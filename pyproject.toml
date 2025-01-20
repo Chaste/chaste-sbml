@@ -11,13 +11,13 @@ authors = [{ name = "Kwabena Amponsah" }, { name = "James Osborne" }]
 
 requires-python = ">=3.8"
 
-dependencies = ["Jinja2 >=2.11,<3", "python-libsbml >=5.20,<6"]
+dependencies = ["Jinja2 >=3.0,<4", "python-libsbml >=5.20,<6"]
 
 [project.optional-dependencies]
 dev = [
   "flake8==3.9",
   "isort==5.8",
-  "Jinja2==2.11",
+  "Jinja2==3.1",
   "pytest==6.2",
   "python-libsbml==5.20",
 ]
