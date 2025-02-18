@@ -1,10 +1,10 @@
-#include "Goldbeter1991SrnModel.hpp"
+#include "goldbeter_1991.hpp"
 #include "CellwiseOdeSystemInformation.hpp"
 /* SBML ODE System */
-Goldbeter1991OdeSystem::Goldbeter1991OdeSystem (std::vector<double> stateVariables)
+goldbeter_1991OdeSystem::goldbeter_1991OdeSystem (std::vector<double> stateVariables)
     : AbstractOdeSystem(3)
 {
-    mpSystemInfo.reset(new CellwiseOdeSystemInformation<Goldbeter1991OdeSystem>);
+    mpSystemInfo.reset(new CellwiseOdeSystemInformation<goldbeter_1991OdeSystem>);
 
     Init();
 
@@ -18,11 +18,11 @@ Goldbeter1991OdeSystem::Goldbeter1991OdeSystem (std::vector<double> stateVariabl
     }
 }
 
-Goldbeter1991OdeSystem::~Goldbeter1991OdeSystem()
+goldbeter_1991OdeSystem::~goldbeter_1991OdeSystem()
 {
 }
 
-void Goldbeter1991OdeSystem::Init()
+void goldbeter_1991OdeSystem::Init()
  {
     /* Initialise the parameters. */
     cell = 1.0;
@@ -33,7 +33,7 @@ void Goldbeter1991OdeSystem::Init()
     Kc = 0.5;
 }
 
-void Goldbeter1991OdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
+void goldbeter_1991OdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
     /* Define state variables */
     double C = rY[0]; // Cyclin
@@ -91,7 +91,7 @@ void Goldbeter1991OdeSystem::EvaluateYDerivatives(double time, const std::vector
 }
 
 template<>
-void CellwiseOdeSystemInformation<Goldbeter1991OdeSystem>::Initialise()
+void CellwiseOdeSystemInformation<goldbeter_1991OdeSystem>::Initialise()
 {
     this->mVariableNames.push_back("Cyclin");
     this->mVariableUnits.push_back("non-dim");
@@ -113,13 +113,13 @@ void CellwiseOdeSystemInformation<Goldbeter1991OdeSystem>::Initialise()
 #include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
 
-typedef SbmlSrnWrapperModel<Goldbeter1991OdeSystem,5> Goldbeter1991SrnModel;
+typedef SbmlSrnWrapperModel<goldbeter_1991OdeSystem,5> goldbeter_1991;
 
 // Declare identifiers for the serializer
 #include "SerializationExportWrapperForCpp.hpp"
-CHASTE_CLASS_EXPORT(Goldbeter1991OdeSystem)
-EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, Goldbeter1991OdeSystem, 5)
+CHASTE_CLASS_EXPORT(goldbeter_1991OdeSystem)
+EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, goldbeter_1991OdeSystem, 5)
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
-EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Goldbeter1991SrnModel)
+EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(goldbeter_1991)
 
