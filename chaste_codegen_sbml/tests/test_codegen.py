@@ -1,5 +1,6 @@
 import logging
 import re
+
 import pytest
 
 import chaste_codegen_sbml as cg
