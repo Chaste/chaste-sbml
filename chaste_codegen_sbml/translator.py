@@ -180,218 +180,17 @@ def GetCompartmentVariableString(model):
     C++ code."""
     num_compartments = model.getNumCompartments()
 
-    compartments_string = GetBlockCommentDefinition(
-        1, "Define compartments and their sizes", True
-    )
+    compartments_string = GetBlockCommentDefinition(1, "Define compartments and their sizes", True)
 
     for i in range(num_compartments):
         compartment_id = GetCompartment(i, model)
         ################# EDITED ##################### use name rather than id
         compartment_name = GetCompartmentName(i, model)
         compartment_val = GetCompartmentValue(i, model)
-        compartment_def = GetConstDoubleDefinition(
-            1, compartment_name, compartment_val, True
-        )
+        compartment_def = GetConstDoubleDefinition(1, compartment_name, compartment_val, True)
         compartments_string += compartment_def
 
     return compartments_string
-
-
-## Functions to return information needed to initialise ODEs
-def GetInitialInformationForASpecies(species, model):
-    """Get the string describing the initial information for a species; that is,
-    its name, units and initial concentrations."""
-
-    # Define the string for the name
-    species_name = species.getName()
-    species_id = species.getId()
-
-    initial_information_string = ""
-
-    if IsSpeciesDefinedAsOde(species_id, model):
-        if species_name == "":  # If no name, set the name to be the species ID
-            name_string = (
-                AddTabs(1) + 'this->mVariableNames.push_back("' + species_id + '");\n'
-            )
-        else:
-            name_string = (
-                AddTabs(1) + 'this->mVariableNames.push_back("' + species_name + '");\n'
-            )
-
-        # Define the string for the units
-        species_compartment = species.getCompartment()
-        species_units = species.getSubstanceUnits()
-
-        if (
-            species_compartment
-        ):  # if there's a compartment, then we would have normalised the ODE, so declare it as non-dimensional
-            units_string = AddTabs(1) + 'this->mVariableUnits.push_back("non-dim");\n'
-        else:
-            units_string = (
-                AddTabs(1)
-                + 'this->mVariableUnits.push_back("'
-                + species_units
-                + '");\n'
-            )
-
-        # Define the string for the initial condition
-        if species.isSetInitialAmount():
-            species_init_conc = species.getInitialAmount()
-        else:
-            species_init_conc = species.getInitialConcentration()
-        init_conc_string = (
-            AddTabs(1)
-            + "this->mInitialConditions.push_back("
-            + str(species_init_conc)
-            + ");\n"
-        )
-
-        initial_information_string += (
-            name_string + units_string + init_conc_string + "\n"
-        )
-    elif IsSpeciesDefinedAsParameter(species_id, model):
-        if species_name == "":  # If no name, set the name to be the species ID
-            name_string = (
-                AddTabs(1) + 'this->mParameterNames.push_back("' + species_id + '");\n'
-            )
-        else:
-            name_string = (
-                AddTabs(1)
-                + 'this->mParameterNames.push_back("'
-                + species_name
-                + '");\n'
-            )
-
-        # Define the string for the units
-        species_compartment = species.getCompartment()
-        species_units = species.getSubstanceUnits()
-
-        if (
-            species_compartment
-        ):  # if there's a compartment, then we would have normalised the ODE, so declare it as non-dimensional
-            units_string = AddTabs(1) + 'this->mParameterUnits.push_back("non-dim");\n'
-        else:
-            units_string = (
-                AddTabs(1)
-                + 'this->mParameterUnits.push_back("'
-                + species_units
-                + '");\n'
-            )
-
-    elif IsVariableDefinedAsRule(
-        species_id, model
-    ):  ############################ EDITED ##################################### if species in rule from simbio
-        if species_name == "":
-            name_string = (
-                AddTabs(1) + 'this->mVariableNames.push_back("' + species_id + '");\n'
-            )
-
-        else:
-            name_string = (
-                AddTabs(1) + 'this->mVariableNames.push_back("' + species_name + '");\n'
-            )
-
-        # Define the string for the units
-        species_compartment = species.getCompartment()
-        species_units = species.getSubstanceUnits()
-
-        if (
-            species_compartment
-        ):  # if there's a compartment, then we would have normalised the ODE, so declare it as non-dimensional
-            units_string = AddTabs(1) + 'this->mVariableUnits.push_back("non-dim");\n'
-        else:
-            units_string = (
-                AddTabs(1)
-                + 'this->mVariableUnits.push_back("'
-                + species_units
-                + '");\n'
-            )
-
-        # Define the string for the initial condition
-        if species.isSetInitialAmount():
-            species_init_conc = species.getInitialAmount()
-        else:
-            species_init_conc = species.getInitialConcentration()
-        init_conc_string = (
-            AddTabs(1)
-            + "this->mInitialConditions.push_back("
-            + str(species_init_conc)
-            + ");\n"
-        )
-
-        # Define string (should be three lines)
-        initial_information_string += (
-            name_string + units_string + init_conc_string + "\n"
-        )
-
-    return initial_information_string
-
-
-def GetInitialInformationForAParameter(parameter, model):
-    """String describing initial information for a parameter; that is, its name and units. This function should only be called if
-    the parameter does not have a set value (and thus must be externally defined)."""
-    parameter_name = parameter.getName()
-    parameter_id = parameter.getId()
-
-    initial_information_string = ""
-
-    if parameter_name == "":
-        name_string = (
-            AddTabs(1) + 'this->mParameterNames.push_back("' + parameter_id + '");\n'
-        )
-    else:
-        name_string = (
-            AddTabs(1) + 'this->mParameterNames.push_back("' + parameter_name + '");\n'
-        )
-
-    # Define the string for the units
-    if parameter.isSetUnits():
-        parameter_units = species.getUnits()
-        units_string = (
-            AddTabs(1) + 'this->mParameterUnits.push_back("' + parameter_units + '");\n'
-        )
-    else:
-        units_string = AddTabs(1) + 'this->mParameterUnits.push_back("non-dim");\n'
-
-    initial_information_string += name_string + units_string + "\n"
-
-    return initial_information_string
-
-
-def GetInitialInformationString(model):
-    """Get all the information required to intiialise the system as a string."""
-    initial_information_string = ""  # Initialise string
-
-    num_species = model.getNumSpecies()
-
-    for i in range(num_species):
-        species = model.getSpecies(i)
-        species_string = GetInitialInformationForASpecies(species, model)
-        initial_information_string += species_string
-
-    num_parameters = model.getNumParameters()
-
-    for i in range(num_parameters):
-        parameter = model.getParameter(i)
-        parameter_id = parameter.getId()
-        parameter_name = parameter.getName()
-
-        if (not IsParameterValueSet(i, model)) & (
-            not IsVariableDefinedAsRule(parameter_id, model)
-        ):
-            parameter_string = GetInitialInformationForAParameter(parameter, model)
-            initial_information_string += parameter_string
-        ############### EDITED ###################
-        elif parameter_name:
-            if (
-                ("wnt" in parameter_name)
-                or ("gamma" in parameter_name)
-                or ("ComplexTransit") in parameter_name
-            ):
-                parameter_string = GetInitialInformationForAParameter(parameter, model)
-                initial_information_string += parameter_string
-
-    return initial_information_string
 
 
 ###################################################################################################
@@ -408,9 +207,7 @@ def GetEventTriggerString(event):
     event_trigger = event.getTrigger()
     trigger_ast = event_trigger.getMath()
 
-    preorder_list = (
-        trigger_ast.getListOfNodes()
-    )  # Get the list of nodes in preorder (DFS)
+    preorder_list = trigger_ast.getListOfNodes()  # Get the list of nodes in preorder (DFS)
 
     # Get the list of nodes in-order, so that we can readily generate the condition
     inorder_list = []
@@ -425,9 +222,7 @@ def GetEventTriggerString(event):
     # We need to replace the species variable names with their equivalents in Chaste.
     original_model = event.getModel()
 
-    trigger_string = ConvertVariableNamesIntoChasteEquivalent(
-        trigger_string, original_model
-    )
+    trigger_string = ConvertVariableNamesIntoChasteEquivalent(trigger_string, original_model)
     return trigger_string
 
 
@@ -436,18 +231,14 @@ def GetEventAssignmentString(event_assignment):
     event_assignment_string = ""
     original_model = event_assignment.getModel()
 
-    event_assignment_variable = (
-        " " + event_assignment.getVariable() + " "
-    )  # Get the variable name
+    event_assignment_variable = " " + event_assignment.getVariable() + " "  # Get the variable name
     event_assignment_variable = ConvertVariableNamesIntoChasteEquivalent(
         event_assignment_variable, original_model
     )  # Convert into Chaste code
     event_assignment_variable = event_assignment_variable.replace(
         "rY", "this->rGetStateVariables()"
     )  # Replace rY with modifiable state
-    event_assignment_variable = event_assignment_variable.replace(
-        " ", ""
-    )  # Remove whitespace
+    event_assignment_variable = event_assignment_variable.replace(" ", "")  # Remove whitespace
 
     event_assignment_math = event_assignment.getMath()  # Get the AST for the maths
     assignment_formula = " " + formulaToString(event_assignment_math)

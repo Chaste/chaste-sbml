@@ -39,7 +39,7 @@ class ChasteCellCycleModel(ChasteModel):
         parameter_decl = "\n    ".join([f"double {p};"] for p in parameters)
 
         ode_class_def = f"""
-class {self.model_name}OdeSystem : public AbstractOdeSystem
+class {self.ode_name} : public AbstractOdeSystem
 {{
 private:
     // Compartments

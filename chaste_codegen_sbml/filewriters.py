@@ -1,26 +1,5 @@
 from . import translator
 
-
-def GetInitialiseString(filename, model):
-    """Returns templated function to initialise ODE system."""
-    ode_name = GetOdeSystemName(filename)
-
-    initialise_void_str = (
-        "template<>\n"
-        + "void CellwiseOdeSystemInformation<"
-        + ode_name
-        + ">::Initialise()\n"
-        + "{\n"
-        + translator.GetInitialInformationString(model)
-        + "\n"  # Initial set up of name, units and initial concentration
-        + translator.AddTabs(1)
-        + "this->mInitialised = true;\n"
-        + "}\n\n"
-    )
-
-    return initialise_void_str
-
-
 ############################################################################################################
 #####################                 SRN-specific functiions                ###############################
 ############################################################################################################
@@ -40,17 +19,6 @@ def WriteSourceFileForSrnModel(filename, model):
     source_file.close()
 
     print(srn_model_name + ".cpp written!\n")
-
-
-def WriteSrnModelToFile(filename, model):
-    """Script that calls upon functions to write the header
-    and source files needed for SRN models in Chaste."""
-
-    # Write the .hpp file
-    WriteHeaderFileForSrnModel(filename, model)
-
-    # Write the .cpp fil
-    WriteSourceFileForSrnModel(filename, model)
 
 
 ############################################################################################################
@@ -120,9 +88,7 @@ def GetAreAllEventsSatisfiedBooleanString(filename):
         + "}\n\n"
         + translator.AddTabs(1)
         + "if (events_satisfied) "
-        + translator.GetCommentDefinition(
-            0, "Reset events vector if division is triggered", True
-        )
+        + translator.GetCommentDefinition(0, "Reset events vector if division is triggered", True)
         + translator.AddTabs(1)
         + "{\n"
         + translator.AddTabs(2)
@@ -140,9 +106,7 @@ def GetAreAllEventsSatisfiedBooleanString(filename):
 def WriteHeaderFileForCcmModel(filename, model):
     """Construct the Chaste header file from the SBML file."""
 
-    ccm_model_name = GetModelName(
-        filename, model
-    )  # Get the name of the file we will write
+    ccm_model_name = GetModelName(filename, model)  # Get the name of the file we will write
 
     # Open to file to write
     header_file = open(ccm_model_name + ".hpp", "w")
@@ -178,9 +142,7 @@ def WriteHeaderFileForCcmModel(filename, model):
 
 def WriteSourceFileForCcmModel(filename, model):
     """Function write source file for SrnModel."""
-    ccm_model_name = GetModelName(
-        filename, model
-    )  # Get the name of the file we will write
+    ccm_model_name = GetModelName(filename, model)  # Get the name of the file we will write
 
     # Open to file to write
     source_file = open(ccm_model_name + ".cpp", "w")

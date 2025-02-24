@@ -1,7 +1,7 @@
 from ._config import ODE_SYSTEM_SUFFIX, SRN_MODEL_SUFFIX, TAB
 from ._utils import get_index_by_id
 from .chaste_model import ChasteModel
-from .templates.srn.srn_cpp import function_impl_template, state_param_template
+from .templates.srn.srn_cpp import function_impl_template, srn_cpp_template, state_param_template
 from .templates.srn.srn_hpp import srn_hpp_template
 
 
@@ -10,8 +10,8 @@ class ChasteSRNModel(ChasteModel):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
-        self.ode_name = self.model_name + ODE_SYSTEM_SUFFIX
-        self.srn_name = self.model_name + SRN_MODEL_SUFFIX
+        self.ode_system_name = self.model_name + ODE_SYSTEM_SUFFIX
+        self.srn_model_name = self.model_name + SRN_MODEL_SUFFIX
 
         self.size = self.model.getNumReactions() + self.model.getNumRules()
 
@@ -47,8 +47,8 @@ class ChasteSRNModel(ChasteModel):
         # Apply inputs to the header file template
         hpp = srn_hpp_template.format(
             header_guard=header_guard_str,
-            ode_name=self.ode_name,
-            srn_name=self.srn_name,
+            ode_name=self.ode_system_name,
+            srn_name=self.srn_model_name,
             model_name=self.model_name,
             size=self.size,
             compartment_declsr=compartment_decls_str,
@@ -69,10 +69,10 @@ class ChasteSRNModel(ChasteModel):
         compartment_inits = []
         for compartment in compartments:
             c_id = compartment.getId()
-            var_name = self.get_varname(compartment)
-            size = compartment.getSize()
+            c_var = self.get_varname(compartment)
+            c_size = compartment.getSize()
 
-            compartment_inits.append(f"{c_id} = {size}; // {var_name}")
+            compartment_inits.append(f"{c_id} = {c_size}; // {c_var}")
 
         compartment_init_str = f"\n{TAB}".join(compartment_inits)
 
@@ -82,29 +82,29 @@ class ChasteSRNModel(ChasteModel):
 
         for rule in rules:
             r_id = rule.getId()
-            var_name = self.get_varname(param)
+            c_var = self.get_varname(param)
             formula = self.convert_formula(rule.getFormula())
 
-            rule_defs.append(f"{r_id} = {formula}; // {var_name}")
+            rule_defs.append(f"{r_id} = {formula}; // {c_var}")
 
         rule_def_str = f"\n{TAB}".join(rule_defs)
 
         # Species
         specii = self.model.getListOfSpecies()
         time_multiplier = self.get_timescale_multiplier()
-        species_inits = []
+        species_defaults = []
         state_vars = []
         state_params = []
         ode_defs = []
         ode_timescale_defs = []
+        species_ode_inits = []
         for i, species in enumerate(specii):
             s_id = species.getId()
             s_var = self.get_varname(species)
             s_conc = self.get_species_concentration(species)
+            s_units = species.getSubstanceUnits()
 
-            species_inits.append(
-                f"SetDefaultInitialCondition({i}, {s_conc}); // {s_var}"
-            )
+            species_defaults.append(f"SetDefaultInitialCondition({i}, {s_conc}); // {s_var}")
 
             if self.is_state_parameter(species):
                 state_param = state_param_template.format(
@@ -157,37 +157,63 @@ class ChasteSRNModel(ChasteModel):
 
             # TODO: include other rules
 
-        species_init_str = f"\n{TAB}".join(species_inits)
+            # Initial conditions
+
+            # If there's a compartment, then we would have normalised
+            # the ODE, so declare it as non-dimensional
+            init_units = "non-dim" if compartment else s_units
+
+            if (s_id in self.odes_dict) or (s_id in self.rules_dict):
+                species_ode_inits.append(f'this->mVariableNames.push_back("{s_var}");')
+                species_ode_inits.append(f'this->mVariableUnits.push_back("{init_units}");')
+                species_ode_inits.append(f'this->mInitialConditions.push_back("{s_conc}");')
+
+            elif self.is_state_parameter(species):
+                species_ode_inits.append(f'this->mParameterNames.push_back("{s_var}");')
+                species_ode_inits.append(f'this->mParameterUnits.push_back("{init_units}");')
+
+        species_defaults_str = f"\n{TAB}".join(species_defaults)
+        species_state_param_def_str = f"\n{TAB}".join(state_params)
         state_var_def_str = f"\n{TAB}".join(state_vars)
         ode_def_str = f"\n{TAB}".join(ode_defs)
         ode_timescale_def_str = f"\n{TAB}".join(ode_timescale_defs)
+        species_ode_init_str = f"\n{TAB}".join(species_ode_inits)
 
         # Parameters
         params = self.model.getListOfParameters()
         param_vector_inits = []
         param_inits = []
+        state_params = []
+        param_ode_inits = []
         for param in params:
             p_id = param.getId()
-            var_name = self.get_varname(param)
-            value = self.get_parameter_value(param)
+            p_var = self.get_varname(param)
+            p_value = self.get_parameter_value(param)
 
-            param_vector_inits.append(
-                f"this->mParameters.push_back({value}); // {var_name}"
-            )
+            param_vector_inits.append(f"this->mParameters.push_back({p_value}); // {p_var}")
 
-            param_inits.append(f"{p_id} = {value};")
+            param_inits.append(f"{p_id} = {p_value};")
 
             if self.is_state_parameter(param):
                 state_param = state_param_template.format(
                     par_id=p_id,
                     par_num=len(state_params),
-                    par_name=var_name,
+                    par_name=p_var,
                 )
                 state_params.append(state_param)
 
+            # Parameters without set values must be externally defined
+            unset = (not param.isSetValue()) and (p_id not in self.rules_dict)
+            special = p_var and any(x in p_var for x in ["wnt", "gamma", "ComplexTransit"])
+            if unset or special:
+                init_units = species.getUnits() if param.isSetUnits() else "non-dim"
+                param_ode_inits.append(f'this->mParameterNames.push_back("{p_var}");')
+                param_ode_inits.append(f'this->mParameterUnits.push_back("{init_units}");')
+
         parameter_vector_init_str = f"\n{TAB}".join(param_vector_inits)
         parameter_init_str = f"\n{TAB}".join(param_inits)
-        state_parameter_def_str = f"\n{TAB}".join(state_params)
+        parameter_state_param_def_str = f"\n{TAB}".join(state_params)
+        parameter_ode_init_str = f"\n{TAB}".join(param_ode_inits)
 
         # Reactions
         reactions = self.model.getListOfReactions()
@@ -223,7 +249,7 @@ class ChasteSRNModel(ChasteModel):
             args_list = self.get_function_definition_arguments(fn)
             body_cpp = self.convert_function_body(fn.getBody())
             impl = function_impl_template.format(
-                ode_name=self.ode_name,
+                ode_name=self.ode_system_name,
                 fn=fn_id,
                 fn_args=", ".join(args_list),
                 fn_body_cpp=body_cpp,
@@ -231,115 +257,28 @@ class ChasteSRNModel(ChasteModel):
             function_impls.append(impl)
         functions_impl_str = "\n".join(function_impls)
 
+        # Events
         num_events = self.model.getNumEvents()
         event_vector_init_str = ""
         if num_events > 0:
             event_vector_init_str = f"eventsSatisfied.resize({num_events}, false);"
 
-        cpp = f"""
-#include "{self.srn_name}.hpp"
-#include "CellwiseOdeSystemInformation.hpp"
-
-// SBML ODE System
-{self.ode_name}::{self.ode_name} (std::vector<double> stateVariables)
-    : AbstractOdeSystem({self.size})
-{{
-    mpSystemInfo.reset(new CellwiseOdeSystemInformation<{self.ode_name}>);
-
-    Init();
-
-    {species_init_str}
-
-    {parameter_vector_init_str}
-
-    if (stateVariables != std::vector<double>())
-    {{
-        SetStateVariables(stateVariables);
-    }}
-}}
-
-{self.ode_name}::~{self.ode_name}()
-{{
-}}
-
-{functions_impl_str}
-
-void {self.ode_name}::Init()
- {{
-    // Initialise the compartments.
-    {compartment_init_str}
-
-    // Initialise the parameters.
-    {parameter_init_str}
-
-    // Initialise vector to check if events have been triggered.
-    {event_vector_init_str}
-    
-}}
-
-void {self.ode_name}::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
-{{
-    
-    /* Define state variables */
-    {state_var_def_str}
-
-    /* Define state parameters */
-    {state_parameter_def_str}
-
-     /* Define algebraic rules. */
-     {rule_def_str}
-
-    /* Define the reactions in this model. */
-    {reaction_def_str}
-
-    {ode_def_str}
-
-    /* Account for the differences in timescales. */
-    {ode_timescale_def_str}
-
-}}
-
-template<>
-void CellwiseOdeSystemInformation<{self.ode_name}>::Initialise()
-{{
-    this->mVariableNames.push_back("Cyclin");
-    this->mVariableUnits.push_back("non-dim");
-    this->mInitialConditions.push_back(0.01);
-
-    this->mVariableNames.push_back("cdc_2_kinase");
-    this->mVariableUnits.push_back("non-dim");
-    this->mInitialConditions.push_back(0.01);
-
-    this->mVariableNames.push_back("Cyclin Protease");
-    this->mVariableUnits.push_back("non-dim");
-    this->mInitialConditions.push_back(0.01);
-
-
-    this->mInitialised = true;
-}}
-
-/* Define SRN model using Wrappers. */
-#include "SbmlSrnWrapperModel.hpp"
-#include "SbmlSrnWrapperModel.cpp"
-
-typedef SbmlSrnWrapperModel<{self.ode_name}, {self.size}> {self.srn_name};
-
-// Declare identifiers for the serializer
-#include "SerializationExportWrapperForCpp.hpp"
-CHASTE_CLASS_EXPORT({self.ode_name})
-EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, {self.ode_name}, {self.size})
-
-#include "CellCycleModelOdeSolverExportWrapper.hpp"
-EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER({self.srn_name})
-"""
-
-        # Initialise function
-        initialise_fn = GetInitialiseString(filename, model)
-        source_file.write(initialise_fn)
-
-        # Define SRN Model
-        srn_model_defn = GetModelDefinitionString(filename, model, False)
-        source_file.write(srn_model_defn)
+        # Apply inputs to the source file template
+        cpp = srn_cpp_template.format(
+            srn_model_name=self.srn_model_name,
+            ode_system_name=self.ode_system_name,
+            model_name=self.model_name,
+            size=self.size,
+            species_defaults=species_defaults_str,
+            parameter_vector_init=parameter_vector_init_str,
+            compartment_init=compartment_init_str,
+            parameter_init=parameter_init_str,
+            event_vector_init=event_vector_init_str,
+            state_var_def=state_var_def_str,
+            species_state_param_def=species_state_param_def_str,
+            parameter_state_param_def=parameter_state_param_def_str,
+            functions_impl=functions_impl_str,
+        )
 
         return cpp
 

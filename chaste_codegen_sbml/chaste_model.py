@@ -7,13 +7,7 @@ from libsbml import SBMLReader, formulaToString
 from ._utils import varname_camel, varname_sanitize
 
 if TYPE_CHECKING:
-    from libsbml import (
-        ASTNode,
-        FunctionDefinition,
-        Parameter,
-        SBase,
-        Species,
-    )
+    from libsbml import ASTNode, FunctionDefinition, Parameter, SBase, Species
 
 
 class ChasteModel:
@@ -28,8 +22,6 @@ class ChasteModel:
         else:
             filename = os.path.splitext(os.path.basename(sbml_file))[0]
             self.model_name = varname_camel(filename)
-
-        self.ode_system_name = f"{self.model_name}OdeSystem"
 
         self.hpp_filename = f"{self.model_name}.hpp"
         self.cpp_filename = f"{self.model_name}.cpp"
@@ -47,6 +39,8 @@ class ChasteModel:
         :param formula: The formula.
         :return: The C++ equivalent of the formula.
         """
+
+        # TODO: Use regex to respect word boundaries
 
         method_map = {
             "abs": "fabs",
@@ -121,19 +115,14 @@ class ChasteModel:
 
         return formula
 
-    def get_function_definition_arguments(
-        self, fn_def: "FunctionDefinition"
-    ) -> list[str]:
+    def get_function_definition_arguments(self, fn_def: "FunctionDefinition") -> list[str]:
         """Get the list of arguments in a given function definition.
 
         :param fn_def: The function definition
         :return: List of arguments in the function definition
         """
 
-        return [
-            formulaToString(fn_def.getArgument(i))
-            for i in range(fn_def.getNumArguments())
-        ]
+        return [formulaToString(fn_def.getArgument(i)) for i in range(fn_def.getNumArguments())]
 
     def get_parameter_value(self, parameter: "Parameter") -> float:
         """Get initial parameter value.
@@ -147,9 +136,7 @@ class ChasteModel:
         # Default for wnt and all other cases not specified above
         return 0.0
 
-    def get_sorted_nodes(
-        self, node: "ASTNode", node_list: list["ASTNode"] = []
-    ) -> list["ASTNode"]:
+    def get_sorted_nodes(self, node: "ASTNode", node_list: list["ASTNode"] = []) -> list["ASTNode"]:
         """Traverse an ASTNode tree and return an ordered list of nodes.
 
         :param node: The current ASTNode.
@@ -227,8 +214,7 @@ class ChasteModel:
         :return: A dictionary of species and their corresponding rules
         """
         rules_dict = {
-            r.getId(): self.convert_formula(r.getFormula())
-            for r in self.model.getListOfRules()
+            r.getId(): self.convert_formula(r.getFormula()) for r in self.model.getListOfRules()
         }
         return rules_dict
 
@@ -280,9 +266,7 @@ class ChasteModel:
         # Any species not defined by an ODE or rule is set as a state parameter
         if isinstance(obj, Species):
             species_id = obj.getId()
-            return (species_id not in self.odes_dict) and (
-                species_id not in self.rules_dict
-            )
+            return (species_id not in self.odes_dict) and (species_id not in self.rules_dict)
 
         if isinstance(obj, Parameter):
             # Also parameters with special strings in their name are state parameters.
