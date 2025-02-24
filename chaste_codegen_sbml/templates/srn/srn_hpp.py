@@ -1,6 +1,6 @@
 srn_hpp_template = """
-#ifndef {header_guard_str}
-#define {header_guard_str}
+#ifndef {header_guard}
+#define {header_guard}
 
 #include ChasteSerialization.hpp"
 #include <boost/serialization/base_object.hpp>"
@@ -14,11 +14,11 @@ srn_hpp_template = """
 class {ode_name} : public AbstractOdeSystem
 {{
 private:
-    // Model compartments
-    {compartment_decls_str}
+    /* Model compartments */
+    {compartment_decls}
 
-    // Model parameters
-    {parameter_decls_str}
+    /* Model parameters */
+    {parameter_decls}
 
     friend class boost::serialization::access;
     template<class Archive>
@@ -28,14 +28,14 @@ private:
     }}
 
 public:
-    // Default constructor.
+    /* Default constructor. */
     {model_name}(std::vector<double> stateVariables=std::vector<double>());
 
-    // Destructor.
+    /* Destructor. */
     ~{model_name}();
 
-    // Model function definitions
-    {function_decls_str}
+    /* Model function definitions. */
+    {function_decls}
 
     void Init();
 
@@ -47,7 +47,7 @@ namespace
 {{
 namespace serialization
 {{
-// Serialize information required to construct a {model_name}.
+/* Serialize information required to construct a {model_name}. */
 template<class Archive>
 inline void save_construct_data(
     Archive & ar, const {model_name} * t, const unsigned int file_version)
@@ -56,7 +56,7 @@ inline void save_construct_data(
     ar & state_variables;
 }}
 
-// De-serialize constructor parameters and intiialise a {model_name}.
+/* De-serialize constructor parameters and intiialise a {model_name}. */
 template<class Archive>
 inline void load_construct_data(
     Archive & ar, {model_name} * t, const unsigned int file_version)
@@ -70,13 +70,13 @@ inline void load_construct_data(
 }}
 }} // namespace ...
 
-// Define SRN model using wrappers.
+/* Define SRN model using wrappers. */
 #include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
 
 typedef SbmlSrnWrapperModel<{ode_name}, {size}> {srn_name};
 
-// Declare identifiers for the serializer
+/* Declare identifiers for the serializer */
 #include "SerializationExportWrapper.hpp"
 CHASTE_CLASS_EXPORT({ode_name})
 EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, {ode_name}, {size})
@@ -84,5 +84,5 @@ EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, {ode_name}, {size})
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
 EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER({srn_name})
 
-#endif // {header_guard_str}
+#endif // {header_guard}
 """

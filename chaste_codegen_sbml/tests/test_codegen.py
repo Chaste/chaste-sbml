@@ -4,6 +4,7 @@ import re
 import pytest
 
 import chaste_codegen_sbml as cg
+from chaste_codegen_sbml._config import ROOT_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +52,7 @@ def test_generation(tmp_path, model):
     cpp = f"{model}.cpp"
     hpp = f"{model}.hpp"
 
-    ref_dir = cg.ROOT_DIR / "data" / "reference_models" / model
+    ref_dir = ROOT_DIR / "data" / "reference_models" / model
     ref_sbml = ref_dir / sbml
     ref_cpp = ref_dir / cpp
     ref_hpp = ref_dir / hpp

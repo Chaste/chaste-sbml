@@ -1,15 +1,7 @@
-import os
-import pathlib
-import shutil
-
-from libsbml import SBMLReader
-
-from . import filewriters
-
-ODESYSTEMANDCELLCYCLEMODEL_HPP_
+from .chaste_model import ChasteModel
 
 
-class ChasteSRNModel(ChasteModel):
+class ChasteCellCycleModel(ChasteModel):
 
     def __init__(self, sbml_file: str, model_name: str = None) -> None:
         pass

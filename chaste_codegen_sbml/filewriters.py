@@ -1,34 +1,6 @@
 from . import translator
 
 
-def GetEvaluateYDerivativesVoidString(filename, model):
-    """Define derivatives functions of ODE system."""
-    ode_name = GetOdeSystemName(filename)
-
-    ode_derivs_str = (
-        "void "
-        + ode_name
-        + "::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)\n"
-        + "{\n"
-        + translator.GetStateVariableString(model)  # Define state variables
-        + "\n"
-        + translator.GetStateParameterString(model)  # Define state parameters
-        + "\n "
-        +
-        # translator.GetCompartmentVariableString(model) + "\n" + #Define compartment variables, e.g. cell
-        # translator.GetConstantParameterString(model) + "\n" + #Define constant parameters
-        translator.GetRulesString(model)
-        + "\n"  # Define rules to be used in reactions
-        + translator.GetReactionString(model)
-        + "\n"  # Define reactions
-        + translator.GetOdesString(model)
-        + "\n"  # Define odes in terms of reactions
-        + "}\n\n"
-    )
-
-    return ode_derivs_str
-
-
 def GetInitialiseString(filename, model):
     """Returns templated function to initialise ODE system."""
     ode_name = GetOdeSystemName(filename)
@@ -53,121 +25,9 @@ def GetInitialiseString(filename, model):
 #####################                 SRN-specific functiions                ###############################
 ############################################################################################################
 
-# def WriteHeaderFileForSrnModel(filename, model):
-#     """ Construct the Chaste header file from the SBML file. """
-
-#     # Create environment
-#     environment = Environment(loader=FileSystemLoader("chaste_codegen_sbml/templates/"))
-#     # environment.trim_blocks = True
-#     environment.lstrip_blocks = True
-#     environment.rstrip_blocks = True
-#     # environment.keep_trailing_newline = True
-
-#     hpp_template = environment.get_template("common/hpp/base.hpp")
-#     context = {
-#         "class_name":  GetOdeSystemName(filename),
-#     }
-#     content = hpp_template.render(context)
-
-#     hpp_filename = GetModelName(filename, model) + ".hpp"
-
-#     with open(hpp_filename, mode="w", encoding="utf-8") as hpp_file:
-#         hpp_file.write(content)
-
-#     print(f"{hpp_filename} written!")
-
-#     #Open to file to write
-#     # header_file = open(srn_model_name + ".hpp", 'w')
-
-#     #Define the header files
-#     header_file_defn = GetHeaderFileDefinitionString(filename, model)
-#     # header_file.write(header_file_defn)
-
-#     #Include the appropriate files
-#     include_files = GetIncludedFilesForHeaderString()
-#     # header_file.write(include_files)
-
-#     #Define the ODE System class
-#     ode_class = GetOdeClassDefinitionString(filename, model)
-#     # header_file.write(ode_class)
-
-#     #Define the serialization
-#     serialization = GetSerializationInformationString(filename)
-#     # header_file.write(serialization)
-
-#     #Define the SRN model
-#     srn_model_defn = GetModelDefinitionString(filename, model, True)
-#     # header_file.write(srn_model_defn)
-
-#     #Close the file
-#     header_close = GetHeaderFileClosingString(filename, model)
-#     # header_file.write(header_close)
-
-#     # header_file.close()
-
-#     # print(srn_model_name + ".hpp written!\n")
-
-
-def WriteHeaderFileForSrnModel(filename, model):
-    """Construct the Chaste header file from the SBML file."""
-
-    # Include the appropriate files
-    include_files = GetIncludedFilesForHeaderString()
-    header_file.write(include_files)
-
-    # Define the ODE System class
-    ode_class = GetOdeClassDefinitionString(filename, model)
-    header_file.write(ode_class)
-
-    # Define the serialization
-    serialization = GetSerializationInformationString(filename)
-    header_file.write(serialization)
-
-    # Define the SRN model
-    srn_model_defn = GetModelDefinitionString(filename, model, True)
-    header_file.write(srn_model_defn)
-
-    # Close the file
-    header_close = GetHeaderFileClosingString(filename, model)
-    header_file.write(header_close)
-
-    header_file.close()
-
-    print(srn_model_name + ".hpp written!\n")
-
 
 def WriteSourceFileForSrnModel(filename, model):
     """Function write source file for SrnModel."""
-    srn_model_name = GetModelName(
-        filename, model
-    )  # Get the name of the file we will write
-
-    # Open to file to write
-    source_file = open(srn_model_name + ".cpp", "w")
-
-    # Include header files
-    included_files = GetIncludedFilesForSourceString(filename, model)
-    source_file.write(included_files)
-
-    # Initialise class
-    class_def = GetClassDefinition(filename, model)
-    source_file.write(class_def)
-
-    # Constructor for system
-    constructor = GetClassConstructor(filename)
-    source_file.write(constructor)
-
-    # Functiond efinitions
-    funct_defn_str = GetFunctionDefinitionsForSource(filename, model)
-    source_file.write(funct_defn_str)
-
-    # Initialise parameters
-    init_fn = GetInitForSource(filename, model)
-    source_file.write(init_fn)
-
-    # Get the derivative function
-    derivs_fn = GetEvaluateYDerivativesVoidString(filename, model)
-    source_file.write(derivs_fn)
 
     # Initialise function
     initialise_fn = GetInitialiseString(filename, model)

@@ -4,3 +4,5 @@ function_impl_template = """
         return {fn_body_cpp};
     }}
 """
+
+state_param_template = "double {par_id} = this->mParameters[{par_num}]; // {par_name}"

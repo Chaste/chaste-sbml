@@ -1,9 +1,7 @@
-import pathlib
-
-ROOT_DIR = pathlib.Path(__file__).parent.absolute()
-
-from .chaste_model import Generate
+from .chaste_cell_cycle_model import ChasteCellCycleModel
+from .chaste_srn_model import ChasteSRNModel
 
 __all__ = [
-    "Generate",
+    "ChasteCellCycleModel",
+    "ChasteSRNModel",
 ]
