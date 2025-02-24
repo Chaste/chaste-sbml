@@ -1,12 +1,13 @@
 import os
-import shutil
 import pathlib
+import shutil
 
 from libsbml import SBMLReader
 
 from . import filewriters
 
 ODESYSTEMANDCELLCYCLEMODEL_HPP_
+
 
 class ChasteSRNModel(ChasteModel):
 
@@ -25,7 +26,8 @@ class ChasteSRNModel(ChasteModel):
         hpp.append("")
 
         # Add includes
-        hpp.append('''
+        hpp.append(
+            """
 #include ChasteSerialization.hpp"
 #include <boost/serialization/base_object.hpp>"
 #include <boost/serialization/shared_ptr.hpp>"
@@ -34,18 +36,15 @@ class ChasteSRNModel(ChasteModel):
 #include <iostream>"
                    
 #include AbstractOdeSystem.hpp"
-''')
+"""
+        )
 
         # Define the ODE System class
         compartments = self.get_compartments()
-        compartment_decl = "\n    ".join(
-            [f"double {c};"] for c in compartments
-        )
+        compartment_decl = "\n    ".join([f"double {c};"] for c in compartments)
 
         parameters = self.get_parameters()
-        parameter_decl = "\n    ".join(
-            [f"double {p};"] for p in parameters
-        )
+        parameter_decl = "\n    ".join([f"double {p};"] for p in parameters)
 
         ode_class_def = f"""
 class {self.model_name}OdeSystem : public AbstractOdeSystem
@@ -75,5 +74,6 @@ public:
 
 }};
 """
+
     def generate_code(self, output_directory=None):
         pass

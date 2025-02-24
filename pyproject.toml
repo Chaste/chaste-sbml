@@ -20,6 +20,7 @@ dependencies = ["Jinja2 >=3.0,<4", "python-libsbml >=5.20,<6"]
 [project.optional-dependencies]
 dev = [
   "flake8",
+  "flake8-bugbear",
   "isort",
   "Jinja2>=3.1",
   "pytest",
@@ -31,3 +32,23 @@ chaste_codegen_sbml = "chaste_codegen_sbml.__main__:main"
 
 [project.urls]
 source = "https://github.com/Chaste/chaste-codegen-sbml"
+
+[tool.black]
+line-length = 88
+target-version = ["py39", "py310", "py311", "py312", "py313"]
+extend-exclude = """
+(
+  ^/venv/
+)
+"""
+
+[tool.isort]
+known_first_party = "chaste_codegen_sbml"
+extend_skip = ["venv"]
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = "True"
+force_grid_wrap = 0
+use_parentheses = "True"
+ensure_newline_before_comments = "True"
+line_length = 88

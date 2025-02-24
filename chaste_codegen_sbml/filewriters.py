@@ -1,43 +1,4 @@
-from jinja2 import Environment, FileSystemLoader
-
 from . import translator
-
-
-# Script with functions that will write all the necessary SBML info into Chaste .cpp
-# and .hpp files.
-
-############################################################################################################
-#####################            Functions common to both SRN and CCM        ###############################
-############################################################################################################
-
-
-def GetFunctionDefinitionsForSource(filename, model):
-    """Define SBML function handles."""
-    ode_name = GetOdeSystemName(filename)
-
-    funct_defns_str = translator.GetFunctionDefinitionsStringForSource(
-        0, model, ode_name
-    )
-
-    return funct_defns_str
-
-
-def GetInitForSource(filename, model):
-    """Initialise parameters."""
-    ode_name = GetOdeSystemName(filename)
-
-    init_param_str = (
-        "void "
-        + ode_name
-        + "::Init()"
-        + "\n "
-        + "{\n"
-        + translator.GetInitParameterStringForSource(
-            1, model
-        )  # Initialise parameter values
-        + "}\n\n"
-    )
-    return init_param_str
 
 
 def GetEvaluateYDerivativesVoidString(filename, model):

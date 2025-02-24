@@ -1,18 +1,9 @@
-import os
-import shutil
-import pathlib
-
-from libsbml import SBMLReader
-
-from . import filewriters
-from .chaste_model import ChasteModel
+from .chaste_model import ODE_SUFFIX, TAB, ChasteModel
+from .templates.srn.srn_cpp import function_impl_template
+from .templates.srn.srn_hpp import srn_hpp_template
 
 HEADER_GUARD_SUFFIX = "ODESYSTEMANDSRNMODEL_HPP_"
-
-ODE_SUFFIX = "OdeSystem"
 SRN_SUFFIX = "SrnModel"
-
-TAB = "    "
 
 
 class ChasteSRNModel(ChasteModel):
@@ -23,10 +14,7 @@ class ChasteSRNModel(ChasteModel):
         self.ode_name = self.model_name + ODE_SUFFIX
         self.srn_name = self.model_name + SRN_SUFFIX
 
-        # Size is defined as the number of ODEs
-        odes = self.get_odes()
-        rules = self.get_rules()
-        self.num_species = len(odes) + len(rules)
+        self.size = self.model.getNumReactions() + self.model.getNumRules()
 
     def generate_hpp(self) -> str:
         """Generate the Chaste header for an SRN model from SBML data.
@@ -35,125 +23,91 @@ class ChasteSRNModel(ChasteModel):
         """
 
         # Get inputs for the header file template
-        header_guard = self.model_name.upper() + HEADER_GUARD_SUFFIX
+        header_guard_str = self.model_name.upper() + self.HEADER_GUARD_SUFFIX
 
-        compartments = self.get_compartments()
-        compartment_decls = f"\n{TAB}".join([f"double {var};" for var in compartments])
-
-        parameters = self.get_parameters()
-        parameter_decls = f"\n{TAB}".join([f"double {var};" for var in parameters])
-
-        functions = self.get_function_definitions()
-        function_decls = f"\n{TAB}".join(
-            [f"double {fn} ({', '.join(args)});" for fn, args in functions.items()]
+        compartments = self.model.getListOfCompartments()
+        compartment_decls_str = f"\n{TAB}".join(
+            [f"double {self.get_identifier(c)};" for c in compartments]
         )
 
-        hpp = f"""
-#ifndef {header_guard}
-#define {header_guard}
+        parameters = self.model.getListOfParameters()
+        parameter_decls_str = f"\n{TAB}".join(
+            [f"double {self.get_identifier(p)};" for p in parameters]
+        )
 
-#include ChasteSerialization.hpp"
-#include <boost/serialization/base_object.hpp>"
-#include <boost/serialization/shared_ptr.hpp>"
-                   
-#include <cmath>"
-#include <iostream>"
-                   
-#include AbstractOdeSystem.hpp"
+        functions = self.model.getListOfFunctionDefinitions()
+        function_decls_list = []
+        for fn in functions:
+            fn_id = fn.getId()
+            fn_args = self.get_function_definition_arguments(fn)
+            function_decls_list.append(f"double {fn_id}({', '.join(fn_args)});")
+        function_decls_str = f"\n{TAB}".join(function_decls_list)
 
-class {self.ode_name} : public AbstractOdeSystem
-{{
-private:
-    // Model compartments
-    {compartment_decls}
+        # Apply inputs to the header file template
+        hpp = srn_hpp_template.format(
+            header_guard_str=header_guard_str,
+            ode_name=self.ode_name,
+            srn_name=self.srn_name,
+            model_name=self.model_name,
+            size=self.size,
+            compartment_decls_str=compartment_decls_str,
+            parameter_decls_str=parameter_decls_str,
+            function_decls_str=function_decls_str,
+        )
 
-    // Model parameters
-    {parameter_decls}
-
-    friend class boost::serialization::access;
-    template<class Archive>
-    void serialize(Archive & archive, const unsigned int version)
-    {{
-        archive & boost::serialization::base_object<AbstractOdeSystem>(*this);"
-    }}
-
-public:
-    // Default constructor.
-    {self.model_name}(std::vector<double> stateVariables=std::vector<double>());
-
-    // Destructor.
-    ~{self.model_name}();
-
-    // Model function definitions
-    {function_decls}
-
-    void Init();
-
-    void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY);
-
-}};
-
-namespace
-{{
-namespace serialization
-{{
-// Serialize information required to construct a {self.model_name}.
-template<class Archive>
-inline void save_construct_data(
-    Archive & ar, const {self.model_name} * t, const unsigned int file_version)
-{{
-    const std::vector<double> state_variables = t->rGetConstStateVariables();
-    ar & state_variables;
-}}
-
-// De-serialize constructor parameters and intiialise a {self.model_name}.
-template<class Archive>
-inline void load_construct_data(
-    Archive & ar, {self.model_name} * t, const unsigned int file_version)
-{{
-    std::vector<double> state_variables;
-    ar & state_variables;
-    
-    // Invoke inplace constructor to initialise instance
-    ::new(t){self.model_name}(state_variables);
-}}
-}}
-}} // namespace ...
-
-// Define SRN model using Wrappers.
-#include "SbmlSrnWrapperModel.hpp"
-#include "SbmlSrnWrapperModel.cpp"
-
-typedef SbmlSrnWrapperModel<{self.ode_name}, {self.num_species}> {self.srn_name};
-
-// Declare identifiers for the serializer
-#include "SerializationExportWrapper.hpp"
-CHASTE_CLASS_EXPORT({self.ode_name})
-EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, {self.ode_name}, {self.num_species})
-
-#include "CellCycleModelOdeSolverExportWrapper.hpp"
-EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER({self.srn_name})
-
-#endif // {header_guard}
-"""
         return hpp
 
-    #########################################
     def generate_cpp(self) -> str:
         """Generate the Chaste source for an SRN model from SBML data.
 
         return: The generated source file as a string.
         """
 
-        species = self.get_species()
-        species_init = f"\n{TAB}".join(
-            [f"SetDefaultInitialCondition({i}, {val});" for i, val in species.items()]
-        )
+        species = self.model.getListOfSpecies()
+        species_inits = []
+        for i, s in enumerate(species):
+            conc = self.get_species_concentration(s)
+            species_inits.append(f"SetDefaultInitialCondition({i}, {conc});")
+        species_init_str = f"\n{TAB}".join(species_inits)
 
-        params = self.get_parameters()
-        params_init = f"\n{TAB}".join(
-            [f"this->mParameters.push_back({val});" for val in params.values()]
-        )
+        compartments = self.model.getListOfCompartments()
+        compartment_inits = []
+        for compartment in compartments:
+            c_id = self.get_identifier(compartment)
+            size = compartment.getSize()
+            compartment_inits.append(f"{c_id} = {size};")
+        compartment_init_str = f"\n{TAB}".join(compartment_inits)
+
+        parameters = self.model.getListOfParameters()
+        parameter_vector_inits = []
+        parameter_inits = []
+        for parameter in parameters:
+            p_id = self.get_identifier(parameter)
+            value = self.get_parameter_value(parameter)
+            parameter_vector_inits.append(f"this->mParameters.push_back({value});")
+            parameter_inits.append(f"{p_id} = {value};")
+        parameter_vector_init_str = f"\n{TAB}".join(parameter_vector_inits)
+        parameter_init_str = f"\n{TAB}".join(parameter_inits)
+
+        functions = self.model.getListOfFunctionDefinitions()
+        function_impls = []
+        for fn in functions:
+            fn_id = fn.getId()
+            args_list = self.get_function_definition_arguments(fn)
+            body_cpp = self.convert_function_body(fn.getBody())
+            impl = function_impl_template.format(
+                ode_name=self.ode_name,
+                fn=fn_id,
+                fn_args=", ".join(args_list),
+                fn_body_cpp=body_cpp,
+            )
+            function_impls.append(impl)
+        functions_impl_str = "\n".join(function_impls)
+
+        num_events = self.model.getNumEvents()
+        event_vector_init_str = ""
+        if num_events > 0:
+            event_vector_init_str = f"eventsSatisfied.resize({num_events}, false);"
 
         cpp = f"""
 #include "{self.srn_name}.hpp"
@@ -167,8 +121,9 @@ EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER({self.srn_name})
 
     Init();
 
-    {species_init}
-    {params_init}
+    {species_init_str}
+
+    {parameter_vector_init_str}
 
     if (stateVariables != std::vector<double>())
     {{
@@ -180,17 +135,19 @@ EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER({self.srn_name})
 {{
 }}
 
-{function_definitions}
+{functions_impl_str}
 
 void {self.ode_name}::Init()
  {{
-    /* Initialise the parameters. */
-    // cell = 1.0;
-    // V1 = 0.0;
-    // V3 = 0.0;
-    // VM1 = 3.0;
-    // VM3 = 1.0;
-    // Kc = 0.5;
+    // Initialise the compartments.
+    {compartment_init_str}
+
+    // Initialise the parameters.
+    {parameter_init_str}
+
+    // Initialise vector to check if events have been triggered.
+    {event_vector_init_str}
+    
 }}
 
 void {self.ode_name}::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
@@ -286,14 +243,6 @@ EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, {self.ode_name}, {self.num_species})
 EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER({self.srn_name})
 """
 
-        # Functiond efinitions
-        funct_defn_str = GetFunctionDefinitionsForSource(filename, model)
-        source_file.write(funct_defn_str)
-
-        # Initialise parameters
-        init_fn = GetInitForSource(filename, model)
-        source_file.write(init_fn)
-
         # Get the derivative function
         derivs_fn = GetEvaluateYDerivativesVoidString(filename, model)
         source_file.write(derivs_fn)
@@ -306,5 +255,9 @@ EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER({self.srn_name})
         srn_model_defn = GetModelDefinitionString(filename, model, False)
         source_file.write(srn_model_defn)
 
-    def generate_code(self, output_directory=None):
-        filewriters.WriteSrnModelToFile(self.model_name, self.model)
+        return cpp
+
+    def generate_code(self) -> None:
+        """Generate the Chaste code for an SRN model from SBML data."""
+        self.hpp_source = self.generate_hpp()
+        self.cpp_source = self.generate_cpp()

@@ -5,7 +5,6 @@ import pytest
 
 import chaste_codegen_sbml as cg
 
-
 logger = logging.getLogger(__name__)
 
 

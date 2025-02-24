@@ -1,22 +1,3 @@
-# Script with useful functions to extract the relevant information from an
-# SBML file needed to define an ODE Model in Chaste
-
-
-###################################################################################################
-############################            Chaste-ey functions         ###############################
-###################################################################################################
-
-
-def GetBlockCommentDefinition(num_tabs, var, newline):
-    """Define string as C++ block comment."""
-    block_comment_def = AddTabs(num_tabs) + "/* " + var + " */"
-
-    if newline:
-        block_comment_def += "\n"
-
-    return block_comment_def
-
-
 def GetConstDoubleDefinition(num_tabs, name, val, newline):
     """Get the string defining a constant double in C++."""
     const_double_def = (
@@ -79,15 +60,6 @@ def GetStateParameterDefinition(num_tabs, n, sp, newline):
         state_parameter_def += "\n"
 
     return state_parameter_def
-
-
-def GetNodeIndex(node_list, node):
-    """Function to get the corresponding node index from an ASTNodeList, as
-    these objects are not enumerable, nor are they `lists' in the python sense."""
-    indices = [
-        i for i in range(node_list.getSize()) if (node_list.get(i) == node)
-    ]  # Have to do it as a list
-    return indices[0]  # Only ever going to be one node
 
 
 def GetCppEquivalent(ast_name):
@@ -195,37 +167,6 @@ def GetNonConstantParameterString(model):
     return non_const_param_string
 
 
-def GetInOrderTraversal(list_of_nodes, tree, preorder_list):
-    """Function to traverse a tree in-order and produce a list of nodes.
-    Assumes the tree is an ASTNode, as defined in SBML. Also assumes the list
-    passed is initially empty (I don't know how to get around this)."""
-
-    if tree.getNumChildren() != 0:
-        left_subtree = tree.getLeftChild()
-        GetInOrderTraversal(list_of_nodes, left_subtree, preorder_list)
-
-        node_index = GetNodeIndex(preorder_list, tree)
-        list_of_nodes.append(node_index)
-
-        right_subtree = tree.getRightChild()
-        GetInOrderTraversal(list_of_nodes, right_subtree, preorder_list)
-
-    else:
-        node_index = GetNodeIndex(preorder_list, tree)
-        list_of_nodes.append(node_index)
-
-    return list_of_nodes
-
-
-def IsSrnModel(model):
-    """Boolean to determine whether a model's an SRN or a CCM."""
-    num_events = model.getNumEvents()
-    if num_events != 0:
-        return False
-    else:
-        return True
-
-
 ###################################################################################################
 ######################        SRN AND Cell Cycle Model Functions         ##########################
 ###################################################################################################
@@ -269,131 +210,6 @@ def IsParameterValueSet(n, model):
         return True
     else:
         return False
-
-
-## Function definitions
-
-
-def GetSubfunctionEquivalents(funct_def_body):
-    """Function to check if any functions used don't match up with their C++ counterparts."""
-    functs = {
-        "abs": "fabs",
-        "arccos": "acos",
-        "arccsc": "acsc",
-        "arccsch": "acsch",
-        "arcsec": "asec",
-        "arcsech": "asech",
-        "arcsinh": "asinh",
-        "arcsin": "asin",
-        "arctan": "atan",
-        "arctanh": "atanh",
-        "max": "fmax",
-        "min": "fmin",
-    }
-
-    subfunct_equivalents = {}
-
-    list_of_nodes = []
-    preorder_list = funct_def_body.getListOfNodes()
-    inorder_list = GetInOrderTraversal(list_of_nodes, funct_def_body, preorder_list)
-
-    for i in range(len(inorder_list)):
-        node_index = inorder_list[i]
-        node = preorder_list.get(node_index)
-        if node.isFunction():
-            node_formula = formulaToString(node)
-
-            # If the function is root, we have to deal with it in an annoying way...
-            if "root" in node_formula:
-                # Split the root by the comma and rearrange
-                split_formula = node_formula.split(",", 1)
-                first_part = split_formula[0]
-                second_part = split_formula[1]
-
-                # Get the exponent of the root
-                index = first_part.find("(")
-                exponent = first_part[index + 1 : len(first_part)]
-
-                # Get the base
-                base = second_part[0 : len(second_part) - 1]
-                subfunct_equivalents[node_formula] = (
-                    "pow(" + base + ", " + "1.0 /" + exponent + ")"
-                )
-
-            # The rest can be done by simple string replacement
-            else:
-                new_formula = node_formula
-
-                for key in functs:
-                    new_formula = new_formula.replace(key, functs[key])
-
-                subfunct_equivalents[node_formula] = new_formula
-
-    return subfunct_equivalents
-
-
-def ConvertFunctionBody(funct_def_body):
-    """Function to the C++ equivalent."""
-    subfunct_equivalents = GetSubfunctionEquivalents(funct_def_body)
-
-    # Now replace all instances of those sub-functions with their C++ equivalents
-    funct_body_formula = formulaToString(funct_def_body)
-
-    for key in subfunct_equivalents:
-        funct_body_formula = funct_body_formula.replace(key, subfunct_equivalents[key])
-
-    return funct_body_formula
-
-
-def GetBodyOfFunctionDefinition(funct_def):
-    """Function to obtain the body of a function definition in C++ form."""
-    body_str = ""
-    funct_body = funct_def.getBody()
-    body_str += ConvertFunctionBody(funct_body)
-    return body_str
-
-
-def GetFunctionDefinitionString(n, funct_def, ode_sys_name):
-    """Function to define C++ function definition in the source files."""
-    funct_def_str = ""
-    funct_id = funct_def.getId()
-    funct_args = GetArgumentsOfFunctionDefinition(funct_def)
-    funct_body = GetBodyOfFunctionDefinition(funct_def)
-
-    funct_def_str += (
-        AddTabs(n)
-        + "double "
-        + ode_sys_name
-        + "::"
-        + funct_id
-        + "("
-        + funct_args
-        + ")\n"
-        + AddTabs(n)
-        + "{\n"
-        + AddTabs(n + 1)
-        + "return "
-        + funct_body
-        + ";\n"
-        + AddTabs(n)
-        + "}\n"
-    )
-    return funct_def_str
-
-
-def GetFunctionDefinitionsStringForSource(n, model, ode_sys_name):
-    """Function to define all the function definitions in Initialise of source file."""
-    num_funct_defns = model.getNumFunctionDefinitions()
-
-    funct_defns_str = ""
-
-    for i in range(num_funct_defns):
-        funct_defn = model.getFunctionDefinition(i)
-        funct_defns_str += (
-            GetFunctionDefinitionString(n, funct_defn, ode_sys_name) + "\n"
-        )
-
-    return funct_defns_str
 
 
 ## Reaction rule functions
@@ -522,7 +338,6 @@ def GetReactionString(model):
         reactions_string += "\n"
 
     return reactions_string
-
 
 
 def IsSpeciesDefinedAsOde(species_id, model):
@@ -1121,52 +936,6 @@ def GetInitialInformationString(model):
                 initial_information_string += parameter_string
 
     return initial_information_string
-
-
-
-def GetInitParameterStringForSource(n, model):
-    """Method to initialise parameter values in teh source file."""
-    num_compartments = model.getNumCompartments()
-    num_parameters = model.getNumParameters()
-    num_funct_defns = model.getNumFunctionDefinitions()
-    num_events = model.getNumEvents()
-
-    init_string = ""
-    init_string += GetBlockCommentDefinition(n, "Initialise the parameters.", True)
-
-    ####################### EDITED ####################################
-    for i in range(num_compartments):
-        compartment_id = GetCompartment(i, model)
-        compartment_name = GetCompartmentName(i, model)
-        if compartment_name == "":
-            compartment_name = compartment_id
-        compartment_value = GetCompartmentValue(i, model)
-
-        init_string += (
-            AddTabs(n) + compartment_name + " = " + str(compartment_value) + ";\n"
-        )
-
-    for i in range(num_parameters):
-        parameter_id = GetParameter(i, model)
-        parameter_value = GetParameterValue(i, model)
-        parameter_name = GetParameterName(i, model)
-        if parameter_name == "":
-            parameter_name = parameter_id
-        init_string += (
-            AddTabs(n) + parameter_name + " = " + str(parameter_value) + ";\n"
-        )
-
-    # Add the vector of booleans to check events
-    if model.getNumEvents() != 0:
-        init_string += "\n"
-        init_string += GetBlockCommentDefinition(
-            n, "Initialise vector to check if events have been triggered.", True
-        )
-        init_string += (
-            AddTabs(n) + "eventsSatisfied.resize(" + str(num_events) + ", false);\n"
-        )
-
-    return init_string
 
 
 ###################################################################################################
