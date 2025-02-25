@@ -1,10 +1,10 @@
-#include "goldbeter_1991.hpp"
+#include "Goldbeter1991SrnModel.hpp"
 #include "CellwiseOdeSystemInformation.hpp"
 /* SBML ODE System */
-goldbeter_1991OdeSystem::goldbeter_1991OdeSystem (std::vector<double> stateVariables)
-    : AbstractOdeSystem(3)
+Goldbeter1991OdeSystem::Goldbeter1991OdeSystem (std::vector<double> stateVariables)
+    : AbstractOdeSystem(5)
 {
-    mpSystemInfo.reset(new CellwiseOdeSystemInformation<goldbeter_1991OdeSystem>);
+    mpSystemInfo.reset(new CellwiseOdeSystemInformation<Goldbeter1991OdeSystem>);
 
     Init();
 
@@ -13,16 +13,17 @@ goldbeter_1991OdeSystem::goldbeter_1991OdeSystem (std::vector<double> stateVaria
     SetDefaultInitialCondition(2, 0.01);
 
 
-    if (stateVariables != std::vector<double>())    {
+    if (stateVariables != std::vector<double>())
+    {
         SetStateVariables(stateVariables);
     }
 }
 
-goldbeter_1991OdeSystem::~goldbeter_1991OdeSystem()
+Goldbeter1991OdeSystem::~Goldbeter1991OdeSystem()
 {
 }
 
-void goldbeter_1991OdeSystem::Init()
+void Goldbeter1991OdeSystem::Init()
  {
     /* Initialise the parameters. */
     cell = 1.0;
@@ -33,7 +34,7 @@ void goldbeter_1991OdeSystem::Init()
     Kc = 0.5;
 }
 
-void goldbeter_1991OdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
+void Goldbeter1991OdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
     /* Define state variables */
     double C = rY[0]; // Cyclin
@@ -81,7 +82,7 @@ void goldbeter_1991OdeSystem::EvaluateYDerivatives(double time, const std::vecto
 
     rDY[0] = (reaction1 - reaction2 - reaction3) / cell; // dCyclin/dt
     rDY[1] = (reaction4 - reaction5) / cell; // dcdc_2_kinase/dt
-    rDY[2] = (reaction6 - reaction7) / cell; // dCyclin Protease/dt
+    rDY[2] = (reaction6 - reaction7) / cell; // dCyclin_Protease/dt
 
     /* Account for the differences in timescales. */
     rDY[0] *= 3600.0;
@@ -91,7 +92,7 @@ void goldbeter_1991OdeSystem::EvaluateYDerivatives(double time, const std::vecto
 }
 
 template<>
-void CellwiseOdeSystemInformation<goldbeter_1991OdeSystem>::Initialise()
+void CellwiseOdeSystemInformation<Goldbeter1991OdeSystem>::Initialise()
 {
     this->mVariableNames.push_back("Cyclin");
     this->mVariableUnits.push_back("non-dim");
@@ -101,7 +102,7 @@ void CellwiseOdeSystemInformation<goldbeter_1991OdeSystem>::Initialise()
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.01);
 
-    this->mVariableNames.push_back("Cyclin Protease");
+    this->mVariableNames.push_back("Cyclin_Protease");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.01);
 
@@ -113,13 +114,12 @@ void CellwiseOdeSystemInformation<goldbeter_1991OdeSystem>::Initialise()
 #include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
 
-typedef SbmlSrnWrapperModel<goldbeter_1991OdeSystem,5> goldbeter_1991;
+typedef SbmlSrnWrapperModel<Goldbeter1991OdeSystem, 5> Goldbeter1991SrnModel;
 
 // Declare identifiers for the serializer
 #include "SerializationExportWrapperForCpp.hpp"
-CHASTE_CLASS_EXPORT(goldbeter_1991OdeSystem)
-EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, goldbeter_1991OdeSystem, 5)
+CHASTE_CLASS_EXPORT(Goldbeter1991OdeSystem)
+EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, Goldbeter1991OdeSystem, 5)
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
-EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(goldbeter_1991)
-
+EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Goldbeter1991SrnModel)

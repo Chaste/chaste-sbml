@@ -1,4 +1,4 @@
-from ._config import ODE_SYSTEM_SUFFIX, SRN_MODEL_SUFFIX, TAB
+from ._config import ODE_SYSTEM_SUFFIX, SRN_HEADER_GUARD_SUFFIX, SRN_MODEL_SUFFIX, TAB
 from ._utils import get_index_by_id
 from .chaste_model import ChasteModel
 from .templates.srn.srn_cpp import function_impl_template, srn_cpp_template, state_param_template
@@ -7,13 +7,16 @@ from .templates.srn.srn_hpp import srn_hpp_template
 
 class ChasteSRNModel(ChasteModel):
 
-    def __init__(self, **kwargs) -> None:
-        super().__init__(**kwargs)
+    def __init__(self, sbml_file: str, model_name: str = None, **kwargs) -> None:
+        super().__init__(sbml_file, model_name, **kwargs)
 
-        self.ode_system_name = self.model_name + ODE_SYSTEM_SUFFIX
-        self.srn_model_name = self.model_name + SRN_MODEL_SUFFIX
+        self.ode_system_name = self.class_name + ODE_SYSTEM_SUFFIX
+        self.srn_model_name = self.class_name + SRN_MODEL_SUFFIX
 
-        self.size = self.model.getNumReactions() + self.model.getNumRules()
+        self.hpp_filename = f"{self.class_name}{SRN_MODEL_SUFFIX}.hpp"
+        self.cpp_filename = f"{self.class_name}{SRN_MODEL_SUFFIX}.cpp"
+
+        self.size = len(self.odes_dict) + len(self.rules_dict)
 
     def generate_hpp(self) -> str:
         """Generate the Chaste header for an SRN model from SBML data.
@@ -22,7 +25,7 @@ class ChasteSRNModel(ChasteModel):
         """
 
         # Get inputs for the header file template
-        header_guard_str = self.model_name.upper() + self.HEADER_GUARD_SUFFIX
+        header_guard_str = self.class_name.upper() + SRN_HEADER_GUARD_SUFFIX
 
         compartments = self.model.getListOfCompartments()
         compartment_decls_str = f"\n{TAB}".join(
@@ -47,11 +50,10 @@ class ChasteSRNModel(ChasteModel):
         # Apply inputs to the header file template
         hpp = srn_hpp_template.format(
             header_guard=header_guard_str,
-            ode_name=self.ode_system_name,
+            ode_system_name=self.ode_system_name,
             srn_name=self.srn_model_name,
-            model_name=self.model_name,
             size=self.size,
-            compartment_declsr=compartment_decls_str,
+            compartment_decls=compartment_decls_str,
             parameter_decls=parameter_decls_str,
             function_decls=function_decls_str,
         )
@@ -82,10 +84,9 @@ class ChasteSRNModel(ChasteModel):
 
         for rule in rules:
             r_id = rule.getId()
-            c_var = self.get_varname(param)
             formula = self.convert_formula(rule.getFormula())
 
-            rule_defs.append(f"{r_id} = {formula}; // {c_var}")
+            rule_defs.append(f"{r_id} = {formula};")
 
         rule_def_str = f"\n{TAB}".join(rule_defs)
 
@@ -166,7 +167,7 @@ class ChasteSRNModel(ChasteModel):
             if (s_id in self.odes_dict) or (s_id in self.rules_dict):
                 species_ode_inits.append(f'this->mVariableNames.push_back("{s_var}");')
                 species_ode_inits.append(f'this->mVariableUnits.push_back("{init_units}");')
-                species_ode_inits.append(f'this->mInitialConditions.push_back("{s_conc}");')
+                species_ode_inits.append(f"this->mInitialConditions.push_back({s_conc});")
 
             elif self.is_state_parameter(species):
                 species_ode_inits.append(f'this->mParameterNames.push_back("{s_var}");')
@@ -181,17 +182,24 @@ class ChasteSRNModel(ChasteModel):
 
         # Parameters
         params = self.model.getListOfParameters()
-        param_vector_inits = []
+        param_defaults = []
         param_inits = []
         state_params = []
         param_ode_inits = []
         for param in params:
             p_id = param.getId()
             p_var = self.get_varname(param)
-            p_value = self.get_parameter_value(param)
 
-            param_vector_inits.append(f"this->mParameters.push_back({p_value}); // {p_var}")
+            unset = (not param.isSetValue()) and (p_id not in self.rules_dict)
+            special = p_var and any(x in p_var for x in ["wnt", "gamma", "ComplexTransit"])
 
+            if unset or special:
+                def_val = 0.0
+                if special and "gamma" in p_var or "ComplexTransit" in p_var:
+                    def_val = 1.0
+                param_defaults.append(f"this->mParameters.push_back({def_val}); // {p_var}")
+
+            p_value = param.getValue()
             param_inits.append(f"{p_id} = {p_value};")
 
             if self.is_state_parameter(param):
@@ -203,14 +211,12 @@ class ChasteSRNModel(ChasteModel):
                 state_params.append(state_param)
 
             # Parameters without set values must be externally defined
-            unset = (not param.isSetValue()) and (p_id not in self.rules_dict)
-            special = p_var and any(x in p_var for x in ["wnt", "gamma", "ComplexTransit"])
             if unset or special:
                 init_units = species.getUnits() if param.isSetUnits() else "non-dim"
                 param_ode_inits.append(f'this->mParameterNames.push_back("{p_var}");')
                 param_ode_inits.append(f'this->mParameterUnits.push_back("{init_units}");')
 
-        parameter_vector_init_str = f"\n{TAB}".join(param_vector_inits)
+        parameter_defaults_str = f"\n{TAB}".join(param_defaults)
         parameter_init_str = f"\n{TAB}".join(param_inits)
         parameter_state_param_def_str = f"\n{TAB}".join(state_params)
         parameter_ode_init_str = f"\n{TAB}".join(param_ode_inits)
@@ -221,19 +227,19 @@ class ChasteSRNModel(ChasteModel):
         for reaction in reactions:
             r_id = reaction.getId()
             r_name = reaction.getName()
-            r_formula = self.convert_formula(reaction.getFormula())
 
             kinetic_law = reaction.getKineticLaw()
-            rparams = kinetic_law.getListOfParameters()
-            rparam_defs = []
-            for rparam in rparams:
-                rp_id = rparam.getId()
-                rp_value = rparam.getValue()
-                rp_name = rparam.getName()
+            r_formula = self.convert_formula(kinetic_law.getFormula())
 
-                rparam_defs.append(f"double {rp_id} = {rp_value}; // {rp_name}")
+            r_params = kinetic_law.getListOfParameters()
+            r_param_defs = []
+            for r_param in r_params:
+                rp_id = r_param.getId()
+                rp_value = r_param.getValue()
 
-            rparam_defs_str = f"\n{TAB}".join(rparam_defs)
+                r_param_defs.append(f"double {rp_id} = {rp_value};")
+
+            rparam_defs_str = f"\n{TAB}".join(r_param_defs)
 
             reaction_defs.append(f"// {r_name}")
             reaction_defs.append(rparam_defs_str)
@@ -267,10 +273,10 @@ class ChasteSRNModel(ChasteModel):
         cpp = srn_cpp_template.format(
             srn_model_name=self.srn_model_name,
             ode_system_name=self.ode_system_name,
-            model_name=self.model_name,
+            model_name=self.class_name,
             size=self.size,
             species_defaults=species_defaults_str,
-            parameter_vector_init=parameter_vector_init_str,
+            parameter_defaults=parameter_defaults_str,
             compartment_init=compartment_init_str,
             parameter_init=parameter_init_str,
             event_vector_init=event_vector_init_str,
@@ -278,11 +284,12 @@ class ChasteSRNModel(ChasteModel):
             species_state_param_def=species_state_param_def_str,
             parameter_state_param_def=parameter_state_param_def_str,
             functions_impl=functions_impl_str,
+            ode_def=ode_def_str,
+            ode_timescale_def=ode_timescale_def_str,
+            species_ode_init=species_ode_init_str,
+            parameter_ode_init=parameter_ode_init_str,
+            rule_def=rule_def_str,
+            reaction_def=reaction_def_str,
         )
 
         return cpp
-
-    def generate_code(self) -> None:
-        """Generate the Chaste code for an SRN model from SBML data."""
-        self.hpp_source = self.generate_hpp()
-        self.cpp_source = self.generate_cpp()

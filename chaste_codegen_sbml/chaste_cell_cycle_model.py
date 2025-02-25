@@ -23,10 +23,10 @@ class ChasteCellCycleModel(ChasteModel):
 #include ChasteSerialization.hpp"
 #include <boost/serialization/base_object.hpp>"
 #include <boost/serialization/shared_ptr.hpp>"
-                   
+
 #include <cmath>"
 #include <iostream>"
-                   
+
 #include AbstractOdeSystem.hpp"
 """
         )
@@ -50,7 +50,7 @@ private:
 
     // Vector to check if all events have been triggered
     std::vector<bool> eventsSatisfied;
- 
+
 public:
 
 

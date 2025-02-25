@@ -32,15 +32,15 @@ def get_index_by_id(obj_id: str, listof: "ListOf") -> int:
     return None
 
 
-def varname_camel(name: str, keep_underscores: bool = False) -> str:
+def varname_camelcase(name: str) -> str:
     """Convert an input string to a C++ compatible alphanumeric string in camel case.
 
     :param name: The variable name.
-    :param keep_underscores: Whether to keep underscores in the variable name.
     :return: The variable name in camel case.
     """
 
     camel_name = []
+
     next_caps = False
     for char in name:
         if char.isalpha():
@@ -52,11 +52,9 @@ def varname_camel(name: str, keep_underscores: bool = False) -> str:
         elif char.isdigit():
             camel_name.append(char)
             next_caps = True
-        elif keep_underscores and char == "_":
-            camel_name.append(char)
-            next_caps = True
         else:
             next_caps = True
+
     return "".join(camel_name)
 
 
@@ -68,10 +66,22 @@ def varname_sanitize(name: str) -> str:
     """
 
     var_name = []
+
     name = name.strip()
+
+    # Prefix with "_" if name starts with a number
+    if name and name[0].isdigit():
+        var_name.append("_")
+
+    skip_underscores = False
     for char in name:
         if char.isalpha() or char.isdigit():
             var_name.append(char)
+            skip_underscores = False
         else:
-            var_name.append("_")
+            # Replace non-alphanumeric chars with "_"; merging successive "_"s
+            if not skip_underscores:
+                var_name.append("_")
+                skip_underscores = True
+
     return "".join(var_name)

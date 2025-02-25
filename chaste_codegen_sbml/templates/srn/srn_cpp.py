@@ -11,7 +11,7 @@ srn_cpp_template = """
 #include "{srn_model_name}.hpp"
 #include "CellwiseOdeSystemInformation.hpp"
 
-// SBML ODE System
+/* SBML ODE System */
 {ode_system_name}::{ode_system_name} (std::vector<double> stateVariables)
     : AbstractOdeSystem({size})
 {{
@@ -21,7 +21,7 @@ srn_cpp_template = """
 
     {species_defaults}
 
-    {parameter_vector_init}
+    {parameter_defaults}
 
     if (stateVariables != std::vector<double>())
     {{
@@ -37,20 +37,20 @@ srn_cpp_template = """
 
 void {ode_system_name}::Init()
  {{
-    // Initialise the compartments.
+    /* Initialise the compartments. */
     {compartment_init}
 
-    // Initialise the parameters.
+    /* Initialise the parameters. */
     {parameter_init}
 
-    // Initialise vector to check if events have been triggered.
+    /* Initialise vector to check if events have been triggered. */
     {event_vector_init}
-    
+
 }}
 
 void {ode_system_name}::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {{
-    
+
     /* Define state variables */
     {state_var_def}
 
@@ -59,8 +59,8 @@ void {ode_system_name}::EvaluateYDerivatives(double time, const std::vector<doub
 
     {parameter_state_param_def}
 
-     /* Define algebraic rules. */
-     {rule_def}
+    /* Define algebraic rules. */
+    {rule_def}
 
     /* Define the reactions in this model. */
     {reaction_def}

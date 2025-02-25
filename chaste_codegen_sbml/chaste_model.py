@@ -2,35 +2,34 @@ import os
 import pathlib
 from typing import TYPE_CHECKING
 
-from libsbml import SBMLReader, formulaToString
+from libsbml import Parameter, SBMLReader, Species, formulaToString
 
-from ._utils import varname_camel, varname_sanitize
+from ._utils import varname_camelcase, varname_sanitize
 
 if TYPE_CHECKING:
-    from libsbml import ASTNode, FunctionDefinition, Parameter, SBase, Species
+    from libsbml import ASTNode, FunctionDefinition, SBase
 
 
 class ChasteModel:
     """Holds information about the SBML model for which code is to be generated."""
 
-    def __init__(self, sbml_file: str, model_name: str = None) -> None:
+    def __init__(self, sbml_file: str, class_name: str = None) -> None:
         self.sbml_file = sbml_file
-        self.sbml_model = SBMLReader().readSBMLFromFile(sbml_file).getModel()
+        self.model = SBMLReader().readSBMLFromFile(sbml_file).getModel()
 
-        if model_name:
-            self.model_name = model_name
+        if class_name:
+            self.class_name = class_name
         else:
             filename = os.path.splitext(os.path.basename(sbml_file))[0]
-            self.model_name = varname_camel(filename)
-
-        self.hpp_filename = f"{self.model_name}.hpp"
-        self.cpp_filename = f"{self.model_name}.cpp"
+            self.class_name = varname_camelcase(filename).title()
 
         self.hpp_source = ""
         self.cpp_source = ""
 
-        self.odes_dict = self.get_ode_dict()
+        self.odes_dict = self.get_odes_dict()
         self.rules_dict = self.get_rules_dict()
+
+        self.varnames = {}
 
     @staticmethod
     def convert_formula(formula: str) -> str:
@@ -124,25 +123,18 @@ class ChasteModel:
 
         return [formulaToString(fn_def.getArgument(i)) for i in range(fn_def.getNumArguments())]
 
-    def get_parameter_value(self, parameter: "Parameter") -> float:
-        """Get initial parameter value.
-
-        :return: The parameter value.
-        """
-
-        name = parameter.getName()
-        if name and ("gamma" in name or "ComplexTransit" in name):
-            return 1.0
-        # Default for wnt and all other cases not specified above
-        return 0.0
-
-    def get_sorted_nodes(self, node: "ASTNode", node_list: list["ASTNode"] = []) -> list["ASTNode"]:
+    def get_sorted_nodes(
+        self, node: "ASTNode", node_list: list["ASTNode"] = None
+    ) -> list["ASTNode"]:
         """Traverse an ASTNode tree and return an ordered list of nodes.
 
         :param node: The current ASTNode.
         :param node_list: A growing list of nodes in traversal order.
         :return: The node list with the current node and its sub-tree added.
         """
+
+        if node_list is None:
+            node_list = []
 
         left_node = node.getLeftChild()
         if left_node:
@@ -165,7 +157,7 @@ class ChasteModel:
             return species.getInitialAmount()
         return species.getInitialConcentration()
 
-    def get_ode_dict(self) -> dict[str, str]:
+    def get_odes_dict(self) -> dict[str, str]:
         """Get the ODEs as a dictionary of equations corresponding to each species.
 
         Each ODE will essentially be the sum of the products minus the sum of
@@ -180,7 +172,7 @@ class ChasteModel:
 
             # Decompose reaction into sum of products minus sum of reactants
             products = reaction.getListOfProducts()
-            for _, product in products.items():
+            for product in products:
                 # Get the species concerning the product
                 species_id = product.getSpecies()
 
@@ -194,7 +186,7 @@ class ChasteModel:
                     ode_dict[species_id] = reaction_id
 
             reactants = reaction.getListOfReactants()
-            for _, reactant in reactants.items():
+            for reactant in reactants:
                 species_id = reactant.getSpecies()
 
                 # TODO: Do we need to do something special with boundary conditions?
@@ -219,16 +211,28 @@ class ChasteModel:
         return rules_dict
 
     def get_varname(self, obj: "SBase") -> str:
-        """Get suitable C++ variable name for an object.
+        """Get a suitable C++ variable name for a libSBML object.
 
+        :param obj: The object.
         :return: The variable name.
         """
-        # TODO: Check that all custom variable names are unique
 
-        name = varname_sanitize(obj.getName())
-        if name:
-            return name
-        return obj.getId()
+        o_id = obj.getId()
+        if o_id in self.varnames:
+            return self.varnames[o_id]
+
+        o_name = varname_sanitize(obj.getName())
+        var = o_name if o_name else o_id
+
+        # Check that all generated variable names are unique
+        if var in self.varnames.values():
+            i = 0
+            while f"{var}_{i}" in self.varnames.values():
+                i += 1
+            var = f"{var}_{i}"
+
+        self.varnames[o_id] = var
+        return var
 
     def is_cc_model(self) -> bool:
         """Determine if the model is a Cell Cycle model.
@@ -256,7 +260,7 @@ class ChasteModel:
         """
         return self.model.getParameter(i).isSetValue()
 
-    def is_state_parameter(self, obj: "Species" | "Parameter") -> bool:
+    def is_state_parameter(self, obj: "Species | Parameter") -> bool:
         """Check if a species or parameter is defined as a state parameter for Chaste.
 
         :param obj: The species or parameter to check.
@@ -310,7 +314,15 @@ class ChasteModel:
                     return 1.0
         return 3600.0
 
-    def write_code(self, output_directory=None):
+    def generate_chaste_code(self) -> None:
+        """Generate Chaste code from SBML data."""
+        self.hpp_source = self.generate_hpp()
+        self.cpp_source = self.generate_cpp()
+
+    def write_chaste_code(self, output_directory=None):
+        """Generate and write Chaste code to file."""
+        self.generate_chaste_code()
+
         if output_directory:
             root_dir = pathlib.Path(output_directory)
         else:
