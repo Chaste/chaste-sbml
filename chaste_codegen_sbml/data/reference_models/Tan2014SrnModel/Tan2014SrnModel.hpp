@@ -1,5 +1,5 @@
-#ifndef TAN2014SBMLODESYSTEMANDSRNMODEL_HPP_
-#define TAN2014SBMLODESYSTEMANDSRNMODEL_HPP_
+#ifndef TAN2014ODESYSTEMANDSRNMODEL_HPP_
+#define TAN2014ODESYSTEMANDSRNMODEL_HPP_
 
 #include "ChasteSerialization.hpp"
 #include <boost/serialization/base_object.hpp>
@@ -9,7 +9,7 @@
 #include <iostream>
 #include "AbstractOdeSystem.hpp"
 
-class Tan2014SbmlOdeSystem : public AbstractOdeSystem
+class Tan2014OdeSystem : public AbstractOdeSystem
 {
 private:
 
@@ -43,10 +43,10 @@ private:
 public:
 
     /* Default constructor. */
-    Tan2014SbmlOdeSystem(std::vector<double> stateVariables=std::vector<double>());
+    Tan2014OdeSystem(std::vector<double> stateVariables=std::vector<double>());
 
     /* Destructor. */
-    ~Tan2014SbmlOdeSystem();
+    ~Tan2014OdeSystem();
 
 
     void Init();
@@ -59,24 +59,24 @@ namespace
 {
 namespace serialization
 {
-/* Serialize information required to construct a Tan2014SbmlOdeSystem. */
+/* Serialize information required to construct a Tan2014OdeSystem. */
 template<class Archive>
 inline void save_construct_data(
-    Archive & ar, const Tan2014SbmlOdeSystem * t, const unsigned int file_version)
+    Archive & ar, const Tan2014OdeSystem * t, const unsigned int file_version)
 {
     const std::vector<double> state_variables = t->rGetConstStateVariables();
     ar & state_variables;
 }
-/* De-serialize constructor parameters and intiialise a Tan2014SbmlOdeSystem. */
+/* De-serialize constructor parameters and intiialise a Tan2014OdeSystem. */
 template<class Archive>
 inline void load_construct_data(
-    Archive & ar, Tan2014SbmlOdeSystem * t, const unsigned int file_version)
+    Archive & ar, Tan2014OdeSystem * t, const unsigned int file_version)
 {
     std::vector<double> state_variables;
     ar & state_variables;
     
     // Invoke inplace constructor to initialise instance
-    ::new(t)Tan2014SbmlOdeSystem(state_variables);
+    ::new(t)Tan2014OdeSystem(state_variables);
 }
 }
 } // namespace ...
@@ -85,14 +85,14 @@ inline void load_construct_data(
 #include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
 
-typedef SbmlSrnWrapperModel<Tan2014SbmlOdeSystem,7> Tan2014SbmlSrnModel;
+typedef SbmlSrnWrapperModel<Tan2014OdeSystem, 7> Tan2014SrnModel;
 
 // Declare identifiers for the serializer
 #include "SerializationExportWrapper.hpp"
-CHASTE_CLASS_EXPORT(Tan2014SbmlOdeSystem)
-EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, Tan2014SbmlOdeSystem, 7)
+CHASTE_CLASS_EXPORT(Tan2014OdeSystem)
+EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, Tan2014OdeSystem, 7)
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
-EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Tan2014SbmlSrnModel)
+EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Tan2014SrnModel)
 
-#endif /* TAN2014SBMLODESYSTEMANDSRNMODEL_HPP_ */
+#endif /* TAN2014ODESYSTEMANDSRNMODEL_HPP_ */

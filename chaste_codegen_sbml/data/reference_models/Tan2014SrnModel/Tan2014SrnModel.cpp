@@ -1,10 +1,10 @@
-#include "Tan2014SbmlSrnModel.hpp"
+#include "Tan2014SrnModel.hpp"
 #include "CellwiseOdeSystemInformation.hpp"
 /* SBML ODE System */
-Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem (std::vector<double> stateVariables)
+Tan2014OdeSystem::Tan2014OdeSystem (std::vector<double> stateVariables)
     : AbstractOdeSystem(7)
 {
-    mpSystemInfo.reset(new CellwiseOdeSystemInformation<Tan2014SbmlOdeSystem>);
+    mpSystemInfo.reset(new CellwiseOdeSystemInformation<Tan2014OdeSystem>);
 
     Init();
 
@@ -20,16 +20,17 @@ Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem (std::vector<double> stateVariables)
     this->mParameters.push_back(1.0);//gamma
     this->mParameters.push_back(1.0);//ComplexTransitThreshold
 
-    if (stateVariables != std::vector<double>())    {
+    if (stateVariables != std::vector<double>())
+    {
         SetStateVariables(stateVariables);
     }
 }
 
-Tan2014SbmlOdeSystem::~Tan2014SbmlOdeSystem()
+Tan2014OdeSystem::~Tan2014OdeSystem()
 {
 }
 
-void Tan2014SbmlOdeSystem::Init()
+void Tan2014OdeSystem::Init()
  {
     /* Initialise the parameters. */
     compartment = 1.0;
@@ -49,7 +50,7 @@ void Tan2014SbmlOdeSystem::Init()
     ComplexTransitThreshold = 1.0;
 }
 
-void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
+void Tan2014OdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
     /* Define state variables */
     double bcat_cm = rY[0];
@@ -103,7 +104,7 @@ void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<d
 }
 
 template<>
-void CellwiseOdeSystemInformation<Tan2014SbmlOdeSystem>::Initialise()
+void CellwiseOdeSystemInformation<Tan2014OdeSystem>::Initialise()
 {
     this->mVariableNames.push_back("bcat_cm");
     this->mVariableUnits.push_back("non-dim");
@@ -150,13 +151,13 @@ void CellwiseOdeSystemInformation<Tan2014SbmlOdeSystem>::Initialise()
 #include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
 
-typedef SbmlSrnWrapperModel<Tan2014SbmlOdeSystem,7> Tan2014SbmlSrnModel;
+typedef SbmlSrnWrapperModel<Tan2014OdeSystem, 7> Tan2014SrnModel;
 
 // Declare identifiers for the serializer
 #include "SerializationExportWrapperForCpp.hpp"
-CHASTE_CLASS_EXPORT(Tan2014SbmlOdeSystem)
-EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, Tan2014SbmlOdeSystem, 7)
+CHASTE_CLASS_EXPORT(Tan2014OdeSystem)
+EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, Tan2014OdeSystem, 7)
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
-EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Tan2014SbmlSrnModel)
+EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Tan2014SrnModel)
 
