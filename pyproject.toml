@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "chaste_codegen_sbml"
 version = "0.0.1"
@@ -9,17 +13,18 @@ license = { file = "LICENSE" }
 
 authors = [{ name = "Kwabena Amponsah" }, { name = "James Osborne" }]
 
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 
-dependencies = ["Jinja2 >=2.11,<3", "python-libsbml >=5.20,<6"]
+dependencies = ["Jinja2 >=3.0,<4", "python-libsbml >=5.20,<6"]
 
 [project.optional-dependencies]
 dev = [
-  "flake8==3.9",
-  "isort==5.8",
-  "Jinja2==2.11",
-  "pytest==6.2",
-  "python-libsbml==5.20",
+  "flake8",
+  "flake8-bugbear",
+  "isort",
+  "Jinja2>=3.1",
+  "pytest",
+  "python-libsbml>=5.20",
 ]
 
 [project.scripts]
@@ -28,6 +33,22 @@ chaste_codegen_sbml = "chaste_codegen_sbml.__main__:main"
 [project.urls]
 source = "https://github.com/Chaste/chaste-codegen-sbml"
 
-[build-system]
-requires = ["setuptools>=58", "wheel>=0.38"]
-build-backend = "setuptools.build_meta"
+[tool.black]
+line-length = 100
+target-version = ["py39", "py310", "py311", "py312", "py313"]
+extend-exclude = """
+(
+  ^/venv/
+)
+"""
+
+[tool.isort]
+known_first_party = "chaste_codegen_sbml"
+extend_skip = ["venv"]
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = "True"
+force_grid_wrap = 0
+use_parentheses = "True"
+ensure_newline_before_comments = "True"
+line_length = 100
