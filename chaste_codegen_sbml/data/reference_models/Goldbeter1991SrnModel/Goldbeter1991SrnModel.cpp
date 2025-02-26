@@ -1,5 +1,6 @@
 #include "Goldbeter1991SrnModel.hpp"
 #include "CellwiseOdeSystemInformation.hpp"
+
 /* SBML ODE System */
 Goldbeter1991OdeSystem::Goldbeter1991OdeSystem (std::vector<double> stateVariables)
     : AbstractOdeSystem(5)
