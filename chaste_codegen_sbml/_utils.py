@@ -2,8 +2,102 @@
 
 from typing import TYPE_CHECKING
 
+from libsbml import formulaToString
+
 if TYPE_CHECKING:
-    from libsbml import ListOf, SBase
+    from libsbml import ASTNode, FunctionDefinition, ListOf, SBase, Species
+
+
+def convert_formula(formula: str) -> str:
+    """Convert a formula to its C++ equivalent.
+
+    :param formula: The formula.
+    :return: The C++ equivalent of the formula.
+    """
+    # TODO: Use regex to respect word boundaries
+
+    method_map = {
+        "abs": "fabs",
+        "arccos": "acos",
+        "arccsc": "acsc",
+        "arccsch": "acsch",
+        "arcsec": "asec",
+        "arcsech": "asech",
+        "arcsinh": "asinh",
+        "arcsin": "asin",
+        "arctan": "atan",
+        "arctanh": "atanh",
+        "max": "fmax",
+        "min": "fmin",
+    }
+
+    # TODO: Add more method mappings as needed
+    # https://sbml.org/software/libsbml/5.18.0/docs/formatted/python-api/namespacelibsbml.html#a8e96a5a70569ae32655c6302638f6dc3
+
+    # Replace method names with the C++ equivalents
+    for old, new in method_map.items():
+        formula = formula.replace(old, new)
+
+    return formula
+
+
+def convert_function_body(fn_body: "ASTNode") -> str:
+    """Convert a function body to its C++ equivalent.
+
+    :param fn_body: The function body.
+    :return: The C++ equivalent of the function body.
+    """
+    # Get the C++ conversion for each node function in the body
+    node_list = sort_nodes(fn_body)
+
+    formula_mapping = {}
+    for node in node_list:
+        if node.isFunction():
+            continue
+
+        node_formula = formulaToString(node)
+        node_formula_cpp = ""
+
+        if "root" in node_formula:
+            # If the function is root, we have to deal with it in an annoying way...
+
+            # Split the root by the comma and rearrange
+            split_formula = node_formula.split(",", 1)
+            first_part = split_formula[0]
+            second_part = split_formula[1]
+
+            # Get the exponent of the root
+            index = first_part.find("(")
+            exponent = first_part[index + 1 : len(first_part)]
+
+            # Get the base
+            base = second_part[0 : len(second_part) - 1]
+
+            node_formula_cpp = f"pow({base}, 1.0 / {exponent})"
+
+        else:
+            # The rest can be done by simple string replacement
+            node_formula_cpp = node_formula
+            node_formula_cpp = convert_formula(node_formula_cpp)
+
+        formula_mapping[node_formula] = node_formula_cpp
+
+    # Replace node formulas in function body with C++ equivalents
+    formula = formulaToString(fn_body)
+    for old, new in formula_mapping.items():
+        formula = formula.replace(old, new)
+
+    return formula
+
+
+def get_function_definition_arguments(fn_def: "FunctionDefinition") -> list[str]:
+    """Get the list of arguments in a given function definition.
+
+    :param fn_def: The function definition
+    :return: List of arguments in the function definition
+    """
+    n = fn_def.getNumArguments()
+    return [formulaToString(fn_def.getArgument(i)) for i in range(n)]
 
 
 def get_index_by_obj(obj: "SBase", listof: "ListOf") -> int:
@@ -12,7 +106,6 @@ def get_index_by_obj(obj: "SBase", listof: "ListOf") -> int:
     :param o: The object.
     :return: The index of the object in the ListOf.
     """
-
     for i, o in enumerate(listof):
         if obj == o:
             return i
@@ -25,11 +118,43 @@ def get_index_by_id(obj_id: str, listof: "ListOf") -> int:
     :param o: The object.
     :return: The index of the object in the ListOf.
     """
-
     for i, o in enumerate(listof):
         if obj_id == o.getId():
             return i
     return None
+
+
+def get_species_concentration(species: "Species") -> float:
+    """Get a initial species concentration.
+
+    :return: The initial species concentration.
+    """
+    if species.isSetInitialAmount():
+        return species.getInitialAmount()
+    return species.getInitialConcentration()
+
+
+def sort_nodes(node: "ASTNode", node_list: list["ASTNode"] = None) -> list["ASTNode"]:
+    """Traverse an ASTNode tree and return an ordered list of nodes.
+
+    :param node: The current ASTNode.
+    :param node_list: A growing list of nodes in traversal order.
+    :return: The list of nodes in traversal order.
+    """
+    if node_list is None:
+        node_list = []
+
+    left_node = node.getLeftChild()
+    if left_node:
+        sort_nodes(left_node, node_list)
+
+    node_list.append(node)
+
+    right_node = node.getRightChild()
+    if right_node:
+        sort_nodes(right_node, node_list)
+
+    return node_list
 
 
 def varname_camelcase(name: str) -> str:
@@ -38,7 +163,6 @@ def varname_camelcase(name: str) -> str:
     :param name: The variable name.
     :return: The variable name in camel case.
     """
-
     camel_name = []
 
     next_caps = False
@@ -64,7 +188,6 @@ def varname_sanitize(name: str) -> str:
     :param name: The variable name.
     :return: The variable name in C++ alphanumeric.
     """
-
     var_name = []
 
     name = name.strip()
