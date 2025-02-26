@@ -119,6 +119,17 @@ class ChasteModel:
     def _generate_cpp(self) -> str:
         return ""
 
+    def _get_name(self, obj: "SBase") -> str:
+        """Get the name of a libSBML object, or the ID if it doesn't have one.
+
+        :param obj: The object.
+        :return: The object name, or ID.
+        """
+        obj_name = obj.getName().strip()
+        if obj_name:
+            return obj_name
+        return obj.getId()
+
     def _get_timescale_multiplier(self) -> float:
         """Get the timescale multiplier.
 
@@ -135,17 +146,6 @@ class ChasteModel:
                 elif "hour" in timescale:
                     return 1.0
         return 3600.0
-
-    def _get_name(self, obj: "SBase") -> str:
-        """Get the name of a libSBML object, or the ID if it doesn't have one.
-
-        :param obj: The object.
-        :return: The object name, or ID.
-        """
-        obj_name = obj.getName().strip()
-        if obj_name:
-            return obj_name
-        return obj.getId()
 
     def _get_varname(self, obj: "SBase") -> str:
         """Get a suitable C++ variable name for a libSBML object.

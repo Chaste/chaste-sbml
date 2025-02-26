@@ -12,12 +12,12 @@
 class Tan2014OdeSystem : public AbstractOdeSystem
 {
 private:
-    /* Initialise compartments and values. */
+    /* Declare model compartments. */
     double compartment;
     double CytosolMembrane;
     double nucleus;
 
-    /* Initialise model parameters. */
+    /* Declare model parameters. */
     double wnt_level;
     double kdegradation;
     double Bsyn;

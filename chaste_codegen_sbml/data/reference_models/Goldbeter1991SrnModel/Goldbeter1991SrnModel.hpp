@@ -12,10 +12,10 @@
 class Goldbeter1991OdeSystem : public AbstractOdeSystem
 {
 private:
-    /* Initialise compartments and values. */
+    /* Declare model compartments. */
     double cell;
 
-    /* Initialise model parameters. */
+    /* Declare model parameters. */
     double V1;
     double V3;
     double VM1;

@@ -15,7 +15,7 @@ class {ode_system_name} : public AbstractOdeSystem
 {{
 private:
 
-    /* Declare compartments and values. */
+    /* Declare model compartments. */
     {compartment_decls}
 
     /* Declare model parameters. */

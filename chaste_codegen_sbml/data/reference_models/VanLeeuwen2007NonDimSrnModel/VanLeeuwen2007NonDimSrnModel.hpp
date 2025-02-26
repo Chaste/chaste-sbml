@@ -1,5 +1,5 @@
-#ifndef VANLEEUWEN2007NONDIMSBMLODESYSTEMANDSRNMODEL_HPP_
-#define VANLEEUWEN2007NONDIMSBMLODESYSTEMANDSRNMODEL_HPP_
+#ifndef VANLEEUWEN2007NONDIMODESYSTEMANDSRNMODEL_HPP_
+#define VANLEEUWEN2007NONDIMODESYSTEMANDSRNMODEL_HPP_
 
 #include "ChasteSerialization.hpp"
 #include <boost/serialization/base_object.hpp>
@@ -9,13 +9,13 @@
 #include <iostream>
 #include "AbstractOdeSystem.hpp"
 
-class VanLeeuwen2007NonDimSbmlOdeSystem : public AbstractOdeSystem
+class VanLeeuwen2007NonDimOdeSystem : public AbstractOdeSystem
 {
 private:
-    /* Initialise compartments and values. */
+    /* Declare model compartments. */
     double cytosolmembraneandnucleus;
 
-    /* Initialise model parameters. */
+    /* Declare model parameters. */
     double K_T;
     double K_C;
     double K_D;
@@ -57,10 +57,10 @@ private:
 
 public:
     /* Default constructor. */
-    VanLeeuwen2007NonDimSbmlOdeSystem(std::vector<double> stateVariables = std::vector<double>());
+    VanLeeuwen2007NonDimOdeSystem(std::vector<double> stateVariables = std::vector<double>());
 
     /* Destructor. */
-    ~VanLeeuwen2007NonDimSbmlOdeSystem();
+    ~VanLeeuwen2007NonDimOdeSystem();
 
     void Init();
 
@@ -71,24 +71,24 @@ namespace
 {
     namespace serialization
     {
-        /* Serialize information required to construct a VanLeeuwen2007NonDimSbmlOdeSystem. */
+        /* Serialize information required to construct a VanLeeuwen2007NonDimOdeSystem. */
         template <class Archive>
         inline void save_construct_data(
-            Archive &ar, const VanLeeuwen2007NonDimSbmlOdeSystem *t, const unsigned int file_version)
+            Archive &ar, const VanLeeuwen2007NonDimOdeSystem *t, const unsigned int file_version)
         {
             const std::vector<double> state_variables = t->rGetConstStateVariables();
             ar & state_variables;
         }
-        /* De-serialize constructor parameters and intiialise a VanLeeuwen2007NonDimSbmlOdeSystem. */
+        /* De-serialize constructor parameters and intiialise a VanLeeuwen2007NonDimOdeSystem. */
         template <class Archive>
         inline void load_construct_data(
-            Archive &ar, VanLeeuwen2007NonDimSbmlOdeSystem *t, const unsigned int file_version)
+            Archive &ar, VanLeeuwen2007NonDimOdeSystem *t, const unsigned int file_version)
         {
             std::vector<double> state_variables;
             ar & state_variables;
 
             // Invoke inplace constructor to initialise instance
-            ::new (t) VanLeeuwen2007NonDimSbmlOdeSystem(state_variables);
+            ::new (t) VanLeeuwen2007NonDimOdeSystem(state_variables);
         }
     }
 } // namespace ...
@@ -97,14 +97,14 @@ namespace
 #include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
 
-typedef SbmlSrnWrapperModel<VanLeeuwen2007NonDimSbmlOdeSystem, 14> VanLeeuwen2007NonDimSbmlSrnModel;
+typedef SbmlSrnWrapperModel<VanLeeuwen2007NonDimOdeSystem, 14> VanLeeuwen2007NonDimSrnModel;
 
 // Declare identifiers for the serializer
 #include "SerializationExportWrapper.hpp"
-CHASTE_CLASS_EXPORT(VanLeeuwen2007NonDimSbmlOdeSystem)
-EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, VanLeeuwen2007NonDimSbmlOdeSystem, 14)
+CHASTE_CLASS_EXPORT(VanLeeuwen2007NonDimOdeSystem)
+EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, VanLeeuwen2007NonDimOdeSystem, 14)
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
-EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(VanLeeuwen2007NonDimSbmlSrnModel)
+EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(VanLeeuwen2007NonDimSrnModel)
 
-#endif /* VANLEEUWEN2007NONDIMSBMLODESYSTEMANDSRNMODEL_HPP_ */
+#endif /* VANLEEUWEN2007NONDIMODESYSTEMANDSRNMODEL_HPP_ */

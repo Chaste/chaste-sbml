@@ -1,10 +1,11 @@
-#include "VanLeeuwen2007NonDimSbmlSrnModel.hpp"
+#include "VanLeeuwen2007NonDimSrnModel.hpp"
 #include "CellwiseOdeSystemInformation.hpp"
+
 /* SBML ODE System */
-VanLeeuwen2007NonDimSbmlOdeSystem::VanLeeuwen2007NonDimSbmlOdeSystem(std::vector<double> stateVariables)
+VanLeeuwen2007NonDimOdeSystem::VanLeeuwen2007NonDimOdeSystem(std::vector<double> stateVariables)
     : AbstractOdeSystem(14)
 {
-    mpSystemInfo.reset(new CellwiseOdeSystemInformation<VanLeeuwen2007NonDimSbmlOdeSystem>);
+    mpSystemInfo.reset(new CellwiseOdeSystemInformation<VanLeeuwen2007NonDimOdeSystem>);
 
     Init();
 
@@ -34,11 +35,11 @@ VanLeeuwen2007NonDimSbmlOdeSystem::VanLeeuwen2007NonDimSbmlOdeSystem(std::vector
     }
 }
 
-VanLeeuwen2007NonDimSbmlOdeSystem::~VanLeeuwen2007NonDimSbmlOdeSystem()
+VanLeeuwen2007NonDimOdeSystem::~VanLeeuwen2007NonDimOdeSystem()
 {
 }
 
-void VanLeeuwen2007NonDimSbmlOdeSystem::Init()
+void VanLeeuwen2007NonDimOdeSystem::Init()
 {
     /* Initialise the parameters. */
     cytosolmembraneandnucleus = 1.0;
@@ -75,7 +76,7 @@ void VanLeeuwen2007NonDimSbmlOdeSystem::Init()
     ComplexTransitThreshold = 1.0;
 }
 
-void VanLeeuwen2007NonDimSbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
+void VanLeeuwen2007NonDimOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
     /* Define state variables */
     double X = rY[0];     // X
@@ -194,7 +195,7 @@ void VanLeeuwen2007NonDimSbmlOdeSystem::EvaluateYDerivatives(double time, const 
 }
 
 template <>
-void CellwiseOdeSystemInformation<VanLeeuwen2007NonDimSbmlOdeSystem>::Initialise()
+void CellwiseOdeSystemInformation<VanLeeuwen2007NonDimOdeSystem>::Initialise()
 {
     this->mVariableNames.push_back("X");
     this->mVariableUnits.push_back("non-dim");
@@ -271,12 +272,12 @@ void CellwiseOdeSystemInformation<VanLeeuwen2007NonDimSbmlOdeSystem>::Initialise
 #include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
 
-typedef SbmlSrnWrapperModel<VanLeeuwen2007NonDimSbmlOdeSystem, 14> VanLeeuwen2007NonDimSbmlSrnModel;
+typedef SbmlSrnWrapperModel<VanLeeuwen2007NonDimOdeSystem, 14> VanLeeuwen2007NonDimSrnModel;
 
 // Declare identifiers for the serializer
 #include "SerializationExportWrapperForCpp.hpp"
-CHASTE_CLASS_EXPORT(VanLeeuwen2007NonDimSbmlOdeSystem)
-EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, VanLeeuwen2007NonDimSbmlOdeSystem, 14)
+CHASTE_CLASS_EXPORT(VanLeeuwen2007NonDimOdeSystem)
+EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, VanLeeuwen2007NonDimOdeSystem, 14)
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
-EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(VanLeeuwen2007NonDimSbmlSrnModel)
+EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(VanLeeuwen2007NonDimSrnModel)

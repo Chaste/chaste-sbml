@@ -37,10 +37,10 @@ srn_cpp_template = """
 
 void {ode_system_name}::Init()
  {{
-    /* Initialise the compartments. */
+    /* Initialise model compartments. */
     {compartment_init}
 
-    /* Initialise the parameters. */
+    /* Initialise model parameters. */
     {parameter_init}
 
     /* Initialise vector to check if events have been triggered. */

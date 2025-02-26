@@ -12,10 +12,10 @@
 class VanLeeuwen2007OdeSystem : public AbstractOdeSystem
 {
 private:
-    /* Initialise compartments and values. */
+    /* Declare model compartments. */
     double cytosolmembraneandnucleus;
 
-    /* Initialise model parameters. */
+    /* Declare model parameters. */
     double K_T;
     double K_C;
     double K_D;

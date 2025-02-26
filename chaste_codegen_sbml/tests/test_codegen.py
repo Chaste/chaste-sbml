@@ -68,6 +68,7 @@ def code_diff(file_a: str, file_b: str) -> str:
         ("Goldbeter1991SrnModel", "Goldbeter1991"),
         ("Tan2014SrnModel", "Tan2014"),
         ("VanLeeuwen2007SrnModel", "VanLeeuwen2007"),
+        ("VanLeeuwen2007NonDimSrnModel", "VanLeeuwen2007NonDim"),
     ],
 )
 def test_generation(tmp_path, filename, model_name):
