@@ -12,7 +12,6 @@
 class VanLeeuwen2007NonDimSbmlOdeSystem : public AbstractOdeSystem
 {
 private:
-
     /* Initialise compartments and values. */
     double cytosolmembraneandnucleus;
 
@@ -49,60 +48,56 @@ private:
     double d_Y;
     double ComplexTransitThreshold;
 
-
     friend class boost::serialization::access;
-    template<class Archive>
-    void serialize(Archive & archive, const unsigned int version)
+    template <class Archive>
+    void serialize(Archive &archive, const unsigned int version)
     {
-        archive & boost::serialization::base_object<AbstractOdeSystem>(*this);
+        archive &boost::serialization::base_object<AbstractOdeSystem>(*this);
     }
 
 public:
-
     /* Default constructor. */
-    VanLeeuwen2007NonDimSbmlOdeSystem(std::vector<double> stateVariables=std::vector<double>());
+    VanLeeuwen2007NonDimSbmlOdeSystem(std::vector<double> stateVariables = std::vector<double>());
 
     /* Destructor. */
     ~VanLeeuwen2007NonDimSbmlOdeSystem();
 
-
     void Init();
 
-    void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY);
-
+    void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
 };
 
 namespace
 {
-namespace serialization
-{
-/* Serialize information required to construct a VanLeeuwen2007NonDimSbmlOdeSystem. */
-template<class Archive>
-inline void save_construct_data(
-    Archive & ar, const VanLeeuwen2007NonDimSbmlOdeSystem * t, const unsigned int file_version)
-{
-    const std::vector<double> state_variables = t->rGetConstStateVariables();
-    ar & state_variables;
-}
-/* De-serialize constructor parameters and intiialise a VanLeeuwen2007NonDimSbmlOdeSystem. */
-template<class Archive>
-inline void load_construct_data(
-    Archive & ar, VanLeeuwen2007NonDimSbmlOdeSystem * t, const unsigned int file_version)
-{
-    std::vector<double> state_variables;
-    ar & state_variables;
-    
-    // Invoke inplace constructor to initialise instance
-    ::new(t)VanLeeuwen2007NonDimSbmlOdeSystem(state_variables);
-}
-}
+    namespace serialization
+    {
+        /* Serialize information required to construct a VanLeeuwen2007NonDimSbmlOdeSystem. */
+        template <class Archive>
+        inline void save_construct_data(
+            Archive &ar, const VanLeeuwen2007NonDimSbmlOdeSystem *t, const unsigned int file_version)
+        {
+            const std::vector<double> state_variables = t->rGetConstStateVariables();
+            ar & state_variables;
+        }
+        /* De-serialize constructor parameters and intiialise a VanLeeuwen2007NonDimSbmlOdeSystem. */
+        template <class Archive>
+        inline void load_construct_data(
+            Archive &ar, VanLeeuwen2007NonDimSbmlOdeSystem *t, const unsigned int file_version)
+        {
+            std::vector<double> state_variables;
+            ar & state_variables;
+
+            // Invoke inplace constructor to initialise instance
+            ::new (t) VanLeeuwen2007NonDimSbmlOdeSystem(state_variables);
+        }
+    }
 } // namespace ...
 
 /* Define SRN model using Wrappers. */
 #include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
 
-typedef SbmlSrnWrapperModel<VanLeeuwen2007NonDimSbmlOdeSystem,14> VanLeeuwen2007NonDimSbmlSrnModel;
+typedef SbmlSrnWrapperModel<VanLeeuwen2007NonDimSbmlOdeSystem, 14> VanLeeuwen2007NonDimSbmlSrnModel;
 
 // Declare identifiers for the serializer
 #include "SerializationExportWrapper.hpp"

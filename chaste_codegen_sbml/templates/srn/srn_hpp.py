@@ -22,16 +22,16 @@ private:
     {parameter_decls}
 
     friend class boost::serialization::access;
-    template<class Archive>
-    void serialize(Archive & archive, const unsigned int version)
+    template <class Archive>
+    void serialize(Archive &archive, const unsigned int version)
     {{
-        archive & boost::serialization::base_object<AbstractOdeSystem>(*this);
+        archive &boost::serialization::base_object<AbstractOdeSystem>(*this);
     }}
 
 public:
 
     /* Default constructor. */
-    {ode_system_name}(std::vector<double> stateVariables=std::vector<double>());
+    {ode_system_name}(std::vector<double> stateVariables = std::vector<double>());
 
     /* Destructor. */
     ~{ode_system_name}();
@@ -41,7 +41,7 @@ public:
 
     void Init();
 
-    void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY);
+    void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
 
 }};
 
@@ -50,24 +50,24 @@ namespace
 namespace serialization
 {{
 /* Serialize information required to construct a {ode_system_name}. */
-template<class Archive>
+template <class Archive>
 inline void save_construct_data(
-    Archive & ar, const {ode_system_name} * t, const unsigned int file_version)
+    Archive &ar, const {ode_system_name} *t, const unsigned int file_version)
 {{
     const std::vector<double> state_variables = t->rGetConstStateVariables();
     ar & state_variables;
 }}
 
 /* De-serialize constructor parameters and intiialise a {ode_system_name}. */
-template<class Archive>
+template <class Archive>
 inline void load_construct_data(
-    Archive & ar, {ode_system_name} * t, const unsigned int file_version)
+    Archive &ar, {ode_system_name} *t, const unsigned int file_version)
 {{
     std::vector<double> state_variables;
     ar & state_variables;
 
     // Invoke inplace constructor to initialise instance
-    ::new(t){ode_system_name}(state_variables);
+    ::new (t) {ode_system_name}(state_variables);
 }}
 }}
 }} // namespace ...

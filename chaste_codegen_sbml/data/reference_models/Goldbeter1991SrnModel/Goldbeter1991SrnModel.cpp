@@ -2,7 +2,7 @@
 #include "CellwiseOdeSystemInformation.hpp"
 
 /* SBML ODE System */
-Goldbeter1991OdeSystem::Goldbeter1991OdeSystem (std::vector<double> stateVariables)
+Goldbeter1991OdeSystem::Goldbeter1991OdeSystem(std::vector<double> stateVariables)
     : AbstractOdeSystem(5)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Goldbeter1991OdeSystem>);
@@ -12,7 +12,6 @@ Goldbeter1991OdeSystem::Goldbeter1991OdeSystem (std::vector<double> stateVariabl
     SetDefaultInitialCondition(0, 0.01);
     SetDefaultInitialCondition(1, 0.01);
     SetDefaultInitialCondition(2, 0.01);
-
 
     if (stateVariables != std::vector<double>())
     {
@@ -25,7 +24,7 @@ Goldbeter1991OdeSystem::~Goldbeter1991OdeSystem()
 }
 
 void Goldbeter1991OdeSystem::Init()
- {
+{
     /* Initialise the parameters. */
     cell = 1.0;
     V1 = 0.0;
@@ -35,7 +34,7 @@ void Goldbeter1991OdeSystem::Init()
     Kc = 0.5;
 }
 
-void Goldbeter1991OdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
+void Goldbeter1991OdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
     /* Define state variables */
     double C = rY[0]; // Cyclin
@@ -44,7 +43,7 @@ void Goldbeter1991OdeSystem::EvaluateYDerivatives(double time, const std::vector
 
     /* Define state parameters */
 
-     /* Define algebraic rules. */
+    /* Define algebraic rules. */
     V1 = C * VM1 * pow(C + Kc, -1);
     V3 = M * VM3;
 
@@ -80,19 +79,17 @@ void Goldbeter1991OdeSystem::EvaluateYDerivatives(double time, const std::vector
     double V4 = 0.5;
     double reaction7 = cell * V4 * X * pow(K4 + X, -1);
 
-
     rDY[0] = (reaction1 - reaction2 - reaction3) / cell; // dCyclin/dt
-    rDY[1] = (reaction4 - reaction5) / cell; // dcdc_2_kinase/dt
-    rDY[2] = (reaction6 - reaction7) / cell; // dCyclin_Protease/dt
+    rDY[1] = (reaction4 - reaction5) / cell;             // dcdc_2_kinase/dt
+    rDY[2] = (reaction6 - reaction7) / cell;             // dCyclin_Protease/dt
 
     /* Account for the differences in timescales. */
     rDY[0] *= 3600.0;
     rDY[1] *= 3600.0;
     rDY[2] *= 3600.0;
-
 }
 
-template<>
+template <>
 void CellwiseOdeSystemInformation<Goldbeter1991OdeSystem>::Initialise()
 {
     this->mVariableNames.push_back("Cyclin");
@@ -103,10 +100,9 @@ void CellwiseOdeSystemInformation<Goldbeter1991OdeSystem>::Initialise()
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.01);
 
-    this->mVariableNames.push_back("Cyclin_Protease");
+    this->mVariableNames.push_back("Cyclin Protease");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.01);
-
 
     this->mInitialised = true;
 }

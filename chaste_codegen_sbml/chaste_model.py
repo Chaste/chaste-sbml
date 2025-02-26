@@ -136,18 +136,33 @@ class ChasteModel:
                     return 1.0
         return 3600.0
 
+    def _get_name(self, obj: "SBase") -> str:
+        """Get the name of a libSBML object, or the ID if it doesn't have one.
+
+        :param obj: The object.
+        :return: The object name, or ID.
+        """
+        obj_name = obj.getName().strip()
+        if obj_name:
+            return obj_name
+        return obj.getId()
+
     def _get_varname(self, obj: "SBase") -> str:
         """Get a suitable C++ variable name for a libSBML object.
 
         :param obj: The object.
         :return: The variable name.
         """
-        o_id = obj.getId()
-        if o_id in self._varnames:
-            return self._varnames[o_id]
+        obj_id = obj.getId()
+        if obj_id in self._varnames:
+            return self._varnames[obj_id]
 
-        o_name = varname_sanitize(obj.getName())
-        var = o_name if o_name else o_id
+        # Use the name if it is shorter than the ID
+        obj_name = varname_sanitize(self._get_name(obj))
+        if 0 < len(obj_name) < len(obj_id):
+            var = obj_name
+        else:
+            var = obj_id
 
         # Check that all generated variable names are unique
         if var in self._varnames.values():
@@ -156,7 +171,7 @@ class ChasteModel:
                 i += 1
             var = f"{var}_{i}"
 
-        self._varnames[o_id] = var
+        self._varnames[obj_id] = var
         return var
 
     def _is_state_parameter(self, obj: "Species | Parameter") -> bool:
@@ -191,7 +206,7 @@ class ChasteModel:
         """
         self._odes_dict = {}
         for reaction in self._reactions:
-            reaction_id = reaction.getId()
+            reaction_var = self._get_varname(reaction)
 
             # Decompose reaction into sum of products minus sum of reactants
             products = reaction.getListOfProducts()
@@ -204,9 +219,9 @@ class ChasteModel:
                 # if species.isSetBoundaryCondition() and not species.getBoundaryCondition():
 
                 if species_id in self._odes_dict:
-                    self._odes_dict[species_id] += " + " + reaction_id
+                    self._odes_dict[species_id] += " + " + reaction_var
                 else:
-                    self._odes_dict[species_id] = reaction_id
+                    self._odes_dict[species_id] = reaction_var
 
             reactants = reaction.getListOfReactants()
             for reactant in reactants:
@@ -217,9 +232,9 @@ class ChasteModel:
                 # if species.isSetBoundaryCondition() and not species.getBoundaryCondition():
 
                 if species_id in self._odes_dict:
-                    self._odes_dict[species_id] += " - " + reaction_id
+                    self._odes_dict[species_id] += " - " + reaction_var
                 else:
-                    self._odes_dict[species_id] = " - " + reaction_id
+                    self._odes_dict[species_id] = "-" + reaction_var
 
     def _update_rules_dict(self) -> None:
         """Get a dictionary of species defined by reaction rules."""

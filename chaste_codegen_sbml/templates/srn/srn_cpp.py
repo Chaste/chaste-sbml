@@ -12,7 +12,7 @@ srn_cpp_template = """
 #include "CellwiseOdeSystemInformation.hpp"
 
 /* SBML ODE System */
-{ode_system_name}::{ode_system_name} (std::vector<double> stateVariables)
+{ode_system_name}::{ode_system_name}(std::vector<double> stateVariables)
     : AbstractOdeSystem({size})
 {{
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<{ode_system_name}>);
@@ -48,7 +48,7 @@ void {ode_system_name}::Init()
 
 }}
 
-void {ode_system_name}::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
+void {ode_system_name}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {{
 
     /* Define state variables */
@@ -72,7 +72,7 @@ void {ode_system_name}::EvaluateYDerivatives(double time, const std::vector<doub
 
 }}
 
-template<>
+template <>
 void CellwiseOdeSystemInformation<{ode_system_name}>::Initialise()
 {{
     {species_ode_init}

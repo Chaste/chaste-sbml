@@ -1,10 +1,11 @@
-#include "VanLeeuwen2007SbmlSrnModel.hpp"
+#include "VanLeeuwen2007SrnModel.hpp"
 #include "CellwiseOdeSystemInformation.hpp"
+
 /* SBML ODE System */
-VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem (std::vector<double> stateVariables)
+VanLeeuwen2007OdeSystem::VanLeeuwen2007OdeSystem(std::vector<double> stateVariables)
     : AbstractOdeSystem(14)
 {
-    mpSystemInfo.reset(new CellwiseOdeSystemInformation<VanLeeuwen2007SbmlOdeSystem>);
+    mpSystemInfo.reset(new CellwiseOdeSystemInformation<VanLeeuwen2007OdeSystem>);
 
     Init();
 
@@ -23,22 +24,23 @@ VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem (std::vector<double> st
     SetDefaultInitialCondition(12, 2.54);
     SetDefaultInitialCondition(13, 1.0);
 
-    this->mParameters.push_back(0.0);//wnt_level
-    this->mParameters.push_back(1.0);//gamma1
-    this->mParameters.push_back(1.0);//gamma2
-    this->mParameters.push_back(1.0);//ComplexTransitThreshold
+    this->mParameters.push_back(0.0); // wnt_level
+    this->mParameters.push_back(1.0); // gamma1
+    this->mParameters.push_back(1.0); // gamma2
+    this->mParameters.push_back(1.0); // ComplexTransitThreshold
 
-    if (stateVariables != std::vector<double>())    {
+    if (stateVariables != std::vector<double>())
+    {
         SetStateVariables(stateVariables);
     }
 }
 
-VanLeeuwen2007SbmlOdeSystem::~VanLeeuwen2007SbmlOdeSystem()
+VanLeeuwen2007OdeSystem::~VanLeeuwen2007OdeSystem()
 {
 }
 
-void VanLeeuwen2007SbmlOdeSystem::Init()
- {
+void VanLeeuwen2007OdeSystem::Init()
+{
     /* Initialise the parameters. */
     cytosolmembraneandnucleus = 1.0;
     K_T = 50.0;
@@ -74,31 +76,31 @@ void VanLeeuwen2007SbmlOdeSystem::Init()
     ComplexTransitThreshold = 1.0;
 }
 
-void VanLeeuwen2007SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
+void VanLeeuwen2007OdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
     /* Define state variables */
-    double X = rY[0]; // X
-    double D = rY[1]; // D
-    double C_o = rY[2]; // C_o
-    double C_u = rY[3]; // C_u
-    double C_c = rY[4]; // C_c
-    double A = rY[5]; // A
-    double C_A = rY[6]; // C_A
-    double T = rY[7]; // T
-    double C_oT = rY[8]; // C_oT
-    double C_cT = rY[9]; // C_cT
-    double Y = rY[10]; // Y
-    double C_F = rY[11]; // C_F
-    double C_T = rY[12]; // C_T
+    double X = rY[0];     // X
+    double D = rY[1];     // D
+    double C_o = rY[2];   // C_o
+    double C_u = rY[3];   // C_u
+    double C_c = rY[4];   // C_c
+    double A = rY[5];     // A
+    double C_A = rY[6];   // C_A
+    double T = rY[7];     // T
+    double C_oT = rY[8];  // C_oT
+    double C_cT = rY[9];  // C_cT
+    double Y = rY[10];    // Y
+    double C_F = rY[11];  // C_F
+    double C_T = rY[12];  // C_T
     double drag = rY[13]; // drag
 
     /* Define state parameters */
-    double wnt_level = this->mParameters[0]; // wnt_level
-    double gamma1 = this->mParameters[1]; // gamma1
-    double gamma2 = this->mParameters[2]; // gamma2
+    double wnt_level = this->mParameters[0];               // wnt_level
+    double gamma1 = this->mParameters[1];                  // gamma1
+    double gamma2 = this->mParameters[2];                  // gamma2
     double ComplexTransitThreshold = this->mParameters[3]; // ComplexTransitThreshold
 
-     /* Define algebraic rules. */
+    /* Define algebraic rules. */
     C_F = C_o + C_c;
     C_T = C_oT + C_cT;
     drag = fmax((C_A - 100) / 3, 1);
@@ -176,26 +178,37 @@ void VanLeeuwen2007SbmlOdeSystem::EvaluateYDerivatives(double time, const std::v
     // r24
     double r24 = (d_D + wnt_level * xi_D) * D;
 
+    rDY[0] = (-r1 + r2 + r22 - r23) / cytosolmembraneandnucleus;                       // dX/dt
+    rDY[1] = (r1 - r2 + r7 - r7 + r16 - r16 - r24) / cytosolmembraneandnucleus;        // dD/dt
+    rDY[2] = (-r7 + r3 - r4 - r9 + r10 - r11 + r12 - r15) / cytosolmembraneandnucleus; // dC_o/dt
+    rDY[3] = (r7 + r16 - r8) / cytosolmembraneandnucleus;                              // dC_u/dt
+    rDY[4] = (-r16 - r17 - r18 + r19 + r15) / cytosolmembraneandnucleus;               // dC_c/dt
+    rDY[5] = (-r9 + r10 + r5 - r6) / cytosolmembraneandnucleus;                        // dA/dt
+    rDY[6] = (r9 - r10) / cytosolmembraneandnucleus;                                   // dC_A/dt
+    rDY[7] = (-r11 - r18 + r12 + r19 + r20 - r21) / cytosolmembraneandnucleus;         // dT/dt
+    rDY[8] = (r11 - r12 + r13 - r13) / cytosolmembraneandnucleus;                      // dC_oT/dt
+    rDY[9] = (r18 - r19) / cytosolmembraneandnucleus;                                  // dC_cT/dt
+    rDY[10] = (r13 - r14) / cytosolmembraneandnucleus;                                 // dY/dt
+    rDY[11] = (rDY[2] + rDY[4]) / cytosolmembraneandnucleus;                           // dC_F/dt
+    rDY[12] = (rDY[8] + rDY[9]) / cytosolmembraneandnucleus;                           // dC_T/dt
+    rDY[13] = (drag - rY[13]) / cytosolmembraneandnucleus;                             // ddrag/dt
 
-    rDY[0] = ( - r1 + r2 + r22 - r23) / cytosolmembraneandnucleus; // dX/dt
-    rDY[1] = (r1 - r2 + r7 - r7 + r16 - r16 - r24) / cytosolmembraneandnucleus; // dD/dt
-    rDY[2] = ( - r7 + r3 - r4 - r9 + r10 - r11 + r12 - r15) / cytosolmembraneandnucleus; // dC_o/dt
-    rDY[3] = (r7 + r16 - r8) / cytosolmembraneandnucleus; // dC_u/dt
-    rDY[4] = ( - r16 - r17 - r18 + r19 + r15) / cytosolmembraneandnucleus; // dC_c/dt
-    rDY[5] = ( - r9 + r10 + r5 - r6) / cytosolmembraneandnucleus; // dA/dt
-    rDY[6] = (r9 - r10) / cytosolmembraneandnucleus; // dC_A/dt
-    rDY[7] = ( - r11 - r18 + r12 + r19 + r20 - r21) / cytosolmembraneandnucleus; // dT/dt
-    rDY[8] = (r11 - r12 + r13 - r13) / cytosolmembraneandnucleus; // dC_oT/dt
-    rDY[9] = (r18 - r19) / cytosolmembraneandnucleus; // dC_cT/dt
-    rDY[10] = (r13 - r14) / cytosolmembraneandnucleus; // dY/dt
-    rDY[11] = (rDY[2]+ rDY[4]) / cytosolmembraneandnucleus; // dC_F/dt
-    rDY[12] = (rDY[8]+ rDY[9]) / cytosolmembraneandnucleus; // dC_T/dt
-    rDY[13] = (drag - rY[13]) / cytosolmembraneandnucleus; // ddrag/dt
-
+    /* Account for the differences in timescales. */
+    rDY[0] *= 3600.0;
+    rDY[1] *= 3600.0;
+    rDY[2] *= 3600.0;
+    rDY[3] *= 3600.0;
+    rDY[4] *= 3600.0;
+    rDY[5] *= 3600.0;
+    rDY[6] *= 3600.0;
+    rDY[7] *= 3600.0;
+    rDY[8] *= 3600.0;
+    rDY[9] *= 3600.0;
+    rDY[10] *= 3600.0;
 }
 
-template<>
-void CellwiseOdeSystemInformation<VanLeeuwen2007SbmlOdeSystem>::Initialise()
+template <>
+void CellwiseOdeSystemInformation<VanLeeuwen2007OdeSystem>::Initialise()
 {
     this->mVariableNames.push_back("X");
     this->mVariableUnits.push_back("non-dim");
@@ -265,7 +278,6 @@ void CellwiseOdeSystemInformation<VanLeeuwen2007SbmlOdeSystem>::Initialise()
     this->mParameterNames.push_back("ComplexTransitThreshold");
     this->mParameterUnits.push_back("non-dim");
 
-
     this->mInitialised = true;
 }
 
@@ -273,13 +285,12 @@ void CellwiseOdeSystemInformation<VanLeeuwen2007SbmlOdeSystem>::Initialise()
 #include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
 
-typedef SbmlSrnWrapperModel<VanLeeuwen2007SbmlOdeSystem,14> VanLeeuwen2007SbmlSrnModel;
+typedef SbmlSrnWrapperModel<VanLeeuwen2007OdeSystem, 14> VanLeeuwen2007SrnModel;
 
 // Declare identifiers for the serializer
 #include "SerializationExportWrapperForCpp.hpp"
-CHASTE_CLASS_EXPORT(VanLeeuwen2007SbmlOdeSystem)
-EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, VanLeeuwen2007SbmlOdeSystem, 14)
+CHASTE_CLASS_EXPORT(VanLeeuwen2007OdeSystem)
+EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, VanLeeuwen2007OdeSystem, 14)
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
-EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(VanLeeuwen2007SbmlSrnModel)
-
+EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(VanLeeuwen2007SrnModel)

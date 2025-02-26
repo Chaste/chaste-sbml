@@ -1,7 +1,7 @@
 #include "Tan2014SrnModel.hpp"
 #include "CellwiseOdeSystemInformation.hpp"
 /* SBML ODE System */
-Tan2014OdeSystem::Tan2014OdeSystem (std::vector<double> stateVariables)
+Tan2014OdeSystem::Tan2014OdeSystem(std::vector<double> stateVariables)
     : AbstractOdeSystem(7)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Tan2014OdeSystem>);
@@ -16,9 +16,9 @@ Tan2014OdeSystem::Tan2014OdeSystem (std::vector<double> stateVariables)
     SetDefaultInitialCondition(5, 483.2);
     SetDefaultInitialCondition(6, 1.0);
 
-    this->mParameters.push_back(0.0);//wnt_level
-    this->mParameters.push_back(1.0);//gamma
-    this->mParameters.push_back(1.0);//ComplexTransitThreshold
+    this->mParameters.push_back(0.0); // wnt_level
+    this->mParameters.push_back(1.0); // gamma
+    this->mParameters.push_back(1.0); // ComplexTransitThreshold
 
     if (stateVariables != std::vector<double>())
     {
@@ -31,7 +31,7 @@ Tan2014OdeSystem::~Tan2014OdeSystem()
 }
 
 void Tan2014OdeSystem::Init()
- {
+{
     /* Initialise the parameters. */
     compartment = 1.0;
     CytosolMembrane = 1.16;
@@ -50,7 +50,7 @@ void Tan2014OdeSystem::Init()
     ComplexTransitThreshold = 1.0;
 }
 
-void Tan2014OdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
+void Tan2014OdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
     /* Define state variables */
     double bcat_cm = rY[0];
@@ -62,11 +62,11 @@ void Tan2014OdeSystem::EvaluateYDerivatives(double time, const std::vector<doubl
     double drag = rY[6]; // drag
 
     /* Define state parameters */
-    double wnt_level = this->mParameters[0]; // wnt_level
-    double gamma = this->mParameters[1]; // gamma
+    double wnt_level = this->mParameters[0];               // wnt_level
+    double gamma = this->mParameters[1];                   // gamma
     double ComplexTransitThreshold = this->mParameters[2]; // ComplexTransitThreshold
 
-     /* Define algebraic rules. */
+    /* Define algebraic rules. */
     drag = fmax((complex_cm - 700) / 10, 1);
 
     /* Define the reactions in this model. */
@@ -84,14 +84,13 @@ void Tan2014OdeSystem::EvaluateYDerivatives(double time, const std::vector<doubl
 
     double K_n_active = K_n_active_k * bcat_nu;
 
-
     rDY[0] = (Bsynthesis - kDegradation - kC - kdiffusion - K_c_active + K_n_active) / CytosolMembrane; // dbcat_cm/dt
-    rDY[1] = ( - kC) / CytosolMembrane; // dligand_cm/dt
-    rDY[2] = (kC) / CytosolMembrane; // dcomplex_cm/dt
-    rDY[3] = ( - kN + kdiffusion + K_c_active - K_n_active) / nucleus; // dbcat_nu/dt
-    rDY[4] = ( - kN) / nucleus; // dligand_nu/dt
-    rDY[5] = (kN) / nucleus; // dcomplex_nu/dt
-    rDY[6] = (drag - rY[6]) / CytosolMembrane; // ddrag/dt
+    rDY[1] = (-kC) / CytosolMembrane;                                                                   // dligand_cm/dt
+    rDY[2] = (kC) / CytosolMembrane;                                                                    // dcomplex_cm/dt
+    rDY[3] = (-kN + kdiffusion + K_c_active - K_n_active) / nucleus;                                    // dbcat_nu/dt
+    rDY[4] = (-kN) / nucleus;                                                                           // dligand_nu/dt
+    rDY[5] = (kN) / nucleus;                                                                            // dcomplex_nu/dt
+    rDY[6] = (drag - rY[6]) / CytosolMembrane;                                                          // ddrag/dt
 
     /* Account for the differences in timescales. */
     rDY[0] *= 60.0;
@@ -100,10 +99,9 @@ void Tan2014OdeSystem::EvaluateYDerivatives(double time, const std::vector<doubl
     rDY[3] *= 60.0;
     rDY[4] *= 60.0;
     rDY[5] *= 60.0;
-
 }
 
-template<>
+template <>
 void CellwiseOdeSystemInformation<Tan2014OdeSystem>::Initialise()
 {
     this->mVariableNames.push_back("bcat_cm");
@@ -143,7 +141,6 @@ void CellwiseOdeSystemInformation<Tan2014OdeSystem>::Initialise()
     this->mParameterNames.push_back("ComplexTransitThreshold");
     this->mParameterUnits.push_back("non-dim");
 
-
     this->mInitialised = true;
 }
 
@@ -160,4 +157,3 @@ EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, Tan2014OdeSystem, 7)
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
 EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Tan2014SrnModel)
-

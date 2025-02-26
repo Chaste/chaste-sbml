@@ -12,7 +12,6 @@
 class Tan2014OdeSystem : public AbstractOdeSystem
 {
 private:
-
     /* Initialise compartments and values. */
     double compartment;
     double CytosolMembrane;
@@ -32,53 +31,49 @@ private:
     double gamma;
     double ComplexTransitThreshold;
 
-
     friend class boost::serialization::access;
-    template<class Archive>
-    void serialize(Archive & archive, const unsigned int version)
+    template <class Archive>
+    void serialize(Archive &archive, const unsigned int version)
     {
-        archive & boost::serialization::base_object<AbstractOdeSystem>(*this);
+        archive &boost::serialization::base_object<AbstractOdeSystem>(*this);
     }
 
 public:
-
     /* Default constructor. */
-    Tan2014OdeSystem(std::vector<double> stateVariables=std::vector<double>());
+    Tan2014OdeSystem(std::vector<double> stateVariables = std::vector<double>());
 
     /* Destructor. */
     ~Tan2014OdeSystem();
 
-
     void Init();
 
-    void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY);
-
+    void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
 };
 
 namespace
 {
-namespace serialization
-{
-/* Serialize information required to construct a Tan2014OdeSystem. */
-template<class Archive>
-inline void save_construct_data(
-    Archive & ar, const Tan2014OdeSystem * t, const unsigned int file_version)
-{
-    const std::vector<double> state_variables = t->rGetConstStateVariables();
-    ar & state_variables;
-}
-/* De-serialize constructor parameters and intiialise a Tan2014OdeSystem. */
-template<class Archive>
-inline void load_construct_data(
-    Archive & ar, Tan2014OdeSystem * t, const unsigned int file_version)
-{
-    std::vector<double> state_variables;
-    ar & state_variables;
-    
-    // Invoke inplace constructor to initialise instance
-    ::new(t)Tan2014OdeSystem(state_variables);
-}
-}
+    namespace serialization
+    {
+        /* Serialize information required to construct a Tan2014OdeSystem. */
+        template <class Archive>
+        inline void save_construct_data(
+            Archive &ar, const Tan2014OdeSystem *t, const unsigned int file_version)
+        {
+            const std::vector<double> state_variables = t->rGetConstStateVariables();
+            ar & state_variables;
+        }
+        /* De-serialize constructor parameters and intiialise a Tan2014OdeSystem. */
+        template <class Archive>
+        inline void load_construct_data(
+            Archive &ar, Tan2014OdeSystem *t, const unsigned int file_version)
+        {
+            std::vector<double> state_variables;
+            ar & state_variables;
+
+            // Invoke inplace constructor to initialise instance
+            ::new (t) Tan2014OdeSystem(state_variables);
+        }
+    }
 } // namespace ...
 
 /* Define SRN model using Wrappers. */

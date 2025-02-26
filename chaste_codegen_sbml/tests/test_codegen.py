@@ -1,5 +1,6 @@
 import logging
 import re
+from difflib import Differ
 
 import pytest
 
@@ -26,10 +27,11 @@ def load_source_lines(source_file: str) -> list[str]:
 
     source_lines = []
     for line in source.split("\n"):
-        # Simplify whitespace and exclude blank lines
-        line = re.sub(r"\s+", " ", line)
+        # Exclude blank lines
         line = line.strip()
         if line:
+            # Merge whitespace sequences
+            line = re.sub(r"\s+", " ", line)
             source_lines.append(line)
 
     return source_lines
@@ -47,9 +49,12 @@ def code_diff(file_a: str, file_b: str) -> str:
     lines_a = load_source_lines(file_a)
     lines_b = load_source_lines(file_b)
 
+    differ = Differ()
+
     for line_a, line_b in zip(lines_a, lines_b):
         if line_a != line_b:
-            return f'"{line_a}" != "{line_b}"'
+            diff = differ.compare([line_a], [line_b])
+            return "\n".join(diff)
 
     return ""
 
@@ -59,7 +64,11 @@ def code_diff(file_a: str, file_b: str) -> str:
         "filename",
         "model_name",
     ),
-    [("Goldbeter1991SrnModel", "Goldbeter1991")],
+    [
+        ("Goldbeter1991SrnModel", "Goldbeter1991"),
+        ("Tan2014SrnModel", "Tan2014"),
+        ("VanLeeuwen2007SrnModel", "VanLeeuwen2007"),
+    ],
 )
 def test_generation(tmp_path, filename, model_name):
     """
