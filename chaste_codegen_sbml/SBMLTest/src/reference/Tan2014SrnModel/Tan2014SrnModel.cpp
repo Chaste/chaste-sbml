@@ -1,5 +1,6 @@
 #include "Tan2014SrnModel.hpp"
 #include "CellwiseOdeSystemInformation.hpp"
+
 /* SBML ODE System */
 Tan2014OdeSystem::Tan2014OdeSystem(std::vector<double> stateVariables)
     : AbstractOdeSystem(7)

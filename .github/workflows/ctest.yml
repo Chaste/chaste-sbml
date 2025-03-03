@@ -1,0 +1,44 @@
+name: ctest
+on: [pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Checkout Chaste
+        uses: actions/checkout@v4
+        with:
+          repository: Chaste/Chaste
+          path: Chaste
+
+      - name: Setup directories
+        run: |
+          ln -s $(pwd)/SBMLTest/ Chaste/projects/SBMLTest
+          mkdir -p Chaste/build
+
+      - name: Install Chaste dependencies
+        run: |
+          sudo wget -O /usr/share/keyrings/chaste.asc https://chaste.github.io/chaste.asc
+          codename="$(. /etc/os-release && echo ${VERSION_CODENAME} | sed 's/\.//')"
+          repo="deb [signed-by=/usr/share/keyrings/chaste.asc] https://chaste.github.io/ubuntu ${codename}/"
+          echo "${repo}" | sudo tee /etc/apt/sources.list.d/chaste.list
+          sudo apt-get update
+          sudo apt-get install -y chaste-dependencies
+
+      - name: Configure
+        run: |
+          cmake -DCMAKE_BUILD_TYPE=Release ..
+        working-directory: Chaste/build
+
+      - name: Build
+        run: |
+          make -j $(nproc) project_SBMLTest
+        working-directory: Chaste/build
+
+      - name: Test
+        run: |
+          ctest -j $(nproc) -L SBMLTest --output-on-failure
+        working-directory: Chaste/build

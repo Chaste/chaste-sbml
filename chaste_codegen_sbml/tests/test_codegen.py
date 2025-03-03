@@ -61,7 +61,7 @@ def code_diff(file_a: str, file_b: str) -> str:
 
 @pytest.mark.parametrize(
     (
-        "filename",
+        "dirname",
         "model_name",
     ),
     [
@@ -71,14 +71,15 @@ def code_diff(file_a: str, file_b: str) -> str:
         ("VanLeeuwen2007NonDimSrnModel", "VanLeeuwen2007NonDim"),
     ],
 )
-def test_generation(tmp_path, filename, model_name):
+def test_generation(tmp_path, dirname, model_name):
     """
     Check generated model against reference.
     """
-    ref_dir = ROOT_DIR / "data" / "reference_models" / filename
-    ref_sbml = ref_dir / f"{filename}.xml"
-    ref_cpp = ref_dir / f"{filename}.cpp"
-    ref_hpp = ref_dir / f"{filename}.hpp"
+    ref_dir = ROOT_DIR / "SBMLTest" / "src" / "reference" / dirname
+    ref_sbml = ref_dir / f"{dirname}.xml"
+    ref_cpp = ref_dir / f"{dirname}.cpp"
+    ref_hpp = ref_dir / f"{dirname}.hpp"
+    print(ref_sbml)
 
     logger.info(f"Converting: {ref_sbml}")
     chaste_model = cg.ChasteSRNModel(ref_sbml, model_name)

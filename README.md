@@ -1,3 +1,6 @@
+[![pytest](https://github.com/Chaste/chaste-codegen-sbml/actions/workflows/pytest.yml/badge.svg)](https://github.com/Chaste/chaste-codegen-sbml/workflows/pytest.yml)
+[![ctest](https://github.com/Chaste/chaste-codegen-sbml/actions/workflows/ctest.yml/badge.svg)](https://github.com/Chaste/chaste-codegen-sbml/workflows/ctest.yml)
+
 # SBML → Chaste
 
 `chaste_codegen_sbml` converts [SBML](https://synonym.caltech.edu/) models to C++ Chaste code. It relies on [libSBML](https://synonym.caltech.edu/software/libsbml/) for parsing SBML.

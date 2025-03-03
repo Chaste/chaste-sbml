@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from libsbml import Parameter, SBMLReader, Species
 
+from ._config import SHORT_NAME_LEN
 from ._utils import convert_formula, varname_camelcase, varname_sanitize
 
 if TYPE_CHECKING:
@@ -157,9 +158,9 @@ class ChasteModel:
         if obj_id in self._varnames:
             return self._varnames[obj_id]
 
-        # Use the name if it is shorter than the ID
+        # Prefer the name if it is reasonably short, or shorter than the ID
         obj_name = varname_sanitize(self._get_name(obj))
-        if 0 < len(obj_name) < len(obj_id):
+        if 0 < len(obj_name) <= max(SHORT_NAME_LEN, len(obj_id)):
             var = obj_name
         else:
             var = obj_id
