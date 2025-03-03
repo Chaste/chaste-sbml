@@ -76,12 +76,12 @@ inline void load_construct_data(
 #include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
 
-typedef SbmlSrnWrapperModel<{ode_system_name}, {size}> {srn_name};
+typedef SbmlSrnWrapperModel<{ode_system_name}, {num_state_vars}> {srn_name};
 
 /* Declare identifiers for the serializer */
 #include "SerializationExportWrapper.hpp"
 CHASTE_CLASS_EXPORT({ode_system_name})
-EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, {ode_system_name}, {size})
+EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, {ode_system_name}, {num_state_vars})
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
 EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER({srn_name})

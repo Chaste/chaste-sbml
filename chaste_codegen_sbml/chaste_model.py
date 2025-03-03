@@ -49,7 +49,7 @@ class ChasteModel:
         self._rules_dict = None
         self._update_rules_dict()
 
-        self._size = len(self._odes_dict) + len(self._rules_dict)
+        self._num_state_vars = len([s for s in self._species if not self._is_state_parameter(s)])
 
         self._cpp_filename = None
         self._hpp_filename = None

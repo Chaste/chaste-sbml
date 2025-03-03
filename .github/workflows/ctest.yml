@@ -16,7 +16,7 @@ jobs:
 
       - name: Setup directories
         run: |
-          ln -s $(pwd)/SBMLTest/ Chaste/projects/SBMLTest
+          ln -s $(pwd)/chaste_codegen_sbml/SBMLTest Chaste/projects/SBMLTest
           mkdir -p Chaste/build
 
       - name: Install Chaste dependencies

@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2005-2013, University of Oxford.
+Copyright (c) 2005-2025, University of Oxford.
 All rights reserved.
 
 University of Oxford means the Chancellor, Masters and Scholars of the
@@ -63,6 +63,7 @@ SbmlSrnWrapperModel<SBMLODE, SIZE>::SbmlSrnWrapperModel(boost::shared_ptr<Abstra
         mpOdeSolver->CheckForStoppingEvents();
         mpOdeSolver->SetMaxSteps(10000);
 		#else
+        // TODO: Set solver type and dt from CLI
         mpOdeSolver = CellCycleModelOdeSolver<SbmlSrnWrapperModel<SBMLODE, SIZE>, RungeKutta4IvpOdeSolver>::Instance();
         mpOdeSolver->Initialise();
         SetDt(0.0001); // This is small enough for both examples to converge

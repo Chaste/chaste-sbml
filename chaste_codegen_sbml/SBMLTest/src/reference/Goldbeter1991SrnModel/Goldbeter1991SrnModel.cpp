@@ -3,7 +3,7 @@
 
 /* SBML ODE System */
 Goldbeter1991OdeSystem::Goldbeter1991OdeSystem(std::vector<double> stateVariables)
-    : AbstractOdeSystem(5)
+    : AbstractOdeSystem(3)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Goldbeter1991OdeSystem>);
 
@@ -111,12 +111,12 @@ void CellwiseOdeSystemInformation<Goldbeter1991OdeSystem>::Initialise()
 #include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
 
-typedef SbmlSrnWrapperModel<Goldbeter1991OdeSystem, 5> Goldbeter1991SrnModel;
+typedef SbmlSrnWrapperModel<Goldbeter1991OdeSystem, 3> Goldbeter1991SrnModel;
 
 // Declare identifiers for the serializer
 #include "SerializationExportWrapperForCpp.hpp"
 CHASTE_CLASS_EXPORT(Goldbeter1991OdeSystem)
-EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, Goldbeter1991OdeSystem, 5)
+EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, Goldbeter1991OdeSystem, 3)
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
 EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Goldbeter1991SrnModel)
