@@ -9,4 +9,5 @@ exclude =
     .github,
     .venv,
     build,
+    templates,
     venv,

@@ -12,8 +12,8 @@ srn_cpp_template = """
 #include "CellwiseOdeSystemInformation.hpp"
 
 /* SBML ODE System */
-{ode_system_name}::{ode_system_name} (std::vector<double> stateVariables)
-    : AbstractOdeSystem({size})
+{ode_system_name}::{ode_system_name}(std::vector<double> stateVariables)
+    : AbstractOdeSystem({num_state_vars})
 {{
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<{ode_system_name}>);
 
@@ -37,10 +37,10 @@ srn_cpp_template = """
 
 void {ode_system_name}::Init()
  {{
-    /* Initialise the compartments. */
+    /* Initialise model compartments. */
     {compartment_init}
 
-    /* Initialise the parameters. */
+    /* Initialise model parameters. */
     {parameter_init}
 
     /* Initialise vector to check if events have been triggered. */
@@ -48,7 +48,7 @@ void {ode_system_name}::Init()
 
 }}
 
-void {ode_system_name}::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
+void {ode_system_name}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {{
 
     /* Define state variables */
@@ -72,7 +72,7 @@ void {ode_system_name}::EvaluateYDerivatives(double time, const std::vector<doub
 
 }}
 
-template<>
+template <>
 void CellwiseOdeSystemInformation<{ode_system_name}>::Initialise()
 {{
     {species_ode_init}
@@ -86,12 +86,12 @@ void CellwiseOdeSystemInformation<{ode_system_name}>::Initialise()
 #include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
 
-typedef SbmlSrnWrapperModel<{ode_system_name}, {size}> {srn_model_name};
+typedef SbmlSrnWrapperModel<{ode_system_name}, {num_state_vars}> {srn_model_name};
 
 // Declare identifiers for the serializer
 #include "SerializationExportWrapperForCpp.hpp"
 CHASTE_CLASS_EXPORT({ode_system_name})
-EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, {ode_system_name}, {size})
+EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, {ode_system_name}, {num_state_vars})
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
 EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER({srn_model_name})

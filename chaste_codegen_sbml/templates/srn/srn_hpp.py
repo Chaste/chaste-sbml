@@ -15,23 +15,23 @@ class {ode_system_name} : public AbstractOdeSystem
 {{
 private:
 
-    /* Declare compartments and values. */
+    /* Declare model compartments. */
     {compartment_decls}
 
     /* Declare model parameters. */
     {parameter_decls}
 
     friend class boost::serialization::access;
-    template<class Archive>
-    void serialize(Archive & archive, const unsigned int version)
+    template <class Archive>
+    void serialize(Archive &archive, const unsigned int version)
     {{
-        archive & boost::serialization::base_object<AbstractOdeSystem>(*this);
+        archive &boost::serialization::base_object<AbstractOdeSystem>(*this);
     }}
 
 public:
 
     /* Default constructor. */
-    {ode_system_name}(std::vector<double> stateVariables=std::vector<double>());
+    {ode_system_name}(std::vector<double> stateVariables = std::vector<double>());
 
     /* Destructor. */
     ~{ode_system_name}();
@@ -41,7 +41,7 @@ public:
 
     void Init();
 
-    void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY);
+    void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
 
 }};
 
@@ -50,24 +50,24 @@ namespace
 namespace serialization
 {{
 /* Serialize information required to construct a {ode_system_name}. */
-template<class Archive>
+template <class Archive>
 inline void save_construct_data(
-    Archive & ar, const {ode_system_name} * t, const unsigned int file_version)
+    Archive &ar, const {ode_system_name} *t, const unsigned int file_version)
 {{
     const std::vector<double> state_variables = t->rGetConstStateVariables();
     ar & state_variables;
 }}
 
 /* De-serialize constructor parameters and intiialise a {ode_system_name}. */
-template<class Archive>
+template <class Archive>
 inline void load_construct_data(
-    Archive & ar, {ode_system_name} * t, const unsigned int file_version)
+    Archive &ar, {ode_system_name} *t, const unsigned int file_version)
 {{
     std::vector<double> state_variables;
     ar & state_variables;
 
     // Invoke inplace constructor to initialise instance
-    ::new(t){ode_system_name}(state_variables);
+    ::new (t) {ode_system_name}(state_variables);
 }}
 }}
 }} // namespace ...
@@ -76,12 +76,12 @@ inline void load_construct_data(
 #include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
 
-typedef SbmlSrnWrapperModel<{ode_system_name}, {size}> {srn_name};
+typedef SbmlSrnWrapperModel<{ode_system_name}, {num_state_vars}> {srn_name};
 
 /* Declare identifiers for the serializer */
 #include "SerializationExportWrapper.hpp"
 CHASTE_CLASS_EXPORT({ode_system_name})
-EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, {ode_system_name}, {size})
+EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, {ode_system_name}, {num_state_vars})
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
 EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER({srn_name})

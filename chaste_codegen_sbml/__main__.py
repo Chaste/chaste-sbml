@@ -1,10 +1,13 @@
+"""Entry point for the command line interface."""
+
 import os
 from argparse import ArgumentParser
 
-from chaste_codegen_sbml.chaste_model import Generate
+from . import ChasteSRNModel
 
 
 def parse_args():
+    """Parse command line arguments."""
     parser = ArgumentParser(
         prog="chaste_codegen_sbml",
         description="Generate C++ code from SBML models for the Chaste C++ library",
@@ -25,9 +28,12 @@ def parse_args():
 
 
 def generate_code(args):
-    Generate(args.sbml_file)
+    """Run the code generation."""
+    chaste_model = ChasteSRNModel(args.sbml_file)
+    chaste_model.write_chaste_code()
 
 
 def main():
+    """Run the command line interface."""
     args = parse_args()
     generate_code(args)
