@@ -1,4 +1,4 @@
-#include "VanLeeuwen2007SrnModel.hpp"
+#include "VanLeeuwen2007OdeSystemAndSrnModel.hpp"
 #include "CellwiseOdeSystemInformation.hpp"
 
 /* SBML ODE System */

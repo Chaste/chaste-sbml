@@ -35,7 +35,7 @@ jobs:
 
       - name: Build
         run: |
-          make -j $(nproc) project_SBMLTest
+          make -j $(nproc) project_SBMLRefModels
         working-directory: Chaste/build
 
       - name: Test

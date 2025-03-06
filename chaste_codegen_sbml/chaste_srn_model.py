@@ -25,8 +25,8 @@ class ChasteSRNModel(ChasteModel):
         self._ode_system_name = self._model_name + ODE_SYSTEM_SUFFIX
         self._srn_model_name = self._model_name + SRN_MODEL_SUFFIX
 
-        self._cpp_filename = f"{self._srn_model_name}.cpp"
-        self._hpp_filename = f"{self._srn_model_name}.hpp"
+        self._cpp_filename = f"{self._model_name}{ODE_SYSTEM_SUFFIX}And{SRN_MODEL_SUFFIX}.cpp"
+        self._hpp_filename = f"{self._model_name}{ODE_SYSTEM_SUFFIX}And{SRN_MODEL_SUFFIX}.hpp"
 
     # === PRIVATE:
 
@@ -280,6 +280,7 @@ class ChasteSRNModel(ChasteModel):
             compartment_init=compartment_init_str,
             event_vector_init=event_vector_init_str,
             functions_impl=functions_impl_str,
+            model_header_file=self._hpp_filename,
             ode_def=ode_def_str,
             ode_system_name=self._ode_system_name,
             ode_timescale_def=ode_timescale_def_str,

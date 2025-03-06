@@ -1,4 +1,4 @@
-#include "Goldbeter1991SrnModel.hpp"
+#include "Goldbeter1991OdeSystemAndSrnModel.hpp"
 #include "CellwiseOdeSystemInformation.hpp"
 
 /* SBML ODE System */

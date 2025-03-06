@@ -1,4 +1,4 @@
-#include "Tan2014SrnModel.hpp"
+#include "Tan2014OdeSystemAndSrnModel.hpp"
 #include "CellwiseOdeSystemInformation.hpp"
 
 /* SBML ODE System */
