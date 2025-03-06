@@ -44,7 +44,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 #include <iostream>
 
-#include "VanLeeuwen2007SrnModel.hpp"
+#include "VanLeeuwen2007OdeSystemAndSrnModel.hpp"
 #include "BackwardEulerIvpOdeSolver.hpp"
 #include "EulerIvpOdeSolver.hpp"
 #include "RungeKutta4IvpOdeSolver.hpp"

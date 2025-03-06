@@ -1,4 +1,4 @@
 TestGoldbeter1991SBML.hpp
-TestTan2014SrnModel/TestTanOdeSystem.hpp
-TestVanLeeuwen2007SrnModel/TestVanLeeuwenOdeSystem.hpp
-TestVanLeeuwen2007NonDimSrnModel/TestVanLeeuwenNonDimOdeSystem.hpp
+TestTan2014SBML.hpp
+TestVanLeeuwen2007NonDimSBML.hpp
+TestVanLeeuwen2007SBML.hpp

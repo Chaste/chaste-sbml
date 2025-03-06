@@ -406,7 +406,7 @@ public:
     {
       // Compare the generated file in test output with a reference copy in the source code.
       FileFinder generated = output_file_handler.FindFile("goldbeter_1991_srn_results.parameters");
-      FileFinder reference("projects/SBMLRefModels/test/data/TestGoldbeter1991/goldbeter_1991_srn_results.parameters",
+      FileFinder reference("projects/SBMLRefModels/test/data/TestGoldbeter1991SBML/goldbeter_1991_srn_results.parameters",
                            RelativeTo::ChasteSourceRoot);
       FileComparison comparer(generated, reference);
       TS_ASSERT(comparer.CompareFiles());

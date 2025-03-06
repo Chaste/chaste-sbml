@@ -33,33 +33,130 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef TESTTANODEDESYSTEM_HPP_
-#define TESTTANODEDESYSTEM_HPP_
+#ifndef TESTTAN2014SBML_HPP_
+#define TESTTAN2014SBML_HPP_
 
-#include <cxxtest/TestSuite.h>
+#include <iostream>
+#include <vector>
 
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 
-#include <vector>
-#include <iostream>
+#include <cxxtest/TestSuite.h>
 
-//#include "Tan2014BetaCateninModelTwoSbmlTemplateSrnModel.hpp"
-#include "Tan2014SrnModel.hpp"
+#include "AbstractCellBasedTestSuite.hpp"
 #include "BackwardEulerIvpOdeSolver.hpp"
-#include "EulerIvpOdeSolver.hpp"
-#include "RungeKutta4IvpOdeSolver.hpp"
 #include "ColumnDataWriter.hpp"
-#include "Timer.hpp"
 #include "Debug.hpp"
+#include "EulerIvpOdeSolver.hpp"
 #include "PetscTools.hpp"
 #include "PetscSetupAndFinalize.hpp"
+#include "RungeKutta4IvpOdeSolver.hpp"
+#include "Tan2014OdeSystemAndSrnModel.hpp"
+#include "Timer.hpp"
 
-class TestTanOdeSystem : public CxxTest::TestSuite
+// This test is never run in parallel
+#include "FakePetscSetup.hpp"
+
+class TestTan2014SBML : public AbstractCellBasedTestSuite
 {
 public:
+    void TestOdeArchiving()
+    {
+        OutputFileHandler handler("archive", false);
+        std::string archive_filename = handler.GetOutputDirectoryFullPath() + "tan_2014_ode.arch";
 
-    void TestTanEquation()
+        {
+            std::vector<double> state_variables;
+            state_variables.push_back(3.0);
+            state_variables.push_back(4.0);
+            state_variables.push_back(5.0);
+            state_variables.push_back(6.0);
+            state_variables.push_back(7.0);
+            state_variables.push_back(8.0);
+            state_variables.push_back(9.0);
+
+            Tan2014OdeSystem ode_system(state_variables);
+
+            ode_system.SetDefaultInitialCondition(2, 3.25);
+
+            std::vector<double> initial_conditions = ode_system.GetInitialConditions();
+            TS_ASSERT_EQUALS(initial_conditions.size(), 7u);
+            TS_ASSERT_DELTA(initial_conditions[0], 46.60, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[1], 581.10, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[2], 3.25, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[3], 32.60, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[4], 516.80, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[5], 483.20, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[6], 1.00, 1e-3);
+
+            double var1 = ode_system.GetStateVariable(0);
+            double var2 = ode_system.GetStateVariable(1);
+            double var3 = ode_system.GetStateVariable(2);
+            double var4 = ode_system.GetStateVariable(3);
+            double var5 = ode_system.GetStateVariable(4);
+            double var6 = ode_system.GetStateVariable(5);
+            double var7 = ode_system.GetStateVariable(6);
+
+            TS_ASSERT_DELTA(var1, 3.0, 1e-3);
+            TS_ASSERT_DELTA(var2, 4.0, 1e-3);
+            TS_ASSERT_DELTA(var3, 5.0, 1e-3);
+            TS_ASSERT_DELTA(var4, 6.0, 1e-3);
+            TS_ASSERT_DELTA(var5, 7.0, 1e-3);
+            TS_ASSERT_DELTA(var6, 8.0, 1e-3);
+            TS_ASSERT_DELTA(var7, 9.0, 1e-3);
+
+            // Create an output archive
+            std::ofstream ofs(archive_filename.c_str());
+            boost::archive::text_oarchive output_arch(ofs);
+
+            // Archive ODE system
+            AbstractOdeSystem *const p_const_ode_system = &ode_system;
+            output_arch << p_const_ode_system;
+        }
+
+        {
+            AbstractOdeSystem *p_ode_system;
+
+            // Create an input archive
+            std::ifstream ifs(archive_filename.c_str(), std::ios::binary);
+            boost::archive::text_iarchive input_arch(ifs);
+
+            // Restore from the archive
+            input_arch >> p_ode_system;
+
+            // Check that archiving worked correctly
+            std::vector<double> initial_conditions = p_ode_system->GetInitialConditions();
+            TS_ASSERT_EQUALS(initial_conditions.size(), 7u);
+            TS_ASSERT_DELTA(initial_conditions[0], 46.60, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[1], 581.10, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[2], 418.90, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[3], 32.60, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[4], 516.80, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[5], 483.20, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[6], 1.00, 1e-3);
+
+            double var1 = p_ode_system->GetStateVariable(0);
+            double var2 = p_ode_system->GetStateVariable(1);
+            double var3 = p_ode_system->GetStateVariable(2);
+            double var4 = p_ode_system->GetStateVariable(3);
+            double var5 = p_ode_system->GetStateVariable(4);
+            double var6 = p_ode_system->GetStateVariable(5);
+            double var7 = p_ode_system->GetStateVariable(6);
+
+            TS_ASSERT_DELTA(var1, 3.0, 1e-3);
+            TS_ASSERT_DELTA(var2, 4.0, 1e-3);
+            TS_ASSERT_DELTA(var3, 5.0, 1e-3);
+            TS_ASSERT_DELTA(var4, 6.0, 1e-3);
+            TS_ASSERT_DELTA(var5, 7.0, 1e-3);
+            TS_ASSERT_DELTA(var6, 8.0, 1e-3);
+            TS_ASSERT_DELTA(var7, 9.0, 1e-3);
+
+            // Tidy up
+            delete p_ode_system;
+        }
+    }
+    void TestOdeEquation()
     {
         Tan2014OdeSystem tan_system;
 
@@ -77,28 +174,28 @@ public:
         tan_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
         // Test derivatives are correct (default wnt-level=0)
-        TS_ASSERT_DELTA(derivs[0], -170.2326546448276*60.0, 1e-4);
-        TS_ASSERT_DELTA(derivs[1], 0.0002357000000*60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[2], -0.0002357000000*60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[3], 304.7769846153847*60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[4], 0.0016000000000*60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[5], -0.0016000000000*60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[6], 0.0*60.0, 1e-5);
+        TS_ASSERT_DELTA(derivs[0], -170.2326546448276 * 60.0, 1e-4);
+        TS_ASSERT_DELTA(derivs[1], 0.0002357000000 * 60.0, 1e-5);
+        TS_ASSERT_DELTA(derivs[2], -0.0002357000000 * 60.0, 1e-5);
+        TS_ASSERT_DELTA(derivs[3], 304.7769846153847 * 60.0, 1e-5);
+        TS_ASSERT_DELTA(derivs[4], 0.0016000000000 * 60.0, 1e-5);
+        TS_ASSERT_DELTA(derivs[5], -0.0016000000000 * 60.0, 1e-5);
+        TS_ASSERT_DELTA(derivs[6], 0.0 * 60.0, 1e-5);
 
-        //Change Wnt level and check still OK
-        tan_system.SetParameter("wnt_level",1);
+        // Change Wnt level and check still OK
+        tan_system.SetParameter("wnt_level", 1);
         tan_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
-        TS_ASSERT_DELTA(derivs[0], -169.85286464482763335581694263965*60.0, 1e-3);
-        TS_ASSERT_DELTA(derivs[1], 0.0002357000000*60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[2], -0.0002357000000*60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[3], 304.7769846153847*60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[4], 0.0016000000000*60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[5], -0.0016000000000*60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[6], 0.0*60.0, 1e-5);
+        TS_ASSERT_DELTA(derivs[0], -169.85286464482763335581694263965 * 60.0, 1e-3);
+        TS_ASSERT_DELTA(derivs[1], 0.0002357000000 * 60.0, 1e-5);
+        TS_ASSERT_DELTA(derivs[2], -0.0002357000000 * 60.0, 1e-5);
+        TS_ASSERT_DELTA(derivs[3], 304.7769846153847 * 60.0, 1e-5);
+        TS_ASSERT_DELTA(derivs[4], 0.0016000000000 * 60.0, 1e-5);
+        TS_ASSERT_DELTA(derivs[5], -0.0016000000000 * 60.0, 1e-5);
+        TS_ASSERT_DELTA(derivs[6], 0.0 * 60.0, 1e-5);
     }
 
-    void TestTanWithChasteSolver()
+    void TestOdeWithChasteSolver()
     {
         try
         {
@@ -108,7 +205,7 @@ public:
 
             double dt = 0.0001;
 
-            //RK4 solver solution worked out
+            // RK4 solver solution worked out
             RungeKutta4IvpOdeSolver rk4_solver;
 
             std::vector<double> state_variables = tan_system.GetInitialConditions();
@@ -116,7 +213,7 @@ public:
             Timer::Reset();
             OdeSolution solutions = rk4_solver.Solve(&tan_system, state_variables, 0.0, 1000.0, dt, dt);
             Timer::Print("1. Tan RK4");
-            
+
             unsigned end = solutions.rGetSolutions().size() - 1;
 
             // The following code provides nice output for gnuplot
@@ -133,15 +230,15 @@ public:
             // }
             // file->close();
 
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0],80.123027932584804489124508108944, 2e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1],446.75578463039073540130630135536, 1e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2],553.24421536960869616450509056449, 1e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][3],62.102819644032457802040880778804, 2e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][4],359.76798287328375636207056231797, 5e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][5],640.23201712671584573399741202593, 5e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][6],1.0, 1e-5);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 80.123027932584804489124508108944, 2e-2);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 446.75578463039073540130630135536, 1e-2);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 553.24421536960869616450509056449, 1e-2);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][3], 62.102819644032457802040880778804, 2e-2);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][4], 359.76798287328375636207056231797, 5e-2);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][5], 640.23201712671584573399741202593, 5e-2);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][6], 1.0, 1e-5);
         }
-        catch (Exception& e)
+        catch (Exception &e)
         {
             throw e;
         }
@@ -151,7 +248,7 @@ public:
         }
     }
 
- void TestTanWithCvodeSolver()
+    void TestOdeWithCvodeSolver()
     {
         try
         {
@@ -164,11 +261,11 @@ public:
             OdeSolution solutions;
 
             std::vector<double> state_variables = ode_system.GetInitialConditions();
-            
+
             Timer::Reset();
             solutions = solver.Solve(&ode_system, state_variables, 0.0, end_time, h_value, 0.1);
             Timer::Print("1. Tan CVODE");
-            
+
             unsigned end = solutions.rGetSolutions().size() - 1;
 
             // The following code provides nice output for gnuplot
@@ -185,15 +282,15 @@ public:
             // }
             // file->close();
 
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0],80.123027932584804489124508108944, 2e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1],446.75578463039073540130630135536, 1e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2],553.24421536960869616450509056449, 1e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][3],62.102819644032457802040880778804, 2e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][4],359.76798287328375636207056231797, 5e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][5],640.23201712671584573399741202593, 5e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][6],1.0, 1e-5);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 80.123027932584804489124508108944, 2e-2);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 446.75578463039073540130630135536, 1e-2);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 553.24421536960869616450509056449, 1e-2);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][3], 62.102819644032457802040880778804, 2e-2);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][4], 359.76798287328375636207056231797, 5e-2);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][5], 640.23201712671584573399741202593, 5e-2);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][6], 1.0, 1e-5);
         }
-        catch (Exception& e)
+        catch (Exception &e)
         {
             throw e;
         }
@@ -202,59 +299,6 @@ public:
             exit(EXIT_FAILURE);
         }
     }
-
-    void noTestArchiving()
-    {
-        OutputFileHandler handler("archive", false);
-        std::string archive_filename = handler.GetOutputDirectoryFullPath() + "tn_ode.arch";
-
-        {
-            Tan2014OdeSystem ode_system;
-
-            ode_system.SetDefaultInitialCondition(2, 3.25);
-
-            std::vector<double> initial_conditions = ode_system.GetInitialConditions();
-            TS_ASSERT_EQUALS(initial_conditions.size(), 6u);
-            TS_ASSERT_DELTA(initial_conditions[0], 0.0999, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[1], 0.9890, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[2], 3.2500, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[3], 1.4211, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[4], 0.6728, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[5], 0.4854, 1e-4);
-
-            // Create an output archive
-            std::ofstream ofs(archive_filename.c_str());
-            boost::archive::text_oarchive output_arch(ofs);
-
-            // Archive ODE system
-            AbstractOdeSystem* const p_const_ode_system = &ode_system;
-            output_arch << p_const_ode_system;
-        }
-
-        {
-            AbstractOdeSystem* p_ode_system;
-
-            // Create an input archive
-            std::ifstream ifs(archive_filename.c_str(), std::ios::binary);
-            boost::archive::text_iarchive input_arch(ifs);
-
-            // Restore from the archive
-            input_arch >> p_ode_system;
-
-            // Check that archiving worked correctly
-            std::vector<double> initial_conditions = p_ode_system->GetInitialConditions();
-            TS_ASSERT_EQUALS(initial_conditions.size(), 6u);
-            TS_ASSERT_DELTA(initial_conditions[0], 0.0999, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[1], 0.9890, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[2], 3.2500, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[3], 1.4211, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[4], 0.6728, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[5], 0.4854, 1e-4);
-
-            // Tidy up
-            delete p_ode_system;
-        }
-    }
 };
 
-#endif /*TESTTANODEDESYSTEM_HPP_*/
+#endif /*TESTTAN2014SBML_HPP_*/
