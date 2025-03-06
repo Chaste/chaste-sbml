@@ -75,7 +75,7 @@ def test_generation(tmp_path, dirname, model_name):
     """
     Check generated model against reference.
     """
-    ref_dir = ROOT_DIR / "SBMLTest" / "src" / "reference" / dirname
+    ref_dir = ROOT_DIR / "SBMLRefModels" / "src" / "srn" / "models" / dirname
     ref_sbml = ref_dir / f"{dirname}.xml"
     ref_cpp = ref_dir / f"{dirname}.cpp"
     ref_hpp = ref_dir / f"{dirname}.hpp"
