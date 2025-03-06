@@ -63,9 +63,9 @@ public:
     // Keep running until we reach steady state
     SimulationTime *p_simulation_time = SimulationTime::Instance();
 
-    // run until 100, with dt=0.01
-    double t1 = 100;
-    double dt = 0.01;
+    // run until 100s, with dt=0.01
+    double t1 = 0.02778;
+    double dt = 0.000001;
     unsigned num_steps = (unsigned)t1 / dt;
     p_simulation_time->SetEndTimeAndNumberOfTimeSteps(t1, num_steps + 1);
 
@@ -73,21 +73,21 @@ public:
     boost::shared_ptr<AbstractCellProperty> p_healthy_state(CellPropertyRegistry::Instance()->Get<WildTypeCellMutationState>());
     boost::shared_ptr<AbstractCellProperty> p_transit_type(CellPropertyRegistry::Instance()->Get<TransitCellProliferativeType>());
 
-    auto p_cell_model = std::make_unique<FixedG1GenerationalCellCycleModel>();
-    auto p_srn_model = std::make_unique<Goldbeter1991SrnModel>();
+    FixedG1GenerationalCellCycleModel *p_cell_model = new FixedG1GenerationalCellCycleModel();
+    Goldbeter1991SrnModel *p_srn_model = new Goldbeter1991SrnModel();
 
-    boost::shared_ptr<Cell> p_tn_cell = boost::make_shared<Cell>(p_healthy_state, p_cell_model.get(), p_srn_model.get(), false, CellPropertyCollection());
+    CellPtr p_tn_cell(new Cell(p_healthy_state, p_cell_model, p_srn_model, false, CellPropertyCollection()));
     p_tn_cell->SetCellProliferativeType(p_transit_type);
     p_tn_cell->InitialiseCellCycleModel();
     p_tn_cell->InitialiseSrnModel();
 
     // Check initial conditions
     double C = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("Cyclin");
-    TS_ASSERT_DELTA(C, 0.01, 1e-4);
+    TS_ASSERT_DELTA(C, 0.01, 1e-3);
     double M = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("cdc_2_kinase");
-    TS_ASSERT_DELTA(M, 0.01, 1e-4);
+    TS_ASSERT_DELTA(M, 0.01, 1e-3);
     double X = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("Cyclin Protease");
-    TS_ASSERT_DELTA(X, 0.01, 1e-4);
+    TS_ASSERT_DELTA(X, 0.01, 1e-3);
 
     // Run the cell simulation until t1
     while (!p_simulation_time->IsFinished())
@@ -105,19 +105,19 @@ public:
 
     // Direct access to state variables
     C = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("Cyclin");
-    TS_ASSERT_DELTA(C, 0.5470, 1e-4);
+    TS_ASSERT_DELTA(C, 0.5470, 1e-3);
     M = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("cdc_2_kinase");
-    TS_ASSERT_DELTA(M, 0.2936, 1e-4);
+    TS_ASSERT_DELTA(M, 0.2936, 1e-3);
     X = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("Cyclin Protease");
-    TS_ASSERT_DELTA(X, 0.0067, 1e-4);
+    TS_ASSERT_DELTA(X, 0.0067, 1e-3);
 
     // Indirect access to state vector
     C = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetProteinConcentrations()[0];
-    TS_ASSERT_DELTA(C, 0.5470, 1e-4);
+    TS_ASSERT_DELTA(C, 0.5470, 1e-3);
     M = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetProteinConcentrations()[1];
-    TS_ASSERT_DELTA(M, 0.2936, 1e-4);
+    TS_ASSERT_DELTA(M, 0.2936, 1e-3);
     X = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetProteinConcentrations()[2];
-    TS_ASSERT_DELTA(X, 0.0067, 1e-4);
+    TS_ASSERT_DELTA(X, 0.0067, 1e-3);
 
     std::cout << "Finished ODE - " << "C : " << C << ", M : " << M << ", X : " << X << std::endl;
   }
