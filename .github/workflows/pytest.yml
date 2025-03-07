@@ -1,5 +1,11 @@
 name: pytest
+
 on: [pull_request]
+
+concurrency:
+  group: pytest-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest

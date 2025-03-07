@@ -1,5 +1,11 @@
 name: ctest
+
 on: [pull_request]
+
+concurrency:
+  group: ctest-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
