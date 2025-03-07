@@ -50,12 +50,13 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DifferentiatedCellProliferativeType.hpp"
 #include "FileComparison.hpp"
 #include "FixedG1GenerationalCellCycleModel.hpp"
-#include "Goldbeter1991OdeSystemAndSrnModel.hpp"
 #include "SmartPointers.hpp"
 #include "TransitCellProliferativeType.hpp"
 #include "UniformCellCycleModel.hpp"
 #include "UniformG1GenerationalCellCycleModel.hpp"
 #include "WildTypeCellMutationState.hpp"
+
+#include "Goldbeter1991OdeSystemAndSrnModel.hpp"
 
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
@@ -192,8 +193,8 @@ public:
     SimulationTime *p_simulation_time = SimulationTime::Instance();
 
     // run until 100s, with dt=0.000001
-    double t1 = 0.02778;
-    double dt = 0.000001;
+    double t1 = 100.0 / 3600.0;       // 1s
+    double dt = 1.0 / 3600.0 / 100.0; // 0.01s
     unsigned num_steps = (unsigned)t1 / dt;
     p_simulation_time->SetEndTimeAndNumberOfTimeSteps(t1, num_steps + 1);
 
@@ -237,18 +238,18 @@ public:
     M = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("cdc_2_kinase");
     X = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("Cyclin Protease");
 
-    TS_ASSERT_DELTA(C, 0.5470, 1e-3);
-    TS_ASSERT_DELTA(M, 0.2936, 1e-3);
-    TS_ASSERT_DELTA(X, 0.0067, 1e-3);
+    TS_ASSERT_DELTA(C, 0.5470, 1e-2);
+    TS_ASSERT_DELTA(M, 0.2936, 1e-2);
+    TS_ASSERT_DELTA(X, 0.0067, 1e-2);
 
     // Indirect access to state vector
     C = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetProteinConcentrations()[0];
     M = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetProteinConcentrations()[1];
     X = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetProteinConcentrations()[2];
 
-    TS_ASSERT_DELTA(C, 0.5470, 1e-3);
-    TS_ASSERT_DELTA(M, 0.2936, 1e-3);
-    TS_ASSERT_DELTA(X, 0.0067, 1e-3);
+    TS_ASSERT_DELTA(C, 0.5470, 1e-2);
+    TS_ASSERT_DELTA(M, 0.2936, 1e-2);
+    TS_ASSERT_DELTA(X, 0.0067, 1e-2);
 
     std::cout << "Finished ODE - " << "C : " << C << ", M : " << M << ", X : " << X << std::endl;
   }

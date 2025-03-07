@@ -49,11 +49,10 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ColumnDataWriter.hpp"
 #include "Debug.hpp"
 #include "EulerIvpOdeSolver.hpp"
-#include "PetscTools.hpp"
-#include "PetscSetupAndFinalize.hpp"
 #include "RungeKutta4IvpOdeSolver.hpp"
-#include "Tan2014OdeSystemAndSrnModel.hpp"
 #include "Timer.hpp"
+
+#include "Tan2014OdeSystemAndSrnModel.hpp"
 
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
@@ -156,9 +155,10 @@ public:
             delete p_ode_system;
         }
     }
+
     void TestOdeEquation()
     {
-        Tan2014OdeSystem tan_system;
+        Tan2014OdeSystem ode_system;
 
         double time = 0.0;
         std::vector<double> initial_conditions;
@@ -171,7 +171,7 @@ public:
         initial_conditions.push_back(1.0);
 
         std::vector<double> derivs(initial_conditions.size());
-        tan_system.EvaluateYDerivatives(time, initial_conditions, derivs);
+        ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
         // Test derivatives are correct (default wnt-level=0)
         TS_ASSERT_DELTA(derivs[0], -170.2326546448276 * 60.0, 1e-4);
@@ -183,8 +183,8 @@ public:
         TS_ASSERT_DELTA(derivs[6], 0.0 * 60.0, 1e-5);
 
         // Change Wnt level and check still OK
-        tan_system.SetParameter("wnt_level", 1);
-        tan_system.EvaluateYDerivatives(time, initial_conditions, derivs);
+        ode_system.SetParameter("wnt_level", 1);
+        ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
         TS_ASSERT_DELTA(derivs[0], -169.85286464482763335581694263965 * 60.0, 1e-3);
         TS_ASSERT_DELTA(derivs[1], 0.0002357000000 * 60.0, 1e-5);
@@ -199,7 +199,7 @@ public:
     {
         try
         {
-            Tan2014OdeSystem tan_system;
+            Tan2014OdeSystem ode_system;
 
             // Solve system using RK4 solver
 
@@ -208,10 +208,10 @@ public:
             // RK4 solver solution worked out
             RungeKutta4IvpOdeSolver rk4_solver;
 
-            std::vector<double> state_variables = tan_system.GetInitialConditions();
+            std::vector<double> state_variables = ode_system.GetInitialConditions();
 
             Timer::Reset();
-            OdeSolution solutions = rk4_solver.Solve(&tan_system, state_variables, 0.0, 1000.0, dt, dt);
+            OdeSolution solutions = rk4_solver.Solve(&ode_system, state_variables, 0.0, 1000.0, dt, dt);
             Timer::Print("1. Tan RK4");
 
             unsigned end = solutions.rGetSolutions().size() - 1;
@@ -301,4 +301,4 @@ public:
     }
 };
 
-#endif /*TESTTAN2014SBML_HPP_*/
+#endif // TESTTAN2014SBML_HPP_
