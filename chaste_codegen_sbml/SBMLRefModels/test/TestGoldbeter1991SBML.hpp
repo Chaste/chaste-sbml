@@ -51,6 +51,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "FileComparison.hpp"
 #include "FixedG1GenerationalCellCycleModel.hpp"
 #include "SmartPointers.hpp"
+#include "Timer.hpp"
 #include "TransitCellProliferativeType.hpp"
 #include "UniformCellCycleModel.hpp"
 #include "UniformG1GenerationalCellCycleModel.hpp"
@@ -151,107 +152,74 @@ public:
     TS_ASSERT_DELTA(derivs[2], -0.3233, 1e-4);
   }
 
-  void TestOdeSolver()
+  void TestOdeWithChasteSolver()
   {
-    Goldbeter1991OdeSystem ode_system;
+    try
+    {
+      Goldbeter1991OdeSystem ode_system;
 
-    RungeKutta4IvpOdeSolver ode_solver;
+      // Solve system using RK4 solver
 
-    OdeSolution solutions;
+      double dt = 0.0001;
 
-    std::vector<double> initial_conditions = ode_system.GetInitialConditions();
-    double start_time = 0.0;
-    double end_time = 100;
-    double h_value = 0.01; // 1.0 / maximum tolerance
+      // RK4 solver solution worked out
+      RungeKutta4IvpOdeSolver rk4_solver;
 
-    // Test the hard coded ics
-    TS_ASSERT_DELTA(initial_conditions[0], 0.01, 1e-6);
-    TS_ASSERT_DELTA(initial_conditions[1], 0.01, 1e-6);
-    TS_ASSERT_DELTA(initial_conditions[2], 0.01, 1e-6);
+      std::vector<double> state_variables = ode_system.GetInitialConditions();
 
-    double cpu_start_time = (double)std::clock();
-    solutions = ode_solver.Solve(&ode_system, initial_conditions, start_time, end_time, h_value, h_value);
-    double cpu_end_time = (double)std::clock();
-    double cpu_elapsed_time = (cpu_end_time - cpu_start_time) / (CLOCKS_PER_SEC);
-    std::cout << "1. Solver Elapsed time = " << cpu_elapsed_time << "\n";
+      Timer::Reset();
+      OdeSolution solutions = rk4_solver.Solve(&ode_system, state_variables, 0.0, 100.0, dt, dt);
+      Timer::Print("1. Goldbeter RK4");
 
-    // Test solutions are OK for a small time increase...
-    int end = solutions.rGetSolutions().size() - 1;
+      unsigned end = solutions.rGetSolutions().size() - 1;
 
-    // Test the simulation is ending at the right time...(going into S phase at 7.8 hours)
-    TS_ASSERT_DELTA(solutions.rGetTimes()[end], end_time, 1e-2);
-    // std::cout <<  "End time = " << solutions.rGetTimes()[end] << "\n";
-    //  Decent results - checked with numpy # [ 0.54706214  0.29369527  0.00678837]
-    TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 0.5470, 1e-3);
-    TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 0.2936, 1e-3);
-    TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 0.0067, 1e-3);
+      //  Decent results - checked with numpy # [ 0.54706214  0.29369527  0.00678837]
+      TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 0.5470, 1e-3);
+      TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 0.2936, 1e-3);
+      TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 0.0067, 1e-3);
+    }
+    catch (Exception &e)
+    {
+      throw e;
+    }
+    catch (...)
+    {
+      exit(EXIT_FAILURE);
+    }
   }
 
-  void TestOdeSteadyState()
+  void TestOdeWithCvodeSolver()
   {
-    // Keep running until we reach steady state
-    SimulationTime *p_simulation_time = SimulationTime::Instance();
-
-    // run until 100, with dt=0.001
-    double t1 = 100;
-    double dt = 0.001;
-    unsigned num_steps = (unsigned)t1 / dt;
-    p_simulation_time->SetEndTimeAndNumberOfTimeSteps(t1, num_steps + 1);
-
-    // Create a cell-cycle model
-    boost::shared_ptr<AbstractCellProperty> p_healthy_state(CellPropertyRegistry::Instance()->Get<WildTypeCellMutationState>());
-    boost::shared_ptr<AbstractCellProperty> p_transit_type(CellPropertyRegistry::Instance()->Get<TransitCellProliferativeType>());
-
-    FixedG1GenerationalCellCycleModel *p_cell_model = new FixedG1GenerationalCellCycleModel();
-    Goldbeter1991SrnModel *p_srn_model = new Goldbeter1991SrnModel();
-
-    CellPtr p_tn_cell(new Cell(p_healthy_state, p_cell_model, p_srn_model, false, CellPropertyCollection()));
-    p_tn_cell->SetCellProliferativeType(p_transit_type);
-    p_tn_cell->InitialiseCellCycleModel();
-    p_tn_cell->InitialiseSrnModel();
-
-    // Check initial conditions
-    double C = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("Cyclin");
-    double M = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("cdc_2_kinase");
-    double X = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("Cyclin Protease");
-
-    TS_ASSERT_DELTA(C, 0.01, 1e-3);
-    TS_ASSERT_DELTA(M, 0.01, 1e-3);
-    TS_ASSERT_DELTA(X, 0.01, 1e-3);
-
-    // Run the cell simulation until t1
-    while (!p_simulation_time->IsFinished())
+    try
     {
-      p_simulation_time->IncrementTimeOneStep();
-      if (p_tn_cell->ReadyToDivide())
-      {
-        p_tn_cell->Divide();
-      }
+      Goldbeter1991OdeSystem ode_system;
+
+      double end_time = 100;
+      double h_value = 0.01;
+
+      CvodeAdaptor solver;
+      OdeSolution solutions;
+
+      std::vector<double> state_variables = ode_system.GetInitialConditions();
+
+      Timer::Reset();
+      solutions = solver.Solve(&ode_system, state_variables, 0.0, end_time, h_value, 0.1);
+      Timer::Print("1. Goldbeter CVODE");
+
+      unsigned end = solutions.rGetSolutions().size() - 1;
+
+      TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 0.5470, 1e-3);
+      TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 0.2936, 1e-3);
+      TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 0.0067, 1e-3);
     }
-
-    // Get final state variables
-    double current_time = SimulationTime::Instance()->GetTime();
-    std::cout << "Finished ODE - " << "mSimulatedToTime : " << p_srn_model->GetSimulatedToTime() << ", current_time : " << current_time << std::endl;
-
-    // Direct access to state variables
-    C = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("Cyclin");
-    M = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("cdc_2_kinase");
-    X = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("Cyclin Protease");
-
-    TS_ASSERT_DELTA(C, 0.5470, 1e-2);
-    TS_ASSERT_DELTA(M, 0.2936, 1e-2);
-    TS_ASSERT_DELTA(X, 0.0067, 1e-2);
-
-    // Indirect access to state vector
-    C = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetProteinConcentrations()[0];
-    M = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetProteinConcentrations()[1];
-    X = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetProteinConcentrations()[2];
-
-    TS_ASSERT_DELTA(C, 0.5470, 1e-2);
-    TS_ASSERT_DELTA(M, 0.2936, 1e-2);
-    TS_ASSERT_DELTA(X, 0.0067, 1e-2);
-
-    std::cout << "Finished ODE - " << "C : " << C << ", M : " << M << ", X : " << X << std::endl;
+    catch (Exception &e)
+    {
+      throw e;
+    }
+    catch (...)
+    {
+      exit(EXIT_FAILURE);
+    }
   }
 
   void TestSrnArchiving()
@@ -412,6 +380,58 @@ public:
       FileComparison comparer(generated, reference);
       TS_ASSERT(comparer.CompareFiles());
     }
+  }
+
+  void TestSteadyStateSimulation()
+  {
+    // Keep running until we reach steady state
+    SimulationTime *p_simulation_time = SimulationTime::Instance();
+
+    // run until 100, with dt=0.001
+    double end_time = 100;
+    double dt = 0.001;
+    unsigned num_steps = (unsigned)end_time / dt;
+    p_simulation_time->SetEndTimeAndNumberOfTimeSteps(end_time, num_steps + 1);
+
+    // Create a cell-cycle model
+    boost::shared_ptr<AbstractCellProperty> p_healthy_state(CellPropertyRegistry::Instance()->Get<WildTypeCellMutationState>());
+    boost::shared_ptr<AbstractCellProperty> p_transit_type(CellPropertyRegistry::Instance()->Get<TransitCellProliferativeType>());
+
+    FixedG1GenerationalCellCycleModel *p_cell_model = new FixedG1GenerationalCellCycleModel();
+    Goldbeter1991SrnModel *p_srn_model = new Goldbeter1991SrnModel();
+
+    CellPtr p_tn_cell(new Cell(p_healthy_state, p_cell_model, p_srn_model, false, CellPropertyCollection()));
+    p_tn_cell->SetCellProliferativeType(p_transit_type);
+    p_tn_cell->InitialiseCellCycleModel();
+    p_tn_cell->InitialiseSrnModel();
+
+    // Run the cell simulation until end_time
+    while (!p_simulation_time->IsFinished())
+    {
+      p_simulation_time->IncrementTimeOneStep();
+      if (p_tn_cell->ReadyToDivide())
+      {
+        p_tn_cell->Divide();
+      }
+    }
+
+    // Direct access to state variables
+    double C = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("Cyclin");
+    double M = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("cdc_2_kinase");
+    double X = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("Cyclin Protease");
+
+    TS_ASSERT_DELTA(C, 0.5470, 1e-2);
+    TS_ASSERT_DELTA(M, 0.2936, 1e-2);
+    TS_ASSERT_DELTA(X, 0.0067, 1e-3);
+
+    // Indirect access to state vector
+    C = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetProteinConcentrations()[0];
+    M = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetProteinConcentrations()[1];
+    X = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetProteinConcentrations()[2];
+
+    TS_ASSERT_DELTA(C, 0.5470, 1e-2);
+    TS_ASSERT_DELTA(M, 0.2936, 1e-2);
+    TS_ASSERT_DELTA(X, 0.0067, 1e-3);
   }
 };
 

@@ -57,7 +57,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
-class TestVanLeeuwenNonDimOdeSystem : public AbstractCellBasedTestSuite
+class TestVanLeeuwen2007NonDimSBML : public AbstractCellBasedTestSuite
 {
 public:
     void TestOdeArchiving()
