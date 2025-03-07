@@ -230,20 +230,20 @@ public:
         ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
         // Test derivatives are correct (default wnt-level=0)
-        TS_ASSERT_DELTA(derivs[0], -0.0500, 1e-1);
-        TS_ASSERT_DELTA(derivs[1], 0.0, 1e-1);
-        TS_ASSERT_DELTA(derivs[2], -1.1103, 1e-1);
-        TS_ASSERT_DELTA(derivs[3], 0.0703, 1e-1);
-        TS_ASSERT_DELTA(derivs[4], 0.0, 1e-1);
-        TS_ASSERT_DELTA(derivs[5], -1.0, 1e-1);
-        TS_ASSERT_DELTA(derivs[6], 1.0, 1e-1);
-        TS_ASSERT_DELTA(derivs[7], 0.0, 1e-1);
-        TS_ASSERT_DELTA(derivs[8], 0.0, 1e-1);
-        TS_ASSERT_DELTA(derivs[9], 0.0, 1e-1);
-        TS_ASSERT_DELTA(derivs[10], 0.00344, 1e-1);
-        TS_ASSERT_DELTA(derivs[11], -1.1103, 1e-1);
-        TS_ASSERT_DELTA(derivs[12], 0.0, 1e-1);
-        TS_ASSERT_DELTA(derivs[13], 0.0, 1e-1);
+        TS_ASSERT_DELTA(derivs[0], -0.0500, 1e-3);
+        TS_ASSERT_DELTA(derivs[1], 0.0, 1e-3);
+        TS_ASSERT_DELTA(derivs[2], -1.1103, 1e-3);
+        TS_ASSERT_DELTA(derivs[3], 0.0703, 1e-3);
+        TS_ASSERT_DELTA(derivs[4], 0.0, 1e-3);
+        TS_ASSERT_DELTA(derivs[5], -1.0, 1e-3);
+        TS_ASSERT_DELTA(derivs[6], 1.0, 1e-3);
+        TS_ASSERT_DELTA(derivs[7], 0.0, 1e-3);
+        TS_ASSERT_DELTA(derivs[8], 0.0, 1e-3);
+        TS_ASSERT_DELTA(derivs[9], 0.0, 1e-3);
+        TS_ASSERT_DELTA(derivs[10], 0.00344, 1e-3);
+        TS_ASSERT_DELTA(derivs[11], -1.1103, 1e-3);
+        TS_ASSERT_DELTA(derivs[12], 0.0, 1e-3);
+        TS_ASSERT_DELTA(derivs[13], 0.0, 1e-3);
 
         // TODO: Change Wnt level and check still OK
     }

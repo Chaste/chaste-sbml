@@ -146,9 +146,9 @@ public:
     ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
     // Test derivatives are correct
-    TS_ASSERT_DELTA(derivs[0], 86.6400, 1e-4);    // ~ 0.0240 * 3600.0
-    TS_ASSERT_DELTA(derivs[1], -3389.2994, 1e-4); // ~ -0.9414 * 3600.0
-    TS_ASSERT_DELTA(derivs[2], -1164.1809, 1e-4); // ~ -0.3233 * 3600.0
+    TS_ASSERT_DELTA(derivs[0], 0.0240, 1e-4);
+    TS_ASSERT_DELTA(derivs[1], -0.9414, 1e-4);
+    TS_ASSERT_DELTA(derivs[2], -0.3233, 1e-4);
   }
 
   void TestOdeSolver()
@@ -161,8 +161,8 @@ public:
 
     std::vector<double> initial_conditions = ode_system.GetInitialConditions();
     double start_time = 0.0;
-    double end_time = 0.02778; // 100s
-    double h_value = 0.000001; // 1.0 / maximum tolerance
+    double end_time = 100;
+    double h_value = 0.01; // 1.0 / maximum tolerance
 
     // Test the hard coded ics
     TS_ASSERT_DELTA(initial_conditions[0], 0.01, 1e-6);
@@ -192,9 +192,9 @@ public:
     // Keep running until we reach steady state
     SimulationTime *p_simulation_time = SimulationTime::Instance();
 
-    // run until 100s, with dt=0.000001
-    double t1 = 100.0 / 3600.0;       // 1s
-    double dt = 1.0 / 3600.0 / 100.0; // 0.01s
+    // run until 100, with dt=0.001
+    double t1 = 100;
+    double dt = 0.001;
     unsigned num_steps = (unsigned)t1 / dt;
     p_simulation_time->SetEndTimeAndNumberOfTimeSteps(t1, num_steps + 1);
 

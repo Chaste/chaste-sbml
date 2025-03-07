@@ -136,9 +136,9 @@ class ChasteSRNModel(ChasteModel):
                     ode_def = f"rDY[{n}] = ({rhs}) / {c_var}; // d{s_var}/dt"
                     ode_defs.append(ode_def)
 
-                if time_multiplier != 1.0:
-                    # This does not include species defined in algebraic rules
-                    ode_timescale_defs.append(f"rDY[{n}] *= {time_multiplier};")
+                # if time_multiplier != 1.0:
+                #     # This does not include species defined in algebraic rules
+                #     ode_timescale_defs.append(f"rDY[{n}] *= {time_multiplier};")
 
             elif (s_id == "drag") or (s_var == "drag"):
                 rhs = f"drag - rY[{i}]"

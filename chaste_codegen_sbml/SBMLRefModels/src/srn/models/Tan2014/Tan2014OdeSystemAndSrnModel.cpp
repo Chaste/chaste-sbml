@@ -94,12 +94,12 @@ void Tan2014OdeSystem::EvaluateYDerivatives(double time, const std::vector<doubl
     rDY[6] = (drag - rY[6]) / CytosolMembrane;                                                          // ddrag/dt
 
     /* Account for the differences in timescales. */
-    rDY[0] *= 60.0;
-    rDY[1] *= 60.0;
-    rDY[2] *= 60.0;
-    rDY[3] *= 60.0;
-    rDY[4] *= 60.0;
-    rDY[5] *= 60.0;
+    // rDY[0] *= 60.0;
+    // rDY[1] *= 60.0;
+    // rDY[2] *= 60.0;
+    // rDY[3] *= 60.0;
+    // rDY[4] *= 60.0;
+    // rDY[5] *= 60.0;
 }
 
 template <>

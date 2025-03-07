@@ -66,7 +66,7 @@ SbmlSrnWrapperModel<SBMLODE, SIZE>::SbmlSrnWrapperModel(boost::shared_ptr<Abstra
         // TODO: Set solver type and dt from CLI
         mpOdeSolver = CellCycleModelOdeSolver<SbmlSrnWrapperModel<SBMLODE, SIZE>, RungeKutta4IvpOdeSolver>::Instance();
         mpOdeSolver->Initialise();
-        SetDt(1.0 / 3600.0 / 100.0); // 0.01s - This is small enough for both examples to converge
+        SetDt(0.001); // This is small enough for both examples to converge
 		#endif //CHASTE_CVODE
     }
     assert(mpOdeSolver->IsSetUp());

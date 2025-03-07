@@ -174,25 +174,25 @@ public:
         ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
         // Test derivatives are correct (default wnt-level=0)
-        TS_ASSERT_DELTA(derivs[0], -170.2326546448276 * 60.0, 1e-4);
-        TS_ASSERT_DELTA(derivs[1], 0.0002357000000 * 60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[2], -0.0002357000000 * 60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[3], 304.7769846153847 * 60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[4], 0.0016000000000 * 60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[5], -0.0016000000000 * 60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[6], 0.0 * 60.0, 1e-5);
+        TS_ASSERT_DELTA(derivs[0], -170.2326546448276, 1e-4);
+        TS_ASSERT_DELTA(derivs[1], 0.0002357000000, 1e-5);
+        TS_ASSERT_DELTA(derivs[2], -0.0002357000000, 1e-5);
+        TS_ASSERT_DELTA(derivs[3], 304.7769846153847, 1e-5);
+        TS_ASSERT_DELTA(derivs[4], 0.0016000000000, 1e-5);
+        TS_ASSERT_DELTA(derivs[5], -0.0016000000000, 1e-5);
+        TS_ASSERT_DELTA(derivs[6], 0.0, 1e-5);
 
         // Change Wnt level and check still OK
         ode_system.SetParameter("wnt_level", 1);
         ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
-        TS_ASSERT_DELTA(derivs[0], -169.85286464482763335581694263965 * 60.0, 1e-3);
-        TS_ASSERT_DELTA(derivs[1], 0.0002357000000 * 60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[2], -0.0002357000000 * 60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[3], 304.7769846153847 * 60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[4], 0.0016000000000 * 60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[5], -0.0016000000000 * 60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[6], 0.0 * 60.0, 1e-5);
+        TS_ASSERT_DELTA(derivs[0], -169.85286464482763335581694263965, 1e-3);
+        TS_ASSERT_DELTA(derivs[1], 0.0002357000000, 1e-5);
+        TS_ASSERT_DELTA(derivs[2], -0.0002357000000, 1e-5);
+        TS_ASSERT_DELTA(derivs[3], 304.7769846153847, 1e-5);
+        TS_ASSERT_DELTA(derivs[4], 0.0016000000000, 1e-5);
+        TS_ASSERT_DELTA(derivs[5], -0.0016000000000, 1e-5);
+        TS_ASSERT_DELTA(derivs[6], 0.0, 1e-5);
     }
 
     void TestOdeWithChasteSolver()
