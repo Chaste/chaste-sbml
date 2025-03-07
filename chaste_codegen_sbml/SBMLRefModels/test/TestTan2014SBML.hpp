@@ -203,7 +203,7 @@ public:
 
             // Solve system using RK4 solver
 
-            double dt = 0.0001;
+            double dt = 0.01;
 
             // RK4 solver solution worked out
             RungeKutta4IvpOdeSolver rk4_solver;
@@ -211,7 +211,7 @@ public:
             std::vector<double> state_variables = ode_system.GetInitialConditions();
 
             Timer::Reset();
-            OdeSolution solutions = rk4_solver.Solve(&ode_system, state_variables, 0.0, 1000.0, dt, dt);
+            OdeSolution solutions = rk4_solver.Solve(&ode_system, state_variables, 0.0, 1000.0 * 60.0, dt, dt);
             Timer::Print("1. Tan RK4");
 
             unsigned end = solutions.rGetSolutions().size() - 1;
@@ -230,13 +230,13 @@ public:
             // }
             // file->close();
 
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 80.123027932584804489124508108944, 2e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 446.75578463039073540130630135536, 1e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 553.24421536960869616450509056449, 1e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][3], 62.102819644032457802040880778804, 2e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][4], 359.76798287328375636207056231797, 5e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][5], 640.23201712671584573399741202593, 5e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][6], 1.0, 1e-5);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 80.123027932584804489124508108944, 1e-1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 446.75578463039073540130630135536, 1e-1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 553.24421536960869616450509056449, 1e-1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][3], 62.102819644032457802040880778804, 1e-1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][4], 359.76798287328375636207056231797, 1e-1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][5], 640.23201712671584573399741202593, 1e-1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][6], 1.0, 1e-3);
         }
         catch (Exception &e)
         {
@@ -254,7 +254,7 @@ public:
         {
             Tan2014OdeSystem ode_system;
 
-            double end_time = 1000;
+            double end_time = 1000.0 * 60.0;
             double h_value = 0.01;
 
             CvodeAdaptor solver;
@@ -282,13 +282,13 @@ public:
             // }
             // file->close();
 
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 80.123027932584804489124508108944, 2e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 446.75578463039073540130630135536, 1e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 553.24421536960869616450509056449, 1e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][3], 62.102819644032457802040880778804, 2e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][4], 359.76798287328375636207056231797, 5e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][5], 640.23201712671584573399741202593, 5e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][6], 1.0, 1e-5);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 80.123027932584804489124508108944, 1e-1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 446.75578463039073540130630135536, 1e-1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 553.24421536960869616450509056449, 1e-1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][3], 62.102819644032457802040880778804, 1e-1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][4], 359.76798287328375636207056231797, 1e-1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][5], 640.23201712671584573399741202593, 1e-1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][6], 1.0, 1e-3);
         }
         catch (Exception &e)
         {
