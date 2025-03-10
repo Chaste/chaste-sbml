@@ -7,11 +7,14 @@ from typing import TYPE_CHECKING
 
 from libsbml import Parameter, SBMLReader, Species
 
+from jinja2 import Environment, PackageLoader, select_autoescape
+
 from ._config import SHORT_NAME_LEN
 from ._utils import convert_formula, varname_camelcase, varname_sanitize
 
 if TYPE_CHECKING:
     from libsbml import SBase
+    from jinja2.environment import Template
 
 
 class ChasteModel:
@@ -51,21 +54,13 @@ class ChasteModel:
 
         self._num_state_vars = len([s for s in self._species if not self._is_state_parameter(s)])
 
-        self._cpp_filename = None
-        self._hpp_filename = None
+        self._env = Environment(
+            loader=PackageLoader("chaste_codegen_sbml"), autoescape=select_autoescape()
+        )
 
-        self._cpp_source = None
-        self._hpp_source = None
-
-    @property
-    def cpp_filename(self) -> str:
-        """Get the output .cpp filename."""
-        return self._cpp_filename
-
-    @property
-    def hpp_filename(self) -> str:
-        """Get the output .hpp filename."""
-        return self._hpp_filename
+        self._outputs = [
+            {"filename": None, "code": None},
+        ]
 
     def is_cc_model(self) -> bool:
         """Determine if the model is a Cell Cycle model.
@@ -87,38 +82,20 @@ class ChasteModel:
         """
         return self._model.getNumEvents() == 0
 
-    def generate_chaste_code(self) -> None:
-        """Generate Chaste code from SBML data."""
-        self._hpp_source = self._generate_hpp()
-        self._cpp_source = self._generate_cpp()
-
-    def write_chaste_code(self, output_directory=None):
-        """Generate and write Chaste code to file."""
-        self.generate_chaste_code()
-
+    def write(self, output_directory=None):
+        """Write Chaste code to file."""
         if output_directory:
             root_dir = pathlib.Path(output_directory)
         else:
             root_dir = pathlib.Path().cwd()
 
-        hpp_file_path = root_dir / self._hpp_filename
-        cpp_file_path = root_dir / self._cpp_filename
-
-        with open(hpp_file_path, "w") as f:
-            f.write(self._hpp_source)
-
-        with open(cpp_file_path, "w") as f:
-            f.write(self._cpp_source)
+        for output in self._outputs:
+            if output["filename"]:
+                file_path = root_dir / output["filename"]
+                with open(file_path, "w") as f:
+                    f.write(output["code"])
 
     # === PRIVATE:
-
-    @abc.abstractmethod
-    def _generate_hpp(self) -> str:
-        return ""
-
-    @abc.abstractmethod
-    def _generate_cpp(self) -> str:
-        return ""
 
     def _get_name(self, obj: "SBase") -> str:
         """Get the name of a libSBML object, or the ID if it doesn't have one.
@@ -130,6 +107,14 @@ class ChasteModel:
         if obj_name:
             return obj_name
         return obj.getId()
+
+    def _get_template(self, template_name: str) -> "Template":
+        """Get a Jinja2 template.
+
+        :param template: The template name.
+        :return: The template object.
+        """
+        return self._env.get_template(template_name)
 
     def _get_timescale_multiplier(self) -> float:
         """Get the timescale multiplier.
