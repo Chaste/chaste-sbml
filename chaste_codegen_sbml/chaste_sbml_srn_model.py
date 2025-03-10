@@ -27,12 +27,12 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
 
         self._srn_hpp_filename = f"{srn_filename}.hpp"
         srn_hpp_template = self._get_template("srn.hpp")
-        srn_hpp_vars = self._generate_hpp()
+        srn_hpp_vars = self._get_srn_hpp_vars()
         srn_hpp_code = srn_hpp_template.render(srn_hpp_vars)
 
         self._srn_cpp_filename = f"{srn_filename}.cpp"
         srn_cpp_template = self._env.get_template("srn.cpp")
-        srn_cpp_vars = self._generate_cpp()
+        srn_cpp_vars = self._get_srn_cpp_vars()
         srn_cpp_code = srn_cpp_template.render(srn_cpp_vars)
 
         self._outputs = [
@@ -52,8 +52,8 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
 
     # === PRIVATE:
 
-    def _generate_hpp(self) -> str:
-        """Generate the Chaste header for an SRN model from SBML data.
+    def _get_srn_hpp_vars(self) -> dict[str, str]:
+        """Generate the template variables for the SRN model hpp file.
 
         return: The generated header file as a string.
         """
@@ -92,11 +92,15 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
 
         return hpp_vars
 
-    def _generate_cpp(self) -> str:
-        """Generate the Chaste source for an SRN model from SBML data.
+    def _get_srn_cpp_vars(self) -> dict[str, str]:
+        """Generate the template variables for the SRN model cpp file.
 
         return: The generated source file as a string.
         """
+        # Sub-templates
+        function_impl_template = self._get_template("srn/cpp/function_impl.cpp")
+        state_param_template = self._get_template("srn/cpp/state_param.cpp")
+
         # Compartments
         compartment_inits = []
         for compartment in self._compartments:
@@ -137,7 +141,7 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
             species_defaults.append(f"SetDefaultInitialCondition({i}, {s_conc}); // {s_var}")
 
             if self._is_state_parameter(species):
-                state_param = state_param_template.format(
+                state_param = state_param_template.render(
                     par_id=s_id,
                     par_num=len(state_params),
                     par_name=s_var,
@@ -211,7 +215,6 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
         species_ode_init_str = f"\n{TAB}".join(species_ode_inits)
 
         # Parameters
-        state_param_template = self._get_template("srn/cpp/state_param.cpp")
         param_defaults = []
         param_inits = []
         state_params = []
@@ -278,7 +281,6 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
         reaction_def_str = f"\n\n{TAB}".join(reaction_defs)
 
         # Function Definitions
-        function_impl_template = self._get_template("srn/cpp/function_impl.cpp")
         functions = self._function_definitions
         function_impls = []
         for fn in functions:

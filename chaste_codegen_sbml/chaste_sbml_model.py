@@ -5,16 +5,15 @@ import os
 import pathlib
 from typing import TYPE_CHECKING
 
-from libsbml import Parameter, SBMLReader, Species
-
 from jinja2 import Environment, PackageLoader, select_autoescape
+from libsbml import Parameter, SBMLReader, Species
 
 from ._config import SHORT_NAME_LEN
 from ._utils import convert_formula, varname_camelcase, varname_sanitize
 
 if TYPE_CHECKING:
-    from libsbml import SBase
     from jinja2.environment import Template
+    from libsbml import SBase
 
 
 class ChasteSbmlModel:
@@ -108,13 +107,13 @@ class ChasteSbmlModel:
             return obj_name
         return obj.getId()
 
-    def _get_template(self, template_name: str) -> "Template":
+    def _get_template(self, name: str) -> "Template":
         """Get a Jinja2 template.
 
-        :param template: The template name.
+        :param name: The template name.
         :return: The template object.
         """
-        return self._env.get_template(template_name)
+        return self._env.get_template(name)
 
     def _get_timescale_multiplier(self) -> float:
         """Get the timescale multiplier.
