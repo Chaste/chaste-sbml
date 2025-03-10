@@ -1,5 +1,11 @@
 name: ctest
+
 on: [pull_request]
+
+concurrency:
+  group: ctest-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -16,7 +22,7 @@ jobs:
 
       - name: Setup directories
         run: |
-          ln -s $(pwd)/chaste_codegen_sbml/SBMLTest Chaste/projects/SBMLTest
+          ln -s $(pwd)/chaste_codegen_sbml/SBMLRefModels Chaste/projects/SBMLRefModels
           mkdir -p Chaste/build
 
       - name: Install Chaste dependencies
@@ -35,10 +41,10 @@ jobs:
 
       - name: Build
         run: |
-          make -j $(nproc) project_SBMLTest
+          make -j $(nproc) project_SBMLRefModels
         working-directory: Chaste/build
 
       - name: Test
         run: |
-          ctest -j $(nproc) -L SBMLTest --output-on-failure
+          ctest -j $(nproc) -L SBMLRefModels --output-on-failure
         working-directory: Chaste/build

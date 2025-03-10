@@ -60,25 +60,22 @@ def code_diff(file_a: str, file_b: str) -> str:
 
 
 @pytest.mark.parametrize(
-    (
-        "dirname",
-        "model_name",
-    ),
+    ("model_name",),
     [
-        ("Goldbeter1991SrnModel", "Goldbeter1991"),
-        ("Tan2014SrnModel", "Tan2014"),
-        ("VanLeeuwen2007SrnModel", "VanLeeuwen2007"),
-        ("VanLeeuwen2007NonDimSrnModel", "VanLeeuwen2007NonDim"),
+        ("Goldbeter1991",),
+        ("Tan2014",),
+        ("VanLeeuwen2007",),
+        ("VanLeeuwen2007NonDim",),
     ],
 )
-def test_generation(tmp_path, dirname, model_name):
+def test_generation(tmp_path, model_name):
     """
     Check generated model against reference.
     """
-    ref_dir = ROOT_DIR / "SBMLTest" / "src" / "reference" / dirname
-    ref_sbml = ref_dir / f"{dirname}.xml"
-    ref_cpp = ref_dir / f"{dirname}.cpp"
-    ref_hpp = ref_dir / f"{dirname}.hpp"
+    ref_dir = ROOT_DIR / "SBMLRefModels" / "src" / "srn" / "models" / model_name
+    ref_sbml = ref_dir / f"{model_name}.xml"
+    ref_cpp = ref_dir / f"{model_name}OdeSystemAndSrnModel.cpp"
+    ref_hpp = ref_dir / f"{model_name}OdeSystemAndSrnModel.hpp"
     print(ref_sbml)
 
     logger.info(f"Converting: {ref_sbml}")

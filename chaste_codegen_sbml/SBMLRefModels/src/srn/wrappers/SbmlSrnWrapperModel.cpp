@@ -69,7 +69,6 @@ SbmlSrnWrapperModel<SBMLODE, SIZE>::SbmlSrnWrapperModel(boost::shared_ptr<Abstra
         SetDt(0.0001); // This is small enough for both examples to converge
 		#endif //CHASTE_CVODE
     }
-
     assert(mpOdeSolver->IsSetUp());
 }
 

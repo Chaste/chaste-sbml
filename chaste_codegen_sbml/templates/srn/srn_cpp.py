@@ -8,7 +8,7 @@ function_impl_template = """
 state_param_template = "double {par_id} = this->mParameters[{par_num}]; // {par_name}"
 
 srn_cpp_template = """
-#include "{srn_model_name}.hpp"
+#include "{model_header_file}"
 #include "CellwiseOdeSystemInformation.hpp"
 
 /* SBML ODE System */

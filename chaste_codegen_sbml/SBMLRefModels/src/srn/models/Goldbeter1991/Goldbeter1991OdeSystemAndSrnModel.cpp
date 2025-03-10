@@ -1,4 +1,4 @@
-#include "Goldbeter1991SrnModel.hpp"
+#include "Goldbeter1991OdeSystemAndSrnModel.hpp"
 #include "CellwiseOdeSystemInformation.hpp"
 
 /* SBML ODE System */
@@ -84,9 +84,9 @@ void Goldbeter1991OdeSystem::EvaluateYDerivatives(double time, const std::vector
     rDY[2] = (reaction6 - reaction7) / cell;             // dCyclin_Protease/dt
 
     /* Account for the differences in timescales. */
-    rDY[0] *= 3600.0;
-    rDY[1] *= 3600.0;
-    rDY[2] *= 3600.0;
+    // rDY[0] *= 3600.0;
+    // rDY[1] *= 3600.0;
+    // rDY[2] *= 3600.0;
 }
 
 template <>
