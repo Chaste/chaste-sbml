@@ -1,9 +1,9 @@
 """Module for the ChasteCellCycleModel class."""
 
-from .chaste_model import ChasteModel
+from .chaste_sbml_model import ChasteSbmlModel
 
 
-class ChasteCellCycleModel(ChasteModel):
+class ChasteSbmlCellCycleModel(ChasteSbmlModel):
     """Class for generating Chaste code for a Cell Cycle model from SBML data."""
 
     def __init__(self, sbml_file: str, model_name: str = None) -> None:

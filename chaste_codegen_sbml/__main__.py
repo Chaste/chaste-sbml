@@ -3,7 +3,7 @@
 import os
 from argparse import ArgumentParser
 
-from . import ChasteSRNModel
+from . import ChasteSbmlSrnModel
 
 
 def parse_args():
@@ -29,7 +29,7 @@ def parse_args():
 
 def generate_code(args):
     """Run the code generation."""
-    chaste_model = ChasteSRNModel(args.sbml_file)
+    chaste_model = ChasteSbmlSrnModel(args.sbml_file)
     chaste_model.write_chaste_code()
 
 

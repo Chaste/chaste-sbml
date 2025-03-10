@@ -1,4 +1,4 @@
-"""Module for the ChasteSRNModel class."""
+"""Module for the ChasteSbmlSrnModel class."""
 
 from ._config import ODE_SYSTEM_SUFFIX, SRN_HEADER_GUARD_SUFFIX, SRN_MODEL_SUFFIX, TAB
 from ._utils import (
@@ -8,30 +8,52 @@ from ._utils import (
     get_index_by_id,
     get_species_concentration,
 )
-from .chaste_model import ChasteModel
-from .templates.srn.srn_cpp import function_impl_template, srn_cpp_template, state_param_template
-from .templates.srn.srn_hpp import srn_hpp_template
+from .chaste_sbml_model import ChasteSbmlModel
 
 
-class ChasteSRNModel(ChasteModel):
+class ChasteSbmlSrnModel(ChasteSbmlModel):
     """Class for generating Chaste code for an SRN model from SBML data."""
 
     # === PUBLIC:
 
     def __init__(self, sbml_file: str, model_name: str = None, **kwargs) -> None:
-        """Initialise the ChasteSRNModel."""
+        """Initialise the ChasteSbmlSrnModel."""
         super().__init__(sbml_file, model_name, **kwargs)
 
         self._ode_system_name = self._model_name + ODE_SYSTEM_SUFFIX
         self._srn_model_name = self._model_name + SRN_MODEL_SUFFIX
 
-        self._cpp_filename = f"{self._model_name}{ODE_SYSTEM_SUFFIX}And{SRN_MODEL_SUFFIX}.cpp"
-        self._hpp_filename = f"{self._model_name}{ODE_SYSTEM_SUFFIX}And{SRN_MODEL_SUFFIX}.hpp"
+        srn_filename = f"{self._model_name}{ODE_SYSTEM_SUFFIX}And{SRN_MODEL_SUFFIX}"
+
+        self._srn_hpp_filename = f"{srn_filename}.hpp"
+        srn_hpp_template = self._get_template("srn.hpp")
+        srn_hpp_vars = self._get_srn_hpp_vars()
+        srn_hpp_code = srn_hpp_template.render(srn_hpp_vars)
+
+        self._srn_cpp_filename = f"{srn_filename}.cpp"
+        srn_cpp_template = self._env.get_template("srn.cpp")
+        srn_cpp_vars = self._get_srn_cpp_vars()
+        srn_cpp_code = srn_cpp_template.render(srn_cpp_vars)
+
+        self._outputs = [
+            {"filename": self._srn_hpp_filename, "code": srn_hpp_code},
+            {"filename": self._srn_cpp_filename, "code": srn_cpp_code},
+        ]
+
+    @property
+    def srn_cpp_filename(self) -> str:
+        """Get the output {srn}.cpp filename."""
+        return self._srn_cpp_filename
+
+    @property
+    def srn_hpp_filename(self) -> str:
+        """Get the output {srn}.hpp filename."""
+        return self._srn_hpp_filename
 
     # === PRIVATE:
 
-    def _generate_hpp(self) -> str:
-        """Generate the Chaste header for an SRN model from SBML data.
+    def _get_srn_hpp_vars(self) -> dict[str, str]:
+        """Generate the template variables for the SRN model hpp file.
 
         return: The generated header file as a string.
         """
@@ -58,7 +80,7 @@ class ChasteSRNModel(ChasteModel):
         function_decls_str = f"\n{TAB}".join(function_decls_list)
 
         # Apply inputs to the header file template
-        hpp = srn_hpp_template.format(
+        hpp_vars = dict(
             header_guard=header_guard_str,
             ode_system_name=self._ode_system_name,
             srn_name=self._srn_model_name,
@@ -68,13 +90,17 @@ class ChasteSRNModel(ChasteModel):
             function_decls=function_decls_str,
         )
 
-        return hpp
+        return hpp_vars
 
-    def _generate_cpp(self) -> str:
-        """Generate the Chaste source for an SRN model from SBML data.
+    def _get_srn_cpp_vars(self) -> dict[str, str]:
+        """Generate the template variables for the SRN model cpp file.
 
         return: The generated source file as a string.
         """
+        # Sub-templates
+        function_impl_template = self._get_template("srn/cpp/function_impl.cpp")
+        state_param_template = self._get_template("srn/cpp/state_param.cpp")
+
         # Compartments
         compartment_inits = []
         for compartment in self._compartments:
@@ -98,7 +124,7 @@ class ChasteSRNModel(ChasteModel):
         rule_def_str = f"\n{TAB}".join(rule_defs)
 
         # Species
-        time_multiplier = self._get_timescale_multiplier()
+        # time_multiplier = self._get_timescale_multiplier()
         species_defaults = []
         state_vars = []
         state_params = []
@@ -115,7 +141,7 @@ class ChasteSRNModel(ChasteModel):
             species_defaults.append(f"SetDefaultInitialCondition({i}, {s_conc}); // {s_var}")
 
             if self._is_state_parameter(species):
-                state_param = state_param_template.format(
+                state_param = state_param_template.render(
                     par_id=s_id,
                     par_num=len(state_params),
                     par_name=s_var,
@@ -136,6 +162,7 @@ class ChasteSRNModel(ChasteModel):
                     ode_def = f"rDY[{n}] = ({rhs}) / {c_var}; // d{s_var}/dt"
                     ode_defs.append(ode_def)
 
+                # TODO: Handle time scaling
                 # if time_multiplier != 1.0:
                 #     # This does not include species defined in algebraic rules
                 #     ode_timescale_defs.append(f"rDY[{n}] *= {time_multiplier};")
@@ -209,7 +236,7 @@ class ChasteSRNModel(ChasteModel):
             param_inits.append(f"{p_id} = {p_value};")
 
             if self._is_state_parameter(param):
-                state_param = state_param_template.format(
+                state_param = state_param_template.render(
                     par_id=p_id,
                     par_num=len(state_params),
                     par_name=p_var,
@@ -260,7 +287,7 @@ class ChasteSRNModel(ChasteModel):
             fn_id = fn.getId()
             args_list = get_function_definition_arguments(fn)
             body_cpp = convert_function_body(fn.getBody())
-            impl = function_impl_template.format(
+            impl = function_impl_template.render(
                 ode_name=self._ode_system_name,
                 fn=fn_id,
                 fn_args=", ".join(args_list),
@@ -276,11 +303,11 @@ class ChasteSRNModel(ChasteModel):
             event_vector_init_str = f"eventsSatisfied.resize({num_events}, false);"
 
         # Apply inputs to the source file template
-        cpp = srn_cpp_template.format(
+        cpp_vars = dict(
             compartment_init=compartment_init_str,
             event_vector_init=event_vector_init_str,
             functions_impl=functions_impl_str,
-            model_header_file=self._hpp_filename,
+            model_header_file=self._srn_hpp_filename,
             ode_def=ode_def_str,
             ode_system_name=self._ode_system_name,
             ode_timescale_def=ode_timescale_def_str,
@@ -298,4 +325,4 @@ class ChasteSRNModel(ChasteModel):
             state_var_def=state_var_def_str,
         )
 
-        return cpp
+        return cpp_vars

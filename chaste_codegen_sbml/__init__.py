@@ -1,9 +1,9 @@
 """Main module for the Chaste code generation from SBML package."""
 
-from .chaste_cell_cycle_model import ChasteCellCycleModel
-from .chaste_srn_model import ChasteSRNModel
+from .chaste_sbml_cell_cycle_model import ChasteSbmlCellCycleModel
+from .chaste_sbml_srn_model import ChasteSbmlSrnModel
 
 __all__ = [
-    "ChasteCellCycleModel",
-    "ChasteSRNModel",
+    "ChasteSbmlCellCycleModel",
+    "ChasteSbmlSrnModel",
 ]
