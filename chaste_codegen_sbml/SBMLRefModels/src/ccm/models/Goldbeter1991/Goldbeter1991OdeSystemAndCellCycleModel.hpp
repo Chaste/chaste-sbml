@@ -1,5 +1,5 @@
-#ifndef GOLDBETER1991ODESYSTEMANDSRNMODEL_HPP_
-#define GOLDBETER1991ODESYSTEMANDSRNMODEL_HPP_
+#ifndef GOLDBETER1991ODESYSTEMANDCELLCYCLEMODEL_HPP_
+#define GOLDBETER1991ODESYSTEMANDCELLCYCLEMODEL_HPP_
 
 #include <cmath>
 #include <iostream>
@@ -40,6 +40,12 @@ public:
     void Init();
 
     void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
+    
+    bool CalculateStoppingEvent(double time, const std::vector<double>& rY);
+
+    void CheckAndUpdateEvents(double time, const std::vector<double>& rY);
+
+    bool AreAllEventsSatisfied(double time, const std::vector<double>& rY);
 };
 
 namespace
@@ -68,18 +74,18 @@ namespace
     }
 } // namespace ...
 
-/* Define SRN model using Wrappers. */
-#include "SbmlSrnWrapperModel.hpp"
-#include "SbmlSrnWrapperModel.cpp"
+/* Define CCM model using Wrappers. */
+#include "SbmlCcmWrapperModel.hpp"
+#include "SbmlCcmWrapperModel.cpp"
 
-typedef SbmlSrnWrapperModel<Goldbeter1991OdeSystem, 3> Goldbeter1991SrnModel;
+typedef SbmlCcmWrapperModel<Goldbeter1991OdeSystem, 3> Goldbeter1991CellCycleModel;
 
 // Declare identifiers for the serializer
 #include "SerializationExportWrapper.hpp"
 CHASTE_CLASS_EXPORT(Goldbeter1991OdeSystem)
-EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, Goldbeter1991OdeSystem, 3)
+EXPORT_TEMPLATE_CLASS2(SbmlCcmWrapperModel, Goldbeter1991OdeSystem, 3)
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
-EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Goldbeter1991SrnModel)
+EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Goldbeter1991CellCycleModel)
 
-#endif // GOLDBETER1991ODESYSTEMANDSRNMODEL_HPP_
+#endif // GOLDBETER1991ODESYSTEMANDCELLCYCLEMODEL_HPP_

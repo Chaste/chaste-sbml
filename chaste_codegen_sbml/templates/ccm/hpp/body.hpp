@@ -42,7 +42,12 @@ public:
     void Init();
 
     void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
+    
+    bool CalculateStoppingEvent(double time, const std::vector<double>& rY);
 
+    void CheckAndUpdateEvents(double time, const std::vector<double>& rY);
+
+    bool AreAllEventsSatisfied(double time, const std::vector<double>& rY);
 };
 
 namespace
@@ -72,18 +77,18 @@ inline void load_construct_data(
 }
 } // namespace ...
 
-/* Define SRN model using wrappers. */
-#include "SbmlSrnWrapperModel.hpp"
-#include "SbmlSrnWrapperModel.cpp"
+/* Define cell cycle model using wrappers. */
+#include "SbmlCcmWrapperModel.hpp"
+#include "SbmlCcmWrapperModel.cpp"
 
-typedef SbmlSrnWrapperModel<{{ode_system_name}}, {{num_state_vars}}> {{srn_name}};
+typedef SbmlCcmWrapperModel<{{ode_system_name}}, {{num_state_vars}}> {{ccm_name}};
 
 /* Declare identifiers for the serializer */
 #include "SerializationExportWrapper.hpp"
 CHASTE_CLASS_EXPORT({{ode_system_name}})
-EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, {{ode_system_name}}, {{num_state_vars}})
+EXPORT_TEMPLATE_CLASS2(SbmlCcmWrapperModel, {{ode_system_name}}, {{num_state_vars}})
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
-EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER({{srn_name}})
+EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER({{ccm_name}})
 
 #endif // {{header_guard}}

@@ -14,7 +14,7 @@ from .chaste_sbml_model import ChasteSbmlModel
 class ChasteSbmlSrnModel(ChasteSbmlModel):
     """Class for generating Chaste code for an SRN model from SBML data."""
 
-    # === PUBLIC:
+    # -- PUBLIC ---------------------------------------
 
     def __init__(self, sbml_file: str, model_name: str = None, **kwargs) -> None:
         """Initialise the ChasteSbmlSrnModel."""
@@ -24,13 +24,13 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
         self._srn_model_name = self._model_name + SRN_MODEL_SUFFIX
 
         srn_filename = f"{self._model_name}{ODE_SYSTEM_SUFFIX}And{SRN_MODEL_SUFFIX}"
-
         self._srn_hpp_filename = f"{srn_filename}.hpp"
+        self._srn_cpp_filename = f"{srn_filename}.cpp"
+
         srn_hpp_template = self._get_template("srn.hpp")
         srn_hpp_vars = self._get_srn_hpp_vars()
         srn_hpp_code = srn_hpp_template.render(srn_hpp_vars)
 
-        self._srn_cpp_filename = f"{srn_filename}.cpp"
         srn_cpp_template = self._env.get_template("srn.cpp")
         srn_cpp_vars = self._get_srn_cpp_vars()
         srn_cpp_code = srn_cpp_template.render(srn_cpp_vars)
@@ -50,7 +50,7 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
         """Get the output {srn}.hpp filename."""
         return self._srn_hpp_filename
 
-    # === PRIVATE:
+    # -- PRIVATE ---------------------------------------
 
     def _get_srn_hpp_vars(self) -> dict[str, str]:
         """Generate the template variables for the SRN model hpp file.
@@ -79,7 +79,7 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
 
         function_decls_str = f"\n{TAB}".join(function_decls_list)
 
-        # Apply inputs to the header file template
+        # Create inputs for the header file template
         hpp_vars = dict(
             header_guard=header_guard_str,
             ode_system_name=self._ode_system_name,
@@ -302,7 +302,7 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
         if num_events > 0:
             event_vector_init_str = f"eventsSatisfied.resize({num_events}, false);"
 
-        # Apply inputs to the source file template
+        # Create inputs for the source file template
         cpp_vars = dict(
             compartment_init=compartment_init_str,
             event_vector_init=event_vector_init_str,

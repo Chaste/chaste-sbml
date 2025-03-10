@@ -1,13 +1,14 @@
 #ifndef VANLEEUWEN2007NONDIMODESYSTEMANDSRNMODEL_HPP_
 #define VANLEEUWEN2007NONDIMODESYSTEMANDSRNMODEL_HPP_
 
-#include "ChasteSerialization.hpp"
+#include <cmath>
+#include <iostream>
+
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 
-#include <cmath>
-#include <iostream>
 #include "AbstractOdeSystem.hpp"
+#include "ChasteSerialization.hpp"
 
 class VanLeeuwen2007NonDimOdeSystem : public AbstractOdeSystem
 {

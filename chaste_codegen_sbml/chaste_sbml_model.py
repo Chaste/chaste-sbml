@@ -1,4 +1,4 @@
-"""Module for the ChasteModel class."""
+"""Module for the ChasteSbmlModel class."""
 
 import abc
 import os
@@ -17,14 +17,14 @@ if TYPE_CHECKING:
 
 
 class ChasteSbmlModel:
-    """Holds information about the SBML model for which code is to be generated."""
+    """Holds information about an SBML model for which Chaste code is to be generated."""
 
-    # === PUBLIC:
+    # -- PUBLIC ---------------------------------------
 
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, sbml_file: str, model_name: str = None) -> None:
-        """Initialise the ChasteModel."""
+        """Initialise the ChasteSbmlModel."""
         self._sbml_file = sbml_file
 
         if model_name:
@@ -94,7 +94,7 @@ class ChasteSbmlModel:
                 with open(file_path, "w") as f:
                     f.write(output["code"])
 
-    # === PRIVATE:
+    # -- PRIVATE ---------------------------------------
 
     def _get_name(self, obj: "SBase") -> str:
         """Get the name of a libSBML object, or the ID if it doesn't have one.
