@@ -1,5 +1,9 @@
 """Module for the ChasteSRNModel class."""
 
+from jinja2 import Environment, PackageLoader, select_autoescape
+
+env = Environment(loader=PackageLoader("chaste_codegen_sbml"), autoescape=select_autoescape())
+
 from ._config import ODE_SYSTEM_SUFFIX, SRN_HEADER_GUARD_SUFFIX, SRN_MODEL_SUFFIX, TAB
 from ._utils import (
     convert_formula,
@@ -9,8 +13,6 @@ from ._utils import (
     get_species_concentration,
 )
 from .chaste_model import ChasteModel
-from .templates.srn.srn_cpp import function_impl_template, srn_cpp_template, state_param_template
-from .templates.srn.srn_hpp import srn_hpp_template
 
 
 class ChasteSRNModel(ChasteModel):
@@ -58,7 +60,8 @@ class ChasteSRNModel(ChasteModel):
         function_decls_str = f"\n{TAB}".join(function_decls_list)
 
         # Apply inputs to the header file template
-        hpp = srn_hpp_template.format(
+        hpp_template = env.get_template("srn.hpp")
+        hpp = hpp_template.render(
             header_guard=header_guard_str,
             ode_system_name=self._ode_system_name,
             srn_name=self._srn_model_name,
@@ -98,7 +101,7 @@ class ChasteSRNModel(ChasteModel):
         rule_def_str = f"\n{TAB}".join(rule_defs)
 
         # Species
-        time_multiplier = self._get_timescale_multiplier()
+        # time_multiplier = self._get_timescale_multiplier()
         species_defaults = []
         state_vars = []
         state_params = []
@@ -188,6 +191,7 @@ class ChasteSRNModel(ChasteModel):
         species_ode_init_str = f"\n{TAB}".join(species_ode_inits)
 
         # Parameters
+        state_param_template = env.get_template("srn/cpp/state_param")
         param_defaults = []
         param_inits = []
         state_params = []
@@ -209,7 +213,7 @@ class ChasteSRNModel(ChasteModel):
             param_inits.append(f"{p_id} = {p_value};")
 
             if self._is_state_parameter(param):
-                state_param = state_param_template.format(
+                state_param = state_param_template.render(
                     par_id=p_id,
                     par_num=len(state_params),
                     par_name=p_var,
@@ -254,13 +258,14 @@ class ChasteSRNModel(ChasteModel):
         reaction_def_str = f"\n\n{TAB}".join(reaction_defs)
 
         # Function Definitions
+        function_impl_template = env.get_template("srn/cpp/function_impl")
         functions = self._function_definitions
         function_impls = []
         for fn in functions:
             fn_id = fn.getId()
             args_list = get_function_definition_arguments(fn)
             body_cpp = convert_function_body(fn.getBody())
-            impl = function_impl_template.format(
+            impl = function_impl_template.render(
                 ode_name=self._ode_system_name,
                 fn=fn_id,
                 fn_args=", ".join(args_list),
@@ -276,7 +281,8 @@ class ChasteSRNModel(ChasteModel):
             event_vector_init_str = f"eventsSatisfied.resize({num_events}, false);"
 
         # Apply inputs to the source file template
-        cpp = srn_cpp_template.format(
+        cpp_template = env.get_template("srn.cpp")
+        cpp = cpp_template.render(
             compartment_init=compartment_init_str,
             event_vector_init=event_vector_init_str,
             functions_impl=functions_impl_str,
