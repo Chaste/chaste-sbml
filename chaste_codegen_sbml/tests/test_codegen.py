@@ -84,7 +84,7 @@ def test_generation(tmp_path, model_name):
     ref_hpp = ref_dir / f"{model_name}OdeSystemAndSrnModel.hpp"
 
     logger.info(f"Converting: {ref_sbml}")
-    chaste_model = cg.ChasteSRNModel(ref_sbml, model_name)
+    chaste_model = cg.ChasteSbmlSrnModel(ref_sbml, model_name)
     chaste_model.write(output_directory=tmp_path)
 
     gen_hpp = tmp_path / chaste_model.srn_hpp_filename

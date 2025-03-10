@@ -1,4 +1,4 @@
-"""Module for the ChasteSRNModel class."""
+"""Module for the ChasteSbmlSrnModel class."""
 
 from ._config import ODE_SYSTEM_SUFFIX, SRN_HEADER_GUARD_SUFFIX, SRN_MODEL_SUFFIX, TAB
 from ._utils import (
@@ -8,16 +8,16 @@ from ._utils import (
     get_index_by_id,
     get_species_concentration,
 )
-from .chaste_model import ChasteModel
+from .chaste_sbml_model import ChasteSbmlModel
 
 
-class ChasteSRNModel(ChasteModel):
+class ChasteSbmlSrnModel(ChasteSbmlModel):
     """Class for generating Chaste code for an SRN model from SBML data."""
 
     # === PUBLIC:
 
     def __init__(self, sbml_file: str, model_name: str = None, **kwargs) -> None:
-        """Initialise the ChasteSRNModel."""
+        """Initialise the ChasteSbmlSrnModel."""
         super().__init__(sbml_file, model_name, **kwargs)
 
         self._ode_system_name = self._model_name + ODE_SYSTEM_SUFFIX

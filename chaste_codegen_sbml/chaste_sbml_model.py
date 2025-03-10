@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from jinja2.environment import Template
 
 
-class ChasteModel:
+class ChasteSbmlModel:
     """Holds information about the SBML model for which code is to be generated."""
 
     # === PUBLIC:
