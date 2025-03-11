@@ -1,6 +1,6 @@
 """Module for the ChasteCellCycleModel class."""
 
-from ._config import CCM_HEADER_GUARD_SUFFIX, CCM_MODEL_SUFFIX, ODE_SYSTEM_SUFFIX, TAB
+from ._config import CCM_HEADER_GUARD_SUFFIX, ODE_SYSTEM_SUFFIX, CCM_MODEL_SUFFIX, TAB
 from ._utils import (
     get_function_definition_arguments,
 )
@@ -16,8 +16,7 @@ class ChasteSbmlCellCycleModel(ChasteSbmlModel):
         """Initialise the ChasteSbmlCellCycleModel."""
         super().__init__(sbml_file, model_name, **kwargs)
 
-        self._ode_system_name = self._model_name + ODE_SYSTEM_SUFFIX
-        self._ccm_model_name = self._model_name + CCM_MODEL_SUFFIX
+        self._ccm_name = self._model_name + CCM_MODEL_SUFFIX
 
         ccm_filename = f"{self._model_name}{ODE_SYSTEM_SUFFIX}And{CCM_MODEL_SUFFIX}"
         self._ccm_hpp_filename = f"{ccm_filename}.hpp"
@@ -26,10 +25,7 @@ class ChasteSbmlCellCycleModel(ChasteSbmlModel):
         ccm_hpp_template = self._get_template("ccm.hpp")
         ccm_hpp_vars = self._get_ccm_hpp_vars()
         ccm_hpp_code = ccm_hpp_template.render(ccm_hpp_vars)
-
-        self._outputs = [
-            {"filename": self._ccm_hpp_filename, "code": ccm_hpp_code},
-        ]
+        self._outputs[self._ccm_hpp_filename] = ccm_hpp_code
 
     @property
     def ccm_cpp_filename(self) -> str:
@@ -74,7 +70,7 @@ class ChasteSbmlCellCycleModel(ChasteSbmlModel):
         hpp_vars = dict(
             header_guard=header_guard_str,
             ode_system_name=self._ode_system_name,
-            ccm_name=self._ccm_model_name,
+            cell_cycle_model_name=self._ccm_name,
             num_state_vars=self._num_state_vars,
             compartment_decls=compartment_decls_str,
             parameter_decls=parameter_decls_str,

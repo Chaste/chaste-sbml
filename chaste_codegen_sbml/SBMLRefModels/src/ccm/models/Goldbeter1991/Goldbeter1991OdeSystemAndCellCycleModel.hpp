@@ -74,16 +74,16 @@ namespace
     }
 } // namespace ...
 
-/* Define CCM model using Wrappers. */
-#include "SbmlCcmWrapperModel.hpp"
-#include "SbmlCcmWrapperModel.cpp"
+/* Define Cell Cycle model using Wrappers. */
+#include "SbmlCellCycleWrapperModel.hpp"
+#include "SbmlCellCycleWrapperModel.cpp"
 
-typedef SbmlCcmWrapperModel<Goldbeter1991OdeSystem, 3> Goldbeter1991CellCycleModel;
+typedef SbmlCellCycleWrapperModel<Goldbeter1991OdeSystem, 3> Goldbeter1991CellCycleModel;
 
 // Declare identifiers for the serializer
 #include "SerializationExportWrapper.hpp"
 CHASTE_CLASS_EXPORT(Goldbeter1991OdeSystem)
-EXPORT_TEMPLATE_CLASS2(SbmlCcmWrapperModel, Goldbeter1991OdeSystem, 3)
+EXPORT_TEMPLATE_CLASS2(SbmlCellCycleWrapperModel, Goldbeter1991OdeSystem, 3)
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
 EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Goldbeter1991CellCycleModel)

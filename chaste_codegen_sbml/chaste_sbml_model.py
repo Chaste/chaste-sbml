@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from jinja2 import Environment, PackageLoader, select_autoescape
 from libsbml import Parameter, SBMLReader, Species
 
-from ._config import SHORT_NAME_LEN
+from ._config import SHORT_NAME_LEN, ODE_SYSTEM_SUFFIX
 from ._utils import convert_formula, varname_camelcase, varname_sanitize
 
 if TYPE_CHECKING:
@@ -19,9 +19,11 @@ if TYPE_CHECKING:
 class ChasteSbmlModel:
     """Holds information about an SBML model for which Chaste code is to be generated."""
 
-    # -- PUBLIC ---------------------------------------
-
     __metaclass__ = abc.ABCMeta
+
+    _jenv = Environment(loader=PackageLoader("chaste_codegen_sbml"), autoescape=select_autoescape())
+
+    # -- PUBLIC ---------------------------------------
 
     def __init__(self, sbml_file: str, model_name: str = None) -> None:
         """Initialise the ChasteSbmlModel."""
@@ -43,6 +45,8 @@ class ChasteSbmlModel:
         self._species = self._model.getListOfSpecies()
         self._unit_definitions = self._model.getListOfUnitDefinitions()
 
+        self._ode_system_name = self._model_name + ODE_SYSTEM_SUFFIX
+
         self._varnames = {}
 
         self._odes_dict = None
@@ -53,13 +57,7 @@ class ChasteSbmlModel:
 
         self._num_state_vars = len([s for s in self._species if not self._is_state_parameter(s)])
 
-        self._env = Environment(
-            loader=PackageLoader("chaste_codegen_sbml"), autoescape=select_autoescape()
-        )
-
-        self._outputs = [
-            {"filename": None, "code": None},
-        ]
+        self._outputs = {}  # filename: code
 
     def is_cc_model(self) -> bool:
         """Determine if the model is a Cell Cycle model.
@@ -88,11 +86,10 @@ class ChasteSbmlModel:
         else:
             root_dir = pathlib.Path().cwd()
 
-        for output in self._outputs:
-            if output["filename"]:
-                file_path = root_dir / output["filename"]
-                with open(file_path, "w") as f:
-                    f.write(output["code"])
+        for filename, code in self._outputs.items():
+            file_path = root_dir / filename
+            with open(file_path, "w") as f:
+                f.write(code)
 
     # -- PRIVATE ---------------------------------------
 
@@ -113,7 +110,7 @@ class ChasteSbmlModel:
         :param name: The template name.
         :return: The template object.
         """
-        return self._env.get_template(name)
+        return self._jenv.get_template(name)
 
     def _get_timescale_multiplier(self) -> float:
         """Get the timescale multiplier.

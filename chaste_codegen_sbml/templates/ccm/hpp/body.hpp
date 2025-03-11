@@ -78,17 +78,17 @@ inline void load_construct_data(
 } // namespace ...
 
 /* Define cell cycle model using wrappers. */
-#include "SbmlCcmWrapperModel.hpp"
-#include "SbmlCcmWrapperModel.cpp"
+#include "SbmlCellCycleWrapperModel.hpp"
+#include "SbmlCellCycleWrapperModel.cpp"
 
-typedef SbmlCcmWrapperModel<{{ode_system_name}}, {{num_state_vars}}> {{ccm_name}};
+typedef SbmlCellCycleWrapperModel<{{ode_system_name}}, {{num_state_vars}}> {{cell_cycle_model_name}};
 
 /* Declare identifiers for the serializer */
 #include "SerializationExportWrapper.hpp"
 CHASTE_CLASS_EXPORT({{ode_system_name}})
-EXPORT_TEMPLATE_CLASS2(SbmlCcmWrapperModel, {{ode_system_name}}, {{num_state_vars}})
+EXPORT_TEMPLATE_CLASS2(SbmlCellCycleWrapperModel, {{ode_system_name}}, {{num_state_vars}})
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
-EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER({{ccm_name}})
+EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER({{cell_cycle_model_name}})
 
 #endif // {{header_guard}}

@@ -20,7 +20,6 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
         """Initialise the ChasteSbmlSrnModel."""
         super().__init__(sbml_file, model_name, **kwargs)
 
-        self._ode_system_name = self._model_name + ODE_SYSTEM_SUFFIX
         self._srn_model_name = self._model_name + SRN_MODEL_SUFFIX
 
         srn_filename = f"{self._model_name}{ODE_SYSTEM_SUFFIX}And{SRN_MODEL_SUFFIX}"
@@ -30,15 +29,12 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
         srn_hpp_template = self._get_template("srn.hpp")
         srn_hpp_vars = self._get_srn_hpp_vars()
         srn_hpp_code = srn_hpp_template.render(srn_hpp_vars)
+        self._outputs[self._srn_hpp_filename] = srn_hpp_code
 
-        srn_cpp_template = self._env.get_template("srn.cpp")
+        srn_cpp_template = self._get_template("srn.cpp")
         srn_cpp_vars = self._get_srn_cpp_vars()
         srn_cpp_code = srn_cpp_template.render(srn_cpp_vars)
-
-        self._outputs = [
-            {"filename": self._srn_hpp_filename, "code": srn_hpp_code},
-            {"filename": self._srn_cpp_filename, "code": srn_cpp_code},
-        ]
+        self._outputs[self._srn_cpp_filename] = srn_cpp_code
 
     @property
     def srn_cpp_filename(self) -> str:
