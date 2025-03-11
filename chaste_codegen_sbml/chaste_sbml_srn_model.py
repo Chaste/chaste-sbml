@@ -38,12 +38,12 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
 
     @property
     def srn_cpp_filename(self) -> str:
-        """Get the output {srn}.cpp filename."""
+        """Get the output {srn_model}.cpp filename."""
         return self._srn_cpp_filename
 
     @property
     def srn_hpp_filename(self) -> str:
-        """Get the output {srn}.hpp filename."""
+        """Get the output {srn_model}.hpp filename."""
         return self._srn_hpp_filename
 
     # -- PRIVATE ---------------------------------------

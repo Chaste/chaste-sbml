@@ -59,26 +59,6 @@ class ChasteSbmlModel:
 
         self._outputs = {}  # filename: code
 
-    def is_cc_model(self) -> bool:
-        """Determine if the model is a Cell Cycle model.
-
-        Models with events are assumed to be Cell Cycle models.
-        Models with no events are assumed to be SRN models.
-
-        :return: True if the model is a Cell Cycle model, False otherwise.
-        """
-        return not self.is_srn_model()
-
-    def is_srn_model(self) -> bool:
-        """Determine if the model is a subcellular reaction network (SRN) model.
-
-        Models with no events are assumed to be SRN models.
-        Models with events are assumed to be Cell Cycle models.
-
-        :return: True if the model is an SRN model, False otherwise.
-        """
-        return self._model.getNumEvents() == 0
-
     def write(self, output_directory=None):
         """Write Chaste code to file."""
         if output_directory:

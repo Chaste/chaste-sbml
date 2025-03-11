@@ -29,12 +29,12 @@ class ChasteSbmlCellCycleModel(ChasteSbmlModel):
 
     @property
     def ccm_cpp_filename(self) -> str:
-        """Get the output {cell_cycle}.cpp filename."""
+        """Get the output {cell_cycle_model}.cpp filename."""
         return self._ccm_cpp_filename
 
     @property
     def ccm_hpp_filename(self) -> str:
-        """Get the output {cell_cycle}.hpp filename."""
+        """Get the output {cell_cycle_model}.hpp filename."""
         return self._ccm_hpp_filename
 
     # -- PRIVATE ---------------------------------------
