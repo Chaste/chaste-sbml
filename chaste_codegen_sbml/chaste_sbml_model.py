@@ -103,6 +103,14 @@ class ChasteSbmlModel:
         """
         return
 
+    def _add_output(self, filename: str, code: str) -> None:
+        """Add generated code to the outputs dictionary.
+
+        :param filename: The filename.
+        :param code: The code.
+        """
+        self._outputs[filename] = code
+
     def _format_compartments(self) -> list[dict[str, str]]:
         """Get a list of compartment dictionaries for the model.
 
@@ -242,7 +250,7 @@ class ChasteSbmlModel:
         return False
 
     def _update_odes_dict(self) -> None:
-        """Get the ODEs as a dictionary of equations corresponding to each species.
+        """Set the ODEs dictionary of equations corresponding to each species.
 
         Each ODE will essentially be the sum of the products minus the sum of
         the reactants divided by the compartment volume
@@ -280,5 +288,5 @@ class ChasteSbmlModel:
                     self._odes_dict[species_id] = "-" + reaction_var
 
     def _update_rules_dict(self) -> None:
-        """Get a dictionary of species defined by reaction rules."""
+        """Set the dictionary of species defined by reaction rules."""
         self._rules_dict = {r.getId(): convert_formula(r.getFormula()) for r in self._rules}

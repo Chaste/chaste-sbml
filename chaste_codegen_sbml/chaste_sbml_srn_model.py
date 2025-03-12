@@ -34,7 +34,9 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
     # -- PRIVATE ---------------------------------------
 
     def _generate(self) -> None:
-        """Generate Chaste code for the SRN model."""
+        """Generate Chaste code for the SRN model.
+        Overrides the parent method.
+        """
         self._generate_srn_hpp()
         self._generate_srn_cpp()
 
@@ -43,14 +45,14 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
         template = self._get_template("srn.cpp")
         vars = self._get_srn_cpp_vars()
         code = template.render(vars)
-        self._outputs[self.srn_cpp_filename] = code
+        self._add_output(self.srn_cpp_filename, code)
 
     def _generate_srn_hpp(self) -> None:
         """Generate the hpp file code for the SRN model."""
         template = self._get_template("srn.hpp")
         vars = self._get_hpp_vars(self.srn_hpp_filename)
         code = template.render(vars)
-        self._outputs[self.srn_hpp_filename] = code
+        self._add_output(self.srn_hpp_filename, code)
 
     def _get_srn_cpp_vars(self) -> dict[str, str]:
         """Generate the template variables for the SRN model cpp file.
