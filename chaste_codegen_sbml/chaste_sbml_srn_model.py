@@ -17,10 +17,9 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
     """Class for generating Chaste code for an SRN model from SBML data."""
 
     # -- PUBLIC ---------------------------------------
-
-    def __init__(self, sbml_file: str, model_name: str = None, **kwargs) -> None:
+    def __init__(self, sbml: str, name: str = None, **kwargs) -> None:
         """Initialise the ChasteSbmlSrnModel."""
-        super().__init__(sbml_file, model_name, **kwargs)
+        super().__init__(sbml, name, SRN_SUFFIX, **kwargs)
 
     @property
     def srn_cpp_filename(self) -> str:
@@ -49,7 +48,7 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
     def _generate_srn_hpp(self) -> None:
         """Generate the hpp file code for the SRN model."""
         template = self._get_template("srn.hpp")
-        vars = self._get_hpp_vars(SRN_SUFFIX, self.srn_hpp_filename)
+        vars = self._get_hpp_vars(self.srn_hpp_filename)
         code = template.render(vars)
         self._outputs[self.srn_hpp_filename] = code
 
@@ -269,8 +268,7 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
             event_vector_init=event_vector_init_str,
             functions_impl=functions_impl_str,
             model_hpp_file=self.srn_hpp_filename,
-            model_name=self._model_name,
-            model_suffix=SRN_SUFFIX,
+            model_class_name=self._model_class_name,
             ode_def=ode_def_str,
             ode_class_name=self._ode_class_name,
             ode_timescale_def=ode_timescale_def_str,
@@ -285,6 +283,7 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
             species_ode_init=species_ode_init_str,
             species_state_param_def=species_state_param_def_str,
             state_var_def=state_var_def_str,
+            wrapper_class_name=self._wrapper_class_name,
         )
 
         return cpp_vars

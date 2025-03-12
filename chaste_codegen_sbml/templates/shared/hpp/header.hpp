@@ -1,5 +1,3 @@
-{% set model_class_name = model_name + model_suffix + "Model" -%}
-{% set wrapper_class_name = "Sbml" + model_suffix + "WrapperModel" -%}
 #ifndef {{header_guard}}
 #define {{header_guard}}
 

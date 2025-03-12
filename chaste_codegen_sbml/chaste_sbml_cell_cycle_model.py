@@ -11,9 +11,9 @@ class ChasteSbmlCellCycleModel(ChasteSbmlModel):
 
     # -- PUBLIC ---------------------------------------
 
-    def __init__(self, sbml_file: str, model_name: str = None, **kwargs) -> None:
+    def __init__(self, sbml: str, name: str = None, **kwargs) -> None:
         """Initialise the ChasteSbmlCellCycleModel."""
-        super().__init__(sbml_file, model_name, **kwargs)
+        super().__init__(sbml, name, CCM_SUFFIX, **kwargs)
 
     @property
     def ccm_cpp_filename(self) -> str:
@@ -39,6 +39,6 @@ class ChasteSbmlCellCycleModel(ChasteSbmlModel):
     def _generate_ccm_hpp(self) -> None:
         """Generate the hpp file code for the Cell Cycle model."""
         template = self._get_template("ccm.hpp")
-        vars = self._get_hpp_vars(CCM_SUFFIX, self.ccm_hpp_filename)
+        vars = self._get_hpp_vars(self.ccm_hpp_filename)
         code = template.render(vars)
         self._outputs[self.ccm_hpp_filename] = code

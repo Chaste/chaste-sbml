@@ -34,17 +34,27 @@ class ChasteSbmlModel:
 
     # -- PUBLIC ---------------------------------------
 
-    def __init__(self, sbml_file: str, model_name: str = None) -> None:
-        """Initialise the ChasteSbmlModel."""
-        self._sbml_file = sbml_file
+    def __init__(self, sbml: str, name: str = None, suffix: str = None) -> None:
+        """Initialise the ChasteSbmlModel.
 
-        if model_name:
-            self._model_name = model_name
+        :param sbml: The SBML file.
+        :param name: The model name.
+        :param suffix: The model type suffix e.g. "CellCycle".
+        """
+        self._sbml_file = sbml
+
+        if name:
+            self._model_name = name
         else:
-            filename = os.path.splitext(os.path.basename(sbml_file))[0]
+            filename = os.path.splitext(os.path.basename(sbml))[0]
             self._model_name = varname_camelcase(filename).title()
 
-        self._model = SBMLReader().readSBMLFromFile(sbml_file).getModel()
+        self._model_suffix = suffix
+        self._ode_class_name = self._model_name + ODE_SUFFIX
+        self._model_class_name = f"{self._model_name}{self._model_suffix}Model"
+        self._wrapper_class_name = f"Sbml{self._model_suffix}WrapperModel"
+
+        self._model = SBMLReader().readSBMLFromFile(sbml).getModel()
         self._compartments = self._model.getListOfCompartments()
         self._events = self._model.getListOfEvents()
         self._function_definitions = self._model.getListOfFunctionDefinitions()
@@ -53,8 +63,6 @@ class ChasteSbmlModel:
         self._rules = self._model.getListOfRules()
         self._species = self._model.getListOfSpecies()
         self._unit_definitions = self._model.getListOfUnitDefinitions()
-
-        self._ode_class_name = self._model_name + ODE_SUFFIX
 
         self._varnames = {}
 
@@ -127,7 +135,7 @@ class ChasteSbmlModel:
             for fd in self._function_definitions
         ]
 
-    def _get_hpp_vars(self, model_suffix: str, filename: str) -> dict[str, "Any"]:
+    def _get_hpp_vars(self, filename: str) -> dict[str, "Any"]:
         """Generate the template variables for the model hpp file.
 
         :param model_suffix: A suffix for the model type e.g. CellCycle.
@@ -138,12 +146,12 @@ class ChasteSbmlModel:
             compartments=self._format_compartments(),
             function_definitions=self._format_function_definitions(),
             header_guard=self._format_header_guard(filename),
-            model_name=self._model_name,
-            model_suffix=model_suffix,
+            model_class_name=self._model_class_name,
             num_events=self._model.getNumEvents(),
             num_state_vars=self._num_state_vars,
             ode_class_name=self._ode_class_name,
             parameters=self._format_parameters(),
+            wrapper_class_name=self._wrapper_class_name,
         )
 
     def _get_name(self, obj: "SBase") -> str:
