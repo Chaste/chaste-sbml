@@ -62,14 +62,13 @@ void {{ode_class_name}}::EvaluateYDerivatives(double time, const std::vector<dou
 
 }
 
-/* Stopping event is required for Cell Cycle Models to divide. */
+{% if num_events > 0 %}
 bool {{ode_class_name}}::CalculateStoppingEvent(double time, const std::vector<double> & rY)
 {
     // Return true if all events have been triggered.
     return AreAllEventsSatisfied(time, rY);
 }
 
-/* Checks if any events have been triggered and updates the system accordingly. */
 void {{ode_class_name}}::CheckAndUpdateEvents(double time, const std::vector<double> & rY)
 {
     std::vector<double> dy(rY.size()); // Initialise derivatives vector
@@ -77,7 +76,6 @@ void {{ode_class_name}}::CheckAndUpdateEvents(double time, const std::vector<dou
     {{event_defs}}
 }
 
-/* Checks whether all events are satisifed. */
 bool {{ode_class_name}}::AreAllEventsSatisfied(double time, const std::vector<double>& rY)
 {
     CheckAndUpdateEvents(time, rY);
@@ -92,6 +90,7 @@ bool {{ode_class_name}}::AreAllEventsSatisfied(double time, const std::vector<do
     }
     return events_satisfied;
 }
+{% endif %}
 
 template <>
 void CellwiseOdeSystemInformation<{{ode_class_name}}>::Initialise()

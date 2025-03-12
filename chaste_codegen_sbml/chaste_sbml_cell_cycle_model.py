@@ -268,13 +268,13 @@ class ChasteSbmlCellCycleModel(ChasteSbmlModel):
         if num_events > 0:
             event_vector_init_str = f"eventsSatisfied.resize({num_events}, false);"
 
-        event_def_tpl = """" 
-        if ({trigger})
-        {
-            {event_assignment}
-            eventsSatisfied[{i}] = true;
-        }
-        """
+        event_def_tpl = """
+    if ({trigger})
+    {{
+        {event_assignment}
+        eventsSatisfied[{i}] = true;
+    }}
+"""
 
         event_defs = []
         for i, event in enumerate(self._events):
@@ -282,15 +282,16 @@ class ChasteSbmlCellCycleModel(ChasteSbmlModel):
             trigger_nodes = sort_nodes(trigger.getMath())
             tokens = []
             for node in trigger_nodes:
-                if node.isName():
-                    # Replace species variable name with Chaste equivalent.
-                    token = node.getName()
-                    for j, s_id in enumerate(self._odes_dict):
-                        if token == s_id:
-                            token = f"rY[{j}]"
-                            break
+                if node.isNumber():
+                    token = convert_formula(str(node.getValue()))
                 else:
-                    token = formulaToString(node)
+                    token = convert_formula(node.getName())
+                    if node.isName():
+                        # Replace species variable name with Chaste equivalent.
+                        for j, s_id in enumerate(self._odes_dict):
+                            if token == s_id:
+                                token = f"rY[{j}]"
+                                break
                 tokens.append(token)
             trigger_def_str = " ".join(tokens)
 
@@ -303,20 +304,17 @@ class ChasteSbmlCellCycleModel(ChasteSbmlModel):
                         variable = f"this->rGetStateVariables()[{j}]"
                         break
 
-                assignment_nodes = sort_nodes(assignment.getMath())
+                formula = convert_formula(formulaToString(assignment.getMath()))
+                formula_tokens = formula.split(" ")
                 tokens = []
-                for node in assignment_nodes:
-                    if node.isName():
-                        # Replace species variable name with Chaste equivalent.
-                        token = node.getName()
-                        for j, s_id in enumerate(self._odes_dict):
-                            if token == s_id:
-                                token = f"rY[{j}]"
-                                break
-                    else:
-                        token = formulaToString(node)
+                for token in formula_tokens:
+                    for j, s_id in enumerate(self._odes_dict):
+                        if token == s_id:
+                            token = f"rY[{j}]"
+                            break
                     tokens.append(token)
                 value_str = " ".join(tokens)
+
                 assignment_defs.append(f"{variable} = double({value_str});")
             assignment_def_str = "\n".join(assignment_defs)
 
@@ -325,7 +323,7 @@ class ChasteSbmlCellCycleModel(ChasteSbmlModel):
                     trigger=trigger_def_str, event_assignment=assignment_def_str, i=i
                 )
             )
-        
+
         event_def_str = "\n".join(event_defs)
 
         # Create inputs for the source file template
@@ -346,6 +344,7 @@ class ChasteSbmlCellCycleModel(ChasteSbmlModel):
             reaction_def=reaction_def_str,
             rule_def=rule_def_str,
             num_state_vars=self._num_state_vars,
+            num_events=self._model.getNumEvents(),
             species_defaults=species_defaults_str,
             species_ode_init=species_ode_init_str,
             species_state_param_def=species_state_param_def_str,
