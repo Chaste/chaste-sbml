@@ -1,6 +1,8 @@
 """Module for the ChasteSbmlSrnModel class."""
 
-from ._config import ODE_SYSTEM_SUFFIX, SRN_HEADER_GUARD_SUFFIX, SRN_MODEL_SUFFIX, TAB
+import pathlib
+
+from ._config import ODE_SUFFIX, SRN_SUFFIX, TAB
 from ._utils import (
     convert_formula,
     convert_function_body,
@@ -20,73 +22,36 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
         """Initialise the ChasteSbmlSrnModel."""
         super().__init__(sbml_file, model_name, **kwargs)
 
-        self._srn_model_name = self._model_name + SRN_MODEL_SUFFIX
-
-        srn_filename = f"{self._model_name}{ODE_SYSTEM_SUFFIX}And{SRN_MODEL_SUFFIX}"
-        self._srn_hpp_filename = f"{srn_filename}.hpp"
-        self._srn_cpp_filename = f"{srn_filename}.cpp"
-
-        srn_hpp_template = self._get_template("srn.hpp")
-        srn_hpp_vars = self._get_srn_hpp_vars()
-        srn_hpp_code = srn_hpp_template.render(srn_hpp_vars)
-        self._outputs[self._srn_hpp_filename] = srn_hpp_code
-
-        srn_cpp_template = self._get_template("srn.cpp")
-        srn_cpp_vars = self._get_srn_cpp_vars()
-        srn_cpp_code = srn_cpp_template.render(srn_cpp_vars)
-        self._outputs[self._srn_cpp_filename] = srn_cpp_code
-
     @property
     def srn_cpp_filename(self) -> str:
         """Get the output {srn_model}.cpp filename."""
-        return self._srn_cpp_filename
+        return pathlib.Path(self.srn_hpp_filename).with_suffix(".cpp")
 
     @property
     def srn_hpp_filename(self) -> str:
         """Get the output {srn_model}.hpp filename."""
-        return self._srn_hpp_filename
+        return f"{self._model_name}{ODE_SUFFIX}And{SRN_SUFFIX}Model.hpp"
 
     # -- PRIVATE ---------------------------------------
 
-    def _get_srn_hpp_vars(self) -> dict[str, str]:
-        """Generate the template variables for the SRN model hpp file.
+    def _generate(self) -> None:
+        """Generate Chaste code for the SRN model."""
+        self._generate_srn_hpp()
+        self._generate_srn_cpp()
 
-        return: The generated header file as a string.
-        """
-        # Get inputs for the header file template
-        header_guard_str = self._model_name.upper() + SRN_HEADER_GUARD_SUFFIX
+    def _generate_srn_cpp(self) -> None:
+        """Generate the cpp file code for the SRN model."""
+        template = self._get_template("srn.cpp")
+        vars = self._get_srn_cpp_vars()
+        code = template.render(vars)
+        self._outputs[self.srn_cpp_filename] = code
 
-        compartments = self._compartments
-        compartment_decls_str = f"\n{TAB}".join(
-            [f"double {c.getId()}; // {self._get_varname(c)}" for c in compartments]
-        )
-
-        parameters = self._parameters
-        parameter_decls_str = f"\n{TAB}".join(
-            [f"double {p.getId()}; // {self._get_varname(p)}" for p in parameters]
-        )
-
-        function_decls_list = []
-        for fn in self._function_definitions:
-            fn_id = fn.getId()
-            fn_args = get_function_definition_arguments(fn)
-
-            function_decls_list.append(f"double {fn_id}({', '.join(fn_args)});")
-
-        function_decls_str = f"\n{TAB}".join(function_decls_list)
-
-        # Create inputs for the header file template
-        hpp_vars = dict(
-            header_guard=header_guard_str,
-            ode_system_name=self._ode_system_name,
-            srn_name=self._srn_model_name,
-            num_state_vars=self._num_state_vars,
-            compartment_decls=compartment_decls_str,
-            parameter_decls=parameter_decls_str,
-            function_decls=function_decls_str,
-        )
-
-        return hpp_vars
+    def _generate_srn_hpp(self) -> None:
+        """Generate the hpp file code for the SRN model."""
+        template = self._get_template("srn.hpp")
+        vars = self._get_hpp_vars(SRN_SUFFIX, self.srn_hpp_filename)
+        code = template.render(vars)
+        self._outputs[self.srn_hpp_filename] = code
 
     def _get_srn_cpp_vars(self) -> dict[str, str]:
         """Generate the template variables for the SRN model cpp file.
@@ -284,7 +249,7 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
             args_list = get_function_definition_arguments(fn)
             body_cpp = convert_function_body(fn.getBody())
             impl = function_impl_template.render(
-                ode_name=self._ode_system_name,
+                ode_name=self._ode_class_name,
                 fn=fn_id,
                 fn_args=", ".join(args_list),
                 fn_body_cpp=body_cpp,
@@ -303,9 +268,11 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
             compartment_init=compartment_init_str,
             event_vector_init=event_vector_init_str,
             functions_impl=functions_impl_str,
-            model_header_file=self._srn_hpp_filename,
+            model_hpp_file=self.srn_hpp_filename,
+            model_name=self._model_name,
+            model_suffix=SRN_SUFFIX,
             ode_def=ode_def_str,
-            ode_system_name=self._ode_system_name,
+            ode_class_name=self._ode_class_name,
             ode_timescale_def=ode_timescale_def_str,
             parameter_defaults=parameter_defaults_str,
             parameter_init=parameter_init_str,
@@ -317,7 +284,6 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
             species_defaults=species_defaults_str,
             species_ode_init=species_ode_init_str,
             species_state_param_def=species_state_param_def_str,
-            srn_model_name=self._srn_model_name,
             state_var_def=state_var_def_str,
         )
 

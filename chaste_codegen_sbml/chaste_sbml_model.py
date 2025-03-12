@@ -8,10 +8,17 @@ from typing import TYPE_CHECKING
 from jinja2 import Environment, PackageLoader, select_autoescape
 from libsbml import Parameter, SBMLReader, Species
 
-from ._config import SHORT_NAME_LEN, ODE_SYSTEM_SUFFIX
-from ._utils import convert_formula, varname_camelcase, varname_sanitize
+from ._config import ODE_SUFFIX, SHORT_NAME_LEN
+from ._utils import (
+    convert_formula,
+    get_function_definition_arguments,
+    varname_camelcase,
+    varname_sanitize,
+)
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from jinja2.environment import Template
     from libsbml import SBase
 
@@ -21,7 +28,9 @@ class ChasteSbmlModel:
 
     __metaclass__ = abc.ABCMeta
 
-    _jenv = Environment(loader=PackageLoader("chaste_codegen_sbml"), autoescape=select_autoescape())
+    _jinja_env = Environment(
+        loader=PackageLoader("chaste_codegen_sbml"), autoescape=select_autoescape()
+    )
 
     # -- PUBLIC ---------------------------------------
 
@@ -45,7 +54,7 @@ class ChasteSbmlModel:
         self._species = self._model.getListOfSpecies()
         self._unit_definitions = self._model.getListOfUnitDefinitions()
 
-        self._ode_system_name = self._model_name + ODE_SYSTEM_SUFFIX
+        self._ode_class_name = self._model_name + ODE_SUFFIX
 
         self._varnames = {}
 
@@ -57,10 +66,14 @@ class ChasteSbmlModel:
 
         self._num_state_vars = len([s for s in self._species if not self._is_state_parameter(s)])
 
-        self._outputs = {}  # filename: code
+        self._outputs = {}  # { filename: code }
 
     def write(self, output_directory=None):
-        """Write Chaste code to file."""
+        """Generate Chaste code and write to file."""
+        # Generate the code
+        self._generate()
+
+        # Write the code to file
         if output_directory:
             root_dir = pathlib.Path(output_directory)
         else:
@@ -72,6 +85,66 @@ class ChasteSbmlModel:
                 f.write(code)
 
     # -- PRIVATE ---------------------------------------
+
+    @abc.abstractmethod
+    def _generate(self) -> None:
+        """Generate Chaste code for the model.
+        This method should be implemented by subclasses.
+        Generated code should be stored in the self._outputs dictionary as
+        { filename: code } pairs.
+        """
+        return
+
+    def _format_compartments(self) -> list[dict[str, str]]:
+        """Get a list of compartment dictionaries for the model.
+
+        :return: A list of compartment dictionaries.
+        """
+        return [{"id": c.getId(), "varname": self._get_varname(c)} for c in self._compartments]
+
+    def _format_header_guard(self, filename: str) -> str:
+        """Get the header guard for a file.
+
+        :param filename: The filename.
+        :return: The header guard.
+        """
+        return filename.upper().replace(".", "_") + "_"
+
+    def _format_parameters(self) -> list[dict[str, str]]:
+        """Get a list of parameter dictionaries for the model.
+
+        :return: A list of parameter dictionaries.
+        """
+        return [{"id": p.getId(), "varname": self._get_varname(p)} for p in self._parameters]
+
+    def _format_function_definitions(self) -> list[dict[str, str]]:
+        """Get a list of function definition dictionaries for the model.
+
+        :return: A list of function definition dictionaries.
+        """
+        return [
+            {"id": fd.getId(), "args": get_function_definition_arguments(fd)}
+            for fd in self._function_definitions
+        ]
+
+    def _get_hpp_vars(self, model_suffix: str, filename: str) -> dict[str, "Any"]:
+        """Generate the template variables for the model hpp file.
+
+        :param model_suffix: A suffix for the model type e.g. CellCycle.
+        :param filename: The hpp filename for the model.
+        return: The generated header file as a string.
+        """
+        return dict(
+            compartments=self._format_compartments(),
+            function_definitions=self._format_function_definitions(),
+            header_guard=self._format_header_guard(filename),
+            model_name=self._model_name,
+            model_suffix=model_suffix,
+            num_events=self._model.getNumEvents(),
+            num_state_vars=self._num_state_vars,
+            ode_class_name=self._ode_class_name,
+            parameters=self._format_parameters(),
+        )
 
     def _get_name(self, obj: "SBase") -> str:
         """Get the name of a libSBML object, or the ID if it doesn't have one.
@@ -90,7 +163,7 @@ class ChasteSbmlModel:
         :param name: The template name.
         :return: The template object.
         """
-        return self._jenv.get_template(name)
+        return self._jinja_env.get_template(name)
 
     def _get_timescale_multiplier(self) -> float:
         """Get the timescale multiplier.

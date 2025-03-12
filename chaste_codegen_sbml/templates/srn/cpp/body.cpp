@@ -1,11 +1,13 @@
-#include "{{model_header_file}}"
+{% set model_class_name = model_name + model_suffix + "Model" -%}
+{% set wrapper_class_name = "Sbml" + model_suffix + "WrapperModel" -%}
+#include "{{model_hpp_file}}"
 #include "CellwiseOdeSystemInformation.hpp"
 
 /* SBML ODE System */
-{{ode_system_name}}::{{ode_system_name}}(std::vector<double> stateVariables)
+{{ode_class_name}}::{{ode_class_name}}(std::vector<double> stateVariables)
     : AbstractOdeSystem({{num_state_vars}})
 {
-    mpSystemInfo.reset(new CellwiseOdeSystemInformation<{{ode_system_name}}>);
+    mpSystemInfo.reset(new CellwiseOdeSystemInformation<{{ode_class_name}}>);
 
     Init();
 
@@ -19,13 +21,13 @@
     }
 }
 
-{{ode_system_name}}::~{{ode_system_name}}()
+{{ode_class_name}}::~{{ode_class_name}}()
 {
 }
 
 {{functions_impl}}
 
-void {{ode_system_name}}::Init()
+void {{ode_class_name}}::Init()
  {
     /* Initialise model compartments. */
     {{compartment_init}}
@@ -38,7 +40,7 @@ void {{ode_system_name}}::Init()
 
 }
 
-void {{ode_system_name}}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
+void {{ode_class_name}}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
 
     /* Define state variables */
@@ -63,7 +65,7 @@ void {{ode_system_name}}::EvaluateYDerivatives(double time, const std::vector<do
 }
 
 template <>
-void CellwiseOdeSystemInformation<{{ode_system_name}}>::Initialise()
+void CellwiseOdeSystemInformation<{{ode_class_name}}>::Initialise()
 {
     {{species_ode_init}}
 
@@ -73,15 +75,15 @@ void CellwiseOdeSystemInformation<{{ode_system_name}}>::Initialise()
 }
 
 /* Define SRN model using Wrappers. */
-#include "SbmlSrnWrapperModel.hpp"
-#include "SbmlSrnWrapperModel.cpp"
+#include "{{wrapper_class_name}}.hpp"
+#include "{{wrapper_class_name}}.cpp"
 
-typedef SbmlSrnWrapperModel<{{ode_system_name}}, {{num_state_vars}}> {{srn_model_name}};
+typedef {{wrapper_class_name}}<{{ode_class_name}}, {{num_state_vars}}> {{model_class_name}};
 
 // Declare identifiers for the serializer
 #include "SerializationExportWrapperForCpp.hpp"
-CHASTE_CLASS_EXPORT({{ode_system_name}})
-EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, {{ode_system_name}}, {{num_state_vars}})
+CHASTE_CLASS_EXPORT({{ode_class_name}})
+EXPORT_TEMPLATE_CLASS2({{wrapper_class_name}}, {{ode_class_name}}, {{num_state_vars}})
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
-EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER({{srn_model_name}})
+EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER({{model_class_name}})

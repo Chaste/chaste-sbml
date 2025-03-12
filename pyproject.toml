@@ -38,13 +38,15 @@ line-length = 100
 target-version = ["py39", "py310", "py311", "py312", "py313"]
 extend-exclude = """
 (
-  ^/venv/
+  SBMLRefModels
+  | templates/
+  | ^/venv/
 )
 """
 
 [tool.isort]
 known_first_party = "chaste_codegen_sbml"
-extend_skip = ["venv"]
+extend_skip = ["SBMLRefModels", "templates", "venv"]
 profile = "black"
 multi_line_output = 3
 include_trailing_comma = "True"
