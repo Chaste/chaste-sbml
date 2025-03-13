@@ -10,6 +10,7 @@ from libsbml import Parameter, SBMLReader, Species
 
 from ._config import ODE_SUFFIX, SHORT_NAME_LEN
 from ._utils import (
+    convert_function_body,
     convert_formula,
     get_function_definition_arguments,
     varname_camelcase,
@@ -128,10 +129,36 @@ class ChasteSbmlModel:
 
         :return: A list of function definition dictionaries.
         """
-        return [
-            {"id": fd.getId(), "args": get_function_definition_arguments(fd)}
-            for fd in self._function_definitions
-        ]
+        function_definition_dicts = []
+        for fd in self._function_definitions:
+            fd_id = fd.getId()
+            args = get_function_definition_arguments(fd)
+            body = convert_function_body(fd.getBody())
+
+            function_definition_dicts.append(
+                {
+                    "id": fd_id,
+                    "args": args,
+                    "body": body,
+                }
+            )
+        return function_definition_dicts
+
+
+
+        #     impl = function_impl_template.render(
+        #         ode_name=self._ode_class_name,
+        #         fn=fn_id,
+        #         fn_args=", ".join(args_list),
+        #         fn_body_cpp=body_cpp,
+        #     )
+        #     function_impls.append(impl)
+        # functions_impl_str = "\n".join(function_impls)
+
+        # return [
+        #     {"id": fd.getId(), "args": get_function_definition_arguments(fd)}
+        #     for fd in self._function_definitions
+        # ]
 
     def _format_header_guard(self, filename: str) -> str:
         """Get the header guard for a file.

@@ -33,11 +33,10 @@ TysonNovak2001OdeSystem::~TysonNovak2001OdeSystem()
 {
 }
 
-
-    double TysonNovak2001OdeSystem::(A1, A2, A3, A4)
-    {
-        return 2 * A4 * A1 / (A2 - A1 + A3 * A2 + A4 * A1 + root(2, pow(A2 - A1 + A3 * A2 + A4 * A1, 2) - 4 * (A2 - A1) * A4 * A1));
-    }
+double TysonNovak2001OdeSystem::GK(double A1, double A2, double A3, double A4)
+{
+    return 2 * A4 * A1 / (A2 - A1 + A3 * A2 + A4 * A1 + root(2, pow(A2 - A1 + A3 * A2 + A4 * A1, 2) - 4 * (A2 - A1) * A4 * A1));
+}
 
 void TysonNovak2001OdeSystem::Init()
  {

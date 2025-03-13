@@ -72,7 +72,7 @@ public:
     ~TysonNovak2001OdeSystem();
 
     /* Declare model functions. */
-    double GK(A1, A2, A3, A4);
+    double GK(double A1, double A2, double A3, double A4);
 
     void Init();
 

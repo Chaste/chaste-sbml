@@ -64,7 +64,6 @@ class ChasteSbmlCellCycleModel(ChasteSbmlModel):
         return: The generated source file as a string.
         """
         # Sub-templates
-        function_impl_template = self._get_template("ccm/cpp/function_impl.cpp")
         state_param_template = self._get_template("ccm/cpp/state_param.cpp")
 
         # Species
@@ -158,22 +157,6 @@ class ChasteSbmlCellCycleModel(ChasteSbmlModel):
         ode_timescale_def_str = f"\n{TAB}".join(ode_timescale_defs)
         species_ode_init_str = f"\n{TAB}".join(species_ode_inits)
 
-        # Function Definitions
-        functions = self._function_definitions
-        function_impls = []
-        for fn in functions:
-            fn_id = fn.getId()
-            args_list = get_function_definition_arguments(fn)
-            body_cpp = convert_function_body(fn.getBody())
-            impl = function_impl_template.render(
-                ode_name=self._ode_class_name,
-                fn=fn_id,
-                fn_args=", ".join(args_list),
-                fn_body_cpp=body_cpp,
-            )
-            function_impls.append(impl)
-        functions_impl_str = "\n".join(function_impls)
-
         # Events
         num_events = self._model.getNumEvents()
         event_vector_init_str = ""
@@ -243,7 +226,7 @@ class ChasteSbmlCellCycleModel(ChasteSbmlModel):
             compartments=self._format_compartments(),
             event_defs=event_def_str,
             event_vector_init=event_vector_init_str,
-            functions_impl=functions_impl_str,
+            function_definitions=self._format_function_definitions(),
             model_hpp_file=self.ccm_hpp_filename,
             model_class_name=self._model_class_name,
             ode_def=ode_def_str,
