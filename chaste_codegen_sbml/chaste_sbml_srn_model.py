@@ -154,32 +154,6 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
         ode_timescale_def_str = f"\n{TAB}".join(ode_timescale_defs)
         species_ode_init_str = f"\n{TAB}".join(species_ode_inits)
 
-        # Reactions
-        reaction_defs = []
-        for reaction in self._reactions:
-            r_id = reaction.getId()
-            r_name = reaction.getName()
-            r_var = self._get_varname(reaction)
-
-            kinetic_law = reaction.getKineticLaw()
-            r_formula = convert_formula(kinetic_law.getFormula())
-
-            r_params = kinetic_law.getListOfParameters()
-            r_param_defs = []
-            for r_param in r_params:
-                rp_var = self._get_varname(r_param)
-                rp_value = r_param.getValue()
-
-                r_param_defs.append(f"double {rp_var} = {rp_value};")
-
-            rparam_defs_str = f"\n{TAB}".join(r_param_defs)
-
-            reaction_defs.append(f"// {r_name}")
-            reaction_defs.append(rparam_defs_str)
-            reaction_defs.append(f"double {r_var} = {r_formula};")
-
-        reaction_def_str = f"\n\n{TAB}".join(reaction_defs)
-
         # Function Definitions
         functions = self._function_definitions
         function_impls = []
@@ -213,7 +187,7 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
             ode_class_name=self._ode_class_name,
             ode_timescale_def=ode_timescale_def_str,
             parameters=self._format_parameters(),
-            reaction_def=reaction_def_str,
+            reactions=self._format_reactions(),
             rules=self._format_rules(),
             num_state_vars=self._num_state_vars,
             num_events=self._model.getNumEvents(),

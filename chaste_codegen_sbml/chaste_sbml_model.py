@@ -113,7 +113,7 @@ class ChasteSbmlModel:
         """
         self._outputs[filename] = code
 
-    def _format_compartments(self) -> list[dict[str, str]]:
+    def _format_compartments(self) -> list[dict[str, "Any"]]:
         """Get a list of compartment dictionaries for the model.
 
         :return: A list of compartment dictionaries.
@@ -123,7 +123,7 @@ class ChasteSbmlModel:
             for c in self._compartments
         ]
 
-    def _format_function_definitions(self) -> list[dict[str, str]]:
+    def _format_function_definitions(self) -> list[dict[str, "Any"]]:
         """Get a list of function definition dictionaries for the model.
 
         :return: A list of function definition dictionaries.
@@ -141,58 +141,98 @@ class ChasteSbmlModel:
         """
         return filename.upper().replace(".", "_") + "_"
 
-    def _format_parameters(self) -> list[dict[str, str]]:
+    def _format_parameters(self) -> list[dict[str, "Any"]]:
         """Get a list of parameter dictionaries for the model.
 
         :return: A list of parameter dictionaries.
         """
         parameter_dicts = []
-        state_index = 0
-        for p in self._parameters:
-            p_id = p.getId()
-            p_name = self._get_name(p)
-            p_var = self._get_varname(p)
+        next_state_index = 0
+        for param in self._parameters:
+            param_id = param.getId()
+            name = self._get_name(param)
+            varname = self._get_varname(param)
 
-            p_default = 0.0
-            p_is_special = any(x in p_name for x in ["wnt", "gamma", "ComplexTransit"])
-            if p_is_special:
+            default = 0.0
+            is_special = any(x in name for x in ["wnt", "gamma", "ComplexTransit"])
+            if is_special:
                 # Special strings in the parameter name
                 # TODO: Review how to handle these special parameters
-                if any(x in p_name for x in ["gamma", "ComplexTransit"]):
-                    p_default = 1.0
+                if any(x in name for x in ["gamma", "ComplexTransit"]):
+                    default = 1.0
                 # 0.0 for wnt and everything else
-            elif p.isSetValue():
-                p_default = p.getValue()
+            elif param.isSetValue():
+                default = param.getValue()
 
-            p_value = p.getValue() # TODO: if p.isSetValue() else p_default ?
-            p_units = p.getUnits() if p.isSetUnits() else "non-dim"
+            value = param.getValue()  # TODO: if param.isSetValue() else p_default ?
+            units = param.getUnits() if param.isSetUnits() else "non-dim"
 
-            p_is_defined = (p.isSetValue() or p_id in self._rules_dict) and not p_is_special
+            is_defined = (param.isSetValue() or param_id in self._rules_dict) and not is_special
 
-            p_is_state = self._is_state_parameter(p)
-            if p_is_state:
-                p_state_index = state_index
-                state_index += 1
+            is_state = self._is_state_parameter(param)
+            if is_state:
+                state_index = next_state_index
+                next_state_index += 1
             else:
-                p_state_index = None
+                state_index = None
 
             parameter_dicts.append(
                 {
-                    "default": p_default,
-                    "id": p_id,
-                    "is_defined": p_is_defined,
-                    "is_state": p_is_state,
-                    "name": p_name,
-                    "state_index": p_state_index,
-                    "units": p_units,
-                    "value": p_value,
-                    "varname": p_var,
+                    "default": default,
+                    "id": param_id,
+                    "is_defined": is_defined,
+                    "is_state": is_state,
+                    "name": name,
+                    "state_index": state_index,
+                    "units": units,
+                    "value": value,
+                    "varname": varname,
                 }
             )
-
         return parameter_dicts
 
-    def _format_rules(self) -> list[dict[str, str]]:
+    def _format_reactions(self) -> list[dict[str, "Any"]]:
+        """Get a list of reaction dictionaries for the model.
+
+        :return: A list of reaction dictionaries.
+        """
+        reaction_dicts = []
+        for reaction in self._reactions:
+            reaction_id = reaction.getId()
+            name = reaction.getName()
+            varname = self._get_varname(reaction)
+
+            kinetic_law = reaction.getKineticLaw()
+            rhs = convert_formula(kinetic_law.getFormula())
+
+            reaction_dict = {
+                "id": reaction_id,
+                "name": name,
+                "parameters": [],
+                "rhs": rhs,
+                "varname": varname,
+            }
+
+            parameters = kinetic_law.getListOfParameters()
+            for param in parameters:
+                param_id = param.getId()
+                param_name = self._get_name(param)
+                param_varname = self._get_varname(param)
+                param_value = param.getValue()  # TODO: What if not set?
+
+                reaction_dict["parameters"].append(
+                    {
+                        "id": param_id,
+                        "name": param_name,
+                        "varname": param_varname,
+                        "value": param_value,
+                    }
+                )
+
+            reaction_dicts.append(reaction_dict)
+        return reaction_dicts
+
+    def _format_rules(self) -> list[dict[str, "Any"]]:
         """Get a list of rule dictionaries for the model.
 
         :return: A list of rule dictionaries.

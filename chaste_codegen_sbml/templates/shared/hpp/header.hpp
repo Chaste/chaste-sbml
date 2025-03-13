@@ -79,7 +79,7 @@ inline void save_construct_data(
     ar & state_variables;
 }
 
-/* De-serialize constructor parameters and intiialise a {{ode_class_name}}. */
+/* De-serialize constructor parameters and intitialise a {{ode_class_name}}. */
 template <class Archive>
 inline void load_construct_data(
     Archive &ar, {{ode_class_name}} *t, const unsigned int file_version)

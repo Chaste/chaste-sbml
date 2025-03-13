@@ -56,7 +56,7 @@ void {{ode_class_name}}::EvaluateYDerivatives(double time, const std::vector<dou
     /* Define state variables */
     {{state_var_def}}
 
-    /* Define state parameters */
+    /* Define states: species */
     {{species_state_param_def}}
 
 {% if parameters %}
@@ -75,8 +75,19 @@ void {{ode_class_name}}::EvaluateYDerivatives(double time, const std::vector<dou
 {% endfor %}
 {% endif %}
 
+{% if reactions %}
     /* Define the reactions in this model. */
-    {{reaction_def}}
+{% for reaction in reactions %}
+{% if reaction["name"] %}
+    // {{reaction["name"]}}
+{% endif %}
+{% for parameter in reaction["parameters"] %}
+    double {{parameter["varname"]}} = {{parameter["value"]}}; // {{parameter["name"]}}
+{% endfor %}
+    double {{reaction["varname"]}} = {{reaction["rhs"]}};
+
+{% endfor %}
+{% endif %}
 
     {{ode_def}}
 
