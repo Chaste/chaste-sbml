@@ -27,8 +27,12 @@
 
 void {{ode_class_name}}::Init()
  {
+{% if compartments %}
     /* Initialise model compartments. */
-    {{compartment_init}}
+{% for compartment in compartments %}
+    {{compartment["id"]}} = {{compartment["size"]}}; // {{compartment["varname"]}}
+{% endfor %}
+{% endif %}
 
     /* Initialise model parameters. */
     {{parameter_init}}
@@ -49,8 +53,12 @@ void {{ode_class_name}}::EvaluateYDerivatives(double time, const std::vector<dou
 
     {{parameter_state_param_def}}
 
+{% if rules %}
     /* Define algebraic rules. */
-    {{rule_def}}
+{% for rule in rules %}
+    {{rule["id"]}} = {{rule["formula"]}};
+{% endfor %}
+{% endif %}
 
     /* Define the reactions in this model. */
     {{reaction_def}}

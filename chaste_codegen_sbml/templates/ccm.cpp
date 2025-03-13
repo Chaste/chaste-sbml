@@ -1,1 +1,1 @@
-{% include "ccm/cpp/body.cpp" %}
+{% include "shared/cpp/body.cpp" %}

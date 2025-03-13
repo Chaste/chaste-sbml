@@ -12,8 +12,8 @@
     {{species_defaults}}
 
 {% for parameter in parameters %}
-{% if not parameter["is_set"] %}
-    this->mParameters.push_back({{parameter["value"]}}); // {{parameter["varname"]}}
+{% if parameter["is_defined"] is false() %}
+    this->mParameters.push_back({{parameter["default"]}}); // {{parameter["varname"]}}
 {% endif %}
 {% endfor %}
 
@@ -62,7 +62,7 @@ void {{ode_class_name}}::EvaluateYDerivatives(double time, const std::vector<dou
 {% if parameters %}
     /* Define states: parameters. */
 {% for parameter in parameters %}
-{% if parameter["is_state"] %}
+{% if parameter["is_state"] is true() %}
     double {{parameter["id"]}} = this->mParameters[{{parameter["state_index"]}}]; // {{parameter["name"]}}
 {% endif %}
 {% endfor %}
@@ -124,9 +124,10 @@ void CellwiseOdeSystemInformation<{{ode_class_name}}>::Initialise()
     /* Define states: parameters. */
     // Parameters without set values must be externally defined
 {% for parameter in parameters %}
-{% if not parameter["is_set"] %}
+{% if parameter["is_defined"] is false() %}
     this->mParameterNames.push_back("{{parameter['varname']}}");
     this->mParameterUnits.push_back("{{parameter['units']}}");
+
 {% endif %}
 {% endfor %}
 {% endif %}

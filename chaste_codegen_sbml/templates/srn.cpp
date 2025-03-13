@@ -1,1 +1,1 @@
-{% include "srn/cpp/body.cpp" %}
+{% include "shared/cpp/body.cpp" %}

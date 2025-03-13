@@ -67,28 +67,6 @@ class ChasteSbmlCellCycleModel(ChasteSbmlModel):
         function_impl_template = self._get_template("ccm/cpp/function_impl.cpp")
         state_param_template = self._get_template("ccm/cpp/state_param.cpp")
 
-        # Compartments
-        compartment_inits = []
-        for compartment in self._compartments:
-            c_id = compartment.getId()
-            c_var = self._get_varname(compartment)
-            c_size = compartment.getSize()
-
-            compartment_inits.append(f"{c_id} = {c_size}; // {c_var}")
-
-        compartment_init_str = f"\n{TAB}".join(compartment_inits)
-
-        # Rules
-        rule_defs = []
-
-        for rule in self._rules:
-            r_id = rule.getId()
-            formula = convert_formula(rule.getFormula())
-
-            rule_defs.append(f"{r_id} = {formula};")
-
-        rule_def_str = f"\n{TAB}".join(rule_defs)
-
         # Species
         # time_multiplier = self._get_timescale_multiplier()
         species_defaults = []
@@ -179,46 +157,6 @@ class ChasteSbmlCellCycleModel(ChasteSbmlModel):
         ode_def_str = f"\n{TAB}".join(ode_defs)
         ode_timescale_def_str = f"\n{TAB}".join(ode_timescale_defs)
         species_ode_init_str = f"\n{TAB}".join(species_ode_inits)
-
-        # Parameters
-        param_defaults = []
-        param_inits = []
-        state_params = []
-        param_ode_inits = []
-        for param in self._parameters:
-            p_id = param.getId()
-            p_var = self._get_varname(param)
-
-            unset = (not param.isSetValue()) and (p_id not in self._rules_dict)
-            special = p_var and any(x in p_var for x in ["wnt", "gamma", "ComplexTransit"])
-
-            if unset or special:
-                def_val = 0.0
-                if special and "gamma" in p_var or "ComplexTransit" in p_var:
-                    def_val = 1.0
-                param_defaults.append(f"this->mParameters.push_back({def_val}); // {p_var}")
-
-            p_value = param.getValue()
-            param_inits.append(f"{p_id} = {p_value};")
-
-            if self._is_state_parameter(param):
-                state_param = state_param_template.render(
-                    par_id=p_id,
-                    par_num=len(state_params),
-                    par_name=p_var,
-                )
-                state_params.append(state_param)
-
-            # Parameters without set values must be externally defined
-            if unset or special:
-                init_units = species.getUnits() if param.isSetUnits() else "non-dim"
-                param_ode_inits.append(f'this->mParameterNames.push_back("{p_var}");')
-                param_ode_inits.append(f'this->mParameterUnits.push_back("{init_units}");')
-
-        parameter_defaults_str = f"\n{TAB}".join(param_defaults)
-        parameter_init_str = f"\n{TAB}".join(param_inits)
-        parameter_state_param_def_str = f"\n{TAB}".join(state_params)
-        parameter_ode_init_str = f"\n{TAB}".join(param_ode_inits)
 
         # Reactions
         reaction_defs = []
@@ -328,7 +266,7 @@ class ChasteSbmlCellCycleModel(ChasteSbmlModel):
 
         # Create inputs for the source file template
         cpp_vars = dict(
-            compartment_init=compartment_init_str,
+            compartments=self._format_compartments(),
             event_defs=event_def_str,
             event_vector_init=event_vector_init_str,
             functions_impl=functions_impl_str,
@@ -337,12 +275,9 @@ class ChasteSbmlCellCycleModel(ChasteSbmlModel):
             ode_def=ode_def_str,
             ode_class_name=self._ode_class_name,
             ode_timescale_def=ode_timescale_def_str,
-            parameter_defaults=parameter_defaults_str,
-            parameter_init=parameter_init_str,
-            parameter_ode_init=parameter_ode_init_str,
-            parameter_state_param_def=parameter_state_param_def_str,
+            parameters=self._format_parameters(),
             reaction_def=reaction_def_str,
-            rule_def=rule_def_str,
+            rules=self._format_rules(),
             num_state_vars=self._num_state_vars,
             num_events=self._model.getNumEvents(),
             species_defaults=species_defaults_str,

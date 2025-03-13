@@ -101,8 +101,7 @@ class ChasteSbmlModel:
     def _generate(self) -> None:
         """Generate Chaste code for the model.
         This method should be implemented by subclasses.
-        Generated code should be stored in the self._outputs dictionary as
-        { filename: code } pairs.
+        Generated code should be stored in the outputs using _add_output.
         """
         return
 
@@ -119,7 +118,20 @@ class ChasteSbmlModel:
 
         :return: A list of compartment dictionaries.
         """
-        return [{"id": c.getId(), "varname": self._get_varname(c)} for c in self._compartments]
+        return [
+            {"id": c.getId(), "varname": self._get_varname(c), "size": c.getSize()}
+            for c in self._compartments
+        ]
+
+    def _format_function_definitions(self) -> list[dict[str, str]]:
+        """Get a list of function definition dictionaries for the model.
+
+        :return: A list of function definition dictionaries.
+        """
+        return [
+            {"id": fd.getId(), "args": get_function_definition_arguments(fd)}
+            for fd in self._function_definitions
+        ]
 
     def _format_header_guard(self, filename: str) -> str:
         """Get the header guard for a file.
@@ -134,17 +146,58 @@ class ChasteSbmlModel:
 
         :return: A list of parameter dictionaries.
         """
-        return [{"id": p.getId(), "varname": self._get_varname(p)} for p in self._parameters]
+        parameter_dicts = []
+        state_index = 0
+        for p in self._parameters:
+            p_id = p.getId()
+            p_name = self._get_name(p)
+            p_var = self._get_varname(p)
 
-    def _format_function_definitions(self) -> list[dict[str, str]]:
-        """Get a list of function definition dictionaries for the model.
+            p_default = 0.0
+            p_is_special = any(x in p_name for x in ["wnt", "gamma", "ComplexTransit"])
+            if p_is_special:
+                # Special strings in the parameter name
+                # TODO: Review how to handle these special parameters
+                if any(x in p_name for x in ["gamma", "ComplexTransit"]):
+                    p_default = 1.0
+                # 0.0 for wnt and everything else
+            elif p.isSetValue():
+                p_default = p.getValue()
 
-        :return: A list of function definition dictionaries.
+            p_value = p.getValue() # TODO: if p.isSetValue() else p_default ?
+            p_units = p.getUnits() if p.isSetUnits() else "non-dim"
+
+            p_is_defined = (p.isSetValue() or p_id in self._rules_dict) and not p_is_special
+
+            p_is_state = self._is_state_parameter(p)
+            if p_is_state:
+                p_state_index = state_index
+                state_index += 1
+            else:
+                p_state_index = None
+
+            parameter_dicts.append(
+                {
+                    "default": p_default,
+                    "id": p_id,
+                    "is_defined": p_is_defined,
+                    "is_state": p_is_state,
+                    "name": p_name,
+                    "state_index": p_state_index,
+                    "units": p_units,
+                    "value": p_value,
+                    "varname": p_var,
+                }
+            )
+
+        return parameter_dicts
+
+    def _format_rules(self) -> list[dict[str, str]]:
+        """Get a list of rule dictionaries for the model.
+
+        :return: A list of rule dictionaries.
         """
-        return [
-            {"id": fd.getId(), "args": get_function_definition_arguments(fd)}
-            for fd in self._function_definitions
-        ]
+        return [{"id": r.getId(), "formula": convert_formula(r.getFormula())} for r in self._rules]
 
     def _get_hpp_vars(self, filename: str) -> dict[str, "Any"]:
         """Generate the template variables for the model hpp file.
