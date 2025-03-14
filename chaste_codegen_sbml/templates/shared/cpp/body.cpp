@@ -11,13 +11,13 @@
 
 {% for sp in species %}
 {% if sp["is_state_variable"] is true() %}
-    SetDefaultInitialCondition({{ sp["state_variable_index"] }}, {{ sp["concentration"] }}); // {{ sp["name"] }}"
+    SetDefaultInitialCondition({{ sp["state_variable_index"] }}, {{ sp["concentration"] }}); // {{ sp["name"] }}
 {% endif %}
 {% endfor %}
 
 {% for param in parameters %}
 {% if param["is_defined"] is false() %}
-    this->mParameters.push_back({{ param["default"] }}); // {{ param["varname"] }}
+    this->mParameters.push_back({{ param["default"] }}); // {{ param["id"] }}
 {% endif %}
 {% endfor %}
 
@@ -32,21 +32,18 @@
 }
 
 {% for fd in function_definitions %}
-{% if fd["args"] %}{% set args = "double " ~ fd["args"] | join(", double ") %}{% endif %}
-double {{ ode_class_name }}::{{ fd["id"] }}({{ args }})
+double {{ ode_class_name }}::{{ fd["id"] }}({{ fd["args"] }})
 {
     return {{ fd["body"]}};
 }
 {% endfor %}
-
-{{ functions_impl }}
 
 void {{ ode_class_name }}::Init()
 {
 {% if compartments %}
     /* Initialise model compartments. */
 {% for comp in compartments %}
-    {{ comp["id"] }} = {{ comp["size"] }}; // {{ comp["varname"] }}
+    {{ comp["id"] }} = {{ comp["size"] }};
 {% endfor %}
 {% endif %}
 
@@ -65,63 +62,50 @@ void {{ ode_class_name }}::Init()
 
 void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-{% if species %}
     /* Define state variables */
 {% for sp in species %}
 {% if sp["is_state_variable"] is true() %}
     double {{ sp["id"] }} = rY[{{ sp["state_variable_index"] }}]; // {{ sp["name"] }}
 {% endif %}
 {% endfor %}
-{% endif %}
 
-{% if species %}
-    /* Define state parameters (Species). */
+    /* Define state parameters. */
 {% for sp in species %}
 {% if sp["is_state_parameter"] is true() %}
     double {{ sp["id"] }} = this->mParameters[{{ sp["state_parameter_index"] }}]; // {{ sp["name"] }}
 {% endif %}
 {% endfor %}
-{% endif %}
 
-{% if parameters %}
-    /* Define state parameters (Parameters). */
 {% for param in parameters %}
 {% if param["is_state_parameter"] is true() %}
     double {{ param["id"] }} = this->mParameters[{{ param["state_parameter_index"] }}]; // {{ param["name"] }}
 {% endif %}
 {% endfor %}
-{% endif %}
 
-{% if rules %}
     /* Define algebraic rules. */
 {% for rule in rules %}
     {{ rule["id"] }} = {{ rule["formula"] }};
 {% endfor %}
-{% endif %}
 
-{% if reactions %}
     /* Define the reactions in this model. */
 {% for reaction in reactions %}
 {% if reaction["name"] %}
     // {{ reaction["name"] }}
 {% endif %}
 {% for param in reaction["parameters"] %}
-    double {{ param["varname"] }} = {{ param["value"] }}; // {{ param["name"] }}
+    double {{ param["id"] }} = {{ param["value"] }}; // {{ param["name"] }}
 {% endfor %}
     double {{ reaction["varname"] }} = {{ reaction["rhs"] }};
 
 {% endfor %}
-{% endif %}
 
 {% for sp in species %}
 {% if sp["ode"] %}
-    {{ sp["ode"]["lhs"] }} = {{ sp["ode"]["rhs"] }}; // d{{ sp["varname"] }}/dt
+    {{ sp["ode"]["lhs"] }} = {{ sp["ode"]["rhs"] }}; // d{{ sp["name"] }}/dt
 {% endif %}
 {% endfor %}
 
     /* Account for the differences in timescales. */
-    {{ ode_timescale_def }}
-
 }
 
 {% if events %}
@@ -135,11 +119,12 @@ void {{ ode_class_name }}::CheckAndUpdateEvents(double time, const std::vector<d
 {
     std::vector<double> dy(rY.size()); // Initialise derivatives vector
     EvaluateYDerivatives(time, rY, dy);
+
 {% for event in events %}
     if ({{ event["trigger"] }})
     {
 {% for assignment in event["assignments"] %}
-        {{ assignment }}
+        {{ assignment["lhs"] }} = double({{ assignment["rhs"] }});
 {% endfor %}
         eventsSatisfied[{{ loop.index0 }}] = true;
     }
@@ -178,17 +163,15 @@ void CellwiseOdeSystemInformation<{{ ode_class_name }}>::Initialise()
 {% endif %}
 {% endfor %}
 
-{% if parameters %}
-    /* Define states: parameters. */
+    /* Define state parameters. */
     // Parameters without set values must be externally defined
 {% for param in parameters %}
 {% if param["is_defined"] is false() %}
-    this->mParameterNames.push_back("{{ param['varname'] }}");
+    this->mParameterNames.push_back("{{ param['id'] }}");
     this->mParameterUnits.push_back("{{ param['units'] }}");
 
 {% endif %}
 {% endfor %}
-{% endif %}
     this->mInitialised = true;
 }
 

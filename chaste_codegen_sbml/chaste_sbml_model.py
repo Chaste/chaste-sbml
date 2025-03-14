@@ -149,26 +149,6 @@ class ChasteSbmlModel:
             for c in self._compartments
         ]
 
-    def _format_function_definitions(self) -> list[dict[str, "Any"]]:
-        """Get a list of function definition dictionaries for the model.
-
-        :return: A list of function definition dictionaries.
-        """
-        function_definition_dicts = []
-        for fd in self._function_definitions:
-            fd_id = fd.getId()
-            args = get_function_definition_arguments(fd)
-            body = convert_function_body(fd.getBody())
-
-            function_definition_dicts.append(
-                {
-                    "id": fd_id,
-                    "args": args,
-                    "body": body,
-                }
-            )
-        return function_definition_dicts
-
     def _format_events(self) -> list[dict[str, "Any"]]:
         """Get a list of event dictionaries for the model.
 
@@ -182,12 +162,12 @@ class ChasteSbmlModel:
                 if node.isNumber():
                     token = str(node.getValue())
                 elif node.isName():
-                    token = node.getName()
                     # Replace species variable name with Chaste equivalent.
-                    for ode_index, species_id in enumerate(self._odes_dict):
-                        if token == species_id:
-                            token = f"rY[{ode_index}]"
-                            break
+                    token = node.getName()
+                    index = self._get_state_variable_index(token)
+                    if index is not None:
+                        token = f"rY[{index}]"
+
                 else:
                     token = convert_formula(node.getName())
                 tokens.append(token)
@@ -197,23 +177,23 @@ class ChasteSbmlModel:
             for assignment in event.getListOfEventAssignments():
                 # Replace species variable name with Chaste equivalent.
                 lhs = assignment.getVariable()
-                for ode_index, species_id in enumerate(self._odes_dict):
-                    if lhs == species_id:
-                        lhs = f"this->rGetStateVariables()[{ode_index}]"
-                        break
+                index = self._get_state_variable_index(lhs)
+                if index is not None:
+                    lhs = f"this->rGetStateVariables()[{index}]"
 
                 formula = convert_formula(formulaToString(assignment.getMath()))
                 formula_tokens = formula.split(" ")
                 tokens = []
                 for token in formula_tokens:
-                    for ode_index, species_id in enumerate(self._odes_dict):
-                        if token == species_id:
-                            token = f"rY[{ode_index}]"
-                            break
+                    # Replace species variable name with Chaste equivalent.
+                    index = self._get_state_variable_index(token)
+                    if index is not None:
+                        token = f"rY[{index}]"
                     tokens.append(token)
                 rhs = " ".join(tokens)
 
-                assignment_formulas.append(f"{lhs} = double({rhs});")
+                if lhs and rhs:
+                    assignment_formulas.append({"lhs": lhs, "rhs": rhs})
 
             event_dicts.append(
                 {
@@ -222,6 +202,27 @@ class ChasteSbmlModel:
                 }
             )
         return event_dicts
+
+    def _format_function_definitions(self) -> list[dict[str, "Any"]]:
+        """Get a list of function definition dictionaries for the model.
+
+        :return: A list of function definition dictionaries.
+        """
+        function_definition_dicts = []
+        for fd in self._function_definitions:
+            fd_id = fd.getId()
+            arg_list = get_function_definition_arguments(fd)
+            args = ", ".join(map(lambda x: f"double {x}", arg_list))
+            body = convert_function_body(fd.getBody())
+
+            function_definition_dicts.append(
+                {
+                    "id": fd_id,
+                    "args": args,
+                    "body": body,
+                }
+            )
+        return function_definition_dicts
 
     def _format_header_guard(self, filename: str) -> str:
         """Get the header guard for a file.

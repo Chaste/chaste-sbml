@@ -15,46 +15,46 @@ class TysonNovak2001OdeSystem : public AbstractOdeSystem
 private:
 
     /* Declare model compartments. */
-    double cell; // cell
+    double cell;
 
     /* Declare model parameters. */
-    double k1; // k1
-    double k2p; // k2p
-    double k2pp; // k2pp
-    double k2ppp; // k2ppp
-    double k3p; // k3p
-    double k3pp; // k3pp
-    double J3; // J3
-    double k4; // k4
-    double k5p; // k5p
-    double k5pp; // k5pp
-    double J5; // J5
-    double k6; // k6
-    double n; // n
-    double k7; // k7
-    double J7; // J7
-    double k8; // k8
-    double J8; // J8
-    double k9; // k9
-    double k10; // k10
-    double mu; // mu
-    double k11; // k11
-    double k12p; // k12p
-    double k12pp; // k12pp
-    double mmax; // mmax
-    double k12ppp; // k12ppp
-    double Keq; // Keq
-    double k13; // k13
-    double k14; // k14
-    double k15p; // k15p
-    double k15pp; // k15pp
-    double k16p; // k16p
-    double k16pp; // k16pp
-    double J15; // J15
-    double J16; // J16
-    double k4p; // k4p
-    double J4; // J4
-    double TF; // TF
+    double k1;
+    double k2p;
+    double k2pp;
+    double k2ppp;
+    double k3p;
+    double k3pp;
+    double J3;
+    double k4;
+    double k5p;
+    double k5pp;
+    double J5;
+    double k6;
+    double n;
+    double k7;
+    double J7;
+    double k8;
+    double J8;
+    double k9;
+    double k10;
+    double mu;
+    double k11;
+    double k12p;
+    double k12pp;
+    double mmax;
+    double k12ppp;
+    double Keq;
+    double k13;
+    double k14;
+    double k15p;
+    double k15pp;
+    double k16p;
+    double k16pp;
+    double J15;
+    double J16;
+    double k4p;
+    double J4;
+    double TF;
 
     friend class boost::serialization::access;
     template <class Archive>
@@ -101,7 +101,7 @@ inline void save_construct_data(
     ar & state_variables;
 }
 
-/* De-serialize constructor parameters and intiialise a TysonNovak2001OdeSystem. */
+/* De-serialize constructor parameters and intitialise a TysonNovak2001OdeSystem. */
 template <class Archive>
 inline void load_construct_data(
     Archive &ar, TysonNovak2001OdeSystem *t, const unsigned int file_version)

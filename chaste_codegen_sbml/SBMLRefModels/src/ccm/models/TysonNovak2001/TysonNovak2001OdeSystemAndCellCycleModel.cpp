@@ -21,7 +21,6 @@ TysonNovak2001OdeSystem::TysonNovak2001OdeSystem(std::vector<double> stateVariab
     SetDefaultInitialCondition(9, 0.001); // CKIt
     SetDefaultInitialCondition(10, 0.001); // SK
 
-    
 
     if (stateVariables != std::vector<double>())
     {
@@ -39,9 +38,9 @@ double TysonNovak2001OdeSystem::GK(double A1, double A2, double A3, double A4)
 }
 
 void TysonNovak2001OdeSystem::Init()
- {
+{
     /* Initialise model compartments. */
-    cell = 1.0; // cell
+    cell = 1.0;
 
     /* Initialise model parameters. */
     k1 = 0.04;
@@ -84,12 +83,10 @@ void TysonNovak2001OdeSystem::Init()
 
     /* Initialise vector to check if events have been triggered. */
     eventsSatisfied.resize(1, false);
-
 }
 
 void TysonNovak2001OdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-
     /* Define state variables */
     double CycBt = rY[0]; // CycBt
     double CycB = rY[1]; // CycB
@@ -103,10 +100,8 @@ void TysonNovak2001OdeSystem::EvaluateYDerivatives(double time, const std::vecto
     double CKIt = rY[9]; // CKIt
     double SK = rY[10]; // SK
 
-    /* Define state parameters */
-    
+    /* Define state parameters. */
 
-    
 
     /* Define algebraic rules. */
     CycB = CycBt - 2 * CycBt * CKIt / (CycBt + CKIt + 1 / Keq + pow(pow(CycBt + CKIt + 1 / Keq, 2) - 4 * CycBt * CKIt, 1 / 2));
@@ -116,129 +111,70 @@ void TysonNovak2001OdeSystem::EvaluateYDerivatives(double time, const std::vecto
 
     /* Define the reactions in this model. */
     // CycBt synthesis
-
-    
-
     double CycBt_synthesis = k1;
 
     // CycBt degradation
-
-    
-
     double CycBdegradation = k2p * CycBt;
 
     // CycBt degradation via Cdh1
-
-    
-
     double CycBdegradationviaCdh1 = k2pp * Cdh1 * CycBt;
 
     // CycBt degradation via Cdc20a
-
-    
-
     double CycBtdegradationviaCdc20a = k2ppp * Cdc20a * CycBt;
 
     // Cdh1 synthesis
-
-    
-
     double Cdh1synthesis = (k3p + k3pp * Cdc20a) * (1 - Cdh1) / (J3 + 1 - Cdh1);
 
     // Cdh1 degradation
-
-    
-
     double Cdh1degradation = (k4p * SK * Cdh1 + k4 * m * CycB * Cdh1) / (J4 + Cdh1);
 
     // Cdc20t synthesis
-
-    
-
     double Cdc20tsynthesis = k5p + k5pp * pow(CycB * m / J5, n) / (1 + pow(CycB * m / J5, n));
 
     // Cdc20t degradation
-
-    
-
     double Cdc20t_deg = k6 * Cdc20t;
 
     // Cdc20 activation
-
-    
-
     double Cdc20activation = k7 * IEP * (Cdc20t - Cdc20a) / (J7 + Cdc20t - Cdc20a);
 
     // Cdc20a inhibition
-
-    
-
     double Cdc20ainhibition = k8 * Mad * Cdc20a / (J8 + Cdc20a);
 
     // Cdc20a degradation
-
-    
-
     double Cdc20adegradation = k6 * Cdc20a;
 
     // IEP synthesis
-
-    
-
     double IEPsynthesis = k9 * m * CycB * (1 - IEP);
 
     // IEP degradation
-
-    
-
     double IEPdegradation = k10 * IEP;
 
     // growth
-
-    
-
     double growth = mu * m * (1 - m / mmax);
 
     // CKIt synthesis
-
-    
-
     double CKItsynthesis = k11;
 
     // CKIt degradation
-
-    
-
     double CKIdegradation = k12p * CKIt;
 
     // CKIt phosphorilation via SK
-
-    
-
     double CKItphosphorilationviaSK = k12pp * SK * CKIt;
 
     // CKIt Trimer sequestred
-
-    
-
     double eq_7 = k12ppp * m * CycB * CKIt;
 
     // SK synthesis
-
-    
-
     double SKsynthesis = k13 * TF;
 
     // SK degradation
-
-    
-
     double SKdegradation = k14 * SK;
 
+
     rDY[0] = (CycBt_synthesis - CycBdegradation - CycBdegradationviaCdh1 - CycBtdegradationviaCdc20a) / cell; // dCycBt/dt
-    rDY[1] = (rDY[0] + rDY[0] + rDY[9] + rDY[9] + rDY[9] + rDY[0]) / cell; // dCycB/dt;
+    rDY[1] = (rDY[0] + rDY[0] + rDY[9] + rDY[9] + rDY[9] + rDY[0]) / cell; // dCycB/dt
     rDY[2] = (Cdc20activation - Cdc20ainhibition - Cdc20adegradation) / cell; // dCdc20a/dt
-    rDY[3] = (rDY[0] + rDY[9] + rDY[9] + rDY[9] + rDY[0]) / cell; // dTrimer/dt;
+    rDY[3] = (rDY[0] + rDY[9] + rDY[9] + rDY[9] + rDY[0]) / cell; // dTrimer/dt
     rDY[4] = (Cdh1synthesis - Cdh1degradation) / cell; // dCdh1/dt
     rDY[5] = (growth) / cell; // dm/dt
     rDY[6] = (Cdc20tsynthesis - Cdc20t_deg) / cell; // dCdc20t/dt
@@ -247,8 +183,6 @@ void TysonNovak2001OdeSystem::EvaluateYDerivatives(double time, const std::vecto
     rDY[9] = (SKsynthesis - SKdegradation) / cell; // dSK/dt
 
     /* Account for the differences in timescales. */
-    
-
 }
 
 bool TysonNovak2001OdeSystem::CalculateStoppingEvent(double time, const std::vector<double> & rY)
@@ -261,13 +195,12 @@ void TysonNovak2001OdeSystem::CheckAndUpdateEvents(double time, const std::vecto
 {
     std::vector<double> dy(rY.size()); // Initialise derivatives vector
     EvaluateYDerivatives(time, rY, dy);
-    
-    if (CycB < 0.1)
+
+    if (rY[1] < 0.1)
     {
         this->rGetStateVariables()[5] = double(rY[5] / 2);
         eventsSatisfied[0] = true;
     }
-        
 }
 
 bool TysonNovak2001OdeSystem::AreAllEventsSatisfied(double time, const std::vector<double>& rY)
@@ -291,39 +224,50 @@ void CellwiseOdeSystemInformation<TysonNovak2001OdeSystem>::Initialise()
     this->mVariableNames.push_back("CycBt");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.001);
+
     this->mVariableNames.push_back("CycB");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.0);
+
     this->mVariableNames.push_back("Cdc20a");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.001);
+
     this->mVariableNames.push_back("Trimer");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.0);
+
     this->mVariableNames.push_back("Cdh1");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.001);
+
     this->mVariableNames.push_back("m");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.5);
+
     this->mVariableNames.push_back("Cdc20t");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.001);
+
     this->mVariableNames.push_back("IEP");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.001);
+
     this->mVariableNames.push_back("Mad");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.0);
+
     this->mVariableNames.push_back("CKIt");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.001);
+
     this->mVariableNames.push_back("SK");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.001);
 
-    
 
+    /* Define state parameters. */
+    // Parameters without set values must be externally defined
     this->mInitialised = true;
 }
 

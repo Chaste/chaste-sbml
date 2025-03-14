@@ -14,19 +14,15 @@ class {{ ode_class_name }} : public AbstractOdeSystem
 {
 private:
 
-{% if compartments %}
     /* Declare model compartments. */
 {% for compartment in compartments %}
-    double {{ compartment["id"] }}; // {{ compartment["varname"] }}
+    double {{ compartment["id"] }};
 {% endfor %}
-{% endif %}
 
-{% if parameters %}
     /* Declare model parameters. */
 {% for parameter in parameters %}
-    double {{ parameter["id"] }}; // {{ parameter["varname"] }}
+    double {{ parameter["id"] }};
 {% endfor %}
-{% endif %}
 
     friend class boost::serialization::access;
     template <class Archive>
@@ -43,13 +39,10 @@ public:
     /* Destructor. */
     ~{{ ode_class_name }}();
 
-{% if function_definitions %}
     /* Declare model functions. */
 {% for fd in function_definitions %}
-{% if fd["args"] %}{% set args = "double " ~ fd["args"] | join(", double ") %}{% endif %}
-    double {{ fd["id"] }}({{ args }});
+    double {{ fd["id"] }}({{ fd["args"] }});
 {% endfor %}
-{% endif %}
 
     void Init();
 
