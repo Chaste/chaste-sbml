@@ -9,11 +9,15 @@
 
     Init();
 
-    {{ species_defaults }}
+{% for sp in species %}
+{% if sp["is_state_variable"] is true() %}
+    SetDefaultInitialCondition({{ sp["state_variable_index"] }}, {{ sp["concentration"] }}); // {{ sp["name"] }}"
+{% endif %}
+{% endfor %}
 
-{% for parameter in parameters %}
-{% if parameter["is_defined"] is false() %}
-    this->mParameters.push_back({{ parameter["default"] }}); // {{ parameter["varname"] }}
+{% for param in parameters %}
+{% if param["is_defined"] is false() %}
+    this->mParameters.push_back({{ param["default"] }}); // {{ param["varname"] }}
 {% endif %}
 {% endfor %}
 
@@ -41,15 +45,15 @@ void {{ ode_class_name }}::Init()
 {
 {% if compartments %}
     /* Initialise model compartments. */
-{% for compartment in compartments %}
-    {{ compartment["id"] }} = {{ compartment["size"] }}; // {{ compartment["varname"] }}
+{% for comp in compartments %}
+    {{ comp["id"] }} = {{ comp["size"] }}; // {{ comp["varname"] }}
 {% endfor %}
 {% endif %}
 
 {% if parameters %}
     /* Initialise model parameters. */
-{% for parameter in parameters %}
-    {{ parameter["id"] }} = {{ parameter["value"] }};
+{% for param in parameters %}
+    {{ param["id"] }} = {{ param["value"] }};
 {% endfor %}
 {% endif %}
 
@@ -60,18 +64,29 @@ void {{ ode_class_name }}::Init()
 
 void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-
+{% if species %}
     /* Define state variables */
-    {{ state_var_def }}
+{% for sp in species %}
+{% if sp["is_state_variable"] is true() %}
+    double {{ sp["id"] }} = rY[{{ sp["state_variable_index"] }}]; // {{ sp["name"] }}
+{% endif %}
+{% endfor %}
+{% endif %}
 
-    /* Define states: species */
-    {{ species_state_param_def }}
+{% if species %}
+    /* Define state parameters (Species). */
+{% for sp in species %}
+{% if sp["is_state_parameter"] is true() %}
+    double {{ sp["id"] }} = this->mParameters[{{ sp["state_parameter_index"] }}]; // {{ sp["name"] }}
+{% endif %}
+{% endfor %}
+{% endif %}
 
 {% if parameters %}
-    /* Define states: parameters. */
-{% for parameter in parameters %}
-{% if parameter["is_state"] is true() %}
-    double {{ parameter["id"] }} = this->mParameters[{{ parameter["state_index"] }}]; // {{ parameter["name"] }}
+    /* Define state parameters (Parameters). */
+{% for param in parameters %}
+{% if param["is_state_parameter"] is true() %}
+    double {{ param["id"] }} = this->mParameters[{{ param["state_parameter_index"] }}]; // {{ param["name"] }}
 {% endif %}
 {% endfor %}
 {% endif %}
@@ -89,15 +104,19 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
 {% if reaction["name"] %}
     // {{ reaction["name"] }}
 {% endif %}
-{% for parameter in reaction["parameters"] %}
-    double {{ parameter["varname"] }} = {{ parameter["value"] }}; // {{ parameter["name"] }}
+{% for param in reaction["parameters"] %}
+    double {{ param["varname"] }} = {{ param["value"] }}; // {{ param["name"] }}
 {% endfor %}
     double {{ reaction["varname"] }} = {{ reaction["rhs"] }};
 
 {% endfor %}
 {% endif %}
 
-    {{ ode_def }}
+{% for sp in species %}
+{% if sp["ode"] %}
+    {{ sp["ode"]["lhs"] }} = {{ sp["ode"]["rhs"] }}; // d{{ sp["varname"] }}/dt
+{% endif %}
+{% endfor %}
 
     /* Account for the differences in timescales. */
     {{ ode_timescale_def }}
@@ -137,20 +156,30 @@ bool {{ ode_class_name }}::AreAllEventsSatisfied(double time, const std::vector<
 template <>
 void CellwiseOdeSystemInformation<{{ ode_class_name }}>::Initialise()
 {
-    {{ species_ode_init }}
+{% for sp in species %}
+{% if sp["is_state_variable"] is true() %}
+    this->mVariableNames.push_back("{{ sp['name'] }}");
+    this->mVariableUnits.push_back("{{ sp['units'] }}");
+    this->mInitialConditions.push_back({{ sp['concentration'] }});
+
+{% elif sp["is_state_parameter"] is true() %}
+    this->mParameterNames.push_back("{{ sp['name'] }}");
+    this->mParameterUnits.push_back("{{ sp['units'] }}");
+
+{% endif %}
+{% endfor %}
 
 {% if parameters %}
     /* Define states: parameters. */
     // Parameters without set values must be externally defined
-{% for parameter in parameters %}
-{% if parameter["is_defined"] is false() %}
-    this->mParameterNames.push_back("{{ parameter['varname'] }}");
-    this->mParameterUnits.push_back("{{ parameter['units'] }}");
+{% for param in parameters %}
+{% if param["is_defined"] is false() %}
+    this->mParameterNames.push_back("{{ param['varname'] }}");
+    this->mParameterUnits.push_back("{{ param['units'] }}");
 
 {% endif %}
 {% endfor %}
 {% endif %}
-
     this->mInitialised = true;
 }
 

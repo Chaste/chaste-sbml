@@ -10,9 +10,10 @@ from libsbml import Parameter, SBMLReader, Species
 
 from ._config import ODE_SUFFIX, SHORT_NAME_LEN
 from ._utils import (
-    convert_function_body,
     convert_formula,
+    convert_function_body,
     get_function_definition_arguments,
+    get_species_concentration,
     varname_camelcase,
     varname_sanitize,
 )
@@ -35,6 +36,8 @@ class ChasteSbmlModel:
         trim_blocks=True,
         lstrip_blocks=True,
     )
+
+    SPECIAL_PARAMETER_NAMES = ["wnt", "gamma", "ComplexTransit"]
 
     # -- PUBLIC ---------------------------------------
 
@@ -76,7 +79,10 @@ class ChasteSbmlModel:
         self._rules_dict = None
         self._update_rules_dict()
 
-        self._num_state_vars = len([s for s in self._species if not self._is_state_parameter(s)])
+        self._state_parameters = None
+        self._state_variables = None
+        self._update_state()
+        self._num_state_vars = len(self._state_variables)
 
         self._outputs = {}  # { filename: code }
 
@@ -105,6 +111,24 @@ class ChasteSbmlModel:
         Generated code should be stored in the outputs using _add_output.
         """
         return
+
+    def _add_state_parameter(self, obj_id: "str") -> None:
+        """Add a state parameter to the model data.
+
+        :param obj_id: The id of the Parameter / Species.
+        """
+        if obj_id not in self._state_parameters:
+            index = len(self._state_parameters)
+            self._state_parameters[obj_id] = index
+
+    def _add_state_variable(self, obj_id: "str") -> None:
+        """Add a state variable to the model data.
+
+        :param obj_id: The id of the Species.
+        """
+        if obj_id not in self._state_variables:
+            index = len(self._state_variables)
+            self._state_variables[obj_id] = index
 
     def _add_output(self, filename: str, code: str) -> None:
         """Add generated code to the outputs dictionary.
@@ -144,22 +168,6 @@ class ChasteSbmlModel:
             )
         return function_definition_dicts
 
-
-
-        #     impl = function_impl_template.render(
-        #         ode_name=self._ode_class_name,
-        #         fn=fn_id,
-        #         fn_args=", ".join(args_list),
-        #         fn_body_cpp=body_cpp,
-        #     )
-        #     function_impls.append(impl)
-        # functions_impl_str = "\n".join(function_impls)
-
-        # return [
-        #     {"id": fd.getId(), "args": get_function_definition_arguments(fd)}
-        #     for fd in self._function_definitions
-        # ]
-
     def _format_header_guard(self, filename: str) -> str:
         """Get the header guard for a file.
 
@@ -174,14 +182,13 @@ class ChasteSbmlModel:
         :return: A list of parameter dictionaries.
         """
         parameter_dicts = []
-        next_state_index = 0
         for param in self._parameters:
             param_id = param.getId()
             name = self._get_name(param)
             varname = self._get_varname(param)
 
             default = 0.0
-            is_special = any(x in name for x in ["wnt", "gamma", "ComplexTransit"])
+            is_special = self._is_special_parameter(param)
             if is_special:
                 # Special strings in the parameter name
                 # TODO: Review how to handle these special parameters
@@ -196,21 +203,17 @@ class ChasteSbmlModel:
 
             is_defined = (param.isSetValue() or param_id in self._rules_dict) and not is_special
 
-            is_state = self._is_state_parameter(param)
-            if is_state:
-                state_index = next_state_index
-                next_state_index += 1
-            else:
-                state_index = None
+            is_state_parameter = self._is_state_parameter(param)
+            state_parameter_index = self._get_state_parameter_index(param_id)
 
             parameter_dicts.append(
                 {
                     "default": default,
                     "id": param_id,
                     "is_defined": is_defined,
-                    "is_state": is_state,
+                    "is_state_parameter": is_state_parameter,
                     "name": name,
-                    "state_index": state_index,
+                    "state_parameter_index": state_parameter_index,
                     "units": units,
                     "value": value,
                     "varname": varname,
@@ -266,6 +269,91 @@ class ChasteSbmlModel:
         """
         return [{"id": r.getId(), "formula": convert_formula(r.getFormula())} for r in self._rules]
 
+    def _format_species(self) -> list[dict[str, "Any"]]:
+        """Get a list of species dictionaries for the model.
+
+        :return: A list of species dictionaries.
+        """
+        species_dicts = []
+        # time_multiplier = self._get_timescale_multiplier()
+        ode_index = 0
+
+        for species in self._species:
+            species_id = species.getId()
+            name = self._get_name(species)
+            varname = self._get_varname(species)
+            concentration = get_species_concentration(species)
+
+            is_state_parameter = self._is_state_parameter(species)
+            state_parameter_index = self._get_state_parameter_index(species_id)
+
+            is_state_variable = not is_state_parameter
+            state_variable_index = self._get_state_variable_index(species_id)
+
+            comp_id = species.getCompartment()
+            comp = self._compartments.get(comp_id)
+            comp_varname = self._get_varname(comp)
+
+            # If there's a compartment we'll normalise the ODE so declare it as non-dimensional
+            units = "non-dim" if comp else species.getSubstanceUnits()
+
+            species_dict = {
+                "concentration": concentration,
+                "id": species_id,
+                "is_state_parameter": is_state_parameter,
+                "is_state_variable": is_state_variable,
+                "name": name,
+                "state_parameter_index": state_parameter_index,
+                "state_variable_index": state_variable_index,
+                "units": units,
+                "varname": varname,
+            }
+
+            # ODE system
+            lhs = None
+            rhs = None
+            if species_id in self._odes_dict:
+                if not species.getBoundaryCondition():
+                    index = ode_index
+                    lhs = f"rDY[{index}]"
+                    rhs = f"({self._odes_dict[species_id]}) / {comp_varname}"
+                    ode_index += 1
+
+                # TODO: Handle time scaling
+                # if time_multiplier != 1.0:
+                #     # This does not include species defined in algebraic rules
+                #     f"rDY[{index}] *= {time_multiplier};"
+
+            elif is_state_variable and (species_id == "drag" or varname == "drag"):
+                index = ode_index
+                lhs = f"rDY[{index}]"
+                rhs = f"(drag - rY[{state_variable_index}]) / {comp_varname}"
+                ode_index += 1
+
+            elif species_id in self._rules_dict:
+                # Species defined by algebraic rules are not in odes_dict
+                # Assuming these are assignments where variables are added together to represent a total
+                formula = self._rules_dict[species_id]
+                tokens = formula.split(" ")
+                rhs_tokens = []
+                for token in tokens:
+                    state_var_index = self._get_state_variable_index(token)
+                    if state_var_index is not None:
+                        rhs_tokens.append(f"rDY[{state_var_index}]")
+
+                if rhs_tokens:
+                    index = ode_index
+                    lhs = f"rDY[{index}]"
+                    rhs = f"({' + '.join(rhs_tokens)}) / {comp_varname}"
+                    ode_index += 1
+
+            if lhs and rhs:
+                species_dict["ode"] = {"lhs": lhs, "rhs": rhs}
+
+            # TODO: include other rules
+            species_dicts.append(species_dict)
+        return species_dicts
+
     def _get_hpp_vars(self, filename: str) -> dict[str, "Any"]:
         """Generate the template variables for the model hpp file.
 
@@ -295,6 +383,22 @@ class ChasteSbmlModel:
         if obj_name:
             return obj_name
         return obj.getId()
+
+    def _get_state_parameter_index(self, obj_id: "str") -> int:
+        """Get the index of a state parameter.
+
+        :param obj_id: The id of the Parameter / Species.
+        :return: The state parameter index.
+        """
+        return self._state_parameters.get(obj_id)
+
+    def _get_state_variable_index(self, obj_id: "str") -> int:
+        """Get the index of a state variable.
+
+        :param obj_id: The id of the Species.
+        :return: The state variable index.
+        """
+        return self._state_variables.get(obj_id)
 
     def _get_template(self, name: str) -> "Template":
         """Get a Jinja2 template.
@@ -348,6 +452,15 @@ class ChasteSbmlModel:
         self._varnames[obj_id] = var
         return var
 
+    def _is_special_parameter(self, parameter: "Parameter") -> bool:
+        """Check if a parameter has a special name.
+
+        :param parameter: The Parameter.
+        :return: True if special, False otherwise.
+        """
+        name = parameter.getName()
+        return name and any(s in name for s in self.SPECIAL_PARAMETER_NAMES)
+
     def _is_state_parameter(self, obj: "Species | Parameter") -> bool:
         """Check if a species or parameter is defined as a state parameter for Chaste.
 
@@ -360,17 +473,30 @@ class ChasteSbmlModel:
             return (species_id not in self._odes_dict) and (species_id not in self._rules_dict)
 
         if isinstance(obj, Parameter):
-            # Also parameters with special strings in their name are state parameters.
-            parameter_name = obj.getName()
-            match_strings = ["wnt", "gamma", "ComplexTransit"]
-            if parameter_name and any(s in parameter_name for s in match_strings):
+            # Parameters with special strings in their name are state parameters.
+            if self._is_special_parameter(obj):
                 return True
 
-            # Also parameters with unset values are state parameters.
+            # Also, parameters with unset values are state parameters.
             parameter_id = obj.getId()
             return (not obj.isSetValue()) and (parameter_id not in self._rules_dict)
 
         return False
+
+    def _update_state(self) -> None:
+        """Set the state parameters and state variables for the model."""
+        self._state_parameters = {}
+        self._state_variables = {}
+
+        for species in self._species:
+            if self._is_state_parameter(species):
+                self._add_state_parameter(species.getId())
+            else:
+                self._add_state_variable(species.getId())
+
+        for param in self._parameters:
+            if self._is_state_parameter(param):
+                self._add_state_parameter(param.getId())
 
     def _update_odes_dict(self) -> None:
         """Set the ODEs dictionary of equations corresponding to each species.
