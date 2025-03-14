@@ -55,7 +55,7 @@ public:
 
     void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
 
-{% if num_events > 0 %}
+{% if events %}
     // Stopping event is required for Cell Cycle Models to divide.
     bool CalculateStoppingEvent(double time, const std::vector<double>& rY);
 

@@ -6,7 +6,7 @@ import pathlib
 from typing import TYPE_CHECKING
 
 from jinja2 import Environment, PackageLoader, select_autoescape
-from libsbml import Parameter, SBMLReader, Species
+from libsbml import Parameter, SBMLReader, Species, formulaToString
 
 from ._config import ODE_SUFFIX, SHORT_NAME_LEN
 from ._utils import (
@@ -14,6 +14,7 @@ from ._utils import (
     convert_function_body,
     get_function_definition_arguments,
     get_species_concentration,
+    sort_nodes,
     varname_camelcase,
     varname_sanitize,
 )
@@ -167,6 +168,60 @@ class ChasteSbmlModel:
                 }
             )
         return function_definition_dicts
+
+    def _format_events(self) -> list[dict[str, "Any"]]:
+        """Get a list of event dictionaries for the model.
+
+        :return: A list of event dictionaries.
+        """
+        event_dicts = []
+        for event in self._events:
+            trigger = event.getTrigger()
+            tokens = []
+            for node in sort_nodes(trigger.getMath()):
+                if node.isNumber():
+                    token = str(node.getValue())
+                elif node.isName():
+                    token = node.getName()
+                    # Replace species variable name with Chaste equivalent.
+                    for ode_index, species_id in enumerate(self._odes_dict):
+                        if token == species_id:
+                            token = f"rY[{ode_index}]"
+                            break
+                else:
+                    token = convert_formula(node.getName())
+                tokens.append(token)
+            trigger_formula = " ".join(tokens)
+
+            assignment_formulas = []
+            for assignment in event.getListOfEventAssignments():
+                # Replace species variable name with Chaste equivalent.
+                lhs = assignment.getVariable()
+                for ode_index, species_id in enumerate(self._odes_dict):
+                    if lhs == species_id:
+                        lhs = f"this->rGetStateVariables()[{ode_index}]"
+                        break
+
+                formula = convert_formula(formulaToString(assignment.getMath()))
+                formula_tokens = formula.split(" ")
+                tokens = []
+                for token in formula_tokens:
+                    for ode_index, species_id in enumerate(self._odes_dict):
+                        if token == species_id:
+                            token = f"rY[{ode_index}]"
+                            break
+                    tokens.append(token)
+                rhs = " ".join(tokens)
+
+                assignment_formulas.append(f"{lhs} = double({rhs});")
+
+            event_dicts.append(
+                {
+                    "trigger": trigger_formula,
+                    "assignments": assignment_formulas,
+                }
+            )
+        return event_dicts
 
     def _format_header_guard(self, filename: str) -> str:
         """Get the header guard for a file.
@@ -347,31 +402,13 @@ class ChasteSbmlModel:
                     rhs = f"({' + '.join(rhs_tokens)}) / {comp_varname}"
                     ode_index += 1
 
+            # TODO: include other rules
+
             if lhs and rhs:
                 species_dict["ode"] = {"lhs": lhs, "rhs": rhs}
 
-            # TODO: include other rules
             species_dicts.append(species_dict)
         return species_dicts
-
-    def _get_hpp_vars(self, filename: str) -> dict[str, "Any"]:
-        """Generate the template variables for the model hpp file.
-
-        :param model_suffix: A suffix for the model type e.g. CellCycle.
-        :param filename: The hpp filename for the model.
-        return: The generated header file as a string.
-        """
-        return dict(
-            compartments=self._format_compartments(),
-            function_definitions=self._format_function_definitions(),
-            header_guard=self._format_header_guard(filename),
-            model_class_name=self._model_class_name,
-            num_events=self._model.getNumEvents(),
-            num_state_vars=self._num_state_vars,
-            ode_class_name=self._ode_class_name,
-            parameters=self._format_parameters(),
-            wrapper_class_name=self._wrapper_class_name,
-        )
 
     def _get_name(self, obj: "SBase") -> str:
         """Get the name of a libSBML object, or the ID if it doesn't have one.
@@ -407,6 +444,28 @@ class ChasteSbmlModel:
         :return: The template object.
         """
         return self._jinja_env.get_template(name)
+
+    def _get_template_vars(self, hpp_filename: str) -> dict[str, str]:
+        """Generate the template variables for the model cpp file.
+
+        :param hpp_filename: The hpp filename for the model.
+        return: The template variables for the model cpp file.
+        """
+        return dict(
+            compartments=self._format_compartments(),
+            events=self._format_events(),
+            function_definitions=self._format_function_definitions(),
+            header_guard=self._format_header_guard(hpp_filename),
+            model_hpp_file=hpp_filename,
+            model_class_name=self._model_class_name,
+            ode_class_name=self._ode_class_name,
+            parameters=self._format_parameters(),
+            reactions=self._format_reactions(),
+            rules=self._format_rules(),
+            num_state_vars=self._num_state_vars,
+            species=self._format_species(),
+            wrapper_class_name=self._wrapper_class_name,
+        )
 
     def _get_timescale_multiplier(self) -> float:
         """Get the timescale multiplier.

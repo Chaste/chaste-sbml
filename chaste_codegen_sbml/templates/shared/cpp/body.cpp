@@ -57,9 +57,10 @@ void {{ ode_class_name }}::Init()
 {% endfor %}
 {% endif %}
 
+{% if events %}
     /* Initialise vector to check if events have been triggered. */
-    {{ event_vector_init }}
-
+    eventsSatisfied.resize({{ events|length }}, false);
+{% endif %}
 }
 
 void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
@@ -123,7 +124,7 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
 
 }
 
-{% if num_events > 0 %}
+{% if events %}
 bool {{ ode_class_name }}::CalculateStoppingEvent(double time, const std::vector<double> & rY)
 {
     // Return true if all events have been triggered.
@@ -134,7 +135,15 @@ void {{ ode_class_name }}::CheckAndUpdateEvents(double time, const std::vector<d
 {
     std::vector<double> dy(rY.size()); // Initialise derivatives vector
     EvaluateYDerivatives(time, rY, dy);
-    {{ event_defs }}
+{% for event in events %}
+    if ({{ event["trigger"] }})
+    {
+{% for assignment in event["assignments"] %}
+        {{ assignment }}
+{% endfor %}
+        eventsSatisfied[{{ loop.index0 }}] = true;
+    }
+{% endfor %}
 }
 
 bool {{ ode_class_name }}::AreAllEventsSatisfied(double time, const std::vector<double>& rY)
