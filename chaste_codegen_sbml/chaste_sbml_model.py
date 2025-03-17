@@ -62,6 +62,7 @@ class ChasteSbmlModel:
         self._model_class_name = f"{self._model_name}{self._model_suffix}Model"
         self._wrapper_class_name = f"Sbml{self._model_suffix}WrapperModel"
 
+        # TODO: Check if the SBML file exists
         self._model = SBMLReader().readSBMLFromFile(sbml).getModel()
         self._compartments = self._model.getListOfCompartments()
         self._events = self._model.getListOfEvents()

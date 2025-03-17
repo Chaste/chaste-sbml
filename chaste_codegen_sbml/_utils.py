@@ -16,6 +16,9 @@ def convert_formula(formula: str) -> str:
     :return: The C++ equivalent of the formula.
     """
 
+    if not formula:
+        return ""
+
     # Sorted by length to avoid partial replacements
     token_map = {
         "arccsch": "acsch",
