@@ -13,6 +13,7 @@
 class Goldbeter1991OdeSystem : public AbstractOdeSystem
 {
 private:
+
     /* Declare model compartments. */
     double cell;
 
@@ -31,50 +32,55 @@ private:
     }
 
 public:
+
     /* Default constructor. */
     Goldbeter1991OdeSystem(std::vector<double> stateVariables = std::vector<double>());
 
     /* Destructor. */
     ~Goldbeter1991OdeSystem();
 
+    /* Declare model functions. */
+
     void Init();
 
     void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
+
 };
 
 namespace
 {
-    namespace serialization
-    {
-        /* Serialize information required to construct a Goldbeter1991OdeSystem. */
-        template <class Archive>
-        inline void save_construct_data(
-            Archive &ar, const Goldbeter1991OdeSystem *t, const unsigned int file_version)
-        {
-            const std::vector<double> state_variables = t->rGetConstStateVariables();
-            ar & state_variables;
-        }
-        /* De-serialize constructor parameters and intiialise a Goldbeter1991OdeSystem. */
-        template <class Archive>
-        inline void load_construct_data(
-            Archive &ar, Goldbeter1991OdeSystem *t, const unsigned int file_version)
-        {
-            std::vector<double> state_variables;
-            ar & state_variables;
+namespace serialization
+{
+/* Serialize information required to construct a Goldbeter1991OdeSystem. */
+template <class Archive>
+inline void save_construct_data(
+    Archive &ar, const Goldbeter1991OdeSystem *t, const unsigned int file_version)
+{
+    const std::vector<double> state_variables = t->rGetConstStateVariables();
+    ar & state_variables;
+}
 
-            // Invoke inplace constructor to initialise instance
-            ::new (t) Goldbeter1991OdeSystem(state_variables);
-        }
-    }
+/* De-serialize constructor parameters and intitialise a Goldbeter1991OdeSystem. */
+template <class Archive>
+inline void load_construct_data(
+    Archive &ar, Goldbeter1991OdeSystem *t, const unsigned int file_version)
+{
+    std::vector<double> state_variables;
+    ar & state_variables;
+
+    // Invoke inplace constructor to initialise instance
+    ::new (t) Goldbeter1991OdeSystem(state_variables);
+}
+}
 } // namespace ...
 
-/* Define SRN model using Wrappers. */
+/* Define cell cycle model using wrappers. */
 #include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
 
 typedef SbmlSrnWrapperModel<Goldbeter1991OdeSystem, 3> Goldbeter1991SrnModel;
 
-// Declare identifiers for the serializer
+/* Declare identifiers for the serializer */
 #include "SerializationExportWrapper.hpp"
 CHASTE_CLASS_EXPORT(Goldbeter1991OdeSystem)
 EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, Goldbeter1991OdeSystem, 3)

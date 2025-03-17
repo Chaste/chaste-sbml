@@ -4,7 +4,7 @@ from difflib import Differ
 
 import pytest
 
-import chaste_codegen_sbml as cg
+from chaste_codegen_sbml import ChasteSbmlCellCycleModel, ChasteSbmlSrnModel
 from chaste_codegen_sbml._config import ROOT_DIR
 
 logger = logging.getLogger(__name__)
@@ -84,7 +84,7 @@ def test_srn_generation(tmp_path, model_name):
     ref_hpp = ref_dir / f"{model_name}OdeSystemAndSrnModel.hpp"
 
     logger.info(f"Converting: {ref_sbml}")
-    chaste_model = cg.ChasteSbmlSrnModel(ref_sbml, model_name)
+    chaste_model = ChasteSbmlSrnModel(ref_sbml, model_name)
     chaste_model.write(output_directory=tmp_path)
 
     gen_hpp = tmp_path / chaste_model.srn_hpp_filename
@@ -100,6 +100,8 @@ def test_srn_generation(tmp_path, model_name):
 @pytest.mark.parametrize(
     ("model_name",),
     [
+        ("Chen2000",),
+        ("Chen2004",),
         ("TysonNovak2001",),
     ],
 )
@@ -113,7 +115,7 @@ def test_ccm_generation(tmp_path, model_name):
     ref_hpp = ref_dir / f"{model_name}OdeSystemAndCellCycleModel.hpp"
 
     logger.info(f"Converting: {ref_sbml}")
-    chaste_model = cg.ChasteSbmlCellCycleModel(ref_sbml, model_name)
+    chaste_model = ChasteSbmlCellCycleModel(ref_sbml, model_name)
     chaste_model.write(output_directory=tmp_path)
 
     gen_hpp = tmp_path / chaste_model.ccm_hpp_filename
