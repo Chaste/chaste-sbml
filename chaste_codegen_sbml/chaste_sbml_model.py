@@ -42,28 +42,29 @@ class ChasteSbmlModel:
 
     # -- PUBLIC ---------------------------------------
 
-    def __init__(self, sbml: str, name: str = None, suffix: str = None) -> None:
+    def __init__(self, sbml_file: str, model_name: str = None, model_suffix: str = None) -> None:
         """Initialise the ChasteSbmlModel.
 
         :param sbml: The SBML file.
         :param name: The model name.
         :param suffix: The model type suffix e.g. "CellCycle".
         """
-        self._sbml_file = sbml
+        self._sbml_file = os.path.abspath(sbml_file)
+        if not os.path.isfile(self._sbml_file):
+            raise FileNotFoundError(f"Could not find SBML file: {self._sbml_file}")
 
-        if name:
-            self._model_name = name
+        if model_name:
+            self._model_name = model_name
         else:
-            filename = os.path.splitext(os.path.basename(sbml))[0]
+            filename = os.path.splitext(os.path.basename(self._sbml_file))[0]
             self._model_name = varname_camelcase(filename).title()
 
-        self._model_suffix = suffix
+        self._model_suffix = model_suffix
         self._ode_class_name = self._model_name + ODE_SUFFIX
         self._model_class_name = f"{self._model_name}{self._model_suffix}Model"
         self._wrapper_class_name = f"Sbml{self._model_suffix}WrapperModel"
 
-        # TODO: Check if the SBML file exists
-        self._model = SBMLReader().readSBMLFromFile(sbml).getModel()
+        self._model = SBMLReader().readSBMLFromFile(self._sbml_file).getModel()
         self._compartments = self._model.getListOfCompartments()
         self._events = self._model.getListOfEvents()
         self._function_definitions = self._model.getListOfFunctionDefinitions()

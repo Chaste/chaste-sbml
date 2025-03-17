@@ -11,9 +11,9 @@ class ChasteSbmlCellCycleModel(ChasteSbmlModel):
 
     # -- PUBLIC ---------------------------------------
 
-    def __init__(self, sbml: str, name: str = None, **kwargs) -> None:
+    def __init__(self, sbml_file: str, model_name: str = None, **kwargs) -> None:
         """Initialise the ChasteSbmlCellCycleModel."""
-        super().__init__(sbml, name, CCM_SUFFIX, **kwargs)
+        super().__init__(sbml_file, model_name, CCM_SUFFIX, **kwargs)
 
     @property
     def ccm_cpp_filename(self) -> str:
