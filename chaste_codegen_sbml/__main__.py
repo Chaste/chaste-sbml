@@ -1,21 +1,25 @@
 """Entry point for the command line interface."""
 
-from argparse import ArgumentParser
+import argparse
 
 from chaste_codegen_sbml import ChasteSbmlCellCycleModel, ChasteSbmlSrnModel
+
+from ._version import __version__
 
 
 def parse_args():
     """Parse command line arguments."""
-    parser = ArgumentParser(
+    parser = argparse.ArgumentParser(
         prog="chaste_codegen_sbml",
-        description="Generate C++ code from SBML models for the Chaste C++ library",
+        description="Convert SBML models to C++ code for the Chaste library",
     )
 
     parser.add_argument(
         "sbml_file",
-        help="The sbml file to convert to Chaste C++ code",
+        help="The SBML file to convert",
     )
+
+    parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
 
     parser.add_argument(
         "--output-dir", action="store", help="The directory to place output files in", default=None
@@ -32,8 +36,8 @@ def parse_args():
     return args
 
 
-def generate_code(args):
-    """Run the code generation."""
+def process_command_line(args: "argparse.Namespace"):
+    """Run the command line interface."""
 
     if args.cell_cycle:
         chaste_model = ChasteSbmlCellCycleModel(args.sbml_file)
@@ -44,6 +48,6 @@ def generate_code(args):
 
 
 def main():
-    """Run the command line interface."""
+    """Main entrypoint."""
     args = parse_args()
-    generate_code(args)
+    process_command_line(args)
