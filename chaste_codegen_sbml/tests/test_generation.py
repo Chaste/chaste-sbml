@@ -102,6 +102,7 @@ def test_srn_generation(tmp_path, model_name):
     [
         ("Chen2000",),
         ("Chen2004",),
+        ("Gardner1998",),
         ("TysonNovak2001",),
     ],
 )
