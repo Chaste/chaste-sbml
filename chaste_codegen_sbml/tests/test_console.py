@@ -6,9 +6,8 @@ logger = logging.getLogger(__name__)
 
 def test_console_help(capsys):
     """Test help message"""
-    testargs = ["chaste_codegen_sbml", "-h"]
 
-    expected_output = """
+    expected = """
 usage: chaste_codegen_sbml [-h] [--output-dir OUTPUT_DIR] [--srn] [--cell-cycle] sbml_file
 
 Generate C++ code from SBML models for the Chaste C++ library
@@ -27,9 +26,9 @@ ModelTypes:
   --srn                 Generate SRN model
   --cell-cycle          Generate Cell Cycle model
     """
-    expected_output = " ".join(expected_output.split())
+    expected = " ".join(expected.split())
 
-    output = subprocess.check_output(testargs).decode("ascii")
-    output = " ".join(output.split())
+    out = subprocess.check_output(["chaste_codegen_sbml", "-h"]).decode("ascii")
+    out = " ".join(out.split())
 
-    assert output == expected_output
+    assert out == expected

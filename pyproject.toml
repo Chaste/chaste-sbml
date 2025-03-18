@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=64", "wheel"]
+requires = ["setuptools>=64", "setuptools-scm>=8", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "chaste_codegen_sbml"
-version = "0.0.1"
+dynamic = ["version"]
 
 description = "Chaste C++ code generation from SBML"
 
@@ -32,6 +32,9 @@ chaste_codegen_sbml = "chaste_codegen_sbml.__main__:main"
 
 [project.urls]
 source = "https://github.com/Chaste/chaste-codegen-sbml"
+
+[tool.setuptools_scm]
+version_file = "chaste_codegen_sbml/_version.py"
 
 [tool.black]
 line-length = 100
