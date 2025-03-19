@@ -1,13 +1,14 @@
 #ifndef TAN2014ODESYSTEMANDSRNMODEL_HPP_
 #define TAN2014ODESYSTEMANDSRNMODEL_HPP_
 
-#include "ChasteSerialization.hpp"
+#include <cmath>
+#include <iostream>
+
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 
-#include <cmath>
-#include <iostream>
 #include "AbstractOdeSystem.hpp"
+#include "ChasteSerialization.hpp"
 
 class Tan2014OdeSystem : public AbstractOdeSystem
 {

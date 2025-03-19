@@ -4,7 +4,7 @@ from difflib import Differ
 
 import pytest
 
-import chaste_codegen_sbml as cg
+from chaste_codegen_sbml import ChasteSbmlCellCycleModel, ChasteSbmlSrnModel
 from chaste_codegen_sbml._config import ROOT_DIR
 
 logger = logging.getLogger(__name__)
@@ -74,7 +74,7 @@ def code_diff(file_a: str, file_b: str) -> str:
         ("VanLeeuwen2007NonDim",),
     ],
 )
-def test_generation(tmp_path, model_name):
+def test_srn_generation(tmp_path, model_name):
     """
     Check generated model against reference.
     """
@@ -84,11 +84,43 @@ def test_generation(tmp_path, model_name):
     ref_hpp = ref_dir / f"{model_name}OdeSystemAndSrnModel.hpp"
 
     logger.info(f"Converting: {ref_sbml}")
-    chaste_model = cg.ChasteSbmlSrnModel(ref_sbml, model_name)
+    chaste_model = ChasteSbmlSrnModel(ref_sbml, model_name)
     chaste_model.write(output_directory=tmp_path)
 
     gen_hpp = tmp_path / chaste_model.srn_hpp_filename
     gen_cpp = tmp_path / chaste_model.srn_cpp_filename
+
+    hpp_diff = code_diff(ref_hpp, gen_hpp)
+    assert hpp_diff == "", hpp_diff
+
+    cpp_diff = code_diff(ref_cpp, gen_cpp)
+    assert cpp_diff == "", cpp_diff
+
+
+@pytest.mark.parametrize(
+    ("model_name",),
+    [
+        ("Chen2000",),
+        ("Chen2004",),
+        ("Gardner1998",),
+        ("TysonNovak2001",),
+    ],
+)
+def test_ccm_generation(tmp_path, model_name):
+    """
+    Check generated model against reference.
+    """
+    ref_dir = ROOT_DIR / "SBMLRefModels" / "src" / "ccm" / "models" / model_name
+    ref_sbml = ref_dir / f"{model_name}.xml"
+    ref_cpp = ref_dir / f"{model_name}OdeSystemAndCellCycleModel.cpp"
+    ref_hpp = ref_dir / f"{model_name}OdeSystemAndCellCycleModel.hpp"
+
+    logger.info(f"Converting: {ref_sbml}")
+    chaste_model = ChasteSbmlCellCycleModel(ref_sbml, model_name)
+    chaste_model.write(output_directory=tmp_path)
+
+    gen_hpp = tmp_path / chaste_model.ccm_hpp_filename
+    gen_cpp = tmp_path / chaste_model.ccm_cpp_filename
 
     hpp_diff = code_diff(ref_hpp, gen_hpp)
     assert hpp_diff == "", hpp_diff

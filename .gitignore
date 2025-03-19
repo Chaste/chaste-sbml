@@ -169,3 +169,6 @@ desktop.ini
 
 # Mac OS
 .DS_Store
+
+# setuptools-scm
+_version.py

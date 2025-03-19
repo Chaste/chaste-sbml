@@ -4,13 +4,10 @@ import pathlib
 
 ROOT_DIR = pathlib.Path(__file__).parent.absolute()
 
+SHORT_NAME_LEN = 8
+
 TAB = "    "
 
-ODE_SYSTEM_SUFFIX = "OdeSystem"
-
-SRN_HEADER_GUARD_SUFFIX = "ODESYSTEMANDSRNMODEL_HPP_"
-SRN_MODEL_SUFFIX = "SrnModel"
-
-CC_HEADER_GUARD_SUFFIX = "ODESYSTEMANDCELLCYCLEMODEL_HPP_"
-
-SHORT_NAME_LEN = 8
+CCM_SUFFIX = "CellCycle"
+ODE_SUFFIX = "OdeSystem"
+SRN_SUFFIX = "Srn"

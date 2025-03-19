@@ -1,39 +1,53 @@
 """Entry point for the command line interface."""
 
-import os
-from argparse import ArgumentParser
+import argparse
 
-from . import ChasteSbmlSrnModel
+from chaste_codegen_sbml import ChasteSbmlCellCycleModel, ChasteSbmlSrnModel
+
+from ._version import __version__
 
 
 def parse_args():
     """Parse command line arguments."""
-    parser = ArgumentParser(
+    parser = argparse.ArgumentParser(
         prog="chaste_codegen_sbml",
-        description="Generate C++ code from SBML models for the Chaste C++ library",
+        description="Convert SBML models to C++ code for the Chaste library",
     )
 
     parser.add_argument(
         "sbml_file",
-        metavar="sbml_file",
-        help="The sbml file to convert to Chaste C++ code",
+        help="The SBML file to convert",
     )
 
-    args = parser.parse_args()
+    parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
 
-    if not os.path.isfile(args.sbml_file):
-        raise FileNotFoundError(f"Could not find sbml file {args.sbml_file}")
+    parser.add_argument(
+        "--output-dir", action="store", help="The directory to place output files in", default=None
+    )
+
+    group = parser.add_argument_group(
+        "ModelTypes", 'The types of models code can be generated for; defaults to "srn"'
+    )
+    group.add_argument("--srn", help="Generate SRN model", action="store_true")
+    group.add_argument("--cell-cycle", help="Generate Cell Cycle model", action="store_true")
+
+    args = parser.parse_args()
 
     return args
 
 
-def generate_code(args):
-    """Run the code generation."""
-    chaste_model = ChasteSbmlSrnModel(args.sbml_file)
-    chaste_model.write_chaste_code()
+def process_command_line(args: "argparse.Namespace"):
+    """Run the command line interface."""
+
+    if args.cell_cycle:
+        chaste_model = ChasteSbmlCellCycleModel(args.sbml_file)
+    else:
+        chaste_model = ChasteSbmlSrnModel(args.sbml_file)
+
+    chaste_model.write(args.output_dir)
 
 
 def main():
-    """Run the command line interface."""
+    """Main entrypoint."""
     args = parse_args()
-    generate_code(args)
+    process_command_line(args)

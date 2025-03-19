@@ -1,5 +1,6 @@
 """Utility functions for code generation."""
 
+import re
 from typing import TYPE_CHECKING
 
 from libsbml import formulaToString
@@ -9,34 +10,46 @@ if TYPE_CHECKING:
 
 
 def convert_formula(formula: str) -> str:
-    """Convert a formula to its C++ equivalent.
+    """Convert a formula string to its C++ equivalent.
 
-    :param formula: The formula.
+    :param formula: The formula string.
     :return: The C++ equivalent of the formula.
     """
-    # TODO: Use regex to respect word boundaries
 
-    method_map = {
-        "abs": "fabs",
-        "arccos": "acos",
-        "arccsc": "acsc",
+    if not formula:
+        return ""
+
+    # Sorted by length to avoid partial replacements
+    token_map = {
         "arccsch": "acsch",
-        "arcsec": "asec",
         "arcsech": "asech",
         "arcsinh": "asinh",
+        "arctanh": "atanh",
+        "arccos": "acos",
+        "arccsc": "acsc",
+        "arcsec": "asec",
         "arcsin": "asin",
         "arctan": "atan",
-        "arctanh": "atanh",
+        "abs": "fabs",
         "max": "fmax",
         "min": "fmin",
+        "and": "&&",
+        "geq": ">=",
+        "leq": "<=",
+        "neq": "!=",
+        "not": "!",
+        "eq": "==",
+        "gt": ">",
+        "lt": "<",
+        "or": "||",
     }
 
-    # TODO: Add more method mappings as needed
+    # TODO: Add more token mappings as needed
     # https://sbml.org/software/libsbml/5.18.0/docs/formatted/python-api/namespacelibsbml.html#a8e96a5a70569ae32655c6302638f6dc3
 
-    # Replace method names with the C++ equivalents
-    for old, new in method_map.items():
-        formula = formula.replace(old, new)
+    # Replace token names with the C++ equivalents
+    for sbml_token, cpp_token in token_map.items():
+        formula = re.sub(rf"\b{sbml_token}\b", cpp_token, formula)
 
     return formula
 
@@ -84,8 +97,8 @@ def convert_function_body(fn_body: "ASTNode") -> str:
 
     # Replace node formulas in function body with C++ equivalents
     formula = formulaToString(fn_body)
-    for old, new in formula_mapping.items():
-        formula = formula.replace(old, new)
+    for sbml_formula, cpp_formula in formula_mapping.items():
+        formula = re.sub(rf"\b{sbml_formula}\b", cpp_formula, formula)
 
     return formula
 

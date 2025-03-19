@@ -1,5 +1,5 @@
-#ifndef GOLDBETER1991ODESYSTEMANDSRNMODEL_HPP_
-#define GOLDBETER1991ODESYSTEMANDSRNMODEL_HPP_
+#ifndef GARDNER1998ODESYSTEMANDCELLCYCLEMODEL_HPP_
+#define GARDNER1998ODESYSTEMANDCELLCYCLEMODEL_HPP_
 
 #include <cmath>
 #include <iostream>
@@ -10,19 +10,19 @@
 #include "AbstractOdeSystem.hpp"
 #include "ChasteSerialization.hpp"
 
-class Goldbeter1991OdeSystem : public AbstractOdeSystem
+class Gardner1998OdeSystem : public AbstractOdeSystem
 {
 private:
 
     /* Declare model compartments. */
-    double cell;
+    double Cell;
 
     /* Declare model parameters. */
     double V1;
+    double K6;
+    double V1p;
     double V3;
-    double VM1;
-    double VM3;
-    double Kc;
+    double V3p;
 
     friend class boost::serialization::access;
     template <class Archive>
@@ -34,10 +34,10 @@ private:
 public:
 
     /* Default constructor. */
-    Goldbeter1991OdeSystem(std::vector<double> stateVariables = std::vector<double>());
+    Gardner1998OdeSystem(std::vector<double> stateVariables = std::vector<double>());
 
     /* Destructor. */
-    ~Goldbeter1991OdeSystem();
+    ~Gardner1998OdeSystem();
 
     /* Declare model functions. */
 
@@ -51,41 +51,41 @@ namespace
 {
 namespace serialization
 {
-/* Serialize information required to construct a Goldbeter1991OdeSystem. */
+/* Serialize information required to construct a Gardner1998OdeSystem. */
 template <class Archive>
 inline void save_construct_data(
-    Archive &ar, const Goldbeter1991OdeSystem *t, const unsigned int file_version)
+    Archive &ar, const Gardner1998OdeSystem *t, const unsigned int file_version)
 {
     const std::vector<double> state_variables = t->rGetConstStateVariables();
     ar & state_variables;
 }
 
-/* De-serialize constructor parameters and intitialise a Goldbeter1991OdeSystem. */
+/* De-serialize constructor parameters and intitialise a Gardner1998OdeSystem. */
 template <class Archive>
 inline void load_construct_data(
-    Archive &ar, Goldbeter1991OdeSystem *t, const unsigned int file_version)
+    Archive &ar, Gardner1998OdeSystem *t, const unsigned int file_version)
 {
     std::vector<double> state_variables;
     ar & state_variables;
 
     // Invoke inplace constructor to initialise instance
-    ::new (t) Goldbeter1991OdeSystem(state_variables);
+    ::new (t) Gardner1998OdeSystem(state_variables);
 }
 }
 } // namespace ...
 
 /* Define cell cycle model using wrappers. */
-#include "SbmlSrnWrapperModel.hpp"
-#include "SbmlSrnWrapperModel.cpp"
+#include "SbmlCellCycleWrapperModel.hpp"
+#include "SbmlCellCycleWrapperModel.cpp"
 
-typedef SbmlSrnWrapperModel<Goldbeter1991OdeSystem, 3> Goldbeter1991SrnModel;
+typedef SbmlCellCycleWrapperModel<Gardner1998OdeSystem, 5> Gardner1998CellCycleModel;
 
 /* Declare identifiers for the serializer */
 #include "SerializationExportWrapper.hpp"
-CHASTE_CLASS_EXPORT(Goldbeter1991OdeSystem)
-EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, Goldbeter1991OdeSystem, 3)
+CHASTE_CLASS_EXPORT(Gardner1998OdeSystem)
+EXPORT_TEMPLATE_CLASS2(SbmlCellCycleWrapperModel, Gardner1998OdeSystem, 5)
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
-EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Goldbeter1991SrnModel)
+EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Gardner1998CellCycleModel)
 
-#endif // GOLDBETER1991ODESYSTEMANDSRNMODEL_HPP_
+#endif // GARDNER1998ODESYSTEMANDCELLCYCLEMODEL_HPP_
