@@ -211,7 +211,7 @@ def varname_sanitize(name: str) -> str:
 
     skip_underscores = False
     for char in name:
-        if char.isalpha() or char.isdigit():
+        if char.isalpha() or char.isdigit() or char == "_":
             var_name.append(char)
             skip_underscores = False
         else:
