@@ -1,4 +1,4 @@
-TestGoldbeter1991SBML.hpp
-TestTan2014SBML.hpp
-TestVanLeeuwen2007NonDimSBML.hpp
-TestVanLeeuwen2007SBML.hpp
+srn/TestGoldbeter1991SBML.hpp
+srn/TestTan2014SBML.hpp
+srn/TestVanLeeuwen2007NonDimSBML.hpp
+srn/TestVanLeeuwen2007SBML.hpp
