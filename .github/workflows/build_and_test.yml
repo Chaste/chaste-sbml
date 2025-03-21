@@ -63,7 +63,7 @@ jobs:
           repo="deb [signed-by=/usr/share/keyrings/chaste.asc] https://chaste.github.io/ubuntu ${codename}/"
           echo "${repo}" | sudo tee /etc/apt/sources.list.d/chaste.list
           sudo apt-get update
-          sudo apt-get install -y chaste-dependencies
+          sudo apt-get install -y chaste-dependencies lcov
 
       - name: Configure Chaste
         run: |
