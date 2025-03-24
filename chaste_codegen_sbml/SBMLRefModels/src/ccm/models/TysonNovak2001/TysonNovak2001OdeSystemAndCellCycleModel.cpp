@@ -198,7 +198,7 @@ void TysonNovak2001OdeSystem::CheckAndUpdateEvents(double time, const std::vecto
 
     if (rY[1] < 0.1)
     {
-        this->rGetStateVariables()[5] = double(rY[5] / 2);
+        this->SetStateVariable("m", double(rY[5] / 2));
         eventsSatisfied[0] = true;
     }
 }

@@ -715,28 +715,28 @@ void Chen2004OdeSystem::CheckAndUpdateEvents(double time, const std::vector<doub
 
     if (rY[18]  rY[20]  KEZ2 < 0.0)
     {
-        this->rGetStateVariables()[36] = double(0);
+        this->SetStateVariable("ORI", double(0));
         eventsSatisfied[0] = true;
     }
     if (rY[36]  1.0 > 0.0)
     {
-        MAD2 = double(mad2h);
-        BUB2 = double(bub2h);
+        this->SetParameter("MAD2", double(mad2h));
+        this->SetParameter("BUB2", double(bub2h));
         eventsSatisfied[1] = true;
     }
     if (rY[46]  1.0 > 0.0)
     {
-        MAD2 = double(mad2l);
-        LTE1 = double(lte1h);
-        BUB2 = double(bub2l);
+        this->SetParameter("MAD2", double(mad2l));
+        this->SetParameter("LTE1", double(lte1h));
+        this->SetParameter("BUB2", double(bub2l));
         eventsSatisfied[2] = true;
     }
     if (rY[18]  KEZ < 0.0)
     {
-        this->rGetStateVariables()[31] = double(F * rY[31]);
-        LTE1 = double(lte1l);
-        this->rGetStateVariables()[1] = double(0);
-        this->rGetStateVariables()[46] = double(0);
+        this->SetStateVariable("MASS", double(F * rY[31]));
+        this->SetParameter("LTE1", double(lte1l));
+        this->SetStateVariable("BUD", double(0));
+        this->SetStateVariable("SPN", double(0));
         eventsSatisfied[3] = true;
     }
 }

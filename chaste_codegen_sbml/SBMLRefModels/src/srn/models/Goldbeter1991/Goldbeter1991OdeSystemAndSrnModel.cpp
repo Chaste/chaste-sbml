@@ -55,35 +55,56 @@ void Goldbeter1991OdeSystem::EvaluateYDerivatives(double time, const std::vector
 
     /* Define the reactions in this model. */
     // creation of cyclin
-    double vi = 0.025; // vi
-    double reaction1 = cell * vi;
+    double reaction1 = 0.0;
+    {
+        double vi = 0.025;
+        reaction1 = cell * vi;
+    }
 
     // default degradation of cyclin
-    double kd = 0.01; // kd
-    double reaction2 = C * cell * kd;
+    double reaction2 = 0.0;
+    {
+        double kd = 0.01;
+        reaction2 = C * cell * kd;
+    }
 
     // cdc2 kinase triggered degration of cyclin
-    double vd = 0.25; // vd
-    double Kd = 0.02; // Kd
-    double reaction3 = C * cell * vd * X * pow(C + Kd, -1);
+    double reaction3 = 0.0;
+    {
+        double vd = 0.25;
+        double Kd = 0.02;
+        reaction3 = C * cell * vd * X * pow(C + Kd, -1);
+    }
 
     // activation of cdc2 kinase
-    double K1 = 0.005; // K1
-    double reaction4 = cell * (1 + -1 * M) * V1 * pow(K1 + -1 * M + 1, -1);
+    double reaction4 = 0.0;
+    {
+        double K1 = 0.005;
+        reaction4 = cell * (1 + -1 * M) * V1 * pow(K1 + -1 * M + 1, -1);
+    }
 
     // deactivation of cdc2 kinase
-    double V2 = 1.5; // V2
-    double K2 = 0.005; // K2
-    double reaction5 = cell * M * V2 * pow(K2 + M, -1);
+    double reaction5 = 0.0;
+    {
+        double V2 = 1.5;
+        double K2 = 0.005;
+        reaction5 = cell * M * V2 * pow(K2 + M, -1);
+    }
 
     // activation of cyclin protease
-    double K3 = 0.005; // K3
-    double reaction6 = cell * V3 * (1 + -1 * X) * pow(K3 + -1 * X + 1, -1);
+    double reaction6 = 0.0;
+    {
+        double K3 = 0.005;
+        reaction6 = cell * V3 * (1 + -1 * X) * pow(K3 + -1 * X + 1, -1);
+    }
 
     // deactivation of cyclin protease
-    double K4 = 0.005; // K4
-    double V4 = 0.5; // V4
-    double reaction7 = cell * V4 * X * pow(K4 + X, -1);
+    double reaction7 = 0.0;
+    {
+        double K4 = 0.005;
+        double V4 = 0.5;
+        reaction7 = cell * V4 * X * pow(K4 + X, -1);
+    }
 
 
     rDY[0] = (reaction1 - reaction2 - reaction3) / cell; // dCyclin/dt

@@ -131,7 +131,7 @@ void {{ ode_class_name }}::CheckAndUpdateEvents(double time, const std::vector<d
     if ({{ event["trigger"] }})
     {
 {% for assignment in event["assignments"] %}
-        {{ assignment["lhs"] }} = double({{ assignment["rhs"] }});
+        {{ assignment }}
 {% endfor %}
         eventsSatisfied[{{ loop.index0 }}] = true;
     }

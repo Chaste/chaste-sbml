@@ -24,6 +24,7 @@ private:
     double VM3;
     double Kc;
 
+
     friend class boost::serialization::access;
     template <class Archive>
     void serialize(Archive &archive, const unsigned int version)
