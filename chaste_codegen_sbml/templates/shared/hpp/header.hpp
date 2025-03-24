@@ -24,6 +24,10 @@ private:
     double {{ parameter["id"] }};
 {% endfor %}
 
+{% if events %}
+    std::vector<bool> eventsSatisfied;
+{% endif %}
+
     friend class boost::serialization::access;
     template <class Archive>
     void serialize(Archive &archive, const unsigned int version)

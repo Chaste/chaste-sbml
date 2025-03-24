@@ -182,6 +182,8 @@ private:
     double Vppf6;
     double F;
 
+    std::vector<bool> eventsSatisfied;
+
     friend class boost::serialization::access;
     template <class Archive>
     void serialize(Archive &archive, const unsigned int version)
