@@ -111,124 +111,64 @@ void TysonNovak2001OdeSystem::EvaluateYDerivatives(double time, const std::vecto
 
     /* Define the reactions in this model. */
     // CycBt synthesis
-    double CycBt_synthesis = 0.0;
-    {
-        CycBt_synthesis = k1;
-    }
+    double CycBt_synthesis = k1;
 
     // CycBt degradation
-    double CycBdegradation = 0.0;
-    {
-        CycBdegradation = k2p * CycBt;
-    }
+    double CycBdegradation = k2p * CycBt;
 
     // CycBt degradation via Cdh1
-    double CycBdegradationviaCdh1 = 0.0;
-    {
-        CycBdegradationviaCdh1 = k2pp * Cdh1 * CycBt;
-    }
+    double CycBdegradationviaCdh1 = k2pp * Cdh1 * CycBt;
 
     // CycBt degradation via Cdc20a
-    double CycBtdegradationviaCdc20a = 0.0;
-    {
-        CycBtdegradationviaCdc20a = k2ppp * Cdc20a * CycBt;
-    }
+    double CycBtdegradationviaCdc20a = k2ppp * Cdc20a * CycBt;
 
     // Cdh1 synthesis
-    double Cdh1synthesis = 0.0;
-    {
-        Cdh1synthesis = (k3p + k3pp * Cdc20a) * (1 - Cdh1) / (J3 + 1 - Cdh1);
-    }
+    double Cdh1synthesis = (k3p + k3pp * Cdc20a) * (1 - Cdh1) / (J3 + 1 - Cdh1);
 
     // Cdh1 degradation
-    double Cdh1degradation = 0.0;
-    {
-        Cdh1degradation = (k4p * SK * Cdh1 + k4 * m * CycB * Cdh1) / (J4 + Cdh1);
-    }
+    double Cdh1degradation = (k4p * SK * Cdh1 + k4 * m * CycB * Cdh1) / (J4 + Cdh1);
 
     // Cdc20t synthesis
-    double Cdc20tsynthesis = 0.0;
-    {
-        Cdc20tsynthesis = k5p + k5pp * pow(CycB * m / J5, n) / (1 + pow(CycB * m / J5, n));
-    }
+    double Cdc20tsynthesis = k5p + k5pp * pow(CycB * m / J5, n) / (1 + pow(CycB * m / J5, n));
 
     // Cdc20t degradation
-    double Cdc20t_deg = 0.0;
-    {
-        Cdc20t_deg = k6 * Cdc20t;
-    }
+    double Cdc20t_deg = k6 * Cdc20t;
 
     // Cdc20 activation
-    double Cdc20activation = 0.0;
-    {
-        Cdc20activation = k7 * IEP * (Cdc20t - Cdc20a) / (J7 + Cdc20t - Cdc20a);
-    }
+    double Cdc20activation = k7 * IEP * (Cdc20t - Cdc20a) / (J7 + Cdc20t - Cdc20a);
 
     // Cdc20a inhibition
-    double Cdc20ainhibition = 0.0;
-    {
-        Cdc20ainhibition = k8 * Mad * Cdc20a / (J8 + Cdc20a);
-    }
+    double Cdc20ainhibition = k8 * Mad * Cdc20a / (J8 + Cdc20a);
 
     // Cdc20a degradation
-    double Cdc20adegradation = 0.0;
-    {
-        Cdc20adegradation = k6 * Cdc20a;
-    }
+    double Cdc20adegradation = k6 * Cdc20a;
 
     // IEP synthesis
-    double IEPsynthesis = 0.0;
-    {
-        IEPsynthesis = k9 * m * CycB * (1 - IEP);
-    }
+    double IEPsynthesis = k9 * m * CycB * (1 - IEP);
 
     // IEP degradation
-    double IEPdegradation = 0.0;
-    {
-        IEPdegradation = k10 * IEP;
-    }
+    double IEPdegradation = k10 * IEP;
 
     // growth
-    double growth = 0.0;
-    {
-        growth = mu * m * (1 - m / mmax);
-    }
+    double growth = mu * m * (1 - m / mmax);
 
     // CKIt synthesis
-    double CKItsynthesis = 0.0;
-    {
-        CKItsynthesis = k11;
-    }
+    double CKItsynthesis = k11;
 
     // CKIt degradation
-    double CKIdegradation = 0.0;
-    {
-        CKIdegradation = k12p * CKIt;
-    }
+    double CKIdegradation = k12p * CKIt;
 
     // CKIt phosphorilation via SK
-    double CKItphosphorilationviaSK = 0.0;
-    {
-        CKItphosphorilationviaSK = k12pp * SK * CKIt;
-    }
+    double CKItphosphorilationviaSK = k12pp * SK * CKIt;
 
     // CKIt Trimer sequestred
-    double eq_7 = 0.0;
-    {
-        eq_7 = k12ppp * m * CycB * CKIt;
-    }
+    double eq_7 = k12ppp * m * CycB * CKIt;
 
     // SK synthesis
-    double SKsynthesis = 0.0;
-    {
-        SKsynthesis = k13 * TF;
-    }
+    double SKsynthesis = k13 * TF;
 
     // SK degradation
-    double SKdegradation = 0.0;
-    {
-        SKdegradation = k14 * SK;
-    }
+    double SKdegradation = k14 * SK;
 
 
     rDY[0] = (CycBt_synthesis - CycBdegradation - CycBdegradationviaCdh1 - CycBtdegradationviaCdc20a) / cell; // dCycBt/dt

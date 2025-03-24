@@ -92,6 +92,7 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
   {% if reaction["name"] %}
     // {{ reaction["name"] }}
   {% endif %}
+  {% if reaction["parameters"] %}
     double {{ reaction["varname"] }} = 0.0;
     {
   {% for param in reaction["parameters"] %}
@@ -99,6 +100,9 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
   {% endfor %}
         {{ reaction["varname"] }} = {{ reaction["rhs"] }};
     }
+  {% else %}
+    double {{ reaction["varname"] }} = {{ reaction["rhs"] }};
+  {% endif %}
 
 {% endfor %}
 
