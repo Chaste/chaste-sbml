@@ -103,6 +103,15 @@ def convert_function_body(fn_body: "ASTNode") -> str:
     return formula
 
 
+def formula_to_cpp(formula: "ASTNode") -> str:
+    """Convert an ASTNode formula to an equivalent C++ string.
+
+    :param formula: The ASTNode.
+    :return: The equivalent C++ formula string.
+    """
+    pass
+
+
 def get_function_definition_arguments(fn_def: "FunctionDefinition") -> list[str]:
     """Get the list of arguments in a given function definition.
 
