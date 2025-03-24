@@ -733,7 +733,7 @@ void Chen2004OdeSystem::CheckAndUpdateEvents(double time, const std::vector<doub
     }
     if (rY[18]  KEZ < 0.0)
     {
-        this->SetStateVariable("MASS", double(F * rY[31]));
+        this->SetStateVariable("MASS", double(F * this->GetStateVariable("MASS")));
         this->SetParameter("LTE1", double(lte1l));
         this->SetStateVariable("BUD", double(0));
         this->SetStateVariable("SPN", double(0));
@@ -978,7 +978,7 @@ void CellwiseOdeSystemInformation<Chen2004OdeSystem>::Initialise()
     this->mInitialised = true;
 }
 
-/* Define SRN model using Wrappers. */
+/* Define SbmlCellCycleWrapperModel using wrappers. */
 #include "SbmlCellCycleWrapperModel.hpp"
 #include "SbmlCellCycleWrapperModel.cpp"
 

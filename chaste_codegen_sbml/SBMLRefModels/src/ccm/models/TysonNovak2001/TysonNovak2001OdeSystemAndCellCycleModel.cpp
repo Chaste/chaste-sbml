@@ -198,7 +198,7 @@ void TysonNovak2001OdeSystem::CheckAndUpdateEvents(double time, const std::vecto
 
     if (rY[1] < 0.1)
     {
-        this->SetStateVariable("m", double(rY[5] / 2));
+        this->SetStateVariable("m", double(this->GetStateVariable("m") / 2));
         eventsSatisfied[0] = true;
     }
 }
@@ -271,7 +271,7 @@ void CellwiseOdeSystemInformation<TysonNovak2001OdeSystem>::Initialise()
     this->mInitialised = true;
 }
 
-/* Define SRN model using Wrappers. */
+/* Define SbmlCellCycleWrapperModel using wrappers. */
 #include "SbmlCellCycleWrapperModel.hpp"
 #include "SbmlCellCycleWrapperModel.cpp"
 

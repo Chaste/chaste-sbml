@@ -177,25 +177,25 @@ class ChasteSbmlModel:
 
             assignment_formulas = []
             for assignment in event.getListOfEventAssignments():
-                formula_tokens = convert_formula(formulaToString(assignment.getMath())).split(" ")
+                tokens = convert_formula(formulaToString(assignment.getMath())).split(" ")
                 rhs_tokens = []
-                for token in formula_tokens:
+                for token in tokens:
                     # Replace species variable name with Chaste equivalent.
-                    index = self._get_state_variable_index(token)
-                    if index is not None:
-                        token = f"rY[{index}]"
-                    rhs_tokens.append(token)
+                    if self._is_state_variable(token):
+                        rhs_tokens.append(f'this->GetStateVariable("{token}")')
+                    elif self._is_state_parameter(token):
+                        rhs_tokens.append(f'this->GetParameter("{token}")')
+                    else:
+                        rhs_tokens.append(token)
                 rhs = "double(" + " ".join(rhs_tokens) + ")"
 
                 lhs = assignment.getVariable()
                 if self._is_state_variable(lhs):
-                    assignment_formula = f'this->SetStateVariable("{lhs}", {rhs});'
+                    assignment_formulas.append(f'this->SetStateVariable("{lhs}", {rhs});')
                 elif self._is_state_parameter(lhs):
-                    assignment_formula = f'this->SetParameter("{lhs}", {rhs});'
+                    assignment_formulas.append(f'this->SetParameter("{lhs}", {rhs});')
                 else:
-                    assignment_formula = f"{lhs} = {rhs};"
-
-                assignment_formulas.append(assignment_formula)
+                    assignment_formulas.append(f"{lhs} = {rhs};")
 
             event_dicts.append(
                 {

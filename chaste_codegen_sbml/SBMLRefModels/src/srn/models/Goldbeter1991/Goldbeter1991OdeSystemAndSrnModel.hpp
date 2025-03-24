@@ -75,7 +75,7 @@ inline void load_construct_data(
 }
 } // namespace ...
 
-/* Define cell cycle model using wrappers. */
+/* Define SbmlSrnWrapperModel using wrappers. */
 #include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
 

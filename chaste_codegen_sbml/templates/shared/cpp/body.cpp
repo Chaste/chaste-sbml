@@ -182,7 +182,7 @@ void CellwiseOdeSystemInformation<{{ ode_class_name }}>::Initialise()
     this->mInitialised = true;
 }
 
-/* Define SRN model using Wrappers. */
+/* Define {{ wrapper_class_name }} using wrappers. */
 #include "{{ wrapper_class_name }}.hpp"
 #include "{{ wrapper_class_name }}.cpp"
 

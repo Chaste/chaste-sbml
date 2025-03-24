@@ -91,7 +91,7 @@ inline void load_construct_data(
 }
 } // namespace ...
 
-/* Define cell cycle model using wrappers. */
+/* Define {{ wrapper_class_name }} using wrappers. */
 #include "{{ wrapper_class_name }}.hpp"
 #include "{{ wrapper_class_name }}.cpp"
 
