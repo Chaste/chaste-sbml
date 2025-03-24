@@ -493,6 +493,7 @@ class ChasteSbmlModel:
         :param obj: The object.
         :return: The variable name.
         """
+        # TODO: id is not unique for all objects e.g. reaction parameters
         obj_id = obj.getId()
         if obj_id in self._varnames:
             return self._varnames[obj_id]
