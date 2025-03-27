@@ -185,7 +185,7 @@ void CellwiseOdeSystemInformation<Chen2000OdeSystem>::Initialise()
     this->mInitialised = true;
 }
 
-/* Define SRN model using Wrappers. */
+/* Define SbmlCellCycleWrapperModel using wrappers. */
 #include "SbmlCellCycleWrapperModel.hpp"
 #include "SbmlCellCycleWrapperModel.cpp"
 

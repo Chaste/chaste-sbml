@@ -1,5 +1,4 @@
-[![pytest](https://github.com/Chaste/chaste-codegen-sbml/actions/workflows/pytest.yml/badge.svg)](https://github.com/Chaste/chaste-codegen-sbml/workflows/pytest.yml)
-[![ctest](https://github.com/Chaste/chaste-codegen-sbml/actions/workflows/ctest.yml/badge.svg)](https://github.com/Chaste/chaste-codegen-sbml/workflows/ctest.yml)
+[![build_and_test](https://github.com/Chaste/chaste-codegen-sbml/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/Chaste/chaste-codegen-sbml/workflows/build_and_test.yml)
 
 # SBML → Chaste
 

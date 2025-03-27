@@ -531,16 +531,11 @@ void Chen2004OdeSystem::EvaluateYDerivatives(double time, const std::vector<doub
     double Activation_of_CDC20 = Mass_Action_1_222(ka20_p + ka20_p_p * this->GetStateVariable("IEP"), this->GetStateVariable("CDC20i"));
 
     // Inactivation
-<<<<<<< Updated upstream
-    double k = 1.0; // k
-    double Inactivation_0 = k * Mass_Action_1_222(MAD2, CDC20);
-=======
     double Inactivation_0 = 0.0;
     {
         double k = 1.0;
         Inactivation_0 = k * Mass_Action_1_222(this->GetParameter("MAD2"), this->GetStateVariable("CDC20"));
     }
->>>>>>> Stashed changes
 
     // CDH1 synthesis
     double CDH1_synthesis = kscdh;
@@ -722,50 +717,28 @@ void Chen2004OdeSystem::CheckAndUpdateEvents(double time, const std::vector<doub
 
     if (sbmlmath::sm_lt(this->GetStateVariable("CLB2") + this->GetStateVariable("CLB5") - KEZ2, 0))
     {
-<<<<<<< Updated upstream
-        this->rGetStateVariables()[36] = double(0);
-=======
         this->SetStateVariable("ORI", static_cast<double>(0));
->>>>>>> Stashed changes
         eventsSatisfied[0] = true;
     }
     if (sbmlmath::sm_gt(this->GetStateVariable("ORI") - 1, 0))
     {
-<<<<<<< Updated upstream
-        MAD2 = double(mad2h);
-        BUB2 = double(bub2h);
-=======
         this->SetParameter("MAD2", static_cast<double>(mad2h));
         this->SetParameter("BUB2", static_cast<double>(bub2h));
->>>>>>> Stashed changes
         eventsSatisfied[1] = true;
     }
     if (sbmlmath::sm_gt(this->GetStateVariable("SPN") - 1, 0))
     {
-<<<<<<< Updated upstream
-        MAD2 = double(mad2l);
-        LTE1 = double(lte1h);
-        BUB2 = double(bub2l);
-=======
         this->SetParameter("MAD2", static_cast<double>(mad2l));
         this->SetParameter("LTE1", static_cast<double>(lte1h));
         this->SetParameter("BUB2", static_cast<double>(bub2l));
->>>>>>> Stashed changes
         eventsSatisfied[2] = true;
     }
     if (sbmlmath::sm_lt(this->GetStateVariable("CLB2") - KEZ, 0))
     {
-<<<<<<< Updated upstream
-        this->rGetStateVariables()[31] = double(F * rY[31]);
-        LTE1 = double(lte1l);
-        this->rGetStateVariables()[1] = double(0);
-        this->rGetStateVariables()[46] = double(0);
-=======
         this->SetStateVariable("MASS", static_cast<double>(F * this->GetStateVariable("MASS")));
         this->SetParameter("LTE1", static_cast<double>(lte1l));
         this->SetStateVariable("BUD", static_cast<double>(0));
         this->SetStateVariable("SPN", static_cast<double>(0));
->>>>>>> Stashed changes
         eventsSatisfied[3] = true;
     }
 }
@@ -1007,7 +980,7 @@ void CellwiseOdeSystemInformation<Chen2004OdeSystem>::Initialise()
     this->mInitialised = true;
 }
 
-/* Define SRN model using Wrappers. */
+/* Define SbmlCellCycleWrapperModel using wrappers. */
 #include "SbmlCellCycleWrapperModel.hpp"
 #include "SbmlCellCycleWrapperModel.cpp"
 

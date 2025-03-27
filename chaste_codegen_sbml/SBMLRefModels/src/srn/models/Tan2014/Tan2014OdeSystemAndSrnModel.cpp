@@ -11,15 +11,6 @@ Tan2014OdeSystem::Tan2014OdeSystem(std::vector<double> stateVariables)
 
     Init();
 
-<<<<<<< Updated upstream
-    SetDefaultInitialCondition(0, 46.6);
-    SetDefaultInitialCondition(1, 581.1);
-    SetDefaultInitialCondition(2, 418.9);
-    SetDefaultInitialCondition(3, 32.6);
-    SetDefaultInitialCondition(4, 516.8);
-    SetDefaultInitialCondition(5, 483.2);
-    SetDefaultInitialCondition(6, 1.0);
-=======
     SetDefaultInitialCondition(0, 46.6); // 
     SetDefaultInitialCondition(1, 581.1); // 
     SetDefaultInitialCondition(2, 418.9); // 
@@ -27,7 +18,6 @@ Tan2014OdeSystem::Tan2014OdeSystem(std::vector<double> stateVariables)
     SetDefaultInitialCondition(4, 516.8); // 
     SetDefaultInitialCondition(5, 483.2); // 
     SetDefaultInitialCondition(6, 1.0); // drag
->>>>>>> Stashed changes
 
     this->mParameters.push_back(0.0); // wnt_level
     this->mParameters.push_back(1.0); // gamma
@@ -43,12 +33,15 @@ Tan2014OdeSystem::~Tan2014OdeSystem()
 {
 }
 
+
 void Tan2014OdeSystem::Init()
 {
-    /* Initialise the parameters. */
+    /* Initialise model compartments. */
     compartment = 1.0;
     CytosolMembrane = 1.16;
     nucleus = 0.65;
+
+    /* Initialise model parameters. */
     wnt_level = 0.0;
     kdegradation = 0.0163;
     Bsyn = 1.306;
@@ -61,31 +54,24 @@ void Tan2014OdeSystem::Init()
     K_c_active_k = 4.5;
     gamma = 0.0;
     ComplexTransitThreshold = 1.0;
+
 }
 
 void Tan2014OdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
     /* Define state variables */
-<<<<<<< Updated upstream
-    double bcat_cm = rY[0];
-    double ligand_cm = rY[1];
-    double complex_cm = rY[2];
-    double bcat_nu = rY[3];
-    double ligand_nu = rY[4];
-    double complex_nu = rY[5];
-=======
     double bcat_cm = rY[0]; // 
     double ligand_cm = rY[1]; // 
     double complex_cm = rY[2]; // 
     double bcat_nu = rY[3]; // 
     double ligand_nu = rY[4]; // 
     double complex_nu = rY[5]; // 
->>>>>>> Stashed changes
     double drag = rY[6]; // drag
 
-    /* Define state parameters */
-    double wnt_level = this->mParameters[0];               // wnt_level
-    double gamma = this->mParameters[1];                   // gamma
+    /* Define state parameters. */
+
+    double wnt_level = this->mParameters[0]; // wnt_level
+    double gamma = this->mParameters[1]; // gamma
     double ComplexTransitThreshold = this->mParameters[2]; // ComplexTransitThreshold
 
     /* Define algebraic rules. */
@@ -106,15 +92,6 @@ void Tan2014OdeSystem::EvaluateYDerivatives(double time, const std::vector<doubl
 
     double K_n_active = K_n_active_k * this->GetStateVariable("bcat_nu");
 
-<<<<<<< Updated upstream
-    rDY[0] = (Bsynthesis - kDegradation - kC - kdiffusion - K_c_active + K_n_active) / CytosolMembrane; // dbcat_cm/dt
-    rDY[1] = (-kC) / CytosolMembrane;                                                                   // dligand_cm/dt
-    rDY[2] = (kC) / CytosolMembrane;                                                                    // dcomplex_cm/dt
-    rDY[3] = (-kN + kdiffusion + K_c_active - K_n_active) / nucleus;                                    // dbcat_nu/dt
-    rDY[4] = (-kN) / nucleus;                                                                           // dligand_nu/dt
-    rDY[5] = (kN) / nucleus;                                                                            // dcomplex_nu/dt
-    rDY[6] = (drag - rY[6]) / CytosolMembrane;                                                          // ddrag/dt
-=======
 
     rDY[0] = (Bsynthesis - kDegradation - kC - kdiffusion - K_c_active + K_n_active) / CytosolMembrane; // d/dt
     rDY[1] = (-kC) / CytosolMembrane; // d/dt
@@ -123,16 +100,10 @@ void Tan2014OdeSystem::EvaluateYDerivatives(double time, const std::vector<doubl
     rDY[4] = (-kN) / nucleus; // d/dt
     rDY[5] = (kN) / nucleus; // d/dt
     rDY[6] = (drag - rY[6]) / CytosolMembrane; // ddrag/dt
->>>>>>> Stashed changes
 
     /* Account for the differences in timescales. */
-    // rDY[0] *= 60.0;
-    // rDY[1] *= 60.0;
-    // rDY[2] *= 60.0;
-    // rDY[3] *= 60.0;
-    // rDY[4] *= 60.0;
-    // rDY[5] *= 60.0;
 }
+
 
 template <>
 void CellwiseOdeSystemInformation<Tan2014OdeSystem>::Initialise()
@@ -165,6 +136,9 @@ void CellwiseOdeSystemInformation<Tan2014OdeSystem>::Initialise()
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(1.0);
 
+
+    /* Define state parameters. */
+    // Parameters without set values must be externally defined
     this->mParameterNames.push_back("wnt_level");
     this->mParameterUnits.push_back("non-dim");
 
@@ -177,7 +151,7 @@ void CellwiseOdeSystemInformation<Tan2014OdeSystem>::Initialise()
     this->mInitialised = true;
 }
 
-/* Define SRN model using Wrappers. */
+/* Define SbmlSrnWrapperModel using wrappers. */
 #include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
 

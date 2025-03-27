@@ -33,46 +33,48 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef SBMLSRNWRAPPERMODEL_CPP_
-#define SBMLSRNWRAPPERMODEL_CPP_
+#ifndef SBMLCELLCYCLEWRAPPERMODEL_CPP_
+#define SBMLCELLCYCLEWRAPPERMODEL_CPP_
 
-#include "AbstractOdeSrnModel.hpp"
+//#include "UblasIncludes.hpp"
+#include "SbmlCellCycleWrapperModel.hpp"
 #include "CellCycleModelOdeSolver.hpp"
-#include "CvodeAdaptor.hpp"
-#include "Debug.hpp"
 #include "RungeKutta4IvpOdeSolver.hpp"
+#include "AbstractOdeSrnModel.hpp"
+#include "CvodeAdaptor.hpp"
+//#include "Exception.hpp"
+#include "Debug.hpp"
 
-#include "SbmlSrnWrapperModel.hpp"
 
-template <typename SBMLODE, unsigned SIZE>
-SbmlSrnWrapperModel<SBMLODE, SIZE>::SbmlSrnWrapperModel(boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver)
+template<typename SBMLODE, unsigned SIZE>
+SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SbmlCellCycleWrapperModel(boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver)
     : AbstractOdeSrnModel(SIZE, pOdeSolver)
 {
 
-    // TODO add CVODE solver. See VanLeeuwen CCM in trunk
+	// TODO add CVODE solver. See VanLeeuwen CCM in trunk
 
     if (mpOdeSolver == boost::shared_ptr<AbstractCellCycleModelOdeSolver>())
     {
 
-#ifdef CHASTE_CVODE
-        mpOdeSolver = CellCycleModelOdeSolver<SbmlSrnWrapperModel<SBMLODE, SIZE>, CvodeAdaptor>::Instance();
+    	#ifdef CHASTE_CVODE
+        mpOdeSolver = CellCycleModelOdeSolver<SbmlCellCycleWrapperModel<SBMLODE, SIZE>, CvodeAdaptor>::Instance();
         mpOdeSolver->Initialise();
         // Chaste solvers always check for stopping events, CVODE needs to be instructed to do so
         mpOdeSolver->CheckForStoppingEvents();
         mpOdeSolver->SetMaxSteps(10000);
-#else
+		#else
         // TODO: Set solver type and dt from CLI
-        mpOdeSolver = CellCycleModelOdeSolver<SbmlSrnWrapperModel<SBMLODE, SIZE>, RungeKutta4IvpOdeSolver>::Instance();
+        mpOdeSolver = CellCycleModelOdeSolver<SbmlCellCycleWrapperModel<SBMLODE, SIZE>, RungeKutta4IvpOdeSolver>::Instance();
         mpOdeSolver->Initialise();
         SetDt(0.0001); // This is small enough for both examples to converge
-#endif // CHASTE_CVODE
+		#endif //CHASTE_CVODE
     }
     assert(mpOdeSolver->IsSetUp());
 }
 
-// New method for copy constructor
-template <typename SBMLODE, unsigned SIZE>
-SbmlSrnWrapperModel<SBMLODE, SIZE>::SbmlSrnWrapperModel(const SbmlSrnWrapperModel &rModel)
+//New method for copy constructor
+template<typename SBMLODE, unsigned SIZE>
+SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SbmlCellCycleWrapperModel(const SbmlCellCycleWrapperModel& rModel)
     : AbstractOdeSrnModel(rModel)
 {
     /*
@@ -94,77 +96,83 @@ SbmlSrnWrapperModel<SBMLODE, SIZE>::SbmlSrnWrapperModel(const SbmlSrnWrapperMode
     SetOdeSystem(new SBMLODE(rModel.GetOdeSystem()->rGetStateVariables()));
 }
 
-template <typename SBMLODE, unsigned SIZE>
-AbstractSrnModel *SbmlSrnWrapperModel<SBMLODE, SIZE>::CreateSrnModel()
+template<typename SBMLODE, unsigned SIZE>
+AbstractSrnModel* SbmlCellCycleWrapperModel<SBMLODE, SIZE>::CreateSrnModel()
 {
-    return new SbmlSrnWrapperModel(*this);
+	return new SbmlCellCycleWrapperModel(*this);
 }
 
-template <typename SBMLODE, unsigned SIZE>
-void SbmlSrnWrapperModel<SBMLODE, SIZE>::SimulateToCurrentTime()
+
+template<typename SBMLODE, unsigned SIZE>
+void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SimulateToCurrentTime()
 {
 
-    assert(mpOdeSystem != NULL);
-    assert(mpCell != NULL);
+	assert(mpOdeSystem != NULL);
+	assert(mpCell != NULL);
 
-    /* Custom behaviour: store the state variables as cell data and set any parameters
-     * using cell data, so that we can visualise different concentrations in Paraview.
-     */
+	/* Custom behaviour: store the state variables as cell data and set any parameters
+	 * using cell data, so that we can visualise different concentrations in Paraview.
+	 */
 
-    std::vector<std::string> parameterNames = mpOdeSystem->rGetParameterNames();
-    // Set parameters that need to be set
-    for (unsigned i = 0; i < parameterNames.size(); i++)
-    {
-        std::string parameterName = parameterNames[i];
+	std::vector<std::string> parameterNames = mpOdeSystem->rGetParameterNames();
+	//Set parameters that need to be set
+	for (unsigned i = 0; i < parameterNames.size(); i++)
+	{
+		std::string parameterName = parameterNames[i];
 
-        // Get the value from cell data
-        double parameterValue = mpCell->GetCellData()->GetItem(parameterName);
+		//Get the value from cell data
+		double parameterValue = mpCell->GetCellData()->GetItem(parameterName);
 
-        mpOdeSystem->SetParameter(parameterName, parameterValue);
-    }
+		mpOdeSystem->SetParameter(parameterName, parameterValue);
+	}
 
-    std::vector<std::string> stateVariableNames = mpOdeSystem->rGetStateVariableNames();
+	std::vector<std::string> stateVariableNames = mpOdeSystem->rGetStateVariableNames();
 
-    for (unsigned i = 0; i < stateVariableNames.size(); i++)
-    {
-        std::string stateName = stateVariableNames[i];
-        double stateValue = mpOdeSystem->rGetStateVariables()[i];
+	for (unsigned i = 0; i < stateVariableNames.size(); i++)
+	{
+		std::string stateName = stateVariableNames[i];
+		double stateValue = mpOdeSystem->rGetStateVariables()[i];
 
-        // Set current state variable value as cell data
-        mpCell->GetCellData()->SetItem(stateName, stateValue);
-    }
+		//Set current state variable value as cell data
+		mpCell->GetCellData()->SetItem(stateName, stateValue);
+	}
+
 
     // run the ODE simulation as needed
     AbstractOdeSrnModel::SimulateToCurrentTime();
+
+
 }
 
-template <typename SBMLODE, unsigned SIZE>
-void SbmlSrnWrapperModel<SBMLODE, SIZE>::Initialise()
+template<typename SBMLODE, unsigned SIZE>
+void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::Initialise()
 {
-    AbstractOdeSrnModel::Initialise(new SBMLODE);
+	AbstractOdeSrnModel::Initialise(new SBMLODE);
 
-    // Initialise cell data
-    assert(mpOdeSystem != NULL);
-    assert(mpCell != NULL);
+	//Initialise cell data
+	assert(mpOdeSystem != NULL);
+	assert(mpCell != NULL);
 
-    /* Custom behaviour: store the state variables as cell data and set any parameters
-     * using cell data, so that we can visualise different concentrations in Paraview.
-     */
+	/* Custom behaviour: store the state variables as cell data and set any parameters
+	 * using cell data, so that we can visualise different concentrations in Paraview.
+	 */
 
-    std::vector<std::string> stateVariableNames = mpOdeSystem->rGetStateVariableNames();
+	std::vector<std::string> stateVariableNames = mpOdeSystem->rGetStateVariableNames();
 
-    for (unsigned i = 0; i < stateVariableNames.size(); i++)
-    {
-        std::string stateName = stateVariableNames[i];
-        double stateValue = mpOdeSystem->rGetStateVariables()[i];
+	for (unsigned i = 0; i < stateVariableNames.size(); i++)
+	{
+		std::string stateName = stateVariableNames[i];
+		double stateValue = mpOdeSystem->rGetStateVariables()[i];
 
-        // Set current state variable value as cell data
-        mpCell->GetCellData()->SetItem(stateName, stateValue);
-    }
+		//Set current state variable value as cell data
+		mpCell->GetCellData()->SetItem(stateName, stateValue);
+	}
+
 }
 
-template <typename SBMLODE, unsigned SIZE>
-void SbmlSrnWrapperModel<SBMLODE, SIZE>::OutputSrnModelParameters(out_stream &rParamsFile)
+
+template<typename SBMLODE, unsigned SIZE>
+void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::OutputSrnModelParameters(out_stream& rParamsFile)
 {
     // No new parameters to output.
 
@@ -172,11 +180,11 @@ void SbmlSrnWrapperModel<SBMLODE, SIZE>::OutputSrnModelParameters(out_stream &rP
     AbstractOdeSrnModel::OutputSrnModelParameters(rParamsFile);
 }
 
-template <typename SBMLODE, unsigned SIZE>
-double SbmlSrnWrapperModel<SBMLODE, SIZE>::GetStateVariable(const std::string &rName)
+template<typename SBMLODE, unsigned SIZE>
+double SbmlCellCycleWrapperModel<SBMLODE, SIZE>::GetStateVariable(const std::string& rName)
 {
     assert(mpOdeSystem != nullptr);
     return mpOdeSystem->GetStateVariable(rName);
 }
 
-#endif // SBMLSRNWRAPPERMODEL_CPP_
+#endif /* SBMLCELLCYCLEWRAPPERMODEL_CPP_ */

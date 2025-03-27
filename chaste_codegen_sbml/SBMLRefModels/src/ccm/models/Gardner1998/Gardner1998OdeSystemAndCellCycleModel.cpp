@@ -61,55 +61,13 @@ void Gardner1998OdeSystem::EvaluateYDerivatives(double time, const std::vector<d
 
     /* Define the reactions in this model. */
     // creation of cyclin
-    double vi = 0.1; // vi
-    double reaction1 = vi;
+    double reaction1 = 0.0;
+    {
+        double vi = 0.1;
+        reaction1 = vi;
+    }
 
     // cdc2 kinase triggered degration of cyclin
-<<<<<<< Updated upstream
-    double k1 = 0.5; // k1
-    double K5 = 0.02; // K5
-    double reaction2 = C * k1 * X * pow(C + K5, -1);
-
-    // default degradation of cyclin
-    double kd = 0.02; // kd
-    double reaction3 = C * kd;
-
-    // activation of cdc2 kinase
-    double K1 = 0.1; // K1
-    double reaction4 = (1 + -1 * M) * V1 * pow(K1 + -1 * M + 1, -1);
-
-    // deactivation of cdc2 kinase
-    double V2 = 0.25; // V2
-    double K2 = 0.1; // K2
-    double reaction5 = M * V2 * pow(K2 + M, -1);
-
-    // activation of cyclin protease
-    double K3 = 0.2; // K3
-    double reaction6 = V3 * (1 + -1 * X) * pow(K3 + -1 * X + 1, -1);
-
-    // deactivation of cyclin protease
-    double K4 = 0.1; // K4
-    double V4 = 0.1; // V4
-    double reaction7 = V4 * X * pow(K4 + X, -1);
-
-    // reaction8
-    double a1 = 0.05; // a1
-    double reaction8 = a1 * C * Y;
-
-    // reaction9
-    double a2 = 0.05; // a2
-    double reaction9 = a2 * Z;
-
-    // desinhibition of cyclin
-    double alpha = 0.1; // alpha
-    double d1 = 0.05; // d1
-    double reaction10 = alpha * d1 * Z;
-
-    // degradation of inhibited cyclin
-    double kd = 0.02; // kd
-    double alpha = 0.1; // alpha
-    double reaction11 = alpha * kd * Z;
-=======
     double reaction2 = 0.0;
     {
         double k1 = 0.5;
@@ -183,23 +141,20 @@ void Gardner1998OdeSystem::EvaluateYDerivatives(double time, const std::vector<d
         double alpha = 0.1;
         reaction11 = alpha * kd * this->GetStateVariable("Z");
     }
->>>>>>> Stashed changes
 
     // creation of cyclin inhibitor
-    double vs = 0.2; // vs
-    double reaction12 = vs;
+    double reaction12 = 0.0;
+    {
+        double vs = 0.2;
+        reaction12 = vs;
+    }
 
     // degradation of cyclin inhibitor
-<<<<<<< Updated upstream
-    double d1 = 0.05; // d1
-    double reaction13 = d1 * Y;
-=======
     double reaction13 = 0.0;
     {
         double d1 = 0.05;
         reaction13 = d1 * this->GetStateVariable("Y");
     }
->>>>>>> Stashed changes
 
 
     rDY[0] = (reaction1 - reaction2 - reaction3 - reaction8 + reaction9 + reaction10) / Cell; // dcyclin/dt
@@ -241,7 +196,7 @@ void CellwiseOdeSystemInformation<Gardner1998OdeSystem>::Initialise()
     this->mInitialised = true;
 }
 
-/* Define SRN model using Wrappers. */
+/* Define SbmlCellCycleWrapperModel using wrappers. */
 #include "SbmlCellCycleWrapperModel.hpp"
 #include "SbmlCellCycleWrapperModel.cpp"
 

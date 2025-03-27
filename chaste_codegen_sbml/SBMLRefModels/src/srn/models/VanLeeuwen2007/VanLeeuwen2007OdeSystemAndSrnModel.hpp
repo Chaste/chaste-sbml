@@ -13,6 +13,7 @@
 class VanLeeuwen2007OdeSystem : public AbstractOdeSystem
 {
 private:
+
     /* Declare model compartments. */
     double cytosolmembraneandnucleus;
 
@@ -49,6 +50,7 @@ private:
     double d_D;
     double ComplexTransitThreshold;
 
+
     friend class boost::serialization::access;
     template <class Archive>
     void serialize(Archive &archive, const unsigned int version)
@@ -57,50 +59,55 @@ private:
     }
 
 public:
+
     /* Default constructor. */
     VanLeeuwen2007OdeSystem(std::vector<double> stateVariables = std::vector<double>());
 
     /* Destructor. */
     ~VanLeeuwen2007OdeSystem();
 
+    /* Declare model functions. */
+
     void Init();
 
     void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
+
 };
 
 namespace
 {
-    namespace serialization
-    {
-        /* Serialize information required to construct a VanLeeuwen2007OdeSystem. */
-        template <class Archive>
-        inline void save_construct_data(
-            Archive &ar, const VanLeeuwen2007OdeSystem *t, const unsigned int file_version)
-        {
-            const std::vector<double> state_variables = t->rGetConstStateVariables();
-            ar & state_variables;
-        }
-        /* De-serialize constructor parameters and intiialise a VanLeeuwen2007OdeSystem. */
-        template <class Archive>
-        inline void load_construct_data(
-            Archive &ar, VanLeeuwen2007OdeSystem *t, const unsigned int file_version)
-        {
-            std::vector<double> state_variables;
-            ar & state_variables;
+namespace serialization
+{
+/* Serialize information required to construct a VanLeeuwen2007OdeSystem. */
+template <class Archive>
+inline void save_construct_data(
+    Archive &ar, const VanLeeuwen2007OdeSystem *t, const unsigned int file_version)
+{
+    const std::vector<double> state_variables = t->rGetConstStateVariables();
+    ar & state_variables;
+}
 
-            // Invoke inplace constructor to initialise instance
-            ::new (t) VanLeeuwen2007OdeSystem(state_variables);
-        }
-    }
+/* De-serialize constructor parameters and intitialise a VanLeeuwen2007OdeSystem. */
+template <class Archive>
+inline void load_construct_data(
+    Archive &ar, VanLeeuwen2007OdeSystem *t, const unsigned int file_version)
+{
+    std::vector<double> state_variables;
+    ar & state_variables;
+
+    // Invoke inplace constructor to initialise instance
+    ::new (t) VanLeeuwen2007OdeSystem(state_variables);
+}
+}
 } // namespace ...
 
-/* Define SRN model using Wrappers. */
+/* Define SbmlSrnWrapperModel using wrappers. */
 #include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
 
 typedef SbmlSrnWrapperModel<VanLeeuwen2007OdeSystem, 14> VanLeeuwen2007SrnModel;
 
-// Declare identifiers for the serializer
+/* Declare identifiers for the serializer */
 #include "SerializationExportWrapper.hpp"
 CHASTE_CLASS_EXPORT(VanLeeuwen2007OdeSystem)
 EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, VanLeeuwen2007OdeSystem, 14)
@@ -108,4 +115,4 @@ EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, VanLeeuwen2007OdeSystem, 14)
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
 EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(VanLeeuwen2007SrnModel)
 
-#endif /* VANLEEUWEN2007ODESYSTEMANDSRNMODEL_HPP_ */
+#endif // VANLEEUWEN2007ODESYSTEMANDSRNMODEL_HPP_

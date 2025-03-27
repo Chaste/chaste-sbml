@@ -7,7 +7,7 @@ import pathlib
 from typing import TYPE_CHECKING
 
 from jinja2 import Environment, PackageLoader, select_autoescape
-from libsbml import Parameter, SBMLReader, Species, formulaToString
+from libsbml import Parameter, SBMLReader, formulaToString
 
 from ._config import ODE_SUFFIX, SHORT_NAME_LEN
 from ._utils import (
@@ -250,23 +250,12 @@ class ChasteSbmlModel:
                 rhs = f"static_cast<double>({rhs_math})"
 
                 lhs = assignment.getVariable()
-                index = self._get_state_variable_index(lhs)
-                if index is not None:
-                    lhs = f"this->rGetStateVariables()[{index}]"
-
-                formula = convert_formula(formulaToString(assignment.getMath()))
-                formula_tokens = formula.split(" ")
-                tokens = []
-                for token in formula_tokens:
-                    # Replace species variable name with Chaste equivalent.
-                    index = self._get_state_variable_index(token)
-                    if index is not None:
-                        token = f"rY[{index}]"
-                    tokens.append(token)
-                rhs = " ".join(tokens)
-
-                if lhs and rhs:
-                    assignment_formulas.append({"lhs": lhs, "rhs": rhs})
+                if self._is_state_variable(lhs):
+                    assignment_formulas.append(f'this->SetStateVariable("{lhs}", {rhs});')
+                elif self._is_state_parameter(lhs):
+                    assignment_formulas.append(f'this->SetParameter("{lhs}", {rhs});')
+                else:
+                    assignment_formulas.append(f"{lhs} = {rhs};")
 
             event_dicts.append(
                 {
@@ -332,7 +321,7 @@ class ChasteSbmlModel:
 
             is_defined = (param.isSetValue() or param_id in self._rules_dict) and not is_special
 
-            is_state_parameter = self._is_state_parameter(param)
+            is_state_parameter = self._is_state_parameter(param_id)
             state_parameter_index = self._get_state_parameter_index(param_id)
 
             parameter_dicts.append(
@@ -420,10 +409,10 @@ class ChasteSbmlModel:
             varname = self._get_varname(species)
             concentration = get_species_concentration(species)
 
-            is_state_parameter = self._is_state_parameter(species)
+            is_state_parameter = self._is_state_parameter(species_id)
             state_parameter_index = self._get_state_parameter_index(species_id)
 
-            is_state_variable = not is_state_parameter
+            is_state_variable = self._is_state_variable(species_id)
             state_variable_index = self._get_state_variable_index(species_id)
 
             comp_id = species.getCompartment()
@@ -571,6 +560,7 @@ class ChasteSbmlModel:
         :param obj: The object.
         :return: The variable name.
         """
+        # TODO: id is not unique for all objects e.g. reaction parameters
         obj_id = obj.getId()
         if obj_id in self._varnames:
             return self._varnames[obj_id]
@@ -601,27 +591,21 @@ class ChasteSbmlModel:
         name = parameter.getName()
         return name and any(s in name for s in self.SPECIAL_PARAMETER_NAMES)
 
-    def _is_state_parameter(self, obj: "Species | Parameter") -> bool:
-        """Check if a species or parameter is defined as a state parameter for Chaste.
+    def _is_state_parameter(self, obj_id: str) -> bool:
+        """Check if a Species or Parameter is defined as a state parameter for Chaste.
 
-        :param obj: The species or parameter to check.
-        :return: True if defined as a parameter, False otherwise.
+        :param obj_id: The Species or Parameter ID to check.
+        :return: True if defined as a state parameter, False otherwise.
         """
-        # Any species not defined by an ODE or rule is set as a state parameter
-        if isinstance(obj, Species):
-            species_id = obj.getId()
-            return (species_id not in self._odes_dict) and (species_id not in self._rules_dict)
+        return obj_id in self._state_parameters
 
-        if isinstance(obj, Parameter):
-            # Parameters with special strings in their name are state parameters.
-            if self._is_special_parameter(obj):
-                return True
+    def _is_state_variable(self, species_id: str) -> bool:
+        """Check if a Species is defined as a state variable for Chaste.
 
-            # Also, parameters with unset values are state parameters.
-            parameter_id = obj.getId()
-            return (not obj.isSetValue()) and (parameter_id not in self._rules_dict)
-
-        return False
+        :param species_id: The Species ID to check.
+        :return: True if defined as a state variable, False otherwise.
+        """
+        return species_id in self._state_variables
 
     def _update_state(self) -> None:
         """Set the state parameters and state variables for the model."""
@@ -629,14 +613,23 @@ class ChasteSbmlModel:
         self._state_variables = {}
 
         for species in self._species:
-            if self._is_state_parameter(species):
-                self._add_state_parameter(species.getId())
+            species_id = species.getId()
+            if (species_id in self._odes_dict) or (species_id in self._rules_dict):
+                # Any species defined by an ODE or rule is a state variable
+                self._add_state_variable(species_id)
             else:
-                self._add_state_variable(species.getId())
+                # All other species are defined as state parameters
+                self._add_state_parameter(species_id)
 
         for param in self._parameters:
-            if self._is_state_parameter(param):
-                self._add_state_parameter(param.getId())
+            param_id = param.getId()
+            if self._is_special_parameter(param):
+                # Parameters with special strings in their name are defined as state parameters.
+                self._add_state_parameter(param_id)
+
+            elif not (param.isSetValue() or (param_id in self._rules_dict)):
+                # Parameters with unset values are also defined as state parameters.
+                self._add_state_parameter(param_id)
 
     def _update_odes_dict(self) -> None:
         """Set the ODEs dictionary of equations corresponding to each species.

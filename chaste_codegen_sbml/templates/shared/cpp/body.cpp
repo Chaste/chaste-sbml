@@ -91,13 +91,20 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
 
     /* Define the reactions in this model. */
 {% for reaction in reactions %}
-{% if reaction["name"] %}
+  {% if reaction["name"] %}
     // {{ reaction["name"] }}
-{% endif %}
-{% for param in reaction["parameters"] %}
-    double {{ param["id"] }} = {{ param["value"] }}; // {{ param["name"] }}
-{% endfor %}
+  {% endif %}
+  {% if reaction["parameters"] %}
+    double {{ reaction["varname"] }} = 0.0;
+    {
+  {% for param in reaction["parameters"] %}
+        double {{ param["id"] }} = {{ param["value"] }};
+  {% endfor %}
+        {{ reaction["varname"] }} = {{ reaction["rhs"] }};
+    }
+  {% else %}
     double {{ reaction["varname"] }} = {{ reaction["rhs"] }};
+  {% endif %}
 
 {% endfor %}
 
@@ -126,7 +133,7 @@ void {{ ode_class_name }}::CheckAndUpdateEvents(double time, const std::vector<d
     if ({{ event["trigger"] }})
     {
 {% for assignment in event["assignments"] %}
-        {{ assignment["lhs"] }} = double({{ assignment["rhs"] }});
+        {{ assignment }}
 {% endfor %}
         eventsSatisfied[{{ loop.index0 }}] = true;
     }
@@ -177,7 +184,7 @@ void CellwiseOdeSystemInformation<{{ ode_class_name }}>::Initialise()
     this->mInitialised = true;
 }
 
-/* Define SRN model using Wrappers. */
+/* Define {{ wrapper_class_name }} using wrappers. */
 #include "{{ wrapper_class_name }}.hpp"
 #include "{{ wrapper_class_name }}.cpp"
 

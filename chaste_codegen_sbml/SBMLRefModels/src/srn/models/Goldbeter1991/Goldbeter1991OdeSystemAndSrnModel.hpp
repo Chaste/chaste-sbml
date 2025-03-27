@@ -24,6 +24,7 @@ private:
     double VM3;
     double Kc;
 
+
     friend class boost::serialization::access;
     template <class Archive>
     void serialize(Archive &archive, const unsigned int version)
@@ -74,7 +75,7 @@ inline void load_construct_data(
 }
 } // namespace ...
 
-/* Define cell cycle model using wrappers. */
+/* Define SbmlSrnWrapperModel using wrappers. */
 #include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
 

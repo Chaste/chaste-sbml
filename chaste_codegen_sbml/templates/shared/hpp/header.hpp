@@ -24,6 +24,10 @@ private:
     double {{ parameter["id"] }};
 {% endfor %}
 
+{% if events %}
+    std::vector<bool> eventsSatisfied;
+{% endif %}
+
     friend class boost::serialization::access;
     template <class Archive>
     void serialize(Archive &archive, const unsigned int version)
@@ -87,7 +91,7 @@ inline void load_construct_data(
 }
 } // namespace ...
 
-/* Define cell cycle model using wrappers. */
+/* Define {{ wrapper_class_name }} using wrappers. */
 #include "{{ wrapper_class_name }}.hpp"
 #include "{{ wrapper_class_name }}.cpp"
 
