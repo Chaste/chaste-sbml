@@ -1,5 +1,7 @@
-#include "Gardner1998OdeSystemAndCellCycleModel.hpp"
 #include "CellwiseOdeSystemInformation.hpp"
+#include "SbmlMath.hpp"
+
+#include "Gardner1998OdeSystemAndCellCycleModel.hpp"
 
 /* SBML ODE System */
 Gardner1998OdeSystem::Gardner1998OdeSystem(std::vector<double> stateVariables)
@@ -54,8 +56,8 @@ void Gardner1998OdeSystem::EvaluateYDerivatives(double time, const std::vector<d
 
 
     /* Define algebraic rules. */
-    V1 = C * V1p * pow(C + K6, -1);
-    V3 = M * V3p;
+    V1 = this->GetStateVariable("C") * V1p * pow(this->GetStateVariable("C") + K6, -1);
+    V3 = this->GetStateVariable("M") * V3p;
 
     /* Define the reactions in this model. */
     // creation of cyclin
@@ -63,6 +65,7 @@ void Gardner1998OdeSystem::EvaluateYDerivatives(double time, const std::vector<d
     double reaction1 = vi;
 
     // cdc2 kinase triggered degration of cyclin
+<<<<<<< Updated upstream
     double k1 = 0.5; // k1
     double K5 = 0.02; // K5
     double reaction2 = C * k1 * X * pow(C + K5, -1);
@@ -106,14 +109,97 @@ void Gardner1998OdeSystem::EvaluateYDerivatives(double time, const std::vector<d
     double kd = 0.02; // kd
     double alpha = 0.1; // alpha
     double reaction11 = alpha * kd * Z;
+=======
+    double reaction2 = 0.0;
+    {
+        double k1 = 0.5;
+        double K5 = 0.02;
+        reaction2 = this->GetStateVariable("C") * k1 * this->GetStateVariable("X") * pow(this->GetStateVariable("C") + K5, -1);
+    }
+
+    // default degradation of cyclin
+    double reaction3 = 0.0;
+    {
+        double kd = 0.02;
+        reaction3 = this->GetStateVariable("C") * kd;
+    }
+
+    // activation of cdc2 kinase
+    double reaction4 = 0.0;
+    {
+        double K1 = 0.1;
+        reaction4 = (1 + -1 * this->GetStateVariable("M")) * V1 * pow(K1 + -1 * this->GetStateVariable("M") + 1, -1);
+    }
+
+    // deactivation of cdc2 kinase
+    double reaction5 = 0.0;
+    {
+        double V2 = 0.25;
+        double K2 = 0.1;
+        reaction5 = this->GetStateVariable("M") * V2 * pow(K2 + this->GetStateVariable("M"), -1);
+    }
+
+    // activation of cyclin protease
+    double reaction6 = 0.0;
+    {
+        double K3 = 0.2;
+        reaction6 = V3 * (1 + -1 * this->GetStateVariable("X")) * pow(K3 + -1 * this->GetStateVariable("X") + 1, -1);
+    }
+
+    // deactivation of cyclin protease
+    double reaction7 = 0.0;
+    {
+        double K4 = 0.1;
+        double V4 = 0.1;
+        reaction7 = V4 * this->GetStateVariable("X") * pow(K4 + this->GetStateVariable("X"), -1);
+    }
+
+    // reaction8
+    double reaction8 = 0.0;
+    {
+        double a1 = 0.05;
+        reaction8 = a1 * this->GetStateVariable("C") * this->GetStateVariable("Y");
+    }
+
+    // reaction9
+    double reaction9 = 0.0;
+    {
+        double a2 = 0.05;
+        reaction9 = a2 * this->GetStateVariable("Z");
+    }
+
+    // desinhibition of cyclin
+    double reaction10 = 0.0;
+    {
+        double alpha = 0.1;
+        double d1 = 0.05;
+        reaction10 = alpha * d1 * this->GetStateVariable("Z");
+    }
+
+    // degradation of inhibited cyclin
+    double reaction11 = 0.0;
+    {
+        double kd = 0.02;
+        double alpha = 0.1;
+        reaction11 = alpha * kd * this->GetStateVariable("Z");
+    }
+>>>>>>> Stashed changes
 
     // creation of cyclin inhibitor
     double vs = 0.2; // vs
     double reaction12 = vs;
 
     // degradation of cyclin inhibitor
+<<<<<<< Updated upstream
     double d1 = 0.05; // d1
     double reaction13 = d1 * Y;
+=======
+    double reaction13 = 0.0;
+    {
+        double d1 = 0.05;
+        reaction13 = d1 * this->GetStateVariable("Y");
+    }
+>>>>>>> Stashed changes
 
 
     rDY[0] = (reaction1 - reaction2 - reaction3 - reaction8 + reaction9 + reaction10) / Cell; // dcyclin/dt

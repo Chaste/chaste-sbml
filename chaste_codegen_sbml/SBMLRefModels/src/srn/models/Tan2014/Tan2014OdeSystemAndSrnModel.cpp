@@ -1,5 +1,7 @@
-#include "Tan2014OdeSystemAndSrnModel.hpp"
 #include "CellwiseOdeSystemInformation.hpp"
+#include "SbmlMath.hpp"
+
+#include "Tan2014OdeSystemAndSrnModel.hpp"
 
 /* SBML ODE System */
 Tan2014OdeSystem::Tan2014OdeSystem(std::vector<double> stateVariables)
@@ -9,6 +11,7 @@ Tan2014OdeSystem::Tan2014OdeSystem(std::vector<double> stateVariables)
 
     Init();
 
+<<<<<<< Updated upstream
     SetDefaultInitialCondition(0, 46.6);
     SetDefaultInitialCondition(1, 581.1);
     SetDefaultInitialCondition(2, 418.9);
@@ -16,6 +19,15 @@ Tan2014OdeSystem::Tan2014OdeSystem(std::vector<double> stateVariables)
     SetDefaultInitialCondition(4, 516.8);
     SetDefaultInitialCondition(5, 483.2);
     SetDefaultInitialCondition(6, 1.0);
+=======
+    SetDefaultInitialCondition(0, 46.6); // 
+    SetDefaultInitialCondition(1, 581.1); // 
+    SetDefaultInitialCondition(2, 418.9); // 
+    SetDefaultInitialCondition(3, 32.6); // 
+    SetDefaultInitialCondition(4, 516.8); // 
+    SetDefaultInitialCondition(5, 483.2); // 
+    SetDefaultInitialCondition(6, 1.0); // drag
+>>>>>>> Stashed changes
 
     this->mParameters.push_back(0.0); // wnt_level
     this->mParameters.push_back(1.0); // gamma
@@ -54,12 +66,21 @@ void Tan2014OdeSystem::Init()
 void Tan2014OdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
     /* Define state variables */
+<<<<<<< Updated upstream
     double bcat_cm = rY[0];
     double ligand_cm = rY[1];
     double complex_cm = rY[2];
     double bcat_nu = rY[3];
     double ligand_nu = rY[4];
     double complex_nu = rY[5];
+=======
+    double bcat_cm = rY[0]; // 
+    double ligand_cm = rY[1]; // 
+    double complex_cm = rY[2]; // 
+    double bcat_nu = rY[3]; // 
+    double ligand_nu = rY[4]; // 
+    double complex_nu = rY[5]; // 
+>>>>>>> Stashed changes
     double drag = rY[6]; // drag
 
     /* Define state parameters */
@@ -68,23 +89,24 @@ void Tan2014OdeSystem::EvaluateYDerivatives(double time, const std::vector<doubl
     double ComplexTransitThreshold = this->mParameters[2]; // ComplexTransitThreshold
 
     /* Define algebraic rules. */
-    drag = fmax((complex_cm - 700) / 10, 1);
+    drag = sbmlmath::sm_max((this->GetStateVariable("complex_cm") - 700) / 10, 1);
 
     /* Define the reactions in this model. */
     double Bsynthesis = Bsyn * CytosolMembrane;
 
-    double kDegradation = CytosolMembrane * kdegradation * gamma * bcat_cm * (1 - 0.5 * wnt_level);
+    double kDegradation = CytosolMembrane * kdegradation * this->GetParameter("gamma") * this->GetStateVariable("bcat_cm") * (1 - 0.5 * this->GetParameter("wnt_level"));
 
-    double kC = CytosolMembrane * (kC_k1 * bcat_cm * ligand_cm - kC_k2 * complex_cm);
+    double kC = CytosolMembrane * (kC_k1 * this->GetStateVariable("bcat_cm") * this->GetStateVariable("ligand_cm") - kC_k2 * this->GetStateVariable("complex_cm"));
 
-    double kN = nucleus * (kN_k1 * bcat_nu * ligand_nu - kN_k2 * complex_nu);
+    double kN = nucleus * (kN_k1 * this->GetStateVariable("bcat_nu") * this->GetStateVariable("ligand_nu") - kN_k2 * this->GetStateVariable("complex_nu"));
 
-    double kdiffusion = kdiffusion_k * (bcat_cm - bcat_nu);
+    double kdiffusion = kdiffusion_k * (this->GetStateVariable("bcat_cm") - this->GetStateVariable("bcat_nu"));
 
-    double K_c_active = K_c_active_k * bcat_cm;
+    double K_c_active = K_c_active_k * this->GetStateVariable("bcat_cm");
 
-    double K_n_active = K_n_active_k * bcat_nu;
+    double K_n_active = K_n_active_k * this->GetStateVariable("bcat_nu");
 
+<<<<<<< Updated upstream
     rDY[0] = (Bsynthesis - kDegradation - kC - kdiffusion - K_c_active + K_n_active) / CytosolMembrane; // dbcat_cm/dt
     rDY[1] = (-kC) / CytosolMembrane;                                                                   // dligand_cm/dt
     rDY[2] = (kC) / CytosolMembrane;                                                                    // dcomplex_cm/dt
@@ -92,6 +114,16 @@ void Tan2014OdeSystem::EvaluateYDerivatives(double time, const std::vector<doubl
     rDY[4] = (-kN) / nucleus;                                                                           // dligand_nu/dt
     rDY[5] = (kN) / nucleus;                                                                            // dcomplex_nu/dt
     rDY[6] = (drag - rY[6]) / CytosolMembrane;                                                          // ddrag/dt
+=======
+
+    rDY[0] = (Bsynthesis - kDegradation - kC - kdiffusion - K_c_active + K_n_active) / CytosolMembrane; // d/dt
+    rDY[1] = (-kC) / CytosolMembrane; // d/dt
+    rDY[2] = (kC) / CytosolMembrane; // d/dt
+    rDY[3] = (-kN + kdiffusion + K_c_active - K_n_active) / nucleus; // d/dt
+    rDY[4] = (-kN) / nucleus; // d/dt
+    rDY[5] = (kN) / nucleus; // d/dt
+    rDY[6] = (drag - rY[6]) / CytosolMembrane; // ddrag/dt
+>>>>>>> Stashed changes
 
     /* Account for the differences in timescales. */
     // rDY[0] *= 60.0;
@@ -105,27 +137,27 @@ void Tan2014OdeSystem::EvaluateYDerivatives(double time, const std::vector<doubl
 template <>
 void CellwiseOdeSystemInformation<Tan2014OdeSystem>::Initialise()
 {
-    this->mVariableNames.push_back("bcat_cm");
+    this->mVariableNames.push_back("");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(46.6);
 
-    this->mVariableNames.push_back("ligand_cm");
+    this->mVariableNames.push_back("");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(581.1);
 
-    this->mVariableNames.push_back("complex_cm");
+    this->mVariableNames.push_back("");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(418.9);
 
-    this->mVariableNames.push_back("bcat_nu");
+    this->mVariableNames.push_back("");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(32.6);
 
-    this->mVariableNames.push_back("ligand_nu");
+    this->mVariableNames.push_back("");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(516.8);
 
-    this->mVariableNames.push_back("complex_nu");
+    this->mVariableNames.push_back("");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(483.2);
 

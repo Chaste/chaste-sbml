@@ -1,5 +1,7 @@
-#include "Chen2004OdeSystemAndCellCycleModel.hpp"
 #include "CellwiseOdeSystemInformation.hpp"
+#include "SbmlMath.hpp"
+
+#include "Chen2004OdeSystemAndCellCycleModel.hpp"
 
 /* SBML ODE System */
 Chen2004OdeSystem::Chen2004OdeSystem(std::vector<double> stateVariables)
@@ -78,7 +80,7 @@ double Chen2004OdeSystem::BB_218(double A1, double A2, double A3, double A4)
 }
 double Chen2004OdeSystem::GK_219(double A1, double A2, double A3, double A4)
 {
-    return 2 * A4 * A1 / (A2 - A1 + A3 * A2 + A4 * A1 + root(2, pow(A2 - A1 + A3 * A2 + A4 * A1, 2) - 4 * (A2 - A1) * A4 * A1));
+    return 2 * A4 * A1 / (A2 - A1 + A3 * A2 + A4 * A1 + sbmlmath::sm_root(2, pow(A2 - A1 + A3 * A2 + A4 * A1, 2) - 4 * (A2 - A1) * A4 * A1));
 }
 double Chen2004OdeSystem::MichaelisMenten_220(double M1, double J1, double k1, double S1)
 {
@@ -329,325 +331,333 @@ void Chen2004OdeSystem::EvaluateYDerivatives(double time, const std::vector<doub
 
 
     /* Define algebraic rules. */
-    BCK2 = b0 * MASS;
-    Visbf = kisbf_p + kisbf_p_p * CLB2;
-    CLN3 = C0 * Dn3 * MASS / (Jn3 + Dn3 * MASS);
-    Vppc1 = kppc1 * CDC14;
-    Vppf6 = kppf6 * CDC14;
-    Vaiep = kaiep * CLB2;
-    Vacdh = kacdh_p + kacdh_p_p * CDC14;
-    Vicdh = kicdh_p + kicdh_p_p * (eicdhn3 * CLN3 + eicdhn2 * CLN2 + eicdhb5 * CLB5 + eicdhb2 * CLB2);
-    Vkpnet = (kkpnet_p + kkpnet_p_p * CDC15) * MASS;
-    Vppnet = kppnet_p + kppnet_p_p * PPX;
-    Vasbf = kasbf * (esbfn2 * CLN2 + esbfn3 * (CLN3 + BCK2) + esbfb5 * CLB5);
+    BCK2 = b0 * this->GetStateVariable("MASS");
+    Visbf = kisbf_p + kisbf_p_p * this->GetStateVariable("CLB2");
+    CLN3 = C0 * Dn3 * this->GetStateVariable("MASS") / (Jn3 + Dn3 * this->GetStateVariable("MASS"));
+    Vppc1 = kppc1 * this->GetStateVariable("CDC14");
+    Vppf6 = kppf6 * this->GetStateVariable("CDC14");
+    Vaiep = kaiep * this->GetStateVariable("CLB2");
+    Vacdh = kacdh_p + kacdh_p_p * this->GetStateVariable("CDC14");
+    Vicdh = kicdh_p + kicdh_p_p * (eicdhn3 * this->GetStateVariable("CLN3") + eicdhn2 * this->GetStateVariable("CLN2") + eicdhb5 * this->GetStateVariable("CLB5") + eicdhb2 * this->GetStateVariable("CLB2"));
+    Vkpnet = (kkpnet_p + kkpnet_p_p * this->GetStateVariable("CDC15")) * this->GetStateVariable("MASS");
+    Vppnet = kppnet_p + kppnet_p_p * this->GetStateVariable("PPX");
+    Vasbf = kasbf * (esbfn2 * this->GetStateVariable("CLN2") + esbfn3 * (this->GetStateVariable("CLN3") + this->GetStateVariable("BCK2")) + esbfb5 * this->GetStateVariable("CLB5"));
     SBF = GK_219(Vasbf, Visbf, Jasbf, Jisbf);
-    MCM1 = GK_219(kamcm * CLB2, kimcm, Jamcm, Jimcm);
-    mu = log(2) / mdt;
+    MCM1 = GK_219(kamcm * this->GetStateVariable("CLB2"), kimcm, Jamcm, Jimcm);
+    mu = sbmlmath::sm_log(2) / mdt;
     D = 1.026 / mu - 32;
     F = exp(-mu * D);
-    Vd2c1 = kd2c1 * (ec1n3 * CLN3 + ec1k2 * BCK2 + ec1n2 * CLN2 + ec1b5 * CLB5 + ec1b2 * CLB2);
-    Vd2f6 = kd2f6 * (ef6n3 * CLN3 + ef6k2 * BCK2 + ef6n2 * CLN2 + ef6b5 * CLB5 + ef6b2 * CLB2);
-    Vkpc1 = kd1c1 + Vd2c1 / (Jd2c1 + SIC1 + C2 + C5 + SIC1P + C2P + C5P);
-    Vkpf6 = kd1f6 + Vd2f6 / (Jd2f6 + CDC6 + F2 + F5 + CDC6P + F2P + F5P);
-    Vdb2 = kdb2_p + kdb2_p_p * CDH1 + kdb2p * CDC20;
-    Vdb5 = kdb5_p + kdb5_p_p * CDC20;
-    Vdpds = kd1pds_p + kd2pds_p_p * CDC20 + kd3pds_p_p * CDH1;
-    Vdppx = kdppx_p + kdppx_p_p * (J20ppx + CDC20) * Jpds / (Jpds + PDS1);
-    CLB2T = CLB2 + C2 + C2P + F2 + F2P;
-    CLB5T = CLB5 + C5 + C5P + F5 + F5P;
-    CDC14T = CDC14 + RENT + RENTP;
-    NET1T = NET1 + NET1P + RENT + RENTP;
-    SIC1T = SIC1 + C2 + C5 + SIC1P + C2P + C5P;
-    CDC6T = CDC6 + F2 + F5 + CDC6P + F2P + F5P;
-    CKIT = SIC1T + CDC6T;
-    CDC15i = CDC15T - CDC15;
-    IE = IET - IEP;
-    PE = ESP1T - ESP1;
-    TEM1GDP = TEM1T - TEM1GTP;
+    Vd2c1 = kd2c1 * (ec1n3 * this->GetStateVariable("CLN3") + ec1k2 * this->GetStateVariable("BCK2") + ec1n2 * this->GetStateVariable("CLN2") + ec1b5 * this->GetStateVariable("CLB5") + ec1b2 * this->GetStateVariable("CLB2"));
+    Vd2f6 = kd2f6 * (ef6n3 * this->GetStateVariable("CLN3") + ef6k2 * this->GetStateVariable("BCK2") + ef6n2 * this->GetStateVariable("CLN2") + ef6b5 * this->GetStateVariable("CLB5") + ef6b2 * this->GetStateVariable("CLB2"));
+    Vkpc1 = kd1c1 + Vd2c1 / (Jd2c1 + this->GetStateVariable("SIC1") + this->GetStateVariable("C2") + this->GetStateVariable("C5") + this->GetStateVariable("SIC1P") + this->GetStateVariable("C2P") + this->GetStateVariable("C5P"));
+    Vkpf6 = kd1f6 + Vd2f6 / (Jd2f6 + this->GetStateVariable("CDC6") + this->GetStateVariable("F2") + this->GetStateVariable("F5") + this->GetStateVariable("CDC6P") + this->GetStateVariable("F2P") + this->GetStateVariable("F5P"));
+    Vdb2 = kdb2_p + kdb2_p_p * this->GetStateVariable("CDH1") + kdb2p * this->GetStateVariable("CDC20");
+    Vdb5 = kdb5_p + kdb5_p_p * this->GetStateVariable("CDC20");
+    Vdpds = kd1pds_p + kd2pds_p_p * this->GetStateVariable("CDC20") + kd3pds_p_p * this->GetStateVariable("CDH1");
+    Vdppx = kdppx_p + kdppx_p_p * (J20ppx + this->GetStateVariable("CDC20")) * Jpds / (Jpds + this->GetStateVariable("PDS1"));
+    CLB2T = this->GetStateVariable("CLB2") + this->GetStateVariable("C2") + this->GetStateVariable("C2P") + this->GetStateVariable("F2") + this->GetStateVariable("F2P");
+    CLB5T = this->GetStateVariable("CLB5") + this->GetStateVariable("C5") + this->GetStateVariable("C5P") + this->GetStateVariable("F5") + this->GetStateVariable("F5P");
+    CDC14T = this->GetStateVariable("CDC14") + this->GetStateVariable("RENT") + this->GetStateVariable("RENTP");
+    NET1T = this->GetStateVariable("NET1") + this->GetStateVariable("NET1P") + this->GetStateVariable("RENT") + this->GetStateVariable("RENTP");
+    SIC1T = this->GetStateVariable("SIC1") + this->GetStateVariable("C2") + this->GetStateVariable("C5") + this->GetStateVariable("SIC1P") + this->GetStateVariable("C2P") + this->GetStateVariable("C5P");
+    CDC6T = this->GetStateVariable("CDC6") + this->GetStateVariable("F2") + this->GetStateVariable("F5") + this->GetStateVariable("CDC6P") + this->GetStateVariable("F2P") + this->GetStateVariable("F5P");
+    CKIT = this->GetStateVariable("SIC1T") + this->GetStateVariable("CDC6T");
+    CDC15i = CDC15T - this->GetStateVariable("CDC15");
+    IE = IET - this->GetStateVariable("IEP");
+    PE = ESP1T - this->GetStateVariable("ESP1");
+    TEM1GDP = TEM1T - this->GetStateVariable("TEM1GTP");
 
     /* Define the reactions in this model. */
     // Growth
-    double Growth = mu * MASS;
+    double Growth = mu * this->GetStateVariable("MASS");
 
     // Synthesis of CLN2
-    double Synthesis_of_CLN2 = (ksn2_p + ksn2_p_p * SBF) * MASS;
+    double Synthesis_of_CLN2 = (ksn2_p + ksn2_p_p * this->GetStateVariable("SBF")) * this->GetStateVariable("MASS");
 
     // Degradation of CLN2
-    double Degradation_of_CLN2 = Mass_Action_1_222(kdn2, CLN2);
+    double Degradation_of_CLN2 = Mass_Action_1_222(kdn2, this->GetStateVariable("CLN2"));
 
     // Synthesis of CLB2
-    double Synthesis_of_CLB2 = (ksb2_p + ksb2_p_p * MCM1) * MASS;
+    double Synthesis_of_CLB2 = (ksb2_p + ksb2_p_p * this->GetStateVariable("MCM1")) * this->GetStateVariable("MASS");
 
     // Degradation of CLB2
-    double Degradation_of_CLB2 = Mass_Action_1_222(Vdb2, CLB2);
+    double Degradation_of_CLB2 = Mass_Action_1_222(Vdb2, this->GetStateVariable("CLB2"));
 
     // Synthesis of CLB5
-    double Synthesis_of_CLB5 = (ksb5_p + ksb5_p_p * SBF) * MASS;
+    double Synthesis_of_CLB5 = (ksb5_p + ksb5_p_p * this->GetStateVariable("SBF")) * this->GetStateVariable("MASS");
 
     // Degradation of CLB5
-    double Degradation_of_CLB5 = Mass_Action_1_222(Vdb5, CLB5);
+    double Degradation_of_CLB5 = Mass_Action_1_222(Vdb5, this->GetStateVariable("CLB5"));
 
     // Synthesis of SIC1
-    double Synthesis_of_SIC1 = ksc1_p + ksc1_p_p * SWI5;
+    double Synthesis_of_SIC1 = ksc1_p + ksc1_p_p * this->GetStateVariable("SWI5");
 
     // Phosphorylation of SIC1
-    double Phosphorylation_of_SIC1 = Mass_Action_1_222(Vkpc1, SIC1);
+    double Phosphorylation_of_SIC1 = Mass_Action_1_222(Vkpc1, this->GetStateVariable("SIC1"));
 
     // Dephosphorylation of SIC1
-    double Dephosphorylation_of_SIC1 = Mass_Action_1_222(Vppc1, SIC1P);
+    double Dephosphorylation_of_SIC1 = Mass_Action_1_222(Vppc1, this->GetStateVariable("SIC1P"));
 
     // Fast Degradation of SIC1P
-    double Fast_Degradation_of_SIC1P = Mass_Action_1_222(kd3c1, SIC1P);
+    double Fast_Degradation_of_SIC1P = Mass_Action_1_222(kd3c1, this->GetStateVariable("SIC1P"));
 
     // Assoc. of CLB2 and SIC1
-    double Assoc_of_CLB2_and_SIC1 = Mass_Action_2_221(kasb2, CLB2, SIC1);
+    double Assoc_of_CLB2_and_SIC1 = Mass_Action_2_221(kasb2, this->GetStateVariable("CLB2"), this->GetStateVariable("SIC1"));
 
     // Dissoc. of CLB2/SIC1 complex
-    double Dissoc_of_CLB2SIC1_complex = Mass_Action_1_222(kdib2, C2);
+    double Dissoc_of_CLB2SIC1_complex = Mass_Action_1_222(kdib2, this->GetStateVariable("C2"));
 
     // Assoc. of CLB5 and SIC1
-    double Assoc_of_CLB5_and_SIC1 = Mass_Action_2_221(kasb5, CLB5, SIC1);
+    double Assoc_of_CLB5_and_SIC1 = Mass_Action_2_221(kasb5, this->GetStateVariable("CLB5"), this->GetStateVariable("SIC1"));
 
     // Dissoc. of CLB5/SIC1
-    double Dissoc_of_CLB5SIC1 = Mass_Action_1_222(kdib5, C5);
+    double Dissoc_of_CLB5SIC1 = Mass_Action_1_222(kdib5, this->GetStateVariable("C5"));
 
     // Phosphorylation of C2
-    double Phosphorylation_of_C2 = Mass_Action_1_222(Vkpc1, C2);
+    double Phosphorylation_of_C2 = Mass_Action_1_222(Vkpc1, this->GetStateVariable("C2"));
 
     // Dephosphorylation of C2P
-    double Dephosphorylation_of_C2P = Mass_Action_1_222(Vppc1, C2P);
+    double Dephosphorylation_of_C2P = Mass_Action_1_222(Vppc1, this->GetStateVariable("C2P"));
 
     // Phosphorylation of C5
-    double Phosphorylation_of_C5 = Mass_Action_1_222(Vkpc1, C5);
+    double Phosphorylation_of_C5 = Mass_Action_1_222(Vkpc1, this->GetStateVariable("C5"));
 
     // Dephosphorylation of C5P
-    double Dephosphorylation_of_C5P = Mass_Action_1_222(Vppc1, C5P);
+    double Dephosphorylation_of_C5P = Mass_Action_1_222(Vppc1, this->GetStateVariable("C5P"));
 
     // Degradation of CLB2 in C2
-    double Degradation_of_CLB2_in_C2 = Mass_Action_1_222(Vdb2, C2);
+    double Degradation_of_CLB2_in_C2 = Mass_Action_1_222(Vdb2, this->GetStateVariable("C2"));
 
     // Degradation of CLB5 in C5
-    double Degradation_of_CLB5_in_C5 = Mass_Action_1_222(Vdb5, C5);
+    double Degradation_of_CLB5_in_C5 = Mass_Action_1_222(Vdb5, this->GetStateVariable("C5"));
 
     // Degradation of SIC1 in C2P
-    double Degradation_of_SIC1_in_C2P = Mass_Action_1_222(kd3c1, C2P);
+    double Degradation_of_SIC1_in_C2P = Mass_Action_1_222(kd3c1, this->GetStateVariable("C2P"));
 
     // Degradation of SIC1P in C5P
-    double Degradation_of_SIC1P_in_C5P = Mass_Action_1_222(kd3c1, C5P);
+    double Degradation_of_SIC1P_in_C5P = Mass_Action_1_222(kd3c1, this->GetStateVariable("C5P"));
 
     // Degradation of CLB2 in C2P
-    double Degradation_of_CLB2_in_C2P = Mass_Action_1_222(Vdb2, C2P);
+    double Degradation_of_CLB2_in_C2P = Mass_Action_1_222(Vdb2, this->GetStateVariable("C2P"));
 
     // Degradation of CLB5 in C5P
-    double Degradation_of_CLB5_in_C5P = Mass_Action_1_222(Vdb5, C5P);
+    double Degradation_of_CLB5_in_C5P = Mass_Action_1_222(Vdb5, this->GetStateVariable("C5P"));
 
     // CDC6 synthesis
-    double CDC6_synthesis = ksf6_p + ksf6_p_p * SWI5 + ksf6_p_p_p * SBF;
+    double CDC6_synthesis = ksf6_p + ksf6_p_p * this->GetStateVariable("SWI5") + ksf6_p_p_p * this->GetStateVariable("SBF");
 
     // Phosphorylation of CDC6
-    double Phosphorylation_of_CDC6 = Mass_Action_1_222(Vkpf6, CDC6);
+    double Phosphorylation_of_CDC6 = Mass_Action_1_222(Vkpf6, this->GetStateVariable("CDC6"));
 
     // Dephosphorylation of CDC6
-    double Dephosphorylation_of_CDC6 = Mass_Action_1_222(Vppf6, CDC6P);
+    double Dephosphorylation_of_CDC6 = Mass_Action_1_222(Vppf6, this->GetStateVariable("CDC6P"));
 
     // Degradation of CDC6P
-    double Degradation_of_CDC6P = Mass_Action_1_222(kd3f6, CDC6P);
+    double Degradation_of_CDC6P = Mass_Action_1_222(kd3f6, this->GetStateVariable("CDC6P"));
 
     // CLB2/CDC6 complex formation
-    double CLB2CDC6_complex_formation = Mass_Action_2_221(kasf2, CLB2, CDC6);
+    double CLB2CDC6_complex_formation = Mass_Action_2_221(kasf2, this->GetStateVariable("CLB2"), this->GetStateVariable("CDC6"));
 
     // CLB2/CDC6 dissociation
-    double CLB2CDC6_dissociation = Mass_Action_1_222(kdif2, F2);
+    double CLB2CDC6_dissociation = Mass_Action_1_222(kdif2, this->GetStateVariable("F2"));
 
     // CLB5/CDC6 complex formation
-    double CLB5CDC6_complex_formation = Mass_Action_2_221(kasf5, CLB5, CDC6);
+    double CLB5CDC6_complex_formation = Mass_Action_2_221(kasf5, this->GetStateVariable("CLB5"), this->GetStateVariable("CDC6"));
 
     // CLB5/CDC6 dissociation
-    double CLB5CDC6_dissociation = Mass_Action_1_222(kdif5, F5);
+    double CLB5CDC6_dissociation = Mass_Action_1_222(kdif5, this->GetStateVariable("F5"));
 
     // F2 phosphorylation
-    double F2_phosphorylation = Mass_Action_1_222(Vkpf6, F2);
+    double F2_phosphorylation = Mass_Action_1_222(Vkpf6, this->GetStateVariable("F2"));
 
     // F2P dephosphorylation
-    double F2P_dephosphorylation = Mass_Action_1_222(Vppf6, F2P);
+    double F2P_dephosphorylation = Mass_Action_1_222(Vppf6, this->GetStateVariable("F2P"));
 
     // F5 phosphorylation
-    double F5_phosphorylation = Mass_Action_1_222(Vkpf6, F5);
+    double F5_phosphorylation = Mass_Action_1_222(Vkpf6, this->GetStateVariable("F5"));
 
     // F5P dephosphorylation
-    double F5P_dephosphorylation = Mass_Action_1_222(Vppf6, F5P);
+    double F5P_dephosphorylation = Mass_Action_1_222(Vppf6, this->GetStateVariable("F5P"));
 
     // CLB2 degradation in F2
-    double CLB2_degradation_in_F2 = Mass_Action_1_222(Vdb2, F2);
+    double CLB2_degradation_in_F2 = Mass_Action_1_222(Vdb2, this->GetStateVariable("F2"));
 
     // CLB5 degradation in F5
-    double CLB5_degradation_in_F5 = Mass_Action_1_222(Vdb5, F5);
+    double CLB5_degradation_in_F5 = Mass_Action_1_222(Vdb5, this->GetStateVariable("F5"));
 
     // CDC6 degradation in F2P
-    double CDC6_degradation_in_F2P = Mass_Action_1_222(kd3f6, F2P);
+    double CDC6_degradation_in_F2P = Mass_Action_1_222(kd3f6, this->GetStateVariable("F2P"));
 
     // CDC6 degradation in F5P
-    double CDC6_degradation_in_F5P = Mass_Action_1_222(kd3f6, F5P);
+    double CDC6_degradation_in_F5P = Mass_Action_1_222(kd3f6, this->GetStateVariable("F5P"));
 
     // CLB2 degradation in F2P
-    double CLB2_degradation_in_F2P = Mass_Action_1_222(Vdb2, F2P);
+    double CLB2_degradation_in_F2P = Mass_Action_1_222(Vdb2, this->GetStateVariable("F2P"));
 
     // CLB5 degradation in F5P
-    double CLB5_degradation_in_F5P = Mass_Action_1_222(Vdb5, F5P);
+    double CLB5_degradation_in_F5P = Mass_Action_1_222(Vdb5, this->GetStateVariable("F5P"));
 
     // Synthesis of SWI5
-    double Synthesis_of_SWI5 = ksswi_p + ksswi_p_p * MCM1;
+    double Synthesis_of_SWI5 = ksswi_p + ksswi_p_p * this->GetStateVariable("MCM1");
 
     // Degradation of SWI5
-    double Degradation_of_SWI5 = Mass_Action_1_222(kdswi, SWI5);
+    double Degradation_of_SWI5 = Mass_Action_1_222(kdswi, this->GetStateVariable("SWI5"));
 
     // Degradation of SWI5P
-    double Degradation_of_SWI5P = Mass_Action_1_222(kdswi, SWI5P);
+    double Degradation_of_SWI5P = Mass_Action_1_222(kdswi, this->GetStateVariable("SWI5P"));
 
     // Activation of SWI5
-    double Activation_of_SWI5 = Mass_Action_1_222(kaswi * CDC14, SWI5P);
+    double Activation_of_SWI5 = Mass_Action_1_222(kaswi * this->GetStateVariable("CDC14"), this->GetStateVariable("SWI5P"));
 
     // Inactivation of SWI5
-    double Inactivation_of_SWI5 = Mass_Action_1_222(kiswi * CLB2, SWI5);
+    double Inactivation_of_SWI5 = Mass_Action_1_222(kiswi * this->GetStateVariable("CLB2"), this->GetStateVariable("SWI5"));
 
     // Activation of IEP
-    double Activation_of_IEP = MichaelisMenten_220(Vaiep, Jaiep, 1, IE);
+    double Activation_of_IEP = MichaelisMenten_220(Vaiep, Jaiep, 1, this->GetStateVariable("IE"));
 
     // Inactivation
-    double Inactivation = MichaelisMenten_220(1, Jiiep, kiiep, IEP);
+    double Inactivation = MichaelisMenten_220(1, Jiiep, kiiep, this->GetStateVariable("IEP"));
 
     // Synthesis of inactive CDC20
-    double Synthesis_of_inactive_CDC20 = ks20_p + ks20_p_p * MCM1;
+    double Synthesis_of_inactive_CDC20 = ks20_p + ks20_p_p * this->GetStateVariable("MCM1");
 
     // Degradation of inactiveCDC20
-    double Degradation_of_inactiveCDC20 = Mass_Action_1_222(kd20, CDC20i);
+    double Degradation_of_inactiveCDC20 = Mass_Action_1_222(kd20, this->GetStateVariable("CDC20i"));
 
     // Degradation of active CDC20
-    double Degradation_of_active_CDC20 = Mass_Action_1_222(kd20, CDC20);
+    double Degradation_of_active_CDC20 = Mass_Action_1_222(kd20, this->GetStateVariable("CDC20"));
 
     // Activation of CDC20
-    double Activation_of_CDC20 = Mass_Action_1_222(ka20_p + ka20_p_p * IEP, CDC20i);
+    double Activation_of_CDC20 = Mass_Action_1_222(ka20_p + ka20_p_p * this->GetStateVariable("IEP"), this->GetStateVariable("CDC20i"));
 
     // Inactivation
+<<<<<<< Updated upstream
     double k = 1.0; // k
     double Inactivation_0 = k * Mass_Action_1_222(MAD2, CDC20);
+=======
+    double Inactivation_0 = 0.0;
+    {
+        double k = 1.0;
+        Inactivation_0 = k * Mass_Action_1_222(this->GetParameter("MAD2"), this->GetStateVariable("CDC20"));
+    }
+>>>>>>> Stashed changes
 
     // CDH1 synthesis
     double CDH1_synthesis = kscdh;
 
     // CDH1 degradation
-    double CDH1_degradation = Mass_Action_1_222(kdcdh, CDH1);
+    double CDH1_degradation = Mass_Action_1_222(kdcdh, this->GetStateVariable("CDH1"));
 
     // CDH1i degradation
-    double CDH1i_degradation = Mass_Action_1_222(kdcdh, CDH1i);
+    double CDH1i_degradation = Mass_Action_1_222(kdcdh, this->GetStateVariable("CDH1i"));
 
     // CDH1i activation
-    double CDH1i_activation = MichaelisMenten_220(Vacdh, Jacdh, 1, CDH1i);
+    double CDH1i_activation = MichaelisMenten_220(Vacdh, Jacdh, 1, this->GetStateVariable("CDH1i"));
 
     // Inactivation
-    double Inactivation_1 = MichaelisMenten_220(Vicdh, Jicdh, 1, CDH1);
+    double Inactivation_1 = MichaelisMenten_220(Vicdh, Jicdh, 1, this->GetStateVariable("CDH1"));
 
     // CDC14 synthesis
     double CDC14_synthesis = ks14;
 
     // CDC14 degradation
-    double CDC14_degradation = Mass_Action_1_222(kd14, CDC14);
+    double CDC14_degradation = Mass_Action_1_222(kd14, this->GetStateVariable("CDC14"));
 
     // Assoc. with NET1 to form RENT
-    double Assoc_with_NET1_to_form_RENT = Mass_Action_2_221(kasrent, CDC14, NET1);
+    double Assoc_with_NET1_to_form_RENT = Mass_Action_2_221(kasrent, this->GetStateVariable("CDC14"), this->GetStateVariable("NET1"));
 
     // Dissoc. from RENT
-    double Dissoc_from_RENT = Mass_Action_1_222(kdirent, RENT);
+    double Dissoc_from_RENT = Mass_Action_1_222(kdirent, this->GetStateVariable("RENT"));
 
     // Assoc with NET1P to form RENTP
-    double Assoc_with_NET1P_to_form_RENTP = Mass_Action_2_221(kasrentp, CDC14, NET1P);
+    double Assoc_with_NET1P_to_form_RENTP = Mass_Action_2_221(kasrentp, this->GetStateVariable("CDC14"), this->GetStateVariable("NET1P"));
 
     // Dissoc. from RENP
-    double Dissoc_from_RENP = Mass_Action_1_222(kdirentp, RENTP);
+    double Dissoc_from_RENP = Mass_Action_1_222(kdirentp, this->GetStateVariable("RENTP"));
 
     // Net1 synthesis
     double Net1_synthesis = ksnet;
 
     // Net1 degradation
-    double Net1_degradation = Mass_Action_1_222(kdnet, NET1);
+    double Net1_degradation = Mass_Action_1_222(kdnet, this->GetStateVariable("NET1"));
 
     // Net1P degradation
-    double Net1P_degradation = Mass_Action_1_222(kdnet, NET1P);
+    double Net1P_degradation = Mass_Action_1_222(kdnet, this->GetStateVariable("NET1P"));
 
     // NET1 phosphorylation
-    double NET1_phosphorylation = Mass_Action_1_222(Vkpnet, NET1);
+    double NET1_phosphorylation = Mass_Action_1_222(Vkpnet, this->GetStateVariable("NET1"));
 
     // dephosphorylation
-    double dephosphorylation = Mass_Action_1_222(Vppnet, NET1P);
+    double dephosphorylation = Mass_Action_1_222(Vppnet, this->GetStateVariable("NET1P"));
 
     // RENT phosphorylation
-    double RENT_phosphorylation = Mass_Action_1_222(Vkpnet, RENT);
+    double RENT_phosphorylation = Mass_Action_1_222(Vkpnet, this->GetStateVariable("RENT"));
 
     // dephosphorylation
-    double dephosphorylation_0 = Mass_Action_1_222(Vppnet, RENTP);
+    double dephosphorylation_0 = Mass_Action_1_222(Vppnet, this->GetStateVariable("RENTP"));
 
     // Degradation of NET1 in RENT
-    double Degradation_of_NET1_in_RENT = Mass_Action_1_222(kdnet, RENT);
+    double Degradation_of_NET1_in_RENT = Mass_Action_1_222(kdnet, this->GetStateVariable("RENT"));
 
     // Degradation of NET1P in RENTP
-    double Degradation_of_NET1P_in_RENTP = Mass_Action_1_222(kdnet, RENTP);
+    double Degradation_of_NET1P_in_RENTP = Mass_Action_1_222(kdnet, this->GetStateVariable("RENTP"));
 
     // Degradation of CDC14 in RENT
-    double Degradation_of_CDC14_in_RENT = Mass_Action_1_222(kd14, RENT);
+    double Degradation_of_CDC14_in_RENT = Mass_Action_1_222(kd14, this->GetStateVariable("RENT"));
 
     // Degradation of CDC14 in RENTP
-    double Degradation_of_CDC14_in_RENTP = Mass_Action_1_222(kd14, RENTP);
+    double Degradation_of_CDC14_in_RENTP = Mass_Action_1_222(kd14, this->GetStateVariable("RENTP"));
 
     // TEM1 activation
-    double TEM1_activation = MichaelisMenten_220(LTE1, Jatem, 1, TEM1GDP);
+    double TEM1_activation = MichaelisMenten_220(this->GetParameter("LTE1"), Jatem, 1, this->GetStateVariable("TEM1GDP"));
 
     // inactivation
-    double inactivation = MichaelisMenten_220(BUB2, Jitem, 1, TEM1GTP);
+    double inactivation = MichaelisMenten_220(this->GetParameter("BUB2"), Jitem, 1, this->GetStateVariable("TEM1GTP"));
 
     // CDC15 activation
-    double CDC15_activation = Mass_Action_1_222(ka15_p * TEM1GDP + ka15_p_p * TEM1GTP + ka15p * CDC14, CDC15i);
+    double CDC15_activation = Mass_Action_1_222(ka15_p * this->GetStateVariable("TEM1GDP") + ka15_p_p * this->GetStateVariable("TEM1GTP") + ka15p * this->GetStateVariable("CDC14"), this->GetStateVariable("CDC15i"));
 
     // inactivation
-    double inactivation_0 = Mass_Action_1_222(ki15, CDC15);
+    double inactivation_0 = Mass_Action_1_222(ki15, this->GetStateVariable("CDC15"));
 
     // PPX synthesis
     double PPX_synthesis = ksppx;
 
     // degradation
-    double degradation = Mass_Action_1_222(Vdppx, PPX);
+    double degradation = Mass_Action_1_222(Vdppx, this->GetStateVariable("PPX"));
 
     // PDS1 synthesis
-    double PDS1_synthesis = kspds_p + ks1pds_p_p * SBF + ks2pds_p_p * MCM1;
+    double PDS1_synthesis = kspds_p + ks1pds_p_p * this->GetStateVariable("SBF") + ks2pds_p_p * this->GetStateVariable("MCM1");
 
     // degradation
-    double degradation_0 = Mass_Action_1_222(Vdpds, PDS1);
+    double degradation_0 = Mass_Action_1_222(Vdpds, this->GetStateVariable("PDS1"));
 
     // Degradation of PDS1 in PE
-    double Degradation_of_PDS1_in_PE = Mass_Action_1_222(Vdpds, PE);
+    double Degradation_of_PDS1_in_PE = Mass_Action_1_222(Vdpds, this->GetStateVariable("PE"));
 
     // Assoc. with ESP1 to form PE
-    double Assoc_with_ESP1_to_form_PE = Mass_Action_2_221(kasesp, PDS1, ESP1);
+    double Assoc_with_ESP1_to_form_PE = Mass_Action_2_221(kasesp, this->GetStateVariable("PDS1"), this->GetStateVariable("ESP1"));
 
     // Disso. from PE
-    double Disso_from_PE = Mass_Action_1_222(kdiesp, PE);
+    double Disso_from_PE = Mass_Action_1_222(kdiesp, this->GetStateVariable("PE"));
 
     // DNA synthesis
-    double DNA_synthesis = ksori * (eorib5 * CLB5 + eorib2 * CLB2);
+    double DNA_synthesis = ksori * (eorib5 * this->GetStateVariable("CLB5") + eorib2 * this->GetStateVariable("CLB2"));
 
     // Negative regulation of DNA synthesis
-    double Negative_regulation_of_DNA_synthesis = Mass_Action_1_222(kdori, ORI);
+    double Negative_regulation_of_DNA_synthesis = Mass_Action_1_222(kdori, this->GetStateVariable("ORI"));
 
     // Budding
-    double Budding = ksbud * (ebudn2 * CLN2 + ebudn3 * CLN3 + ebudb5 * CLB5);
+    double Budding = ksbud * (ebudn2 * this->GetStateVariable("CLN2") + ebudn3 * this->GetStateVariable("CLN3") + ebudb5 * this->GetStateVariable("CLB5"));
 
     // Negative regulation of Cell budding
-    double Negative_regulation_of_Cell_budding = Mass_Action_1_222(kdbud, BUD);
+    double Negative_regulation_of_Cell_budding = Mass_Action_1_222(kdbud, this->GetStateVariable("BUD"));
 
     // Spindle formation
-    double Spindle_formation = ksspn * CLB2 / (Jspn + CLB2);
+    double Spindle_formation = ksspn * this->GetStateVariable("CLB2") / (Jspn + this->GetStateVariable("CLB2"));
 
     // Spindle disassembly
-    double Spindle_disassembly = Mass_Action_1_222(kdspn, SPN);
+    double Spindle_disassembly = Mass_Action_1_222(kdspn, this->GetStateVariable("SPN"));
 
 
     rDY[0] = (rDY[31]) / cell; // dBCK2/dt
@@ -710,30 +720,52 @@ void Chen2004OdeSystem::CheckAndUpdateEvents(double time, const std::vector<doub
     std::vector<double> dy(rY.size()); // Initialise derivatives vector
     EvaluateYDerivatives(time, rY, dy);
 
-    if (rY[18]  rY[20]  KEZ2 < 0.0)
+    if (sbmlmath::sm_lt(this->GetStateVariable("CLB2") + this->GetStateVariable("CLB5") - KEZ2, 0))
     {
+<<<<<<< Updated upstream
         this->rGetStateVariables()[36] = double(0);
+=======
+        this->SetStateVariable("ORI", static_cast<double>(0));
+>>>>>>> Stashed changes
         eventsSatisfied[0] = true;
     }
-    if (rY[36]  1.0 > 0.0)
+    if (sbmlmath::sm_gt(this->GetStateVariable("ORI") - 1, 0))
     {
+<<<<<<< Updated upstream
         MAD2 = double(mad2h);
         BUB2 = double(bub2h);
+=======
+        this->SetParameter("MAD2", static_cast<double>(mad2h));
+        this->SetParameter("BUB2", static_cast<double>(bub2h));
+>>>>>>> Stashed changes
         eventsSatisfied[1] = true;
     }
-    if (rY[46]  1.0 > 0.0)
+    if (sbmlmath::sm_gt(this->GetStateVariable("SPN") - 1, 0))
     {
+<<<<<<< Updated upstream
         MAD2 = double(mad2l);
         LTE1 = double(lte1h);
         BUB2 = double(bub2l);
+=======
+        this->SetParameter("MAD2", static_cast<double>(mad2l));
+        this->SetParameter("LTE1", static_cast<double>(lte1h));
+        this->SetParameter("BUB2", static_cast<double>(bub2l));
+>>>>>>> Stashed changes
         eventsSatisfied[2] = true;
     }
-    if (rY[18]  KEZ < 0.0)
+    if (sbmlmath::sm_lt(this->GetStateVariable("CLB2") - KEZ, 0))
     {
+<<<<<<< Updated upstream
         this->rGetStateVariables()[31] = double(F * rY[31]);
         LTE1 = double(lte1l);
         this->rGetStateVariables()[1] = double(0);
         this->rGetStateVariables()[46] = double(0);
+=======
+        this->SetStateVariable("MASS", static_cast<double>(F * this->GetStateVariable("MASS")));
+        this->SetParameter("LTE1", static_cast<double>(lte1l));
+        this->SetStateVariable("BUD", static_cast<double>(0));
+        this->SetStateVariable("SPN", static_cast<double>(0));
+>>>>>>> Stashed changes
         eventsSatisfied[3] = true;
     }
 }

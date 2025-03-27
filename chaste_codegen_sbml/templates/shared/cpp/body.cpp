@@ -1,5 +1,7 @@
-#include "{{ model_hpp_file }}"
 #include "CellwiseOdeSystemInformation.hpp"
+#include "SbmlMath.hpp"
+
+#include "{{ model_hpp_file }}"
 
 /* SBML ODE System */
 {{ ode_class_name }}::{{ ode_class_name }}(std::vector<double> stateVariables)

@@ -1,5 +1,7 @@
-#include "VanLeeuwen2007NonDimOdeSystemAndSrnModel.hpp"
 #include "CellwiseOdeSystemInformation.hpp"
+#include "SbmlMath.hpp"
+
+#include "VanLeeuwen2007NonDimOdeSystemAndSrnModel.hpp"
 
 /* SBML ODE System */
 VanLeeuwen2007NonDimOdeSystem::VanLeeuwen2007NonDimOdeSystem(std::vector<double> stateVariables)
@@ -101,82 +103,82 @@ void VanLeeuwen2007NonDimOdeSystem::EvaluateYDerivatives(double time, const std:
     double ComplexTransitThreshold = this->mParameters[3]; // ComplexTransitThreshold
 
     /* Define algebraic rules. */
-    C_F = C_o + C_c;
-    C_T = C_oT + C_cT;
-    drag = fmax((C_A - 2300) / 36, 1);
+    C_F = this->GetStateVariable("C_o") + this->GetStateVariable("C_c");
+    C_T = this->GetStateVariable("C_oT") + this->GetStateVariable("C_cT");
+    drag = sbmlmath::sm_max((this->GetStateVariable("C_A") - 2300) / 36, 1);
 
     /* Define the reactions in this model. */
     // r1
-    double r1 = s_D * gamma1 * X;
+    double r1 = s_D * this->GetParameter("gamma1") * this->GetStateVariable("X");
 
     // r2
-    double r2 = (d_Dx + wnt_level * xi_Dx) * D;
+    double r2 = (d_Dx + this->GetParameter("wnt_level") * xi_Dx) * this->GetStateVariable("D");
 
     // r22
     double r22 = s_X;
 
     // r23
-    double r23 = (d_X + wnt_level * xi_X) * X;
+    double r23 = (d_X + this->GetParameter("wnt_level") * xi_X) * this->GetStateVariable("X");
 
     // r7
-    double r7 = p_u * gamma2 * C_o * D / (C_o + C_c + K_D);
+    double r7 = p_u * this->GetParameter("gamma2") * this->GetStateVariable("C_o") * this->GetStateVariable("D") / (this->GetStateVariable("C_o") + this->GetStateVariable("C_c") + K_D);
 
     // r16
-    double r16 = p_u * gamma2 * C_c * D / (C_c + C_o + K_D);
+    double r16 = p_u * this->GetParameter("gamma2") * this->GetStateVariable("C_c") * this->GetStateVariable("D") / (this->GetStateVariable("C_c") + this->GetStateVariable("C_o") + K_D);
 
     // r8
-    double r8 = d_u * C_u;
+    double r8 = d_u * this->GetStateVariable("C_u");
 
     // r3
     double r3 = s_c;
 
     // r4
-    double r4 = d_c * C_o;
+    double r4 = d_c * this->GetStateVariable("C_o");
 
     // r17
-    double r17 = d_c * C_c;
+    double r17 = d_c * this->GetStateVariable("C_c");
 
     // r9
-    double r9 = s_CA * C_o * A;
+    double r9 = s_CA * this->GetStateVariable("C_o") * this->GetStateVariable("A");
 
     // r10
-    double r10 = d_CA * C_A;
+    double r10 = d_CA * this->GetStateVariable("C_A");
 
     // r11
-    double r11 = s_CT * C_o * T;
+    double r11 = s_CT * this->GetStateVariable("C_o") * this->GetStateVariable("T");
 
     // r18
-    double r18 = s_CT * C_c * T;
+    double r18 = s_CT * this->GetStateVariable("C_c") * this->GetStateVariable("T");
 
     // r12
-    double r12 = d_CT * C_oT;
+    double r12 = d_CT * this->GetStateVariable("C_oT");
 
     // r19
-    double r19 = d_CT * C_cT;
+    double r19 = d_CT * this->GetStateVariable("C_cT");
 
     // r15
-    double r15 = (p_c + wnt_level * xi_C) * C_o / (C_o + K_C);
+    double r15 = (p_c + this->GetParameter("wnt_level") * xi_C) * this->GetStateVariable("C_o") / (this->GetStateVariable("C_o") + K_C);
 
     // r5
     double r5 = s_A;
 
     // r6
-    double r6 = d_A * A;
+    double r6 = d_A * this->GetStateVariable("A");
 
     // r20
     double r20 = s_T;
 
     // r21
-    double r21 = d_T * T;
+    double r21 = d_T * this->GetStateVariable("T");
 
     // r13
-    double r13 = s_Y * (C_oT + C_cT) / (C_oT + C_cT + K_T);
+    double r13 = s_Y * (this->GetStateVariable("C_oT") + this->GetStateVariable("C_cT")) / (this->GetStateVariable("C_oT") + this->GetStateVariable("C_cT") + K_T);
 
     // r14
-    double r14 = d_Y * Y;
+    double r14 = d_Y * this->GetStateVariable("Y");
 
     // r24
-    double r24 = (d_D + wnt_level * xi_D) * D;
+    double r24 = (d_D + this->GetParameter("wnt_level") * xi_D) * this->GetStateVariable("D");
 
     rDY[0] = (-r1 + r2 + r22 - r23) / cytosolmembraneandnucleus;                       // dX/dt
     rDY[1] = (r1 - r2 + r7 - r7 + r16 - r16 - r24) / cytosolmembraneandnucleus;        // dD/dt

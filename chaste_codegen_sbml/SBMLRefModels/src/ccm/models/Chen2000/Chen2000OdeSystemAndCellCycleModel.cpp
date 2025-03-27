@@ -1,5 +1,7 @@
-#include "Chen2000OdeSystemAndCellCycleModel.hpp"
 #include "CellwiseOdeSystemInformation.hpp"
+#include "SbmlMath.hpp"
+
+#include "Chen2000OdeSystemAndCellCycleModel.hpp"
 
 /* SBML ODE System */
 Chen2000OdeSystem::Chen2000OdeSystem(std::vector<double> stateVariables)
@@ -159,7 +161,7 @@ void Chen2000OdeSystem::EvaluateYDerivatives(double time, const std::vector<doub
     Bck2 = Bck2_0 * mass;
     Cln3 = Cln3_max * Dn3 * mass / (Jn3 + Dn3 * mass);
     Vd2_c1 = kd2_c1 * (epsilonc1_n3 * Cln3 + epsilonc1_k2 * Bck2 + Cln2 + epsilonc1_b5 * Clb5 + epsilonc1_b2 * Clb2);
-    Vi_20 = piecewise(ki_20_, >=(ORI, 1), ki_20, >=(SPN, 1), 0.1);
+    Vi_20 = sbmlmath::sm_piecewise(ki_20_, sbmlmath::sm_geq(ORI, 1), ki_20, sbmlmath::sm_geq(SPN, 1), 0.1);
     Vi_t1 = ki_t1 + ki_t1_ * (Cln3 + epsiloni_t1_n2 * Cln2 + epsiloni_t1_b5 * Clb5 + epsiloni_t1_b2 * Clb2);
     SBF = 2 * Va_sbf * Ji_sbf / (ki_sbf + ki_sbf_ * Clb2 + Va_sbf * Ji_sbf + (ki_sbf + ki_sbf_ * Clb2) * Ja_sbf - Va_sbf + sqrt(pow(ki_sbf + ki_sbf_ * Clb2 + Va_sbf * Ji_sbf + (ki_sbf + ki_sbf_ * Clb2) * Ja_sbf - Va_sbf, 2) - 4 * Va_sbf * Ji_sbf * (ki_sbf + ki_sbf_ * Clb2 - Va_sbf)));
     Va_sbf = ka_sbf * (Cln2 + epsilonsbf_n3 * (Cln3 + Bck2) + epsilonsbf_b5 * Clb5);
