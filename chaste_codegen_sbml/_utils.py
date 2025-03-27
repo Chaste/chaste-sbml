@@ -1,13 +1,12 @@
 """Utility functions for code generation."""
 
-import re
 from typing import TYPE_CHECKING
 
-import sympy
 from libsbml import formulaToString
 
 if TYPE_CHECKING:
     from libsbml import ASTNode, FunctionDefinition, ListOf, SBase, Species
+
 
 def get_function_definition_arguments(fn_def: "FunctionDefinition") -> list[str]:
     """Get the list of arguments in a given function definition.

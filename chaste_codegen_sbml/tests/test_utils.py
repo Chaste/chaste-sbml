@@ -4,6 +4,7 @@ from chaste_codegen_sbml._utils import varname_camelcase, varname_sanitize
 
 logger = logging.getLogger(__name__)
 
+
 def test_varname_camelcase():
     """
     Test camel case variable name creation.

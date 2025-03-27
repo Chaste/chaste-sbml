@@ -1,9 +1,9 @@
 """Module for the ChasteSbmlModel class."""
 
-import re
 import abc
 import os
 import pathlib
+import re
 from typing import TYPE_CHECKING
 
 from jinja2 import Environment, PackageLoader, select_autoescape
