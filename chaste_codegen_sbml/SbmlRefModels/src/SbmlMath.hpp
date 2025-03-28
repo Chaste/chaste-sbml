@@ -40,10 +40,12 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * SBML math functions.
  */
 
+#include <cmath>
+
 namespace sbmlmath
 {
 
-  // Arithmetic ===============================
+  // Arithmetic =================================
 
   // divide
   double sm_divide(double x, double y);
@@ -52,18 +54,20 @@ namespace sbmlmath
   double sm_minus(double x, double y);
 
   // plus
-  double sm_plus(double x);
-
   template <typename... Args>
-  double sm_plus(double x, Args... rest);
+  constexpr double sm_plus(Args... args)
+  {
+    return (0.0 + ... + args);
+  }
 
   // times
-  double sm_times(double x);
-
   template <typename... Args>
-  double sm_times(double x, Args... rest);
+  constexpr double sm_times(Args... args)
+  {
+    return (1.0 * ... * args);
+  }
 
-  // Logs and exponents =======================
+  // Logs and exponents =========================
 
   // ln
   double sm_ln(double x);
@@ -81,65 +85,73 @@ namespace sbmlmath
   // sqr
   double sm_sqr(double x);
 
-  // Logical ==================================
+  // Logical ====================================
 
   // and
-  bool sm_and();
-
   template <typename... Args>
-  bool sm_and(bool x, Args... rest);
+  constexpr bool sm_and(Args... args)
+  {
+    return (true && ... && args);
+  }
 
   // or
-  bool sm_or();
-
   template <typename... Args>
-  bool sm_or(bool x, Args... rest);
+  constexpr bool sm_or(Args... args)
+  {
+    return (false || ... || args);
+  }
 
   // not
   bool sm_not(bool x);
 
   // xor
-  bool sm_xor();
-
   template <typename... Args>
-  bool sm_xor(bool x, Args... rest);
+  constexpr bool sm_xor(Args... args)
+  {
+    return (false ^ ... ^ args);
+  }
 
-  // Relational ================================
+  // Relational =================================
 
   // eq
-  bool sm_eq(double first, double second);
-
   template <typename... Args>
-  bool sm_eq(double first, double second, Args... rest);
+  constexpr bool sm_eq(double first, double second, Args... rest)
+  {
+    return ((first == second) && ... && (second == rest));
+  }
 
   // geq
-  bool sm_geq(double first, double second);
-
   template <typename... Args>
-  bool sm_geq(double first, double second, Args... rest);
+  constexpr bool sm_geq(double first, double second, Args... rest)
+  {
+    return ((first >= second) && ... && (second >= rest));
+  }
 
   // gt
-  bool sm_gt(double first, double second);
-
   template <typename... Args>
-  bool sm_gt(double first, double second, Args... rest);
+  constexpr bool sm_gt(double first, double second, Args... rest)
+  {
+    return ((first > second) && ... && (second > rest));
+  }
 
   // leq
-  bool sm_leq(double first, double second);
-
   template <typename... Args>
-  bool sm_leq(double first, double second, Args... rest);
+  constexpr bool sm_leq(double first, double second, Args... rest)
+  {
+    return ((first <= second) && ... && (second <= rest));
+  }
 
   // lt
-  bool sm_lt(double first, double second);
-
   template <typename... Args>
-  bool sm_lt(double first, double second, Args... rest);
+  constexpr bool sm_lt(double first, double second, Args... rest)
+  {
+    return ((first < second) && ... && (second < rest));
+  }
 
   // neq
-  bool sm_neq(double first, double second);
+  bool sm_neq(double x, double y);
 
-  // Trigonometry =============================
+  // Trigonometry ===============================
 
   double sm_arccos(double x);
   double sm_arccosh(double x);
@@ -168,7 +180,7 @@ namespace sbmlmath
   double sm_sec(double x);
   double sm_sech(double x);
 
-  // Other functions ==========================
+  // Other functions ============================
 
   // abs
   double sm_abs(double x);
@@ -180,34 +192,53 @@ namespace sbmlmath
   double sm_factorial(double x);
 
   // max
-  double sm_max(double first, double second);
+  constexpr double sm_max(double first)
+  {
+    return first;
+  }
 
   template <typename... Args>
-  double sm_max(double first, double second, Args... rest);
+  constexpr double sm_max(double first, Args... rest)
+  {
+    return (std::fmax(first, sm_max(rest...)));
+  }
 
   // min
-  double sm_min(double first, double second);
+  constexpr double sm_min(double first)
+  {
+    return first;
+  }
 
   template <typename... Args>
-  double sm_min(double first, double second, Args... rest);
+  constexpr double sm_min(double first, Args... rest)
+  {
+    return (std::fmin(first, sm_min(rest...)));
+  }
 
   // piecewise
-  double sm_piecewise(double value);
+  constexpr double sm_piecewise(double value)
+  {
+    return value;
+  }
 
   template <typename... Args>
-  double sm_piecewise(double value, bool condition, Args... rest);
+  constexpr double sm_piecewise(double value, bool condition, Args... rest)
+  {
+    return condition ? value : sm_piecewise(rest...);
+  }
 
   // rem
   double sm_rem(double numer, double denom);
 
   // quotient
-  double sm_quotient(double x, double y);
+  double sm_quotient(double numer, double denom);
 
   // TODO: Other MathML elements permitted in SBML Level 3
-  // annotation, annotation-xml, apply, bvar, ci, cn, csymbol, degree,
-  // exponentiale, false, implies, infinity, lambda, logbase, notanumber,
-  // otherwise, piece, pi, quotient, rem, root, semantics, sep, true
+  // logical: implies
+  // constants: true, false, notanumber, pi, infinity, exponentiale
+  // general: apply, lambda, otherwise, piece
+  // qualifiers:  bvar, degree, logbase
 
-}
+} // namespace sbmlmath
 
 #endif // SBMLMATH_HPP_

@@ -36,6 +36,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef TESTSBMLMATH_HPP_
 #define TESTSBMLMATH_HPP_
 
+#include <cmath>
+#include <iostream>
+
 #include <cxxtest/TestSuite.h>
 
 #include "SbmlMath.hpp"
@@ -63,6 +66,7 @@ public:
 
   void TestPlus()
   {
+    TS_ASSERT_EQUALS(sm_plus(), 0.0);
     TS_ASSERT_EQUALS(sm_plus(1.0), 1.0);
     TS_ASSERT_EQUALS(sm_plus(1.0, 2.0), 3.0);
     TS_ASSERT_EQUALS(sm_plus(1.0, 2.0, 3.0), 6.0);
@@ -70,7 +74,9 @@ public:
 
   void TestTimes()
   {
+    TS_ASSERT_EQUALS(sm_times(), 1.0);
     TS_ASSERT_EQUALS(sm_times(1.0), 1.0);
+    TS_ASSERT_EQUALS(sm_times(2.0), 2.0);
     TS_ASSERT_EQUALS(sm_times(1.0, 2.0), 2.0);
     TS_ASSERT_EQUALS(sm_times(1.0, 2.0, 3.0), 6.0);
   }
@@ -80,32 +86,48 @@ public:
   void TestLn()
   {
     TS_ASSERT_DELTA(sm_ln(1.0), 0.0, 1e-6);
-    TS_ASSERT_DELTA(sm_ln(2.0), 0.693147, 1e-6);
+    TS_ASSERT_DELTA(sm_ln(std::exp(1)), 1.0, 1e-6);
+    TS_ASSERT_DELTA(sm_ln(10.0), 2.302585, 1e-6);
   }
 
   void TestLog()
   {
     TS_ASSERT_DELTA(sm_log(1.0), 0.0, 1e-6);
-    TS_ASSERT_DELTA(sm_log(2.0), 0.693147, 1e-6);
+    TS_ASSERT_DELTA(sm_log(10.0), 1.0, 1e-6);
+    TS_ASSERT_DELTA(sm_log(std::exp(1)), 0.434294, 1e-6);
+
     TS_ASSERT_DELTA(sm_log(2.0, 2.0), 1.0, 1e-6);
+    TS_ASSERT_DELTA(sm_log(10.0, 2.0), sm_log(2.0), 1e-6);
+    TS_ASSERT_DELTA(sm_log(std::exp(1), 2.0), sm_ln(2.0), 1e-6);
   }
 
   void TestPower()
   {
     TS_ASSERT_DELTA(sm_power(1.0, 1.0), 1.0, 1e-6);
+    TS_ASSERT_DELTA(sm_power(1.0, 2.0), 1.0, 1e-6);
+    TS_ASSERT_DELTA(sm_power(1.0, 3.0), 1.0, 1e-6);
+    TS_ASSERT_DELTA(sm_power(2.0, 1.0), 2.0, 1e-6);
     TS_ASSERT_DELTA(sm_power(2.0, 2.0), 4.0, 1e-6);
+    TS_ASSERT_DELTA(sm_power(2.0, 3.0), 8.0, 1e-6);
+    TS_ASSERT_DELTA(sm_power(3.0, 1.0), 3.0, 1e-6);
+    TS_ASSERT_DELTA(sm_power(3.0, 2.0), 9.0, 1e-6);
+    TS_ASSERT_DELTA(sm_power(3.0, 3.0), 27.0, 1e-6);
   }
 
   void TestRoot()
   {
     TS_ASSERT_DELTA(sm_root(1.0, 1.0), 1.0, 1e-6);
     TS_ASSERT_DELTA(sm_root(2.0, 4.0), 2.0, 1e-6);
+    TS_ASSERT_DELTA(sm_root(3.0, 8.0), 2.0, 1e-6);
+    TS_ASSERT_DELTA(sm_root(2.0, 9.0), 3.0, 1e-6);
+    TS_ASSERT_DELTA(sm_root(3.0, 27.0), 3.0, 1e-6);
   }
 
   void TestSqr()
   {
     TS_ASSERT_DELTA(sm_sqr(1.0), 1.0, 1e-6);
     TS_ASSERT_DELTA(sm_sqr(2.0), 4.0, 1e-6);
+    TS_ASSERT_DELTA(sm_sqr(3.0), 9.0, 1e-6);
   }
 
   // Logical ===================================
@@ -202,92 +224,111 @@ public:
 
   void TestArccos()
   {
+    TS_ASSERT_DELTA(sm_arccos(0.0), M_PI / 2.0, 1e-6);
     TS_ASSERT_DELTA(sm_arccos(1.0), 0.0, 1e-6);
   }
 
   void TestArccosh()
   {
     TS_ASSERT_DELTA(sm_arccosh(1.0), 0.0, 1e-6);
+    TS_ASSERT_DELTA(sm_arccosh(10.0), 2.993223, 1e-6);
   }
 
   void TestArccot()
   {
-    TS_ASSERT_DELTA(sm_arccot(1.0), 0.0, 1e-6);
+    TS_ASSERT_DELTA(sm_arccot(0.0), M_PI / 2.0, 1e-6);
+    TS_ASSERT_DELTA(sm_arccot(1.0), M_PI / 4.0, 1e-6);
   }
 
   void TestArccoth()
   {
-    TS_ASSERT_DELTA(sm_arccoth(1.0), 0.0, 1e-6);
+    TS_ASSERT_DELTA(sm_arccoth(2.0), 0.549306, 1e-6);
+    TS_ASSERT_DELTA(sm_arccoth(10.0), 0.100335, 1e-6);
   }
 
   void TestArccsc()
   {
-    TS_ASSERT_DELTA(sm_arccsc(1.0), 0.0, 1e-6);
+    TS_ASSERT_DELTA(sm_arccsc(1.0), 1.570796, 1e-6);
+    TS_ASSERT_DELTA(sm_arccsc(10.0), 0.100167, 1e-6);
   }
 
   void TestArccsch()
   {
-    TS_ASSERT_DELTA(sm_arccsch(1.0), 0.0, 1e-6);
+    TS_ASSERT_DELTA(sm_arccsch(1.0), 0.881373, 1e-6);
+    TS_ASSERT_DELTA(sm_arccsch(10.0), 0.099834, 1e-6);
   }
 
   void TestArcsec()
   {
     TS_ASSERT_DELTA(sm_arcsec(1.0), 0.0, 1e-6);
+    TS_ASSERT_DELTA(sm_arcsec(10.0), 1.470629, 1e-6);
   }
 
   void TestArcsech()
   {
+    std::cout << "sm_arcsech(0.1) = " << sm_arcsech(0.1) << std::endl;
+    TS_ASSERT_DELTA(sm_arcsech(0.1), 2.993223, 1e-6);
     TS_ASSERT_DELTA(sm_arcsech(1.0), 0.0, 1e-6);
   }
 
   void TestArcsin()
   {
     TS_ASSERT_DELTA(sm_arcsin(0.0), 0.0, 1e-6);
+    TS_ASSERT_DELTA(sm_arcsin(1.0), M_PI / 2.0, 1e-6);
   }
 
   void TestArcsinh()
   {
     TS_ASSERT_DELTA(sm_arcsinh(0.0), 0.0, 1e-6);
+    TS_ASSERT_DELTA(sm_arcsinh(1.0), 0.881374, 1e-6);
   }
 
   void TestArctan()
   {
     TS_ASSERT_DELTA(sm_arctan(0.0), 0.0, 1e-6);
+    TS_ASSERT_DELTA(sm_arctan(1.0), M_PI / 4.0, 1e-6);
   }
 
   void TestArctanh()
   {
     TS_ASSERT_DELTA(sm_arctanh(0.0), 0.0, 1e-6);
+    TS_ASSERT_DELTA(sm_arctanh(0.5), 0.549306, 1e-6);
   }
 
   void TestCot()
   {
-    TS_ASSERT_DELTA(sm_cot(0.0), 1.0, 1e-6);
+    TS_ASSERT_DELTA(sm_cot(M_PI / 2.0), 0.0, 1e-6);
+    TS_ASSERT_DELTA(sm_cot(M_PI / 4.0), 1.0, 1e-6);
   }
 
   void TestCoth()
   {
-    TS_ASSERT_DELTA(sm_coth(0.0), 1.0, 1e-6);
+    TS_ASSERT_DELTA(sm_coth(1.0), 1.313035, 1e-6);
+    TS_ASSERT_DELTA(sm_coth(10.0), 1.0, 1e-6);
   }
 
   void TestCsc()
   {
-    TS_ASSERT_DELTA(sm_csc(0.0), 1.0, 1e-6);
+    TS_ASSERT_DELTA(sm_csc(M_PI / 2.0), 1.0, 1e-6);
+    TS_ASSERT_DELTA(sm_csc(M_PI / 4.0), std::sqrt(2), 1e-6);
   }
 
   void TestCsch()
   {
-    TS_ASSERT_DELTA(sm_csch(0.0), 1.0, 1e-6);
+    TS_ASSERT_DELTA(sm_csch(1.0), 0.850918, 1e-6);
+    TS_ASSERT_DELTA(sm_csch(10.0), 0.000091, 1e-6);
   }
 
   void TestSec()
   {
     TS_ASSERT_DELTA(sm_sec(0.0), 1.0, 1e-6);
+    TS_ASSERT_DELTA(sm_sec(M_PI), -1.0, 1e-6);
   }
 
   void TestSech()
   {
     TS_ASSERT_DELTA(sm_sech(0.0), 1.0, 1e-6);
+    TS_ASSERT_DELTA(sm_sech(10.0), 0.000091, 1e-6);
   }
 
   // Other functions ============================
@@ -299,8 +340,8 @@ public:
 
   void TestCeiling()
   {
-    TS_ASSERT_EQUALS(sm_ceil(1.0), 1.0);
-    TS_ASSERT_EQUALS(sm_ceil(1.1), 2.0);
+    TS_ASSERT_EQUALS(sm_ceiling(1.0), 1.0);
+    TS_ASSERT_EQUALS(sm_ceiling(1.1), 2.0);
   }
 
   void TestFactorial()

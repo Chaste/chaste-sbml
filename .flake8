@@ -9,6 +9,6 @@ exclude =
     .github,
     .venv,
     build,
-    SBMLRefModels,
+    SbmlRefModels,
     templates,
     venv,

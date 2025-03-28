@@ -78,7 +78,7 @@ def test_srn_generation(tmp_path, model_name):
     """
     Check generated model against reference.
     """
-    ref_dir = ROOT_DIR / "SBMLRefModels" / "src" / "srn" / "models" / model_name
+    ref_dir = ROOT_DIR / "SbmlRefModels" / "src" / "srn" / "models" / model_name
     ref_sbml = ref_dir / f"{model_name}.xml"
     ref_cpp = ref_dir / f"{model_name}OdeSystemAndSrnModel.cpp"
     ref_hpp = ref_dir / f"{model_name}OdeSystemAndSrnModel.hpp"
@@ -110,7 +110,7 @@ def test_ccm_generation(tmp_path, model_name):
     """
     Check generated model against reference.
     """
-    ref_dir = ROOT_DIR / "SBMLRefModels" / "src" / "ccm" / "models" / model_name
+    ref_dir = ROOT_DIR / "SbmlRefModels" / "src" / "ccm" / "models" / model_name
     ref_sbml = ref_dir / f"{model_name}.xml"
     ref_cpp = ref_dir / f"{model_name}OdeSystemAndCellCycleModel.cpp"
     ref_hpp = ref_dir / f"{model_name}OdeSystemAndCellCycleModel.hpp"
