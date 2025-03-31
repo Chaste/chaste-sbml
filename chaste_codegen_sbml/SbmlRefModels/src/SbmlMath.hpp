@@ -42,9 +42,14 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cmath>
 
+// SBML Level 3 recommended value:
+// https://sbml.org/documents/specifications/level-3/
+#define SM_AVOGADRO 6.02214179E23
+
+// Note: Avogadro value has been updated in the most recent SI Brochure.
 // Bureau International des Poids et Mesures (2019):
 // The International System of Units (SI), 9th edition
-#define SM_AVOGADRO 6.02214076E23
+// #define SM_AVOGADRO 6.02214076E23
 
 namespace sbmlmath
 {
@@ -151,19 +156,19 @@ namespace sbmlmath
 
   // Trigonometry ===============================
 
-  // cot, coth, arccot, arccoth
+  // cot, coth, acot, acoth
   double sm_cot(double x);
   double sm_coth(double x);
   double sm_acot(double x);
   double sm_acoth(double x);
 
-  // csc, csch, arccsc, arccsch
+  // csc, csch, acsc, acsch
   double sm_csc(double x);
   double sm_csch(double x);
   double sm_acsc(double x);
   double sm_acsch(double x);
 
-  // sec, sech, arcsec, arcsech
+  // sec, sech, asec, asech
   double sm_sec(double x);
   double sm_sech(double x);
   double sm_asec(double x);

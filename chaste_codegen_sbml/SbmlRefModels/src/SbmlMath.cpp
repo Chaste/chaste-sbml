@@ -108,7 +108,7 @@ bool sbmlmath::sm_neq(double x, double y)
 
 // Trigonometry =================================
 
-// cot, coth, arccot, arccoth
+// cot, coth, acot, acoth
 double sbmlmath::sm_cot(double x)
 {
   return 1.0 / std::tan(x);
@@ -129,7 +129,7 @@ double sbmlmath::sm_acoth(double x)
   return std::atanh(1.0 / x);
 }
 
-// csc, csch, arccsc, arccsch
+// csc, csch, acsc, acsch
 double sbmlmath::sm_csc(double x)
 {
   return 1.0 / std::sin(x);
@@ -150,7 +150,7 @@ double sbmlmath::sm_acsch(double x)
   return std::asinh(1.0 / x);
 }
 
-// sec, sech, arcsec, arcsech
+// sec, sech, asec, asech
 double sbmlmath::sm_sec(double x)
 {
   return 1.0 / std::cos(x);
