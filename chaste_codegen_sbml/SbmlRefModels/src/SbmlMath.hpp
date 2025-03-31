@@ -150,20 +150,20 @@ namespace sbmlmath
   // cot, coth, arccot, arccoth
   double sm_cot(double x);
   double sm_coth(double x);
-  double sm_arccot(double x);
-  double sm_arccoth(double x);
+  double sm_acot(double x);
+  double sm_acoth(double x);
 
   // csc, csch, arccsc, arccsch
   double sm_csc(double x);
   double sm_csch(double x);
-  double sm_arccsc(double x);
-  double sm_arccsch(double x);
+  double sm_acsc(double x);
+  double sm_acsch(double x);
 
   // sec, sech, arcsec, arcsech
   double sm_sec(double x);
   double sm_sech(double x);
-  double sm_arcsec(double x);
-  double sm_arcsech(double x);
+  double sm_asec(double x);
+  double sm_asech(double x);
 
   // Other functions ============================
 
@@ -198,12 +198,6 @@ namespace sbmlmath
 
   // quotient
   double sm_quotient(double numer, double denom);
-
-  // TODO: Other MathML elements permitted in SBML Level 3
-  // logical: implies
-  // constants: true, false, notanumber, pi, infinity, exponentiale
-  // general: apply, lambda, otherwise, piece
-  // qualifiers:  bvar, degree, logbase
 
 } // namespace sbmlmath
 

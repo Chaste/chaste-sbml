@@ -139,29 +139,49 @@ class ChasteSbmlModel:
         """
         self._outputs[filename] = code
 
-    def _convert_ast_formula(self, ast_formula: "ASTNode") -> str:
+    def _convert_ast_formula(self, ast_formula: "ASTNode", convert_names=True) -> str:
         """Convert SBML AST formula to equivalent C++ string.
 
         :param ast: The AST formula.
+        :param convert_names: Whether to convert state variable and parameter names.
         :return: The equivalent C++ string.
         """
-        return self._convert_str_formula(formulaToString(ast_formula))
+        return self._convert_str_formula(formulaToString(ast_formula), convert_names)
 
     def _convert_str_formula(self, formula: str, convert_names=True) -> str:
         """Convert SBML string formula to equivalent C++ string.
 
         :param ast: The string formula.
+        :param convert_names: Whether to convert state variable and parameter names.
         :return: The equivalent C++ string.
         """
 
+        #  TODO:
+        #  Other MathML elements permitted in SBML Level 3
+        #    logical: implies
+        #    general: apply, lambda, otherwise, piece
+        #    qualifiers:  bvar, degree, logbase
+        #  Special SBML functions and constants
+        #    time, delay
+
+        # SBML contants to be replaced with C++ equivalents
         constants = {
+            "exponentiale": "M_E",
+            "infinity": "std::numeric_limits<double>::infinity()",
             "notanumber": "NAN",
             "pi": "M_PI",
-            "infinity": "std::numeric_limits<double>::infinity();",
-            "exponentiale": "M_E",
         }
+        # skip: "true", "false"
 
+        # SBML functions with same name as C++ equivalents
         unchanged_functions = {
+            "acos",
+            "acosh",
+            "asin",
+            "asinh",
+            "atan",
+            "atanh",
+            "ceil",
             "cos",
             "cosh",
             "exp",
@@ -174,6 +194,7 @@ class ChasteSbmlModel:
             "tanh",
         }
 
+        # SBML functions with different names in C++
         renamed_functions = {
             "abs": "fabs",
             "arccos": "acos",
@@ -188,67 +209,76 @@ class ChasteSbmlModel:
             "rem": "fmod",
         }
 
+        # SBML functions with custom implementations
         custom_functions = {
-            "and",
-            "arccot",
-            "arccoth",
-            "arccsc",
-            "arccsch",
-            "arcsec",
-            "arcsech",
-            "cot",
-            "coth",
-            "csc",
-            "csch",
-            "eq",
-            "factorial",
-            "geq",
-            "gt",
-            "leq",
-            "log",
-            "lt",
-            "max",
-            "min",
-            "neq",
-            "not",
-            "or",
-            "piecewise",
-            "quotient",
-            "root",
-            "sec",
-            "sech",
-            "sqr",
-            "xor",
+            "and": "sm_and",
+            "acot": "sm_acot",
+            "acoth": "sm_acoth",
+            "acsc": "sm_acsc",
+            "acsch": "sm_acsch",
+            "asec": "sm_asec",
+            "asech": "sm_asech",
+            "arccot": "sm_acot",
+            "arccoth": "sm_acoth",
+            "arccsc": "sm_acsc",
+            "arccsch": "sm_acsch",
+            "arcsec": "sm_asec",
+            "arcsech": "sm_asech",
+            "cot": "sm_cot",
+            "coth": "sm_coth",
+            "csc": "sm_csc",
+            "csch": "sm_csch",
+            "eq": "sm_eq",
+            "factorial": "sm_factorial",
+            "geq": "sm_geq",
+            "gt": "sm_gt",
+            "leq": "sm_leq",
+            "log": "sm_log",
+            "lt": "sm_lt",
+            "max": "sm_max",
+            "min": "sm_min",
+            "neq": "sm_neq",
+            "not": "sm_not",
+            "or": "sm_or",
+            "piecewise": "sm_piecewise",
+            "quotient": "sm_quotient",
+            "root": "sm_root",
+            "sec": "sm_sec",
+            "sech": "sm_sech",
+            "sqr": "sm_sqr",
+            "xor": "sm_xor",
         }
 
         tokens = re.findall(r"\w+|\W+", formula)
 
         cpp_tokens = []
         for token in tokens:
+            cpp_token = token
+
             # Replace function names and constnts
             if token in constants:
-                token = f"std::{constants[token]}"
+                cpp_token = f"{constants[token]}"
 
             elif token in unchanged_functions:
-                token = f"std::{token}"
+                cpp_token = f"std::{token}"
 
             elif token in renamed_functions:
-                token = f"std::{renamed_functions[token]}"
+                cpp_token = f"std::{renamed_functions[token]}"
 
             elif token in custom_functions:
-                token = f"sbmlmath::sm_{token}"
+                cpp_token = f"sbmlmath::{custom_functions[token]}"
 
             # Replace state parameter and variable names.
             elif convert_names:
                 if self._is_state_variable(token):
                     index = self._get_state_variable_index(token)
-                    token = f"rY[{index}]"
+                    cpp_token = f"rY[{index}]"
 
                 elif self._is_state_parameter(token):
                     index = self._get_state_parameter_index(token)
-                    token = f"this->mParameters[{index}]"
+                    cpp_token = f"this->mParameters[{index}]"
 
-            cpp_tokens.append(token)
+            cpp_tokens.append(cpp_token)
         cpp_formula = "".join(cpp_tokens)
         return cpp_formula
 

@@ -203,38 +203,38 @@ public:
 
   void TestArccot()
   {
-    TS_ASSERT_DELTA(sm_arccot(0.0), M_PI / 2.0, 1e-6);
-    TS_ASSERT_DELTA(sm_arccot(1.0), M_PI / 4.0, 1e-6);
+    TS_ASSERT_DELTA(sm_acot(0.0), M_PI / 2.0, 1e-6);
+    TS_ASSERT_DELTA(sm_acot(1.0), M_PI / 4.0, 1e-6);
   }
 
   void TestArccoth()
   {
-    TS_ASSERT_DELTA(sm_arccoth(2.0), 0.549306, 1e-6);
-    TS_ASSERT_DELTA(sm_arccoth(10.0), 0.100335, 1e-6);
+    TS_ASSERT_DELTA(sm_acoth(2.0), 0.549306, 1e-6);
+    TS_ASSERT_DELTA(sm_acoth(10.0), 0.100335, 1e-6);
   }
 
   void TestArccsc()
   {
-    TS_ASSERT_DELTA(sm_arccsc(1.0), 1.570796, 1e-6);
-    TS_ASSERT_DELTA(sm_arccsc(10.0), 0.100167, 1e-6);
+    TS_ASSERT_DELTA(sm_acsc(1.0), 1.570796, 1e-6);
+    TS_ASSERT_DELTA(sm_acsc(10.0), 0.100167, 1e-6);
   }
 
   void TestArccsch()
   {
-    TS_ASSERT_DELTA(sm_arccsch(1.0), 0.881373, 1e-6);
-    TS_ASSERT_DELTA(sm_arccsch(10.0), 0.099834, 1e-6);
+    TS_ASSERT_DELTA(sm_acsch(1.0), 0.881373, 1e-6);
+    TS_ASSERT_DELTA(sm_acsch(10.0), 0.099834, 1e-6);
   }
 
   void TestArcsec()
   {
-    TS_ASSERT_DELTA(sm_arcsec(1.0), 0.0, 1e-6);
-    TS_ASSERT_DELTA(sm_arcsec(10.0), 1.470629, 1e-6);
+    TS_ASSERT_DELTA(sm_asec(1.0), 0.0, 1e-6);
+    TS_ASSERT_DELTA(sm_asec(10.0), 1.470629, 1e-6);
   }
 
   void TestArcsech()
   {
-    TS_ASSERT_DELTA(sm_arcsech(0.1), 2.993223, 1e-6);
-    TS_ASSERT_DELTA(sm_arcsech(1.0), 0.0, 1e-6);
+    TS_ASSERT_DELTA(sm_asech(0.1), 2.993223, 1e-6);
+    TS_ASSERT_DELTA(sm_asech(1.0), 0.0, 1e-6);
   }
 
   void TestCot()
@@ -274,7 +274,7 @@ public:
   }
 
   // Other functions ============================
-  
+
   void TestFactorial()
   {
     TS_ASSERT_EQUALS(sm_factorial(0.0), 1.0);

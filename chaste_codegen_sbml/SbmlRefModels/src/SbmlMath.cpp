@@ -119,12 +119,12 @@ double sbmlmath::sm_coth(double x)
   return 1.0 / std::tanh(x);
 }
 
-double sbmlmath::sm_arccot(double x)
+double sbmlmath::sm_acot(double x)
 {
   return std::atan(1.0 / x);
 }
 
-double sbmlmath::sm_arccoth(double x)
+double sbmlmath::sm_acoth(double x)
 {
   return std::atanh(1.0 / x);
 }
@@ -140,12 +140,12 @@ double sbmlmath::sm_csch(double x)
   return 1.0 / std::sinh(x);
 }
 
-double sbmlmath::sm_arccsc(double x)
+double sbmlmath::sm_acsc(double x)
 {
   return std::asin(1.0 / x);
 }
 
-double sbmlmath::sm_arccsch(double x)
+double sbmlmath::sm_acsch(double x)
 {
   return std::asinh(1.0 / x);
 }
@@ -161,12 +161,12 @@ double sbmlmath::sm_sech(double x)
   return 1.0 / std::cosh(x);
 }
 
-double sbmlmath::sm_arcsec(double x)
+double sbmlmath::sm_asec(double x)
 {
   return std::acos(1.0 / x);
 }
 
-double sbmlmath::sm_arcsech(double x)
+double sbmlmath::sm_asech(double x)
 {
   return std::acosh(1.0 / x);
 }
