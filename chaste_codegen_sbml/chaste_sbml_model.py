@@ -160,7 +160,7 @@ class ChasteSbmlModel:
         #  Other MathML elements permitted in SBML Level 3
         #    logical: implies
         #    general: apply, lambda, otherwise, piece
-        #    qualifiers:  bvar, degree, logbase
+        #    qualifiers: bvar, degree, logbase
         #  Special SBML functions and constants
         #    time, delay
 

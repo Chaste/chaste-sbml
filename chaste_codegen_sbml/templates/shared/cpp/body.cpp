@@ -64,29 +64,9 @@ void {{ ode_class_name }}::Init()
 
 void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-    /* Define state variables */
-{% for sp in species %}
-{% if sp["is_state_variable"] is true() %}
-    double {{ sp["id"] }} = rY[{{ sp["state_variable_index"] }}]; // {{ sp["name"] }}
-{% endif %}
-{% endfor %}
-
-    /* Define state parameters. */
-{% for sp in species %}
-{% if sp["is_state_parameter"] is true() %}
-    double {{ sp["id"] }} = this->mParameters[{{ sp["state_parameter_index"] }}]; // {{ sp["name"] }}
-{% endif %}
-{% endfor %}
-
-{% for param in parameters %}
-{% if param["is_state_parameter"] is true() %}
-    double {{ param["id"] }} = this->mParameters[{{ param["state_parameter_index"] }}]; // {{ param["name"] }}
-{% endif %}
-{% endfor %}
-
     /* Define algebraic rules. */
 {% for rule in rules %}
-    {{ rule["id"] }} = {{ rule["formula"] }};
+    double {{ rule["id"] }} = {{ rule["formula"] }};
 {% endfor %}
 
     /* Define the reactions in this model. */

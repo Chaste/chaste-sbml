@@ -84,33 +84,10 @@ void VanLeeuwen2007NonDimOdeSystem::Init()
 
 void VanLeeuwen2007NonDimOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-    /* Define state variables */
-    double X = rY[0]; // X
-    double D = rY[1]; // D
-    double C_o = rY[2]; // C_o
-    double C_u = rY[3]; // C_u
-    double C_c = rY[4]; // C_c
-    double A = rY[5]; // A
-    double C_A = rY[6]; // C_A
-    double T = rY[7]; // T
-    double C_oT = rY[8]; // C_oT
-    double C_cT = rY[9]; // C_cT
-    double Y = rY[10]; // Y
-    double C_F = rY[11]; // C_F
-    double C_T = rY[12]; // C_T
-    double drag = rY[13]; // drag
-
-    /* Define state parameters. */
-
-    double wnt_level = this->mParameters[0]; // wnt_level
-    double gamma1 = this->mParameters[1]; // gamma1
-    double gamma2 = this->mParameters[2]; // gamma2
-    double ComplexTransitThreshold = this->mParameters[3]; // ComplexTransitThreshold
-
     /* Define algebraic rules. */
-    C_F = rY[2] + rY[4];
-    C_T = rY[8] + rY[9];
-    drag = sbmlmath::sm_max((rY[6] - 2300) / 36, 1);
+    double C_F = rY[2] + rY[4];
+    double C_T = rY[8] + rY[9];
+    double drag = sbmlmath::sm_max((rY[6] - 2300) / 36, 1);
 
     /* Define the reactions in this model. */
     // r1

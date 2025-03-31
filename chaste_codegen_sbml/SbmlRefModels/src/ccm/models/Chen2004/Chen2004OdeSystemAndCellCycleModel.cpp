@@ -271,101 +271,42 @@ void Chen2004OdeSystem::Init()
 
 void Chen2004OdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-    /* Define state variables */
-    double BCK2 = rY[0]; // BCK2
-    double BUD = rY[1]; // BUD
-    double C2 = rY[2]; // C2
-    double C2P = rY[3]; // C2P
-    double C5 = rY[4]; // C5
-    double C5P = rY[5]; // C5P
-    double CDC14 = rY[6]; // CDC14
-    double CDC14T = rY[7]; // CDC14T
-    double CDC15 = rY[8]; // CDC15
-    double CDC15i = rY[9]; // CDC15i
-    double CDC20 = rY[10]; // CDC20
-    double CDC20i = rY[11]; // CDC20i
-    double CDC6 = rY[12]; // CDC6
-    double CDC6P = rY[13]; // CDC6P
-    double CDC6T = rY[14]; // CDC6T
-    double CDH1 = rY[15]; // CDH1
-    double CDH1i = rY[16]; // CDH1i
-    double CKIT = rY[17]; // CKIT
-    double CLB2 = rY[18]; // CLB2
-    double CLB2T = rY[19]; // CLB2T
-    double CLB5 = rY[20]; // CLB5
-    double CLB5T = rY[21]; // CLB5T
-    double CLN2 = rY[22]; // CLN2
-    double CLN3 = rY[23]; // CLN3
-    double ESP1 = rY[24]; // ESP1
-    double F2 = rY[25]; // F2
-    double F2P = rY[26]; // F2P
-    double F5 = rY[27]; // F5
-    double F5P = rY[28]; // F5P
-    double IE = rY[29]; // IE
-    double IEP = rY[30]; // IEP
-    double MASS = rY[31]; // MASS
-    double MCM1 = rY[32]; // MCM1
-    double NET1 = rY[33]; // NET1
-    double NET1P = rY[34]; // NET1P
-    double NET1T = rY[35]; // NET1T
-    double ORI = rY[36]; // ORI
-    double PDS1 = rY[37]; // PDS1
-    double PE = rY[38]; // PE
-    double PPX = rY[39]; // PPX
-    double RENT = rY[40]; // RENT
-    double RENTP = rY[41]; // RENTP
-    double SBF = rY[42]; // SBF
-    double SIC1 = rY[43]; // SIC1
-    double SIC1P = rY[44]; // SIC1P
-    double SIC1T = rY[45]; // SIC1T
-    double SPN = rY[46]; // SPN
-    double SWI5 = rY[47]; // SWI5
-    double SWI5P = rY[48]; // SWI5P
-    double TEM1GDP = rY[49]; // TEM1GDP
-    double TEM1GTP = rY[50]; // TEM1GTP
-
-    /* Define state parameters. */
-    double BUB2 = this->mParameters[0]; // BUB2
-    double LTE1 = this->mParameters[1]; // LTE1
-    double MAD2 = this->mParameters[2]; // MAD2
-
-
     /* Define algebraic rules. */
-    BCK2 = b0 * rY[31];
-    Visbf = kisbf_p + kisbf_p_p * rY[18];
-    CLN3 = C0 * Dn3 * rY[31] / (Jn3 + Dn3 * rY[31]);
-    Vppc1 = kppc1 * rY[6];
-    Vppf6 = kppf6 * rY[6];
-    Vaiep = kaiep * rY[18];
-    Vacdh = kacdh_p + kacdh_p_p * rY[6];
-    Vicdh = kicdh_p + kicdh_p_p * (eicdhn3 * rY[23] + eicdhn2 * rY[22] + eicdhb5 * rY[20] + eicdhb2 * rY[18]);
-    Vkpnet = (kkpnet_p + kkpnet_p_p * rY[8]) * rY[31];
-    Vppnet = kppnet_p + kppnet_p_p * rY[39];
-    Vasbf = kasbf * (esbfn2 * rY[22] + esbfn3 * (rY[23] + rY[0]) + esbfb5 * rY[20]);
-    SBF = GK_219(Vasbf, Visbf, Jasbf, Jisbf);
-    MCM1 = GK_219(kamcm * rY[18], kimcm, Jamcm, Jimcm);
-    mu = sbmlmath::sm_log(2) / mdt;
-    D = 1.026 / mu - 32;
-    F = std::exp(-mu * D);
-    Vd2c1 = kd2c1 * (ec1n3 * rY[23] + ec1k2 * rY[0] + ec1n2 * rY[22] + ec1b5 * rY[20] + ec1b2 * rY[18]);
-    Vd2f6 = kd2f6 * (ef6n3 * rY[23] + ef6k2 * rY[0] + ef6n2 * rY[22] + ef6b5 * rY[20] + ef6b2 * rY[18]);
-    Vkpc1 = kd1c1 + Vd2c1 / (Jd2c1 + rY[43] + rY[2] + rY[4] + rY[44] + rY[3] + rY[5]);
-    Vkpf6 = kd1f6 + Vd2f6 / (Jd2f6 + rY[12] + rY[25] + rY[27] + rY[13] + rY[26] + rY[28]);
-    Vdb2 = kdb2_p + kdb2_p_p * rY[15] + kdb2p * rY[10];
-    Vdb5 = kdb5_p + kdb5_p_p * rY[10];
-    Vdpds = kd1pds_p + kd2pds_p_p * rY[10] + kd3pds_p_p * rY[15];
-    Vdppx = kdppx_p + kdppx_p_p * (J20ppx + rY[10]) * Jpds / (Jpds + rY[37]);
-    CLB2T = rY[18] + rY[2] + rY[3] + rY[25] + rY[26];
-    CLB5T = rY[20] + rY[4] + rY[5] + rY[27] + rY[28];
-    CDC14T = rY[6] + rY[40] + rY[41];
-    NET1T = rY[33] + rY[34] + rY[40] + rY[41];
-    SIC1T = rY[43] + rY[2] + rY[4] + rY[44] + rY[3] + rY[5];
-    CDC6T = rY[12] + rY[25] + rY[27] + rY[13] + rY[26] + rY[28];
-    CKIT = rY[45] + rY[14];
-    CDC15i = CDC15T - rY[8];
-    IE = IET - rY[30];
-    PE = ESP1T - rY[24];
-    TEM1GDP = TEM1T - rY[50];
+    double BCK2 = b0 * rY[31];
+    double Visbf = kisbf_p + kisbf_p_p * rY[18];
+    double CLN3 = C0 * Dn3 * rY[31] / (Jn3 + Dn3 * rY[31]);
+    double Vppc1 = kppc1 * rY[6];
+    double Vppf6 = kppf6 * rY[6];
+    double Vaiep = kaiep * rY[18];
+    double Vacdh = kacdh_p + kacdh_p_p * rY[6];
+    double Vicdh = kicdh_p + kicdh_p_p * (eicdhn3 * rY[23] + eicdhn2 * rY[22] + eicdhb5 * rY[20] + eicdhb2 * rY[18]);
+    double Vkpnet = (kkpnet_p + kkpnet_p_p * rY[8]) * rY[31];
+    double Vppnet = kppnet_p + kppnet_p_p * rY[39];
+    double Vasbf = kasbf * (esbfn2 * rY[22] + esbfn3 * (rY[23] + rY[0]) + esbfb5 * rY[20]);
+    double SBF = GK_219(Vasbf, Visbf, Jasbf, Jisbf);
+    double MCM1 = GK_219(kamcm * rY[18], kimcm, Jamcm, Jimcm);
+    double mu = sbmlmath::sm_log(2) / mdt;
+    double D = 1.026 / mu - 32;
+    double F = std::exp(-mu * D);
+    double Vd2c1 = kd2c1 * (ec1n3 * rY[23] + ec1k2 * rY[0] + ec1n2 * rY[22] + ec1b5 * rY[20] + ec1b2 * rY[18]);
+    double Vd2f6 = kd2f6 * (ef6n3 * rY[23] + ef6k2 * rY[0] + ef6n2 * rY[22] + ef6b5 * rY[20] + ef6b2 * rY[18]);
+    double Vkpc1 = kd1c1 + Vd2c1 / (Jd2c1 + rY[43] + rY[2] + rY[4] + rY[44] + rY[3] + rY[5]);
+    double Vkpf6 = kd1f6 + Vd2f6 / (Jd2f6 + rY[12] + rY[25] + rY[27] + rY[13] + rY[26] + rY[28]);
+    double Vdb2 = kdb2_p + kdb2_p_p * rY[15] + kdb2p * rY[10];
+    double Vdb5 = kdb5_p + kdb5_p_p * rY[10];
+    double Vdpds = kd1pds_p + kd2pds_p_p * rY[10] + kd3pds_p_p * rY[15];
+    double Vdppx = kdppx_p + kdppx_p_p * (J20ppx + rY[10]) * Jpds / (Jpds + rY[37]);
+    double CLB2T = rY[18] + rY[2] + rY[3] + rY[25] + rY[26];
+    double CLB5T = rY[20] + rY[4] + rY[5] + rY[27] + rY[28];
+    double CDC14T = rY[6] + rY[40] + rY[41];
+    double NET1T = rY[33] + rY[34] + rY[40] + rY[41];
+    double SIC1T = rY[43] + rY[2] + rY[4] + rY[44] + rY[3] + rY[5];
+    double CDC6T = rY[12] + rY[25] + rY[27] + rY[13] + rY[26] + rY[28];
+    double CKIT = rY[45] + rY[14];
+    double CDC15i = CDC15T - rY[8];
+    double IE = IET - rY[30];
+    double PE = ESP1T - rY[24];
+    double TEM1GDP = TEM1T - rY[50];
 
     /* Define the reactions in this model. */
     // Growth

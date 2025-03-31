@@ -43,17 +43,9 @@ void Goldbeter1991OdeSystem::Init()
 
 void Goldbeter1991OdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-    /* Define state variables */
-    double C = rY[0]; // Cyclin
-    double M = rY[1]; // cdc_2_kinase
-    double X = rY[2]; // Cyclin Protease
-
-    /* Define state parameters. */
-
-
     /* Define algebraic rules. */
-    V1 = rY[0] * VM1 * std::pow(rY[0] + Kc, -1);
-    V3 = rY[1] * VM3;
+    double V1 = rY[0] * VM1 * std::pow(rY[0] + Kc, -1);
+    double V3 = rY[1] * VM3;
 
     /* Define the reactions in this model. */
     // creation of cyclin

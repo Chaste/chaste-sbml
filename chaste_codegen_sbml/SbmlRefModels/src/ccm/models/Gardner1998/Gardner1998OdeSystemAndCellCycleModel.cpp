@@ -45,19 +45,9 @@ void Gardner1998OdeSystem::Init()
 
 void Gardner1998OdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-    /* Define state variables */
-    double C = rY[0]; // cyclin
-    double X = rY[1]; // protease
-    double M = rY[2]; // cdc2k
-    double Y = rY[3]; // cyclin inhibitor
-    double Z = rY[4]; // complex inhibitor-cyclin
-
-    /* Define state parameters. */
-
-
     /* Define algebraic rules. */
-    V1 = rY[0] * V1p * std::pow(rY[0] + K6, -1);
-    V3 = rY[2] * V3p;
+    double V1 = rY[0] * V1p * std::pow(rY[0] + K6, -1);
+    double V3 = rY[2] * V3p;
 
     /* Define the reactions in this model. */
     // creation of cyclin

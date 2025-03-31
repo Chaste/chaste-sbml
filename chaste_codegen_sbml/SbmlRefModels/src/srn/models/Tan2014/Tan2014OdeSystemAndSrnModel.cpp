@@ -59,23 +59,8 @@ void Tan2014OdeSystem::Init()
 
 void Tan2014OdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-    /* Define state variables */
-    double bcat_cm = rY[0]; // 
-    double ligand_cm = rY[1]; // 
-    double complex_cm = rY[2]; // 
-    double bcat_nu = rY[3]; // 
-    double ligand_nu = rY[4]; // 
-    double complex_nu = rY[5]; // 
-    double drag = rY[6]; // drag
-
-    /* Define state parameters. */
-
-    double wnt_level = this->mParameters[0]; // wnt_level
-    double gamma = this->mParameters[1]; // gamma
-    double ComplexTransitThreshold = this->mParameters[2]; // ComplexTransitThreshold
-
     /* Define algebraic rules. */
-    drag = sbmlmath::sm_max((rY[2] - 700) / 10, 1);
+    double drag = sbmlmath::sm_max((rY[2] - 700) / 10, 1);
 
     /* Define the reactions in this model. */
     double Bsynthesis = Bsyn * CytosolMembrane;

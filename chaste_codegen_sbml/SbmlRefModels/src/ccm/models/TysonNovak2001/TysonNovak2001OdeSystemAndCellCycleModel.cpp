@@ -89,27 +89,11 @@ void TysonNovak2001OdeSystem::Init()
 
 void TysonNovak2001OdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-    /* Define state variables */
-    double CycBt = rY[0]; // CycBt
-    double CycB = rY[1]; // CycB
-    double Cdc20a = rY[2]; // Cdc20a
-    double Trimer = rY[3]; // Trimer
-    double Cdh1 = rY[4]; // Cdh1
-    double m = rY[5]; // m
-    double Cdc20t = rY[6]; // Cdc20t
-    double IEP = rY[7]; // IEP
-    double Mad = rY[8]; // Mad
-    double CKIt = rY[9]; // CKIt
-    double SK = rY[10]; // SK
-
-    /* Define state parameters. */
-
-
     /* Define algebraic rules. */
-    CycB = rY[0] - 2 * rY[0] * rY[9] / (rY[0] + rY[9] + 1 / Keq + std::pow(std::pow(rY[0] + rY[9] + 1 / Keq, 2) - 4 * rY[0] * rY[9], 1 / 2));
-    Trimer = 2 * rY[0] * rY[9] / (rY[0] + rY[9] + 1 / Keq + std::pow(std::pow(rY[0] + rY[9] + 1 / Keq, 2) - 4 * rY[0] * rY[9], 1 / 2));
-    TF = GK(k15p * rY[5] + k15pp * rY[10], k16p + k16pp * rY[5] * rY[1], J15, J16);
-    Mad = 1;
+    double CycB = rY[0] - 2 * rY[0] * rY[9] / (rY[0] + rY[9] + 1 / Keq + std::pow(std::pow(rY[0] + rY[9] + 1 / Keq, 2) - 4 * rY[0] * rY[9], 1 / 2));
+    double Trimer = 2 * rY[0] * rY[9] / (rY[0] + rY[9] + 1 / Keq + std::pow(std::pow(rY[0] + rY[9] + 1 / Keq, 2) - 4 * rY[0] * rY[9], 1 / 2));
+    double TF = GK(k15p * rY[5] + k15pp * rY[10], k16p + k16pp * rY[5] * rY[1], J15, J16);
+    double Mad = 1;
 
     /* Define the reactions in this model. */
     // CycBt synthesis
