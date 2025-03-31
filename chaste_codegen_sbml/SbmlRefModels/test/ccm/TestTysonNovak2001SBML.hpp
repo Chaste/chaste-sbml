@@ -71,13 +71,18 @@ public:
             ode_system.SetDefaultInitialCondition(2, 3.25);
 
             std::vector<double> initial_conditions = ode_system.GetInitialConditions();
-            TS_ASSERT_EQUALS(initial_conditions.size(), 6u);
-            TS_ASSERT_DELTA(initial_conditions[0], 0.0999, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[1], 0.9890, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[2], 3.2500, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[3], 1.4211, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[4], 0.6728, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[5], 0.4854, 1e-4);
+            TS_ASSERT_EQUALS(initial_conditions.size(), 11u);
+            TS_ASSERT_DELTA(initial_conditions[0], 0.001, 1e-6); // CycBt
+            TS_ASSERT_DELTA(initial_conditions[1], 0.0, 1e-6); // CycB
+            TS_ASSERT_DELTA(initial_conditions[2], 3.25, 1e-6); // Cdc20a
+            TS_ASSERT_DELTA(initial_conditions[3], 0.0, 1e-6); // Trimer
+            TS_ASSERT_DELTA(initial_conditions[4], 0.001, 1e-6); // Cdh1
+            TS_ASSERT_DELTA(initial_conditions[5], 0.5, 1e-6); // m
+            TS_ASSERT_DELTA(initial_conditions[6], 0.001, 1e-6); // Cdc20t
+            TS_ASSERT_DELTA(initial_conditions[7], 0.001, 1e-6); // IEP
+            TS_ASSERT_DELTA(initial_conditions[8], 0.0, 1e-6); // Mad
+            TS_ASSERT_DELTA(initial_conditions[9], 0.001, 1e-6); // CKIt
+            TS_ASSERT_DELTA(initial_conditions[10], 0.001, 1e-6); // SK
 
             // Create an output archive
             std::ofstream ofs(archive_filename.c_str());
@@ -100,13 +105,18 @@ public:
 
             // Check that archiving worked correctly
             std::vector<double> initial_conditions = p_ode_system->GetInitialConditions();
-            TS_ASSERT_EQUALS(initial_conditions.size(), 6u);
-            TS_ASSERT_DELTA(initial_conditions[0], 0.0999, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[1], 0.9890, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[2], 3.2500, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[3], 1.4211, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[4], 0.6728, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[5], 0.4854, 1e-4);
+            TS_ASSERT_EQUALS(initial_conditions.size(), 11u);
+            TS_ASSERT_DELTA(initial_conditions[0], 0.001, 1e-6);
+            TS_ASSERT_DELTA(initial_conditions[1], 0.0, 1e-6);
+            TS_ASSERT_DELTA(initial_conditions[2], 0.001, 1e-6);
+            TS_ASSERT_DELTA(initial_conditions[3], 0.0, 1e-6);
+            TS_ASSERT_DELTA(initial_conditions[4], 0.001, 1e-6);
+            TS_ASSERT_DELTA(initial_conditions[5], 0.5, 1e-6);
+            TS_ASSERT_DELTA(initial_conditions[6], 0.001, 1e-6);
+            TS_ASSERT_DELTA(initial_conditions[7], 0.001, 1e-6);
+            TS_ASSERT_DELTA(initial_conditions[8], 0.0, 1e-6);
+            TS_ASSERT_DELTA(initial_conditions[9], 0.001, 1e-6);
+            TS_ASSERT_DELTA(initial_conditions[10], 0.001, 1e-6);
 
             // Tidy up
             delete p_ode_system;
@@ -119,24 +129,33 @@ public:
 
         double time = 0.0;
         std::vector<double> initial_conditions;
-        initial_conditions.push_back(0.6);
-        initial_conditions.push_back(0.1);
-        initial_conditions.push_back(1.5);
-        initial_conditions.push_back(0.6);
-        initial_conditions.push_back(0.6);
-        initial_conditions.push_back(0.85);
+        initial_conditions.push_back(0.001);
+        initial_conditions.push_back(0.0);
+        initial_conditions.push_back(0.001);
+        initial_conditions.push_back(0.0);
+        initial_conditions.push_back(0.001);
+        initial_conditions.push_back(0.5);
+        initial_conditions.push_back(0.001);
+        initial_conditions.push_back(0.001);
+        initial_conditions.push_back(0.0);
+        initial_conditions.push_back(0.001);
+        initial_conditions.push_back(0.001);
 
         std::vector<double> derivs(initial_conditions.size());
         ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
         // Test derivatives are correct
-        // Divided by 60 to change to hours
-        TS_ASSERT_DELTA(derivs[0], -4.400000000000000e-02 * 60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[1], -6.047872340425530e+00 * 60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[2], 3.361442884485838e-02 * 60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[3], 4.016602000735009e-02 * 60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[4], 8.400000000000001e-03 * 60.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[5], 7.777500000000001e-03 * 60.0, 1e-5);
+        TS_ASSERT_DELTA(derivs[0], 0.0399, 1e-6);
+        TS_ASSERT_DELTA(derivs[1], 0.1198, 1e-6);
+        TS_ASSERT_DELTA(derivs[2], -0.0001, 1e-6);
+        TS_ASSERT_DELTA(derivs[3], 0.0799, 1e-6);
+        TS_ASSERT_DELTA(derivs[4], 0.9710, 1e-6);
+        TS_ASSERT_DELTA(derivs[5], 0.0023, 1e-6);
+        TS_ASSERT_DELTA(derivs[6], 0.0049, 1e-6);
+        TS_ASSERT_DELTA(derivs[7], -0.0000, 1e-6);
+        TS_ASSERT_DELTA(derivs[8], 0.9997, 1e-6);
+        TS_ASSERT_DELTA(derivs[9], 0.0278, 1e-6);
+        TS_ASSERT_DELTA(derivs[10], 0.0, 1e-6);
     }
 
     void TestOdeWithChasteSolver()
