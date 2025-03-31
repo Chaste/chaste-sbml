@@ -166,10 +166,14 @@ class ChasteSbmlModel:
 
         # SBML contants to be replaced with C++ equivalents
         constants = {
+            "avogadro": "SM_AVOGADRO",
             "exponentiale": "M_E",
+            "inf": "std::numeric_limits<double>::infinity()",
             "infinity": "std::numeric_limits<double>::infinity()",
+            "nan": "NAN",
             "notanumber": "NAN",
             "pi": "M_PI",
+            # TODO "time": "rTime",
         }
         # skip: "true", "false"
 

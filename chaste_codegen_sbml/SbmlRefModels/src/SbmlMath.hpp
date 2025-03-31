@@ -42,6 +42,10 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cmath>
 
+// Bureau International des Poids et Mesures (2019):
+// The International System of Units (SI), 9th edition
+#define SM_AVOGADRO 6.02214076E23
+
 namespace sbmlmath
 {
 
