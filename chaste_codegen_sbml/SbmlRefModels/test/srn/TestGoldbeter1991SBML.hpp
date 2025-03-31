@@ -227,7 +227,7 @@ public:
     OutputFileHandler handler("archive", false);
     std::string archive_filename = handler.GetOutputDirectoryFullPath() + "goldbeter_1991_srn.arch";
 
-    double C, M, X;
+    double C0, M0, X0;
 
     // Create an output archive
     {
@@ -260,9 +260,9 @@ public:
         p_srn_model->SimulateToCurrentTime();
       }
 
-      C = dynamic_cast<Goldbeter1991SrnModel *>(p_srn_model)->GetStateVariable("Cyclin");
-      M = dynamic_cast<Goldbeter1991SrnModel *>(p_srn_model)->GetStateVariable("cdc_2_kinase");
-      X = dynamic_cast<Goldbeter1991SrnModel *>(p_srn_model)->GetStateVariable("Cyclin Protease");
+      C0 = dynamic_cast<Goldbeter1991SrnModel *>(p_srn_model)->GetStateVariable("C");
+      M0 = dynamic_cast<Goldbeter1991SrnModel *>(p_srn_model)->GetStateVariable("M");
+      X0 = dynamic_cast<Goldbeter1991SrnModel *>(p_srn_model)->GetStateVariable("X");
 
       output_arch << p_srn_model;
 
@@ -281,12 +281,12 @@ public:
 
       input_arch >> p_srn_model;
 
-      double C1 = dynamic_cast<Goldbeter1991SrnModel *>(p_srn_model)->GetStateVariable("Cyclin");
-      double M1 = dynamic_cast<Goldbeter1991SrnModel *>(p_srn_model)->GetStateVariable("cdc_2_kinase");
-      double X1 = dynamic_cast<Goldbeter1991SrnModel *>(p_srn_model)->GetStateVariable("Cyclin Protease");
-      TS_ASSERT_DELTA(C1, C, 1e-6);
-      TS_ASSERT_DELTA(M1, M, 1e-6);
-      TS_ASSERT_DELTA(X1, X, 1e-6);
+      double C1 = dynamic_cast<Goldbeter1991SrnModel *>(p_srn_model)->GetStateVariable("C");
+      double M1 = dynamic_cast<Goldbeter1991SrnModel *>(p_srn_model)->GetStateVariable("M");
+      double X1 = dynamic_cast<Goldbeter1991SrnModel *>(p_srn_model)->GetStateVariable("X");
+      TS_ASSERT_DELTA(C1, C0, 1e-6);
+      TS_ASSERT_DELTA(M1, M0, 1e-6);
+      TS_ASSERT_DELTA(X1, X0, 1e-6);
 
       // Destroy model
       delete p_srn_model;
@@ -347,9 +347,9 @@ public:
     Goldbeter1991SrnModel *p_model2 = static_cast<Goldbeter1991SrnModel *>(p_model->CreateSrnModel());
 
     // Check correct initializations
-    double C = dynamic_cast<Goldbeter1991SrnModel *>(p_model2)->GetStateVariable("Cyclin");
-    double M = dynamic_cast<Goldbeter1991SrnModel *>(p_model2)->GetStateVariable("cdc_2_kinase");
-    double X = dynamic_cast<Goldbeter1991SrnModel *>(p_model2)->GetStateVariable("Cyclin Protease");
+    double C = dynamic_cast<Goldbeter1991SrnModel *>(p_model2)->GetStateVariable("C");
+    double M = dynamic_cast<Goldbeter1991SrnModel *>(p_model2)->GetStateVariable("M");
+    double X = dynamic_cast<Goldbeter1991SrnModel *>(p_model2)->GetStateVariable("X");
     TS_ASSERT_EQUALS(C, 2.0);
     TS_ASSERT_EQUALS(M, 3.0);
     TS_ASSERT_EQUALS(X, 4.0);
@@ -416,9 +416,9 @@ public:
     }
 
     // Direct access to state variables
-    double C = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("Cyclin");
-    double M = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("cdc_2_kinase");
-    double X = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("Cyclin Protease");
+    double C = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("C");
+    double M = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("M");
+    double X = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("X");
 
     TS_ASSERT_DELTA(C, 0.5470, 1e-2);
     TS_ASSERT_DELTA(M, 0.2936, 1e-2);

@@ -56,12 +56,6 @@ double sbmlmath::sm_minus(double x, double y)
 
 // Logs and exponents ===========================
 
-// ln
-double sbmlmath::sm_ln(double x)
-{
-  return std::log(x);
-}
-
 // log
 double sbmlmath::sm_log(double x)
 {
@@ -71,12 +65,6 @@ double sbmlmath::sm_log(double x)
 double sbmlmath::sm_log(double b, double x)
 {
   return std::log(x) / std::log(b);
-}
-
-// power
-double sbmlmath::sm_power(double x, double n)
-{
-  return std::pow(x, n);
 }
 
 // root
@@ -120,127 +108,70 @@ bool sbmlmath::sm_neq(double x, double y)
 
 // Trigonometry =================================
 
-// arccos
-double sbmlmath::sm_arccos(double x)
-{
-  return std::acos(x);
-}
-
-// arccosh
-double sbmlmath::sm_arccosh(double x)
-{
-  return std::acosh(x);
-}
-
-// arccot
-double sbmlmath::sm_arccot(double x)
-{
-  return std::atan(1.0 / x);
-}
-
-// arccoth
-double sbmlmath::sm_arccoth(double x)
-{
-  return std::atanh(1.0 / x);
-}
-
-// arccsc
-double sbmlmath::sm_arccsc(double x)
-{
-  return std::asin(1.0 / x);
-}
-
-// arccsch
-double sbmlmath::sm_arccsch(double x)
-{
-  return std::asinh(1.0 / x);
-}
-
-// arcsec
-double sbmlmath::sm_arcsec(double x)
-{
-  return std::acos(1.0 / x);
-}
-
-// arcsech
-double sbmlmath::sm_arcsech(double x)
-{
-  return std::acosh(1.0 / x);
-}
-
-// arcsin
-double sbmlmath::sm_arcsin(double x)
-{
-  return std::asin(x);
-}
-
-// arcsinh
-double sbmlmath::sm_arcsinh(double x)
-{
-  return std::asinh(x);
-}
-
-// arctan
-double sbmlmath::sm_arctan(double x)
-{
-  return std::atan(x);
-}
-
-// arctanh
-double sbmlmath::sm_arctanh(double x)
-{
-  return std::atanh(x);
-}
-
-// cot
+// cot, coth, arccot, arccoth
 double sbmlmath::sm_cot(double x)
 {
   return 1.0 / std::tan(x);
 }
 
-// coth
 double sbmlmath::sm_coth(double x)
 {
   return 1.0 / std::tanh(x);
 }
 
-// csc
+double sbmlmath::sm_arccot(double x)
+{
+  return std::atan(1.0 / x);
+}
+
+double sbmlmath::sm_arccoth(double x)
+{
+  return std::atanh(1.0 / x);
+}
+
+// csc, csch, arccsc, arccsch
 double sbmlmath::sm_csc(double x)
 {
   return 1.0 / std::sin(x);
 }
 
-// csch
 double sbmlmath::sm_csch(double x)
 {
   return 1.0 / std::sinh(x);
 }
 
-// sec
+double sbmlmath::sm_arccsc(double x)
+{
+  return std::asin(1.0 / x);
+}
+
+double sbmlmath::sm_arccsch(double x)
+{
+  return std::asinh(1.0 / x);
+}
+
+// sec, sech, arcsec, arcsech
 double sbmlmath::sm_sec(double x)
 {
   return 1.0 / std::cos(x);
 }
 
-// sech
 double sbmlmath::sm_sech(double x)
 {
   return 1.0 / std::cosh(x);
 }
 
+double sbmlmath::sm_arcsec(double x)
+{
+  return std::acos(1.0 / x);
+}
+
+double sbmlmath::sm_arcsech(double x)
+{
+  return std::acosh(1.0 / x);
+}
+
 // Other functions ==============================
-
-// abs
-double sbmlmath::sm_abs(double x)
-{
-  return std::fabs(x);
-}
-
-// ceiling
-double sbmlmath::sm_ceiling(double x)
-{
-  return std::ceil(x);
-}
 
 // factorial
 double sbmlmath::sm_factorial(double x)
@@ -255,12 +186,6 @@ double sbmlmath::sm_factorial(double x)
 // max
 // min
 // piecewise
-
-// rem
-double sbmlmath::sm_rem(double numer, double denom)
-{
-  return std::fmod(numer, denom);
-}
 
 // quotient
 double sbmlmath::sm_quotient(double numer, double denom)

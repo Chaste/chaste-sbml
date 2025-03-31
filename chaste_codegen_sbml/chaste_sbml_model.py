@@ -147,40 +147,64 @@ class ChasteSbmlModel:
         """
         return self._convert_str_formula(formulaToString(ast_formula))
 
-    def _convert_str_formula(self, formula: str) -> str:
+    def _convert_str_formula(self, formula: str, convert_names=True) -> str:
         """Convert SBML string formula to equivalent C++ string.
 
         :param ast: The string formula.
         :return: The equivalent C++ string.
         """
 
-        functions = {
-            "abs",
+        constants = {
+            "notanumber": "NAN",
+            "pi": "M_PI",
+            "infinity": "std::numeric_limits<double>::infinity();",
+            "exponentiale": "M_E",
+        }
+
+        unchanged_functions = {
+            "cos",
+            "cosh",
+            "exp",
+            "floor",
+            "pow",
+            "sin",
+            "sinh",
+            "sqrt",
+            "tan",
+            "tanh",
+        }
+
+        renamed_functions = {
+            "abs": "fabs",
+            "arccos": "acos",
+            "arccosh": "acosh",
+            "arcsin": "asin",
+            "arcsinh": "asinh",
+            "arctan": "atan",
+            "arctanh": "atanh",
+            "ceiling": "ceil",
+            "ln": "log",
+            "power": "pow",
+            "rem": "fmod",
+        }
+
+        custom_functions = {
             "and",
-            "arccos",
-            "arccosh",
             "arccot",
             "arccoth",
             "arccsc",
             "arccsch",
             "arcsec",
             "arcsech",
-            "arcsin",
-            "arcsinh",
-            "arctan",
-            "arctanh",
-            "ceiling",
             "cot",
             "coth",
             "csc",
             "csch",
             "eq",
             "factorial",
-            "floor",
             "geq",
             "gt",
             "leq",
-            "ln",
             "log",
             "lt",
             "max",
@@ -189,34 +213,43 @@ class ChasteSbmlModel:
             "not",
             "or",
             "piecewise",
-            "power",
             "quotient",
-            "rem",
             "root",
             "sec",
             "sech",
             "sqr",
             "xor",
         }
-        # Skip: cos, cosh, exp, floor, pow, sin, sinh, sqrt, tan, tanh
 
         tokens = re.findall(r"\w+|\W+", formula)
 
         cpp_tokens = []
         for token in tokens:
-            if token in functions:
-                # Replace function name with Chaste equivalent.
-                cpp_tokens.append(f"sbmlmath::sm_{token}")
-            elif self._is_state_variable(token):
-                # Replace state variable name with Chaste equivalent.
-                cpp_tokens.append(f'this->GetStateVariable("{token}")')
-            elif self._is_state_parameter(token):
-                # Replace state parameter name with Chaste equivalent.
-                cpp_tokens.append(f'this->GetParameter("{token}")')
-            else:
-                cpp_tokens.append(token)
-        cpp_formula = "".join(cpp_tokens)
+            # Replace function names and constnts
+            if token in constants:
+                token = f"std::{constants[token]}"
 
+            elif token in unchanged_functions:
+                token = f"std::{token}"
+
+            elif token in renamed_functions:
+                token = f"std::{renamed_functions[token]}"
+
+            elif token in custom_functions:
+                token = f"sbmlmath::sm_{token}"
+
+            # Replace state parameter and variable names.
+            elif convert_names:
+                if self._is_state_variable(token):
+                    index = self._get_state_variable_index(token)
+                    token = f"rY[{index}]"
+
+                elif self._is_state_parameter(token):
+                    index = self._get_state_parameter_index(token)
+                    token = f"this->mParameters[{index}]"
+
+            cpp_tokens.append(token)
+        cpp_formula = "".join(cpp_tokens)
         return cpp_formula
 
     def _format_compartments(self) -> list[dict[str, "Any"]]:

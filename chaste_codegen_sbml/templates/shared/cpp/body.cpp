@@ -161,12 +161,12 @@ void CellwiseOdeSystemInformation<{{ ode_class_name }}>::Initialise()
 {
 {% for sp in species %}
 {% if sp["is_state_variable"] is true() %}
-    this->mVariableNames.push_back("{{ sp['name'] }}");
+    this->mVariableNames.push_back("{{ sp['id'] }}");
     this->mVariableUnits.push_back("{{ sp['units'] }}");
     this->mInitialConditions.push_back({{ sp['concentration'] }});
 
 {% elif sp["is_state_parameter"] is true() %}
-    this->mParameterNames.push_back("{{ sp['name'] }}");
+    this->mParameterNames.push_back("{{ sp['id'] }}");
     this->mParameterUnits.push_back("{{ sp['units'] }}");
 
 {% endif %}

@@ -36,7 +36,7 @@ TysonNovak2001OdeSystem::~TysonNovak2001OdeSystem()
 
 double TysonNovak2001OdeSystem::GK(double A1, double A2, double A3, double A4)
 {
-    return 2 * A4 * A1 / (A2 - A1 + A3 * A2 + A4 * A1 + sbmlmath::sm_root(2, pow(A2 - A1 + A3 * A2 + A4 * A1, 2) - 4 * (A2 - A1) * A4 * A1));
+    return 2 * A4 * A1 / (A2 - A1 + A3 * A2 + A4 * A1 + sbmlmath::sm_root(2, std::pow(A2 - A1 + A3 * A2 + A4 * A1, 2) - 4 * (A2 - A1) * A4 * A1));
 }
 
 void TysonNovak2001OdeSystem::Init()
@@ -106,9 +106,9 @@ void TysonNovak2001OdeSystem::EvaluateYDerivatives(double time, const std::vecto
 
 
     /* Define algebraic rules. */
-    CycB = this->GetStateVariable("CycBt") - 2 * this->GetStateVariable("CycBt") * this->GetStateVariable("CKIt") / (this->GetStateVariable("CycBt") + this->GetStateVariable("CKIt") + 1 / Keq + pow(pow(this->GetStateVariable("CycBt") + this->GetStateVariable("CKIt") + 1 / Keq, 2) - 4 * this->GetStateVariable("CycBt") * this->GetStateVariable("CKIt"), 1 / 2));
-    Trimer = 2 * this->GetStateVariable("CycBt") * this->GetStateVariable("CKIt") / (this->GetStateVariable("CycBt") + this->GetStateVariable("CKIt") + 1 / Keq + pow(pow(this->GetStateVariable("CycBt") + this->GetStateVariable("CKIt") + 1 / Keq, 2) - 4 * this->GetStateVariable("CycBt") * this->GetStateVariable("CKIt"), 1 / 2));
-    TF = GK(k15p * this->GetStateVariable("m") + k15pp * this->GetStateVariable("SK"), k16p + k16pp * this->GetStateVariable("m") * this->GetStateVariable("CycB"), J15, J16);
+    CycB = rY[0] - 2 * rY[0] * rY[9] / (rY[0] + rY[9] + 1 / Keq + std::pow(std::pow(rY[0] + rY[9] + 1 / Keq, 2) - 4 * rY[0] * rY[9], 1 / 2));
+    Trimer = 2 * rY[0] * rY[9] / (rY[0] + rY[9] + 1 / Keq + std::pow(std::pow(rY[0] + rY[9] + 1 / Keq, 2) - 4 * rY[0] * rY[9], 1 / 2));
+    TF = GK(k15p * rY[5] + k15pp * rY[10], k16p + k16pp * rY[5] * rY[1], J15, J16);
     Mad = 1;
 
     /* Define the reactions in this model. */
@@ -116,61 +116,61 @@ void TysonNovak2001OdeSystem::EvaluateYDerivatives(double time, const std::vecto
     double CycBt_synthesis = k1;
 
     // CycBt degradation
-    double CycBdegradation = k2p * this->GetStateVariable("CycBt");
+    double CycBdegradation = k2p * rY[0];
 
     // CycBt degradation via Cdh1
-    double CycBdegradationviaCdh1 = k2pp * this->GetStateVariable("Cdh1") * this->GetStateVariable("CycBt");
+    double CycBdegradationviaCdh1 = k2pp * rY[4] * rY[0];
 
     // CycBt degradation via Cdc20a
-    double CycBtdegradationviaCdc20a = k2ppp * this->GetStateVariable("Cdc20a") * this->GetStateVariable("CycBt");
+    double CycBtdegradationviaCdc20a = k2ppp * rY[2] * rY[0];
 
     // Cdh1 synthesis
-    double Cdh1synthesis = (k3p + k3pp * this->GetStateVariable("Cdc20a")) * (1 - this->GetStateVariable("Cdh1")) / (J3 + 1 - this->GetStateVariable("Cdh1"));
+    double Cdh1synthesis = (k3p + k3pp * rY[2]) * (1 - rY[4]) / (J3 + 1 - rY[4]);
 
     // Cdh1 degradation
-    double Cdh1degradation = (k4p * this->GetStateVariable("SK") * this->GetStateVariable("Cdh1") + k4 * this->GetStateVariable("m") * this->GetStateVariable("CycB") * this->GetStateVariable("Cdh1")) / (J4 + this->GetStateVariable("Cdh1"));
+    double Cdh1degradation = (k4p * rY[10] * rY[4] + k4 * rY[5] * rY[1] * rY[4]) / (J4 + rY[4]);
 
     // Cdc20t synthesis
-    double Cdc20tsynthesis = k5p + k5pp * pow(this->GetStateVariable("CycB") * this->GetStateVariable("m") / J5, n) / (1 + pow(this->GetStateVariable("CycB") * this->GetStateVariable("m") / J5, n));
+    double Cdc20tsynthesis = k5p + k5pp * std::pow(rY[1] * rY[5] / J5, n) / (1 + std::pow(rY[1] * rY[5] / J5, n));
 
     // Cdc20t degradation
-    double Cdc20t_deg = k6 * this->GetStateVariable("Cdc20t");
+    double Cdc20t_deg = k6 * rY[6];
 
     // Cdc20 activation
-    double Cdc20activation = k7 * this->GetStateVariable("IEP") * (this->GetStateVariable("Cdc20t") - this->GetStateVariable("Cdc20a")) / (J7 + this->GetStateVariable("Cdc20t") - this->GetStateVariable("Cdc20a"));
+    double Cdc20activation = k7 * rY[7] * (rY[6] - rY[2]) / (J7 + rY[6] - rY[2]);
 
     // Cdc20a inhibition
-    double Cdc20ainhibition = k8 * this->GetStateVariable("Mad") * this->GetStateVariable("Cdc20a") / (J8 + this->GetStateVariable("Cdc20a"));
+    double Cdc20ainhibition = k8 * rY[8] * rY[2] / (J8 + rY[2]);
 
     // Cdc20a degradation
-    double Cdc20adegradation = k6 * this->GetStateVariable("Cdc20a");
+    double Cdc20adegradation = k6 * rY[2];
 
     // IEP synthesis
-    double IEPsynthesis = k9 * this->GetStateVariable("m") * this->GetStateVariable("CycB") * (1 - this->GetStateVariable("IEP"));
+    double IEPsynthesis = k9 * rY[5] * rY[1] * (1 - rY[7]);
 
     // IEP degradation
-    double IEPdegradation = k10 * this->GetStateVariable("IEP");
+    double IEPdegradation = k10 * rY[7];
 
     // growth
-    double growth = mu * this->GetStateVariable("m") * (1 - this->GetStateVariable("m") / mmax);
+    double growth = mu * rY[5] * (1 - rY[5] / mmax);
 
     // CKIt synthesis
     double CKItsynthesis = k11;
 
     // CKIt degradation
-    double CKIdegradation = k12p * this->GetStateVariable("CKIt");
+    double CKIdegradation = k12p * rY[9];
 
     // CKIt phosphorilation via SK
-    double CKItphosphorilationviaSK = k12pp * this->GetStateVariable("SK") * this->GetStateVariable("CKIt");
+    double CKItphosphorilationviaSK = k12pp * rY[10] * rY[9];
 
     // CKIt Trimer sequestred
-    double eq_7 = k12ppp * this->GetStateVariable("m") * this->GetStateVariable("CycB") * this->GetStateVariable("CKIt");
+    double eq_7 = k12ppp * rY[5] * rY[1] * rY[9];
 
     // SK synthesis
     double SKsynthesis = k13 * TF;
 
     // SK degradation
-    double SKdegradation = k14 * this->GetStateVariable("SK");
+    double SKdegradation = k14 * rY[10];
 
 
     rDY[0] = (CycBt_synthesis - CycBdegradation - CycBdegradationviaCdh1 - CycBtdegradationviaCdc20a) / cell; // dCycBt/dt
@@ -198,9 +198,9 @@ void TysonNovak2001OdeSystem::CheckAndUpdateEvents(double time, const std::vecto
     std::vector<double> dy(rY.size()); // Initialise derivatives vector
     EvaluateYDerivatives(time, rY, dy);
 
-    if (sbmlmath::sm_lt(this->GetStateVariable("CycB"), 0.1))
+    if (sbmlmath::sm_lt(rY[1], 0.1))
     {
-        this->SetStateVariable("m", static_cast<double>(this->GetStateVariable("m") / 2));
+        this->SetStateVariable("m", static_cast<double>(rY[5] / 2));
         eventsSatisfied[0] = true;
     }
 }

@@ -52,8 +52,8 @@ void Goldbeter1991OdeSystem::EvaluateYDerivatives(double time, const std::vector
 
 
     /* Define algebraic rules. */
-    V1 = this->GetStateVariable("C") * VM1 * pow(this->GetStateVariable("C") + Kc, -1);
-    V3 = this->GetStateVariable("M") * VM3;
+    V1 = rY[0] * VM1 * std::pow(rY[0] + Kc, -1);
+    V3 = rY[1] * VM3;
 
     /* Define the reactions in this model. */
     // creation of cyclin
@@ -67,7 +67,7 @@ void Goldbeter1991OdeSystem::EvaluateYDerivatives(double time, const std::vector
     double reaction2 = 0.0;
     {
         double kd = 0.01;
-        reaction2 = this->GetStateVariable("C") * cell * kd;
+        reaction2 = rY[0] * cell * kd;
     }
 
     // cdc2 kinase triggered degration of cyclin
@@ -75,14 +75,14 @@ void Goldbeter1991OdeSystem::EvaluateYDerivatives(double time, const std::vector
     {
         double vd = 0.25;
         double Kd = 0.02;
-        reaction3 = this->GetStateVariable("C") * cell * vd * this->GetStateVariable("X") * pow(this->GetStateVariable("C") + Kd, -1);
+        reaction3 = rY[0] * cell * vd * rY[2] * std::pow(rY[0] + Kd, -1);
     }
 
     // activation of cdc2 kinase
     double reaction4 = 0.0;
     {
         double K1 = 0.005;
-        reaction4 = cell * (1 + -1 * this->GetStateVariable("M")) * V1 * pow(K1 + -1 * this->GetStateVariable("M") + 1, -1);
+        reaction4 = cell * (1 + -1 * rY[1]) * V1 * std::pow(K1 + -1 * rY[1] + 1, -1);
     }
 
     // deactivation of cdc2 kinase
@@ -90,14 +90,14 @@ void Goldbeter1991OdeSystem::EvaluateYDerivatives(double time, const std::vector
     {
         double V2 = 1.5;
         double K2 = 0.005;
-        reaction5 = cell * this->GetStateVariable("M") * V2 * pow(K2 + this->GetStateVariable("M"), -1);
+        reaction5 = cell * rY[1] * V2 * std::pow(K2 + rY[1], -1);
     }
 
     // activation of cyclin protease
     double reaction6 = 0.0;
     {
         double K3 = 0.005;
-        reaction6 = cell * V3 * (1 + -1 * this->GetStateVariable("X")) * pow(K3 + -1 * this->GetStateVariable("X") + 1, -1);
+        reaction6 = cell * V3 * (1 + -1 * rY[2]) * std::pow(K3 + -1 * rY[2] + 1, -1);
     }
 
     // deactivation of cyclin protease
@@ -105,7 +105,7 @@ void Goldbeter1991OdeSystem::EvaluateYDerivatives(double time, const std::vector
     {
         double K4 = 0.005;
         double V4 = 0.5;
-        reaction7 = cell * V4 * this->GetStateVariable("X") * pow(K4 + this->GetStateVariable("X"), -1);
+        reaction7 = cell * V4 * rY[2] * std::pow(K4 + rY[2], -1);
     }
 
 
@@ -120,15 +120,15 @@ void Goldbeter1991OdeSystem::EvaluateYDerivatives(double time, const std::vector
 template <>
 void CellwiseOdeSystemInformation<Goldbeter1991OdeSystem>::Initialise()
 {
-    this->mVariableNames.push_back("Cyclin");
+    this->mVariableNames.push_back("C");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.01);
 
-    this->mVariableNames.push_back("cdc_2_kinase");
+    this->mVariableNames.push_back("M");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.01);
 
-    this->mVariableNames.push_back("Cyclin Protease");
+    this->mVariableNames.push_back("X");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.01);
 

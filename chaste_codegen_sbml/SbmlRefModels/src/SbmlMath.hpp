@@ -69,15 +69,9 @@ namespace sbmlmath
 
   // Logs and exponents =========================
 
-  // ln
-  double sm_ln(double x);
-
   // log
   double sm_log(double x);
   double sm_log(double b, double x);
-
-  // power
-  double sm_power(double x, double n);
 
   // root
   double sm_root(double n, double x);
@@ -153,72 +147,47 @@ namespace sbmlmath
 
   // Trigonometry ===============================
 
-  double sm_arccos(double x);
-  double sm_arccosh(double x);
-
+  // cot, coth, arccot, arccoth
+  double sm_cot(double x);
+  double sm_coth(double x);
   double sm_arccot(double x);
   double sm_arccoth(double x);
 
+  // csc, csch, arccsc, arccsch
+  double sm_csc(double x);
+  double sm_csch(double x);
   double sm_arccsc(double x);
   double sm_arccsch(double x);
 
+  // sec, sech, arcsec, arcsech
+  double sm_sec(double x);
+  double sm_sech(double x);
   double sm_arcsec(double x);
   double sm_arcsech(double x);
 
-  double sm_arcsin(double x);
-  double sm_arcsinh(double x);
-
-  double sm_arctan(double x);
-  double sm_arctanh(double x);
-
-  double sm_cot(double x);
-  double sm_coth(double x);
-
-  double sm_csc(double x);
-  double sm_csch(double x);
-
-  double sm_sec(double x);
-  double sm_sech(double x);
-
   // Other functions ============================
-
-  // abs
-  double sm_abs(double x);
-
-  // ceiling
-  double sm_ceiling(double x);
 
   // factorial
   double sm_factorial(double x);
 
   // max
-  constexpr double sm_max(double first)
-  {
-    return first;
-  }
-
   template <typename... Args>
   constexpr double sm_max(double first, Args... rest)
   {
-    return (std::fmax(first, sm_max(rest...)));
+    return (std::fmax(first, rest), ...);
   }
 
   // min
-  constexpr double sm_min(double first)
-  {
-    return first;
-  }
-
   template <typename... Args>
   constexpr double sm_min(double first, Args... rest)
   {
-    return (std::fmin(first, sm_min(rest...)));
+    return (std::fmin(first, rest), ...);
   }
 
   // piecewise
-  constexpr double sm_piecewise(double value)
+  constexpr double sm_piecewise(double value0, bool condition, double value1)
   {
-    return value;
+    return condition ? value0 : value1;
   }
 
   template <typename... Args>
@@ -226,9 +195,6 @@ namespace sbmlmath
   {
     return condition ? value : sm_piecewise(rest...);
   }
-
-  // rem
-  double sm_rem(double numer, double denom);
 
   // quotient
   double sm_quotient(double numer, double denom);

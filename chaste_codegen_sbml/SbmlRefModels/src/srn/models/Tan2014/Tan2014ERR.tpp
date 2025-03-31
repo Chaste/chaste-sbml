@@ -80,7 +80,7 @@ void Tan2014OdeSystem::EvaluateYDerivatives(double time, const std::vector<doubl
     /* Define the reactions in this model. */
     double Bsynthesis = Bsyn * CytosolMembrane;
 
-    double kDegradation = CytosolMembrane * kdegradation * this->mParameters[1] * rY[0] * (1 - 0.5 * this->mParameters[0]);
+    double kDegradation = CytosolMembrane * kdegradation * rY[1] * rY[0] * (1 - 0.5 * rY[0]);
 
     double kC = CytosolMembrane * (kC_k1 * rY[0] * rY[1] - kC_k2 * rY[2]);
 

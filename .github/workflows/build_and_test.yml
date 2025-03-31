@@ -84,9 +84,9 @@ jobs:
         run: |
           lcov --capture --no-external \
             --directory build/projects/SbmlRefModels \
-            --base-directory projects/SbmlRefModels/src \
+            --base-directory projects/SbmlRefModels \
             --output-file coverage.info
-          lcov --remove coverage.info '*/test/*' --output-file coverage.info
+          lcov --extract coverage.info '*/projects/SbmlRefModels/src/*' --output-file coverage.info
           lcov --list coverage.info
         working-directory: Chaste
 

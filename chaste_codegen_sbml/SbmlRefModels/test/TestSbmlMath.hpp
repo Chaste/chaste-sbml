@@ -37,7 +37,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TESTSBMLMATH_HPP_
 
 #include <cmath>
-#include <iostream>
 
 #include <cxxtest/TestSuite.h>
 
@@ -83,35 +82,15 @@ public:
 
   // Logs and exponents =========================
 
-  void TestLn()
-  {
-    TS_ASSERT_DELTA(sm_ln(1.0), 0.0, 1e-6);
-    TS_ASSERT_DELTA(sm_ln(std::exp(1)), 1.0, 1e-6);
-    TS_ASSERT_DELTA(sm_ln(10.0), 2.302585, 1e-6);
-  }
-
   void TestLog()
   {
     TS_ASSERT_DELTA(sm_log(1.0), 0.0, 1e-6);
     TS_ASSERT_DELTA(sm_log(10.0), 1.0, 1e-6);
-    TS_ASSERT_DELTA(sm_log(std::exp(1)), 0.434294, 1e-6);
+    TS_ASSERT_DELTA(sm_log(M_E), 0.434294, 1e-6);
 
     TS_ASSERT_DELTA(sm_log(2.0, 2.0), 1.0, 1e-6);
-    TS_ASSERT_DELTA(sm_log(10.0, 2.0), sm_log(2.0), 1e-6);
-    TS_ASSERT_DELTA(sm_log(std::exp(1), 2.0), sm_ln(2.0), 1e-6);
-  }
-
-  void TestPower()
-  {
-    TS_ASSERT_DELTA(sm_power(1.0, 1.0), 1.0, 1e-6);
-    TS_ASSERT_DELTA(sm_power(1.0, 2.0), 1.0, 1e-6);
-    TS_ASSERT_DELTA(sm_power(1.0, 3.0), 1.0, 1e-6);
-    TS_ASSERT_DELTA(sm_power(2.0, 1.0), 2.0, 1e-6);
-    TS_ASSERT_DELTA(sm_power(2.0, 2.0), 4.0, 1e-6);
-    TS_ASSERT_DELTA(sm_power(2.0, 3.0), 8.0, 1e-6);
-    TS_ASSERT_DELTA(sm_power(3.0, 1.0), 3.0, 1e-6);
-    TS_ASSERT_DELTA(sm_power(3.0, 2.0), 9.0, 1e-6);
-    TS_ASSERT_DELTA(sm_power(3.0, 3.0), 27.0, 1e-6);
+    TS_ASSERT_DELTA(sm_log(10.0, 2.0), std::log10(2.0), 1e-6);
+    TS_ASSERT_DELTA(sm_log(M_E, 2.0), M_LN2, 1e-6);
   }
 
   void TestRoot()
@@ -222,18 +201,6 @@ public:
 
   // Trigonometry ===============================
 
-  void TestArccos()
-  {
-    TS_ASSERT_DELTA(sm_arccos(0.0), M_PI / 2.0, 1e-6);
-    TS_ASSERT_DELTA(sm_arccos(1.0), 0.0, 1e-6);
-  }
-
-  void TestArccosh()
-  {
-    TS_ASSERT_DELTA(sm_arccosh(1.0), 0.0, 1e-6);
-    TS_ASSERT_DELTA(sm_arccosh(10.0), 2.993223, 1e-6);
-  }
-
   void TestArccot()
   {
     TS_ASSERT_DELTA(sm_arccot(0.0), M_PI / 2.0, 1e-6);
@@ -266,33 +233,8 @@ public:
 
   void TestArcsech()
   {
-    std::cout << "sm_arcsech(0.1) = " << sm_arcsech(0.1) << std::endl;
     TS_ASSERT_DELTA(sm_arcsech(0.1), 2.993223, 1e-6);
     TS_ASSERT_DELTA(sm_arcsech(1.0), 0.0, 1e-6);
-  }
-
-  void TestArcsin()
-  {
-    TS_ASSERT_DELTA(sm_arcsin(0.0), 0.0, 1e-6);
-    TS_ASSERT_DELTA(sm_arcsin(1.0), M_PI / 2.0, 1e-6);
-  }
-
-  void TestArcsinh()
-  {
-    TS_ASSERT_DELTA(sm_arcsinh(0.0), 0.0, 1e-6);
-    TS_ASSERT_DELTA(sm_arcsinh(1.0), 0.881374, 1e-6);
-  }
-
-  void TestArctan()
-  {
-    TS_ASSERT_DELTA(sm_arctan(0.0), 0.0, 1e-6);
-    TS_ASSERT_DELTA(sm_arctan(1.0), M_PI / 4.0, 1e-6);
-  }
-
-  void TestArctanh()
-  {
-    TS_ASSERT_DELTA(sm_arctanh(0.0), 0.0, 1e-6);
-    TS_ASSERT_DELTA(sm_arctanh(0.5), 0.549306, 1e-6);
   }
 
   void TestCot()
@@ -332,18 +274,7 @@ public:
   }
 
   // Other functions ============================
-  void TestAbs()
-  {
-    TS_ASSERT_DELTA(sm_abs(1.0), 1.0, 1e-6);
-    TS_ASSERT_DELTA(sm_abs(-1.0), 1.0, 1e-6);
-  }
-
-  void TestCeiling()
-  {
-    TS_ASSERT_EQUALS(sm_ceiling(1.0), 1.0);
-    TS_ASSERT_EQUALS(sm_ceiling(1.1), 2.0);
-  }
-
+  
   void TestFactorial()
   {
     TS_ASSERT_EQUALS(sm_factorial(0.0), 1.0);
@@ -366,18 +297,10 @@ public:
 
   void TestPiecewise()
   {
-    TS_ASSERT_EQUALS(sm_piecewise(1.0), 1.0);
     TS_ASSERT_EQUALS(sm_piecewise(1.0, true, 2.0), 1.0);
     TS_ASSERT_EQUALS(sm_piecewise(1.0, false, 2.0), 2.0);
     TS_ASSERT_EQUALS(sm_piecewise(1.0, false, 2.0, true, 3.0), 2.0);
     TS_ASSERT_EQUALS(sm_piecewise(1.0, false, 2.0, false, 3.0), 3.0);
-  }
-
-  void TestRem()
-  {
-    TS_ASSERT_EQUALS(sm_rem(1.0, 1.0), 0.0);
-    TS_ASSERT_EQUALS(sm_rem(1.0, 2.0), 1.0);
-    TS_ASSERT_EQUALS(sm_rem(2.0, 1.0), 0.0);
   }
 
   void TestQuotient()

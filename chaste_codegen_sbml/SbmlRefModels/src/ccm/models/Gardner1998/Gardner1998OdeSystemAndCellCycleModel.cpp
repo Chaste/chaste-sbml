@@ -56,8 +56,8 @@ void Gardner1998OdeSystem::EvaluateYDerivatives(double time, const std::vector<d
 
 
     /* Define algebraic rules. */
-    V1 = this->GetStateVariable("C") * V1p * pow(this->GetStateVariable("C") + K6, -1);
-    V3 = this->GetStateVariable("M") * V3p;
+    V1 = rY[0] * V1p * std::pow(rY[0] + K6, -1);
+    V3 = rY[2] * V3p;
 
     /* Define the reactions in this model. */
     // creation of cyclin
@@ -72,21 +72,21 @@ void Gardner1998OdeSystem::EvaluateYDerivatives(double time, const std::vector<d
     {
         double k1 = 0.5;
         double K5 = 0.02;
-        reaction2 = this->GetStateVariable("C") * k1 * this->GetStateVariable("X") * pow(this->GetStateVariable("C") + K5, -1);
+        reaction2 = rY[0] * k1 * rY[1] * std::pow(rY[0] + K5, -1);
     }
 
     // default degradation of cyclin
     double reaction3 = 0.0;
     {
         double kd = 0.02;
-        reaction3 = this->GetStateVariable("C") * kd;
+        reaction3 = rY[0] * kd;
     }
 
     // activation of cdc2 kinase
     double reaction4 = 0.0;
     {
         double K1 = 0.1;
-        reaction4 = (1 + -1 * this->GetStateVariable("M")) * V1 * pow(K1 + -1 * this->GetStateVariable("M") + 1, -1);
+        reaction4 = (1 + -1 * rY[2]) * V1 * std::pow(K1 + -1 * rY[2] + 1, -1);
     }
 
     // deactivation of cdc2 kinase
@@ -94,14 +94,14 @@ void Gardner1998OdeSystem::EvaluateYDerivatives(double time, const std::vector<d
     {
         double V2 = 0.25;
         double K2 = 0.1;
-        reaction5 = this->GetStateVariable("M") * V2 * pow(K2 + this->GetStateVariable("M"), -1);
+        reaction5 = rY[2] * V2 * std::pow(K2 + rY[2], -1);
     }
 
     // activation of cyclin protease
     double reaction6 = 0.0;
     {
         double K3 = 0.2;
-        reaction6 = V3 * (1 + -1 * this->GetStateVariable("X")) * pow(K3 + -1 * this->GetStateVariable("X") + 1, -1);
+        reaction6 = V3 * (1 + -1 * rY[1]) * std::pow(K3 + -1 * rY[1] + 1, -1);
     }
 
     // deactivation of cyclin protease
@@ -109,21 +109,21 @@ void Gardner1998OdeSystem::EvaluateYDerivatives(double time, const std::vector<d
     {
         double K4 = 0.1;
         double V4 = 0.1;
-        reaction7 = V4 * this->GetStateVariable("X") * pow(K4 + this->GetStateVariable("X"), -1);
+        reaction7 = V4 * rY[1] * std::pow(K4 + rY[1], -1);
     }
 
     // reaction8
     double reaction8 = 0.0;
     {
         double a1 = 0.05;
-        reaction8 = a1 * this->GetStateVariable("C") * this->GetStateVariable("Y");
+        reaction8 = a1 * rY[0] * rY[3];
     }
 
     // reaction9
     double reaction9 = 0.0;
     {
         double a2 = 0.05;
-        reaction9 = a2 * this->GetStateVariable("Z");
+        reaction9 = a2 * rY[4];
     }
 
     // desinhibition of cyclin
@@ -131,7 +131,7 @@ void Gardner1998OdeSystem::EvaluateYDerivatives(double time, const std::vector<d
     {
         double alpha = 0.1;
         double d1 = 0.05;
-        reaction10 = alpha * d1 * this->GetStateVariable("Z");
+        reaction10 = alpha * d1 * rY[4];
     }
 
     // degradation of inhibited cyclin
@@ -139,7 +139,7 @@ void Gardner1998OdeSystem::EvaluateYDerivatives(double time, const std::vector<d
     {
         double kd = 0.02;
         double alpha = 0.1;
-        reaction11 = alpha * kd * this->GetStateVariable("Z");
+        reaction11 = alpha * kd * rY[4];
     }
 
     // creation of cyclin inhibitor
@@ -153,7 +153,7 @@ void Gardner1998OdeSystem::EvaluateYDerivatives(double time, const std::vector<d
     double reaction13 = 0.0;
     {
         double d1 = 0.05;
-        reaction13 = d1 * this->GetStateVariable("Y");
+        reaction13 = d1 * rY[3];
     }
 
 
@@ -170,23 +170,23 @@ void Gardner1998OdeSystem::EvaluateYDerivatives(double time, const std::vector<d
 template <>
 void CellwiseOdeSystemInformation<Gardner1998OdeSystem>::Initialise()
 {
-    this->mVariableNames.push_back("cyclin");
+    this->mVariableNames.push_back("C");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.0);
 
-    this->mVariableNames.push_back("protease");
+    this->mVariableNames.push_back("X");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.0);
 
-    this->mVariableNames.push_back("cdc2k");
+    this->mVariableNames.push_back("M");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.0);
 
-    this->mVariableNames.push_back("cyclin inhibitor");
+    this->mVariableNames.push_back("Y");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(1.0);
 
-    this->mVariableNames.push_back("complex inhibitor-cyclin");
+    this->mVariableNames.push_back("Z");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(1.0);
 
