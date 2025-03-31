@@ -281,6 +281,7 @@ public:
     TS_ASSERT_EQUALS(sm_factorial(1.0), 1.0);
     TS_ASSERT_EQUALS(sm_factorial(2.0), 2.0);
     TS_ASSERT_EQUALS(sm_factorial(3.0), 6.0);
+    TS_ASSERT_EQUALS(sm_factorial(10.0), 3628800.0);
   }
 
   void TestMax()

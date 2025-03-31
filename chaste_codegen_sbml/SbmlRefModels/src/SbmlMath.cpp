@@ -176,11 +176,7 @@ double sbmlmath::sm_asech(double x)
 // factorial
 double sbmlmath::sm_factorial(double x)
 {
-  if (x == 0.0)
-  {
-    return 1.0;
-  }
-  return x * sm_factorial(x - 1.0);
+  return std::tgamma(x + 1.0);
 }
 
 // max
