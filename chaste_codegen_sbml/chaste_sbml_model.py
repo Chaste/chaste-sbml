@@ -3,6 +3,7 @@
 import abc
 import os
 import pathlib
+import re
 from typing import TYPE_CHECKING
 
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -10,11 +11,8 @@ from libsbml import Parameter, SBMLReader, formulaToString
 
 from ._config import ODE_SUFFIX, SHORT_NAME_LEN
 from ._utils import (
-    convert_formula,
-    convert_function_body,
     get_function_definition_arguments,
     get_species_concentration,
-    sort_nodes,
     varname_camelcase,
     varname_sanitize,
 )
@@ -23,7 +21,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from jinja2.environment import Template
-    from libsbml import SBase
+    from libsbml import ASTNode, SBase
 
 
 class ChasteSbmlModel:
@@ -76,15 +74,15 @@ class ChasteSbmlModel:
 
         self._varnames = {}
 
-        self._odes_dict = None
+        self._odes_dict = {}
+        self._rules_dict = {}
+        self._state_parameters = {}
+        self._state_variables = {}
+
         self._update_odes_dict()
-
-        self._rules_dict = None
         self._update_rules_dict()
-
-        self._state_parameters = None
-        self._state_variables = None
         self._update_state()
+
         self._num_state_vars = len(self._state_variables)
 
         self._outputs = {}  # { filename: code }
@@ -141,13 +139,165 @@ class ChasteSbmlModel:
         """
         self._outputs[filename] = code
 
+    def _convert_ast_formula(self, ast_formula: "ASTNode", convert_names=True) -> str:
+        """Convert SBML AST formula to equivalent C++ string.
+
+        :param ast: The AST formula.
+        :param convert_names: Whether to convert state variable and parameter names.
+        :return: The equivalent C++ string.
+        """
+        return self._convert_str_formula(formulaToString(ast_formula), convert_names)
+
+    def _convert_str_formula(self, formula: str, convert_names=True) -> str:
+        """Convert SBML string formula to equivalent C++ string.
+
+        :param ast: The string formula.
+        :param convert_names: Whether to convert state variable and parameter names.
+        :return: The equivalent C++ string.
+        """
+
+        #  TODO:
+        #  Other MathML elements permitted in SBML Level 3
+        #    logical: implies
+        #    general: apply, lambda, otherwise, piece
+        #    qualifiers: bvar, degree, logbase
+        #  Special SBML functions and constants
+        #    time, delay
+
+        # SBML contants to be replaced with C++ equivalents
+        constants = {
+            "avogadro": "sbmlmath::SM_AVOGADRO",
+            "exponentiale": "M_E",
+            "inf": "std::numeric_limits<double>::infinity()",
+            "infinity": "std::numeric_limits<double>::infinity()",
+            "nan": "NAN",
+            "notanumber": "NAN",
+            "pi": "M_PI",
+            "time": "SimulationTime::Instance()->GetTimeStep()",
+        }
+        # skip: "true", "false"
+
+        # SBML functions with same name as C++ equivalents
+        unchanged_functions = {
+            "acos",
+            "acosh",
+            "asin",
+            "asinh",
+            "atan",
+            "atanh",
+            "ceil",
+            "cos",
+            "cosh",
+            "exp",
+            "floor",
+            "pow",
+            "sin",
+            "sinh",
+            "sqrt",
+            "tan",
+            "tanh",
+        }
+
+        # SBML functions with different names in C++
+        renamed_functions = {
+            "abs": "fabs",
+            "arccos": "acos",
+            "arccosh": "acosh",
+            "arcsin": "asin",
+            "arcsinh": "asinh",
+            "arctan": "atan",
+            "arctanh": "atanh",
+            "ceiling": "ceil",
+            "ln": "log",
+            "power": "pow",
+            "rem": "fmod",
+        }
+
+        # SBML functions with custom implementations
+        custom_functions = {
+            "and": "sm_and",
+            "acot": "sm_acot",
+            "acoth": "sm_acoth",
+            "acsc": "sm_acsc",
+            "acsch": "sm_acsch",
+            "asec": "sm_asec",
+            "asech": "sm_asech",
+            "arccot": "sm_acot",
+            "arccoth": "sm_acoth",
+            "arccsc": "sm_acsc",
+            "arccsch": "sm_acsch",
+            "arcsec": "sm_asec",
+            "arcsech": "sm_asech",
+            "cot": "sm_cot",
+            "coth": "sm_coth",
+            "csc": "sm_csc",
+            "csch": "sm_csch",
+            "eq": "sm_eq",
+            "factorial": "sm_factorial",
+            "geq": "sm_geq",
+            "gt": "sm_gt",
+            "leq": "sm_leq",
+            "log": "sm_log",
+            "lt": "sm_lt",
+            "max": "sm_max",
+            "min": "sm_min",
+            "neq": "sm_neq",
+            "not": "sm_not",
+            "or": "sm_or",
+            "piecewise": "sm_piecewise",
+            "quotient": "sm_quotient",
+            "root": "sm_root",
+            "sec": "sm_sec",
+            "sech": "sm_sech",
+            "sqr": "sm_sqr",
+            "xor": "sm_xor",
+        }
+
+        tokens = re.findall(r"\w+|\W+", formula)
+
+        cpp_tokens = []
+        for token in tokens:
+            cpp_token = token
+
+            # Replace function names and constnts
+            if token in constants:
+                cpp_token = f"{constants[token]}"
+
+            elif token in unchanged_functions:
+                cpp_token = f"std::{token}"
+
+            elif token in renamed_functions:
+                cpp_token = f"std::{renamed_functions[token]}"
+
+            elif token in custom_functions:
+                cpp_token = f"sbmlmath::{custom_functions[token]}"
+
+            # Replace state parameter and variable names.
+            elif convert_names:
+                if self._is_state_variable(token):
+                    index = self._get_state_variable_index(token)
+                    cpp_token = f"rY[{index}]"
+
+                elif self._is_state_parameter(token):
+                    index = self._get_state_parameter_index(token)
+                    cpp_token = f"this->mParameters[{index}]"
+
+            cpp_tokens.append(cpp_token)
+        cpp_formula = "".join(cpp_tokens)
+        return cpp_formula
+
     def _format_compartments(self) -> list[dict[str, "Any"]]:
         """Get a list of compartment dictionaries for the model.
 
         :return: A list of compartment dictionaries.
         """
         return [
-            {"id": c.getId(), "varname": self._get_varname(c), "size": c.getSize()}
+            {
+                "id": c.getId(),
+                "name": c.getName(),
+                "varname": self._get_varname(c),
+                "size": c.getSize(),
+            }
             for c in self._compartments
         ]
 
@@ -159,35 +309,12 @@ class ChasteSbmlModel:
         event_dicts = []
         for event in self._events:
             trigger = event.getTrigger()
-            tokens = []
-            for node in sort_nodes(trigger.getMath()):
-                if node.isNumber():
-                    token = str(node.getValue())
-                elif node.isName():
-                    # Replace species variable name with Chaste equivalent.
-                    token = node.getName()
-                    index = self._get_state_variable_index(token)
-                    if index is not None:
-                        token = f"rY[{index}]"
-
-                else:
-                    token = convert_formula(node.getName())
-                tokens.append(token)
-            trigger_formula = " ".join(tokens)
+            trigger_formula = self._convert_ast_formula(trigger.getMath())
 
             assignment_formulas = []
             for assignment in event.getListOfEventAssignments():
-                tokens = convert_formula(formulaToString(assignment.getMath())).split(" ")
-                rhs_tokens = []
-                for token in tokens:
-                    # Replace species variable name with Chaste equivalent.
-                    if self._is_state_variable(token):
-                        rhs_tokens.append(f'this->GetStateVariable("{token}")')
-                    elif self._is_state_parameter(token):
-                        rhs_tokens.append(f'this->GetParameter("{token}")')
-                    else:
-                        rhs_tokens.append(token)
-                rhs = "double(" + " ".join(rhs_tokens) + ")"
+                rhs_math = self._convert_ast_formula(assignment.getMath())
+                rhs = f"static_cast<double>({rhs_math})"
 
                 lhs = assignment.getVariable()
                 if self._is_state_variable(lhs):
@@ -215,7 +342,7 @@ class ChasteSbmlModel:
             fd_id = fd.getId()
             arg_list = get_function_definition_arguments(fd)
             args = ", ".join(map(lambda x: f"double {x}", arg_list))
-            body = convert_function_body(fd.getBody())
+            body = self._convert_ast_formula(fd.getBody())
 
             function_definition_dicts.append(
                 {
@@ -242,7 +369,7 @@ class ChasteSbmlModel:
         parameter_dicts = []
         for param in self._parameters:
             param_id = param.getId()
-            name = self._get_name(param)
+            name = param.getName()
             varname = self._get_varname(param)
 
             default = 0.0
@@ -291,7 +418,7 @@ class ChasteSbmlModel:
             varname = self._get_varname(reaction)
 
             kinetic_law = reaction.getKineticLaw()
-            rhs = convert_formula(kinetic_law.getFormula())
+            rhs = self._convert_str_formula(kinetic_law.getFormula())
 
             reaction_dict = {
                 "id": reaction_id,
@@ -325,7 +452,14 @@ class ChasteSbmlModel:
 
         :return: A list of rule dictionaries.
         """
-        return [{"id": r.getId(), "formula": convert_formula(r.getFormula())} for r in self._rules]
+        return [
+            {
+                "id": r.getId(),
+                "name": r.getName(),
+                "formula": self._convert_str_formula(r.getFormula()),
+            }
+            for r in self._rules
+        ]
 
     def _format_species(self) -> list[dict[str, "Any"]]:
         """Get a list of species dictionaries for the model.
@@ -338,7 +472,7 @@ class ChasteSbmlModel:
 
         for species in self._species:
             species_id = species.getId()
-            name = self._get_name(species)
+            name = species.getName()
             varname = self._get_varname(species)
             concentration = get_species_concentration(species)
 
@@ -604,4 +738,6 @@ class ChasteSbmlModel:
 
     def _update_rules_dict(self) -> None:
         """Set the dictionary of species defined by reaction rules."""
-        self._rules_dict = {r.getId(): convert_formula(r.getFormula()) for r in self._rules}
+        self._rules_dict = {
+            r.getId(): self._convert_str_formula(r.getFormula()) for r in self._rules
+        }

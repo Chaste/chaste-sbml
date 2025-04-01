@@ -1,5 +1,7 @@
-#include "{{ model_hpp_file }}"
 #include "CellwiseOdeSystemInformation.hpp"
+#include "SbmlMath.hpp"
+
+#include "{{ model_hpp_file }}"
 
 /* SBML ODE System */
 {{ ode_class_name }}::{{ ode_class_name }}(std::vector<double> stateVariables)
@@ -62,29 +64,9 @@ void {{ ode_class_name }}::Init()
 
 void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-    /* Define state variables */
-{% for sp in species %}
-{% if sp["is_state_variable"] is true() %}
-    double {{ sp["id"] }} = rY[{{ sp["state_variable_index"] }}]; // {{ sp["name"] }}
-{% endif %}
-{% endfor %}
-
-    /* Define state parameters. */
-{% for sp in species %}
-{% if sp["is_state_parameter"] is true() %}
-    double {{ sp["id"] }} = this->mParameters[{{ sp["state_parameter_index"] }}]; // {{ sp["name"] }}
-{% endif %}
-{% endfor %}
-
-{% for param in parameters %}
-{% if param["is_state_parameter"] is true() %}
-    double {{ param["id"] }} = this->mParameters[{{ param["state_parameter_index"] }}]; // {{ param["name"] }}
-{% endif %}
-{% endfor %}
-
     /* Define algebraic rules. */
 {% for rule in rules %}
-    {{ rule["id"] }} = {{ rule["formula"] }};
+    double {{ rule["id"] }} = {{ rule["formula"] }};
 {% endfor %}
 
     /* Define the reactions in this model. */
@@ -159,12 +141,12 @@ void CellwiseOdeSystemInformation<{{ ode_class_name }}>::Initialise()
 {
 {% for sp in species %}
 {% if sp["is_state_variable"] is true() %}
-    this->mVariableNames.push_back("{{ sp['name'] }}");
+    this->mVariableNames.push_back("{{ sp['id'] }}");
     this->mVariableUnits.push_back("{{ sp['units'] }}");
     this->mInitialConditions.push_back({{ sp['concentration'] }});
 
 {% elif sp["is_state_parameter"] is true() %}
-    this->mParameterNames.push_back("{{ sp['name'] }}");
+    this->mParameterNames.push_back("{{ sp['id'] }}");
     this->mParameterUnits.push_back("{{ sp['units'] }}");
 
 {% endif %}

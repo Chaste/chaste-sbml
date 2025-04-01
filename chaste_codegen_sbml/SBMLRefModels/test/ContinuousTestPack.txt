@@ -1,4 +1,0 @@
-srn/TestGoldbeter1991SBML.hpp
-srn/TestTan2014SBML.hpp
-srn/TestVanLeeuwen2007NonDimSBML.hpp
-srn/TestVanLeeuwen2007SBML.hpp

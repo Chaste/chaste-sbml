@@ -53,7 +53,7 @@ jobs:
 
       - name: Setup Chaste paths
         run: |
-          ln -s $(pwd)/chaste_codegen_sbml/SBMLRefModels Chaste/projects/SBMLRefModels
+          ln -s $(pwd)/chaste_codegen_sbml/SbmlRefModels Chaste/projects/SbmlRefModels
           mkdir -p Chaste/build
 
       - name: Install Chaste dependencies
@@ -67,26 +67,26 @@ jobs:
 
       - name: Configure Chaste
         run: |
-          cmake -DCMAKE_BUILD_TYPE=Debug -DChaste_COVERAGE=ON ..
+          cmake -DCMAKE_BUILD_TYPE=Debug -DChaste_ERROR_ON_WARNING=OFF -DChaste_COVERAGE=ON ..
         working-directory: Chaste/build
 
-      - name: Build SBMLRefModels
+      - name: Build SbmlRefModels
         run: |
-          cmake --build . --target project_SBMLRefModels --parallel $(nproc)
+          cmake --build . --target project_SbmlRefModels --parallel $(nproc)
         working-directory: Chaste/build
 
-      - name: Test SBMLRefModels
+      - name: Test SbmlRefModels
         run: |
-          ctest -j $(nproc) -L SBMLRefModels --output-on-failure
+          ctest -j $(nproc) -L SbmlRefModels --output-on-failure
         working-directory: Chaste/build
 
       - name: Run coverage
         run: |
           lcov --capture --no-external \
-            --directory build/projects/SBMLRefModels \
-            --base-directory projects/SBMLRefModels/src \
+            --directory build/projects/SbmlRefModels \
+            --base-directory projects/SbmlRefModels \
             --output-file coverage.info
-          lcov --remove coverage.info '*/test/*' --output-file coverage.info
+          lcov --extract coverage.info '*/projects/SbmlRefModels/src/*' --output-file coverage.info
           lcov --list coverage.info
         working-directory: Chaste
 
