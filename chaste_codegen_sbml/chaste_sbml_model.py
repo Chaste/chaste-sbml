@@ -173,7 +173,7 @@ class ChasteSbmlModel:
             "nan": "NAN",
             "notanumber": "NAN",
             "pi": "M_PI",
-            # TODO "time": "rTime",
+            "time": "SimulationTime::Instance()->GetTimeStep()",
         }
         # skip: "true", "false"
 
