@@ -117,38 +117,63 @@ namespace sbmlmath
   // Relational =================================
 
   // eq
+  constexpr bool sm_eq(double first, double second)
+  {
+    return first == second;
+  }
+
   template <typename... Args>
   constexpr bool sm_eq(double first, double second, Args... rest)
   {
-    return ((first == second) && ... && (second == rest));
+    return sm_eq(first, second) && sm_eq(second, rest...);
   }
 
   // geq
+  constexpr bool sm_geq(double first, double second)
+  {
+    return first >= second;
+  }
+
   template <typename... Args>
   constexpr bool sm_geq(double first, double second, Args... rest)
   {
-    return ((first >= second) && ... && (second >= rest));
+    return sm_geq(first, second) && sm_geq(second, rest...);
   }
 
   // gt
+  constexpr bool sm_gt(double first, double second)
+  {
+    return first > second;
+  }
+
   template <typename... Args>
   constexpr bool sm_gt(double first, double second, Args... rest)
   {
-    return ((first > second) && ... && (second > rest));
+    return sm_gt(first, second) && sm_gt(second, rest...);
   }
 
   // leq
+  constexpr bool sm_leq(double first, double second)
+  {
+    return first <= second;
+  }
+
   template <typename... Args>
   constexpr bool sm_leq(double first, double second, Args... rest)
   {
-    return ((first <= second) && ... && (second <= rest));
+    return sm_leq(first, second) && sm_leq(second, rest...);
   }
 
   // lt
+  constexpr bool sm_lt(double first, double second)
+  {
+    return first < second;
+  }
+
   template <typename... Args>
   constexpr bool sm_lt(double first, double second, Args... rest)
   {
-    return ((first < second) && ... && (second < rest));
+    return sm_lt(first, second) && sm_lt(second, rest...);
   }
 
   // neq
@@ -181,16 +206,28 @@ namespace sbmlmath
 
   // max
   template <typename... Args>
-  constexpr double sm_max(double first, Args... rest)
+  constexpr double sm_max(double first, double second)
   {
-    return (std::fmax(first, rest), ...);
+    return std::fmax(first, second);
+  }
+
+  template <typename... Args>
+  constexpr double sm_max(double first, double second, Args... rest)
+  {
+    return std::fmax(first, sm_max(second, rest...));
   }
 
   // min
   template <typename... Args>
-  constexpr double sm_min(double first, Args... rest)
+  constexpr double sm_min(double first, double second)
   {
-    return (std::fmin(first, rest), ...);
+    return std::fmin(first, second);
+  }
+
+  template <typename... Args>
+  constexpr double sm_min(double first, double second, Args... rest)
+  {
+    return std::fmin(first, sm_min(second, rest...));
   }
 
   // piecewise

@@ -156,13 +156,7 @@ class ChasteSbmlModel:
         :return: The equivalent C++ string.
         """
 
-        #  TODO:
-        #  Other MathML elements permitted in SBML Level 3
-        #    logical: implies
-        #    general: apply, lambda, otherwise, piece
-        #    qualifiers: bvar, degree, logbase
-        #  Special SBML functions and constants
-        #    time, delay
+        # TODO: implies, lambda, delay
 
         # SBML contants to be replaced with C++ equivalents
         constants = {
@@ -259,7 +253,7 @@ class ChasteSbmlModel:
         for token in tokens:
             cpp_token = token
 
-            # Replace function names and constnts
+            # Replace function names and constants.
             if token in constants:
                 cpp_token = f"{constants[token]}"
 

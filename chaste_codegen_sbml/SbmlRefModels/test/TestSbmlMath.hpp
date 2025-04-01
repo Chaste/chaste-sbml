@@ -160,22 +160,47 @@ public:
   void TestEq()
   {
     TS_ASSERT_EQUALS(sm_eq(1.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm_eq(2.0, 2.0), true);
     TS_ASSERT_EQUALS(sm_eq(1.0, 2.0), false);
     TS_ASSERT_EQUALS(sm_eq(2.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm_geq(1.0, 1.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm_geq(2.0, 2.0, 2.0), true);
+    TS_ASSERT_EQUALS(sm_geq(1.0, 2.0, 2.0), false);
+    TS_ASSERT_EQUALS(sm_geq(1.0, 1.0, 2.0), false);
+    TS_ASSERT_EQUALS(sm_geq(1.0, 1.0, 1.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm_geq(1.0, 2.0, 1.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm_geq(1.0, 1.0, 2.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm_geq(1.0, 1.0, 1.0, 2.0), false);
   }
 
   void TestGeq()
   {
     TS_ASSERT_EQUALS(sm_geq(1.0, 1.0), true);
-    TS_ASSERT_EQUALS(sm_geq(1.0, 2.0), false);
     TS_ASSERT_EQUALS(sm_geq(2.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm_geq(1.0, 2.0), false);
+    TS_ASSERT_EQUALS(sm_geq(1.0, 1.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm_geq(3.0, 2.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm_geq(2.0, 3.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm_geq(3.0, 1.0, 2.0), false);
+    TS_ASSERT_EQUALS(sm_geq(1.0, 1.0, 1.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm_geq(4.0, 3.0, 2.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm_geq(3.0, 2.0, 2.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm_geq(3.0, 2.0, 1.0, 1.5), false);
   }
 
   void TestGt()
   {
     TS_ASSERT_EQUALS(sm_gt(1.0, 1.0), false);
-    TS_ASSERT_EQUALS(sm_gt(1.0, 2.0), false);
     TS_ASSERT_EQUALS(sm_gt(2.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm_gt(1.0, 2.0), false);
+    TS_ASSERT_EQUALS(sm_gt(1.0, 1.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm_gt(3.0, 2.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm_gt(2.0, 3.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm_gt(3.0, 1.0, 2.0), false);
+    TS_ASSERT_EQUALS(sm_gt(1.0, 1.0, 1.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm_gt(4.0, 3.0, 2.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm_gt(3.0, 2.0, 2.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm_gt(3.0, 2.0, 1.0, 1.5), false);
   }
 
   void TestLeq()
@@ -183,6 +208,14 @@ public:
     TS_ASSERT_EQUALS(sm_leq(1.0, 1.0), true);
     TS_ASSERT_EQUALS(sm_leq(1.0, 2.0), true);
     TS_ASSERT_EQUALS(sm_leq(2.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm_leq(1.0, 1.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm_leq(1.0, 2.0, 3.0), true);
+    TS_ASSERT_EQUALS(sm_leq(1.0, 3.0, 2.0), false);
+    TS_ASSERT_EQUALS(sm_leq(2.0, 1.0, 3.0), false);
+    TS_ASSERT_EQUALS(sm_leq(1.0, 1.0, 1.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm_leq(1.0, 2.0, 3.0, 4.0), true);
+    TS_ASSERT_EQUALS(sm_leq(1.0, 2.0, 2.0, 3.0), true);
+    TS_ASSERT_EQUALS(sm_leq(1.0, 2.0, 3.0, 2.5), false);
   }
 
   void TestLt()
@@ -190,11 +223,20 @@ public:
     TS_ASSERT_EQUALS(sm_lt(1.0, 1.0), false);
     TS_ASSERT_EQUALS(sm_lt(1.0, 2.0), true);
     TS_ASSERT_EQUALS(sm_lt(2.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm_lt(1.0, 1.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm_lt(1.0, 2.0, 3.0), true);
+    TS_ASSERT_EQUALS(sm_lt(1.0, 3.0, 2.0), false);
+    TS_ASSERT_EQUALS(sm_lt(2.0, 1.0, 3.0), false);
+    TS_ASSERT_EQUALS(sm_lt(1.0, 1.0, 1.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm_lt(1.0, 2.0, 3.0, 4.0), true);
+    TS_ASSERT_EQUALS(sm_lt(1.0, 2.0, 2.0, 3.0), false);
+    TS_ASSERT_EQUALS(sm_lt(1.0, 2.0, 3.0, 2.5), false);
   }
 
   void TestNeq()
   {
     TS_ASSERT_EQUALS(sm_neq(1.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm_neq(2.0, 2.0), false);
     TS_ASSERT_EQUALS(sm_neq(1.0, 2.0), true);
     TS_ASSERT_EQUALS(sm_neq(2.0, 1.0), true);
   }
@@ -288,12 +330,20 @@ public:
   {
     TS_ASSERT_EQUALS(sm_max(1.0, 2.0), 2.0);
     TS_ASSERT_EQUALS(sm_max(2.0, 1.0), 2.0);
+    TS_ASSERT_EQUALS(sm_max(1.0, 2.0, 3.0), 3.0);
+    TS_ASSERT_EQUALS(sm_max(1.0, 2.0, 3.0, 4.0), 4.0);
+    TS_ASSERT_EQUALS(sm_max(1.0, 2.0, 3.0, 5.0, 4.0), 5.0);
+    TS_ASSERT_EQUALS(sm_max(1.0, 2.0, 3.0, 6.0, 4.0, 5.0), 6.0);
   }
 
   void TestMin()
   {
     TS_ASSERT_EQUALS(sm_min(1.0, 2.0), 1.0);
     TS_ASSERT_EQUALS(sm_min(2.0, 1.0), 1.0);
+    TS_ASSERT_EQUALS(sm_min(3.0, 2.0, 1.0), 1.0);
+    TS_ASSERT_EQUALS(sm_min(4.0, 3.0, 2.0, 1.0), 1.0);
+    TS_ASSERT_EQUALS(sm_min(4.0, 3.0, 2.0, 1.0, 5.0), 1.0);
+    TS_ASSERT_EQUALS(sm_min(5.0, 4.0, 3.0, 1.0, 2.0, 6.0), 1.0);
   }
 
   void TestPiecewise()
