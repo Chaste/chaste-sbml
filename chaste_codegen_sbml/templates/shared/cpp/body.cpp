@@ -66,7 +66,7 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
 {
     /* Define algebraic rules. */
 {% for rule in rules %}
-    double {{ rule["id"] }} = {{ rule["formula"] }};
+    {%+ if rule["is_parameter"] is false() %}double {%+ endif %}{{ rule["lhs"] }} = {{ rule["rhs"] }};
 {% endfor %}
 
     /* Define the reactions in this model. */

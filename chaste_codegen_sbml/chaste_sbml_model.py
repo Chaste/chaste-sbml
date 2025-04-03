@@ -446,14 +446,24 @@ class ChasteSbmlModel:
 
         :return: A list of rule dictionaries.
         """
-        return [
-            {
-                "id": r.getId(),
-                "name": r.getName(),
-                "formula": self._convert_str_formula(r.getFormula()),
+        rule_dicts = []
+
+        for rule in self._rules:
+            rule_id = rule.getId()
+            name = rule.getName()
+            lhs = rule.getVariable()
+            rhs = self._convert_str_formula(rule.getFormula())
+            is_parameter = self._is_parameter(lhs)
+
+            rule_dict = {
+                "id": rule_id,
+                "name": name,
+                "rhs": rhs,
+                "lhs": lhs,
+                "is_parameter": is_parameter,
             }
-            for r in self._rules
-        ]
+            rule_dicts.append(rule_dict)
+        return rule_dicts
 
     def _format_species(self) -> list[dict[str, "Any"]]:
         """Get a list of species dictionaries for the model.
@@ -642,6 +652,14 @@ class ChasteSbmlModel:
 
         self._varnames[obj_id] = var
         return var
+
+    def _is_parameter(self, obj_id: str) -> bool:
+        """Check if ID belongs to a parameter.
+
+        :param obj_id: The ID to check.
+        :return: True if the ID belongs to a parameter.
+        """
+        return any(obj_id == p.getId() for p in self._parameters)
 
     def _is_special_parameter(self, parameter: "Parameter") -> bool:
         """Check if a parameter has a special name.

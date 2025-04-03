@@ -46,8 +46,8 @@ void Gardner1998OdeSystem::Init()
 void Gardner1998OdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
     /* Define algebraic rules. */
-    double V1 = rY[0] * V1p * std::pow(rY[0] + K6, -1);
-    double V3 = rY[2] * V3p;
+    V1 = rY[0] * V1p * std::pow(rY[0] + K6, -1);
+    V3 = rY[2] * V3p;
 
     /* Define the reactions in this model. */
     // creation of cyclin

@@ -44,8 +44,8 @@ void Goldbeter1991OdeSystem::Init()
 void Goldbeter1991OdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
     /* Define algebraic rules. */
-    double V1 = rY[0] * VM1 * std::pow(rY[0] + Kc, -1);
-    double V3 = rY[1] * VM3;
+    V1 = rY[0] * VM1 * std::pow(rY[0] + Kc, -1);
+    V3 = rY[1] * VM3;
 
     /* Define the reactions in this model. */
     // creation of cyclin

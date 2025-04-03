@@ -92,7 +92,7 @@ void TysonNovak2001OdeSystem::EvaluateYDerivatives(double time, const std::vecto
     /* Define algebraic rules. */
     double CycB = rY[0] - 2 * rY[0] * rY[9] / (rY[0] + rY[9] + 1 / Keq + std::pow(std::pow(rY[0] + rY[9] + 1 / Keq, 2) - 4 * rY[0] * rY[9], 1 / 2));
     double Trimer = 2 * rY[0] * rY[9] / (rY[0] + rY[9] + 1 / Keq + std::pow(std::pow(rY[0] + rY[9] + 1 / Keq, 2) - 4 * rY[0] * rY[9], 1 / 2));
-    double TF = GK(k15p * rY[5] + k15pp * rY[10], k16p + k16pp * rY[5] * rY[1], J15, J16);
+    TF = GK(k15p * rY[5] + k15pp * rY[10], k16p + k16pp * rY[5] * rY[1], J15, J16);
     double Mad = 1;
 
     /* Define the reactions in this model. */
