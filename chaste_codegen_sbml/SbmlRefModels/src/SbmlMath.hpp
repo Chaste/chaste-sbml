@@ -48,7 +48,7 @@ namespace sbmlmath
 
   // SBML Level 3 recommended avogadro value:
   // https://sbml.org/documents/specifications/level-3/
-  constexpr double SM_AVOGADRO = 6.02214179E23;
+  inline constexpr double SM_AVOGADRO = 6.02214179E23;
 
   // Note: Avogadro value has been updated in the most recent SI Brochure.
   // Bureau International des Poids et Mesures (2019):
@@ -64,17 +64,11 @@ namespace sbmlmath
 
   // plus
   template <typename... Args>
-  constexpr double sm_plus(Args... args)
-  {
-    return (0.0 + ... + args);
-  }
+  constexpr double sm_plus(Args... args);
 
   // times
   template <typename... Args>
-  constexpr double sm_times(Args... args)
-  {
-    return (1.0 * ... * args);
-  }
+  constexpr double sm_times(Args... args);
 
   // Logs and exponents =========================
 
@@ -92,84 +86,40 @@ namespace sbmlmath
 
   // and
   template <typename... Args>
-  constexpr bool sm_and(Args... args)
-  {
-    return (true && ... && args);
-  }
+  constexpr bool sm_and(Args... args);
 
   // or
   template <typename... Args>
-  constexpr bool sm_or(Args... args)
-  {
-    return (false || ... || args);
-  }
+  constexpr bool sm_or(Args... args);
 
   // not
   bool sm_not(bool x);
 
   // xor
   template <typename... Args>
-  constexpr bool sm_xor(Args... args)
-  {
-    return (false ^ ... ^ args);
-  }
+  constexpr bool sm_xor(Args... args);
 
   // Relational =================================
 
   // eq
   template <typename... Args>
-  constexpr bool sm_eq(double first, double second, Args... rest)
-  {
-    if constexpr (sizeof...(rest) > 0)
-    {
-      return (first == second) && sm_eq(second, rest...);
-    }
-    return first == second;
-  }
+  constexpr bool sm_eq(double first, double second, Args... rest);
 
   // geq
   template <typename... Args>
-  constexpr bool sm_geq(double first, double second, Args... rest)
-  {
-    if constexpr (sizeof...(rest) > 0)
-    {
-      return (first >= second) && sm_geq(second, rest...);
-    }
-    return first >= second;
-  }
+  constexpr bool sm_geq(double first, double second, Args... rest);
 
   // gt
   template <typename... Args>
-  constexpr bool sm_gt(double first, double second, Args... rest)
-  {
-    if constexpr (sizeof...(rest) > 0)
-    {
-      return (first > second) && sm_gt(second, rest...);
-    }
-    return first > second;
-  }
+  constexpr bool sm_gt(double first, double second, Args... rest);
 
   // leq
   template <typename... Args>
-  constexpr bool sm_leq(double first, double second, Args... rest)
-  {
-    if constexpr (sizeof...(rest) > 0)
-    {
-      return (first <= second) && sm_leq(second, rest...);
-    }
-    return first <= second;
-  }
+  constexpr bool sm_leq(double first, double second, Args... rest);
 
   // lt
   template <typename... Args>
-  constexpr bool sm_lt(double first, double second, Args... rest)
-  {
-    if constexpr (sizeof...(rest) > 0)
-    {
-      return (first < second) && sm_lt(second, rest...);
-    }
-    return first < second;
-  }
+  constexpr bool sm_lt(double first, double second, Args... rest);
 
   // neq
   bool sm_neq(double x, double y);
@@ -201,41 +151,153 @@ namespace sbmlmath
 
   // max
   template <typename... Args>
-  constexpr double sm_max(double first, double second, Args... rest)
-  {
-    if constexpr (sizeof...(rest) > 0)
-    {
-      return std::fmax(first, sm_max(second, rest...));
-    }
-    return std::fmax(first, second);
-  }
+  constexpr double sm_max(double first, double second, Args... rest);
 
   // min
   template <typename... Args>
-  constexpr double sm_min(double first, double second, Args... rest)
-  {
-    if constexpr (sizeof...(rest) > 0)
-    {
-      return std::fmin(first, sm_min(second, rest...));
-    }
-    return std::fmin(first, second);
-  }
+  constexpr double sm_min(double first, double second, Args... rest);
 
   // piecewise
-  constexpr double sm_piecewise(double value, bool condition, double otherwise)
-  {
-    return condition ? value : otherwise;
-  }
+  constexpr double sm_piecewise(double value, bool condition, double otherwise);
 
   template <typename... Args>
-  constexpr double sm_piecewise(double value, bool condition, Args... rest)
-  {
-    return condition ? value : sm_piecewise(rest...);
-  }
+  constexpr double sm_piecewise(double value, bool condition, Args... rest);
 
   // quotient
   double sm_quotient(double numer, double denom);
 
 } // namespace sbmlmath
+
+// Arithmetic (variadic templates) ============
+
+// plus
+template <typename... Args>
+constexpr double sbmlmath::sm_plus(Args... args)
+{
+  return (0.0 + ... + args);
+}
+
+// times
+template <typename... Args>
+constexpr double sbmlmath::sm_times(Args... args)
+{
+  return (1.0 * ... * args);
+}
+
+// Logical (variadic templates) =================
+
+// and
+template <typename... Args>
+constexpr bool sbmlmath::sm_and(Args... args)
+{
+  return (true && ... && args);
+}
+
+// or
+template <typename... Args>
+constexpr bool sbmlmath::sm_or(Args... args)
+{
+  return (false || ... || args);
+}
+
+// xor
+template <typename... Args>
+constexpr bool sbmlmath::sm_xor(Args... args)
+{
+  return (false ^ ... ^ args);
+}
+
+// Relational (variadic templates) ==============
+
+// eq
+template <typename... Args>
+constexpr bool sbmlmath::sm_eq(double first, double second, Args... rest)
+{
+  if constexpr (sizeof...(rest) > 0)
+  {
+    return (first == second) && sbmlmath::sm_eq(second, rest...);
+  }
+  return first == second;
+}
+
+// geq
+template <typename... Args>
+constexpr bool sbmlmath::sm_geq(double first, double second, Args... rest)
+{
+  if constexpr (sizeof...(rest) > 0)
+  {
+    return (first >= second) && sbmlmath::sm_geq(second, rest...);
+  }
+  return first >= second;
+}
+
+// gt
+template <typename... Args>
+constexpr bool sbmlmath::sm_gt(double first, double second, Args... rest)
+{
+  if constexpr (sizeof...(rest) > 0)
+  {
+    return (first > second) && sbmlmath::sm_gt(second, rest...);
+  }
+  return first > second;
+}
+
+// leq
+template <typename... Args>
+constexpr bool sbmlmath::sm_leq(double first, double second, Args... rest)
+{
+  if constexpr (sizeof...(rest) > 0)
+  {
+    return (first <= second) && sbmlmath::sm_leq(second, rest...);
+  }
+  return first <= second;
+}
+
+// lt
+template <typename... Args>
+constexpr bool sbmlmath::sm_lt(double first, double second, Args... rest)
+{
+  if constexpr (sizeof...(rest) > 0)
+  {
+    return (first < second) && sbmlmath::sm_lt(second, rest...);
+  }
+  return first < second;
+}
+
+// Other (variadic templates) ===================
+
+// max
+template <typename... Args>
+constexpr double sbmlmath::sm_max(double first, double second, Args... rest)
+{
+  if constexpr (sizeof...(rest) > 0)
+  {
+    return std::fmax(first, sbmlmath::sm_max(second, rest...));
+  }
+  return std::fmax(first, second);
+}
+
+// min
+template <typename... Args>
+constexpr double sbmlmath::sm_min(double first, double second, Args... rest)
+{
+  if constexpr (sizeof...(rest) > 0)
+  {
+    return std::fmin(first, sbmlmath::sm_min(second, rest...));
+  }
+  return std::fmin(first, second);
+}
+
+// piecewise
+constexpr double sbmlmath::sm_piecewise(double value, bool condition, double otherwise)
+{
+  return condition ? value : otherwise;
+}
+
+template <typename... Args>
+constexpr double sbmlmath::sm_piecewise(double value, bool condition, Args... rest)
+{
+  return condition ? value : sbmlmath::sm_piecewise(rest...);
+}
 
 #endif // SBMLMATH_HPP_
