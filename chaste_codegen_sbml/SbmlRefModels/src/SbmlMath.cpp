@@ -40,13 +40,13 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Arithmetic ===================================
 
 // divide
-double sbmlmath::sm_divide(double x, double y)
+double sbmlmath::divide(double x, double y)
 {
   return x / y;
 }
 
 // minus
-double sbmlmath::sm_minus(double x, double y)
+double sbmlmath::minus(double x, double y)
 {
   return x - y;
 }
@@ -57,40 +57,40 @@ double sbmlmath::sm_minus(double x, double y)
 // Logs and exponents ===========================
 
 // log
-double sbmlmath::sm_log(double x)
+double sbmlmath::log(double x)
 {
   return std::log10(x);
 }
 
-double sbmlmath::sm_log(double b, double x)
+double sbmlmath::log(double b, double x)
 {
   return std::log(x) / std::log(b);
 }
 
 // root
-double sbmlmath::sm_root(double n, double x)
+double sbmlmath::root(double n, double x)
 {
   return std::pow(x, 1.0 / n);
 }
 
 // sqr
-double sbmlmath::sm_sqr(double x)
+double sbmlmath::sqr(double x)
 {
   return x * x;
 }
 
 // Logical ======================================
 
-// and
-// or
+// and_
+// or_
 
-// not
-bool sbmlmath::sm_not(bool x)
+// not_
+bool sbmlmath::not_(bool x)
 {
   return !x;
 }
 
-// xor
+// xor_
 
 // Relational ===================================
 
@@ -101,7 +101,7 @@ bool sbmlmath::sm_not(bool x)
 // lt
 
 // neq
-bool sbmlmath::sm_neq(double x, double y)
+bool sbmlmath::neq(double x, double y)
 {
   return x != y;
 }
@@ -109,64 +109,64 @@ bool sbmlmath::sm_neq(double x, double y)
 // Trigonometry =================================
 
 // cot, coth, acot, acoth
-double sbmlmath::sm_cot(double x)
+double sbmlmath::cot(double x)
 {
   return 1.0 / std::tan(x);
 }
 
-double sbmlmath::sm_coth(double x)
+double sbmlmath::coth(double x)
 {
   return 1.0 / std::tanh(x);
 }
 
-double sbmlmath::sm_acot(double x)
+double sbmlmath::acot(double x)
 {
   return std::atan(1.0 / x);
 }
 
-double sbmlmath::sm_acoth(double x)
+double sbmlmath::acoth(double x)
 {
   return std::atanh(1.0 / x);
 }
 
 // csc, csch, acsc, acsch
-double sbmlmath::sm_csc(double x)
+double sbmlmath::csc(double x)
 {
   return 1.0 / std::sin(x);
 }
 
-double sbmlmath::sm_csch(double x)
+double sbmlmath::csch(double x)
 {
   return 1.0 / std::sinh(x);
 }
 
-double sbmlmath::sm_acsc(double x)
+double sbmlmath::acsc(double x)
 {
   return std::asin(1.0 / x);
 }
 
-double sbmlmath::sm_acsch(double x)
+double sbmlmath::acsch(double x)
 {
   return std::asinh(1.0 / x);
 }
 
 // sec, sech, asec, asech
-double sbmlmath::sm_sec(double x)
+double sbmlmath::sec(double x)
 {
   return 1.0 / std::cos(x);
 }
 
-double sbmlmath::sm_sech(double x)
+double sbmlmath::sech(double x)
 {
   return 1.0 / std::cosh(x);
 }
 
-double sbmlmath::sm_asec(double x)
+double sbmlmath::asec(double x)
 {
   return std::acos(1.0 / x);
 }
 
-double sbmlmath::sm_asech(double x)
+double sbmlmath::asech(double x)
 {
   return std::acosh(1.0 / x);
 }
@@ -174,7 +174,7 @@ double sbmlmath::sm_asech(double x)
 // Other functions ==============================
 
 // factorial
-double sbmlmath::sm_factorial(double x)
+double sbmlmath::factorial(double x)
 {
   return std::tgamma(x + 1.0);
 }
@@ -184,7 +184,7 @@ double sbmlmath::sm_factorial(double x)
 // piecewise
 
 // quotient
-double sbmlmath::sm_quotient(double numer, double denom)
+double sbmlmath::quotient(double numer, double denom)
 {
   return std::trunc(numer / denom);
 }

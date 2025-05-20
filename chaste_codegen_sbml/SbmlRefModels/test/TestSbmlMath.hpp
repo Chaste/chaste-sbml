@@ -42,7 +42,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "SbmlMath.hpp"
 
-using namespace sbmlmath;
+namespace sm = sbmlmath;
 
 class TestSbmlMath : public CxxTest::TestSuite
 {
@@ -51,359 +51,359 @@ public:
 
   void TestDivide()
   {
-    TS_ASSERT_EQUALS(sm_divide(1.0, 1.0), 1.0);
-    TS_ASSERT_EQUALS(sm_divide(1.0, 2.0), 0.5);
-    TS_ASSERT_EQUALS(sm_divide(2.0, 1.0), 2.0);
+    TS_ASSERT_EQUALS(sm::divide(1.0, 1.0), 1.0);
+    TS_ASSERT_EQUALS(sm::divide(1.0, 2.0), 0.5);
+    TS_ASSERT_EQUALS(sm::divide(2.0, 1.0), 2.0);
 
-    TS_ASSERT_EQUALS(sm_divide(1, 2), 0.5);
-    TS_ASSERT_EQUALS(sm_divide(2, 1), 2);
+    TS_ASSERT_EQUALS(sm::divide(1, 2), 0.5);
+    TS_ASSERT_EQUALS(sm::divide(2, 1), 2);
   }
 
   void TestMinus()
   {
-    TS_ASSERT_EQUALS(sm_minus(1.0, 1.0), 0.0);
-    TS_ASSERT_EQUALS(sm_minus(1.0, 2.0), -1.0);
-    TS_ASSERT_EQUALS(sm_minus(2.0, 1.0), 1.0);
+    TS_ASSERT_EQUALS(sm::minus(1.0, 1.0), 0.0);
+    TS_ASSERT_EQUALS(sm::minus(1.0, 2.0), -1.0);
+    TS_ASSERT_EQUALS(sm::minus(2.0, 1.0), 1.0);
 
-    TS_ASSERT_EQUALS(sm_minus(1, 2), -1);
-    TS_ASSERT_EQUALS(sm_minus(2, 1), 1);
+    TS_ASSERT_EQUALS(sm::minus(1, 2), -1);
+    TS_ASSERT_EQUALS(sm::minus(2, 1), 1);
   }
 
   void TestPlus()
   {
-    TS_ASSERT_EQUALS(sm_plus(), 0.0);
-    TS_ASSERT_EQUALS(sm_plus(1.0), 1.0);
-    TS_ASSERT_EQUALS(sm_plus(1.0, 2.0), 3.0);
-    TS_ASSERT_EQUALS(sm_plus(1.0, 2.0, 3.0), 6.0);
+    TS_ASSERT_EQUALS(sm::plus(), 0.0);
+    TS_ASSERT_EQUALS(sm::plus(1.0), 1.0);
+    TS_ASSERT_EQUALS(sm::plus(1.0, 2.0), 3.0);
+    TS_ASSERT_EQUALS(sm::plus(1.0, 2.0, 3.0), 6.0);
 
-    TS_ASSERT_EQUALS(sm_plus(1, 2), 3);
-    TS_ASSERT_EQUALS(sm_plus(2, 1), 3);
+    TS_ASSERT_EQUALS(sm::plus(1, 2), 3);
+    TS_ASSERT_EQUALS(sm::plus(2, 1), 3);
   }
 
   void TestTimes()
   {
-    TS_ASSERT_EQUALS(sm_times(), 1.0);
-    TS_ASSERT_EQUALS(sm_times(1.0), 1.0);
-    TS_ASSERT_EQUALS(sm_times(2.0), 2.0);
-    TS_ASSERT_EQUALS(sm_times(1.0, 2.0), 2.0);
-    TS_ASSERT_EQUALS(sm_times(1.0, 2.0, 3.0), 6.0);
+    TS_ASSERT_EQUALS(sm::times(), 1.0);
+    TS_ASSERT_EQUALS(sm::times(1.0), 1.0);
+    TS_ASSERT_EQUALS(sm::times(2.0), 2.0);
+    TS_ASSERT_EQUALS(sm::times(1.0, 2.0), 2.0);
+    TS_ASSERT_EQUALS(sm::times(1.0, 2.0, 3.0), 6.0);
 
-    TS_ASSERT_EQUALS(sm_times(1, 2), 2);
-    TS_ASSERT_EQUALS(sm_times(2, 1), 2);
+    TS_ASSERT_EQUALS(sm::times(1, 2), 2);
+    TS_ASSERT_EQUALS(sm::times(2, 1), 2);
   }
 
   // Logs and exponents =========================
 
   void TestLog()
   {
-    TS_ASSERT_DELTA(sm_log(1.0), 0.0, 1e-6);
-    TS_ASSERT_DELTA(sm_log(10.0), 1.0, 1e-6);
-    TS_ASSERT_DELTA(sm_log(M_E), 0.434294, 1e-6);
+    TS_ASSERT_DELTA(sm::log(1.0), 0.0, 1e-6);
+    TS_ASSERT_DELTA(sm::log(10.0), 1.0, 1e-6);
+    TS_ASSERT_DELTA(sm::log(M_E), 0.434294, 1e-6);
 
-    TS_ASSERT_DELTA(sm_log(2.0, 2.0), 1.0, 1e-6);
-    TS_ASSERT_DELTA(sm_log(10.0, 2.0), std::log10(2.0), 1e-6);
-    TS_ASSERT_DELTA(sm_log(M_E, 2.0), M_LN2, 1e-6);
+    TS_ASSERT_DELTA(sm::log(2.0, 2.0), 1.0, 1e-6);
+    TS_ASSERT_DELTA(sm::log(10.0, 2.0), std::log10(2.0), 1e-6);
+    TS_ASSERT_DELTA(sm::log(M_E, 2.0), M_LN2, 1e-6);
   }
 
   void TestRoot()
   {
-    TS_ASSERT_DELTA(sm_root(1.0, 1.0), 1.0, 1e-6);
-    TS_ASSERT_DELTA(sm_root(2.0, 4.0), 2.0, 1e-6);
-    TS_ASSERT_DELTA(sm_root(3.0, 8.0), 2.0, 1e-6);
-    TS_ASSERT_DELTA(sm_root(2.0, 9.0), 3.0, 1e-6);
-    TS_ASSERT_DELTA(sm_root(3.0, 27.0), 3.0, 1e-6);
+    TS_ASSERT_DELTA(sm::root(1.0, 1.0), 1.0, 1e-6);
+    TS_ASSERT_DELTA(sm::root(2.0, 4.0), 2.0, 1e-6);
+    TS_ASSERT_DELTA(sm::root(3.0, 8.0), 2.0, 1e-6);
+    TS_ASSERT_DELTA(sm::root(2.0, 9.0), 3.0, 1e-6);
+    TS_ASSERT_DELTA(sm::root(3.0, 27.0), 3.0, 1e-6);
   }
 
   void TestSqr()
   {
-    TS_ASSERT_DELTA(sm_sqr(1.0), 1.0, 1e-6);
-    TS_ASSERT_DELTA(sm_sqr(2.0), 4.0, 1e-6);
-    TS_ASSERT_DELTA(sm_sqr(3.0), 9.0, 1e-6);
+    TS_ASSERT_DELTA(sm::sqr(1.0), 1.0, 1e-6);
+    TS_ASSERT_DELTA(sm::sqr(2.0), 4.0, 1e-6);
+    TS_ASSERT_DELTA(sm::sqr(3.0), 9.0, 1e-6);
   }
 
   // Logical ===================================
 
   void TestAnd()
   {
-    TS_ASSERT_EQUALS(sm_and(), true);
-    TS_ASSERT_EQUALS(sm_and(true), true);
-    TS_ASSERT_EQUALS(sm_and(false), false);
-    TS_ASSERT_EQUALS(sm_and(true, true), true);
-    TS_ASSERT_EQUALS(sm_and(true, false), false);
-    TS_ASSERT_EQUALS(sm_and(false, true), false);
-    TS_ASSERT_EQUALS(sm_and(false, false), false);
-    TS_ASSERT_EQUALS(sm_and(true, true, true), true);
-    TS_ASSERT_EQUALS(sm_and(false, true, true), false);
+    TS_ASSERT_EQUALS(sm::and_(), true);
+    TS_ASSERT_EQUALS(sm::and_(true), true);
+    TS_ASSERT_EQUALS(sm::and_(false), false);
+    TS_ASSERT_EQUALS(sm::and_(true, true), true);
+    TS_ASSERT_EQUALS(sm::and_(true, false), false);
+    TS_ASSERT_EQUALS(sm::and_(false, true), false);
+    TS_ASSERT_EQUALS(sm::and_(false, false), false);
+    TS_ASSERT_EQUALS(sm::and_(true, true, true), true);
+    TS_ASSERT_EQUALS(sm::and_(false, true, true), false);
   };
 
   void TestOr()
   {
-    TS_ASSERT_EQUALS(sm_or(), false);
-    TS_ASSERT_EQUALS(sm_or(true), true);
-    TS_ASSERT_EQUALS(sm_or(false), false);
-    TS_ASSERT_EQUALS(sm_or(true, true), true);
-    TS_ASSERT_EQUALS(sm_or(true, false), true);
-    TS_ASSERT_EQUALS(sm_or(false, true), true);
-    TS_ASSERT_EQUALS(sm_or(false, false), false);
-    TS_ASSERT_EQUALS(sm_or(false, true, false), true);
-    TS_ASSERT_EQUALS(sm_or(true, false, true), true);
+    TS_ASSERT_EQUALS(sm::or_(), false);
+    TS_ASSERT_EQUALS(sm::or_(true), true);
+    TS_ASSERT_EQUALS(sm::or_(false), false);
+    TS_ASSERT_EQUALS(sm::or_(true, true), true);
+    TS_ASSERT_EQUALS(sm::or_(true, false), true);
+    TS_ASSERT_EQUALS(sm::or_(false, true), true);
+    TS_ASSERT_EQUALS(sm::or_(false, false), false);
+    TS_ASSERT_EQUALS(sm::or_(false, true, false), true);
+    TS_ASSERT_EQUALS(sm::or_(true, false, true), true);
   }
 
   void TestNot()
   {
-    TS_ASSERT_EQUALS(sm_not(true), false);
-    TS_ASSERT_EQUALS(sm_not(false), true);
+    TS_ASSERT_EQUALS(sm::not_(true), false);
+    TS_ASSERT_EQUALS(sm::not_(false), true);
   }
 
   void TestXor()
   {
-    TS_ASSERT_EQUALS(sm_xor(), false);
-    TS_ASSERT_EQUALS(sm_xor(true), true);
-    TS_ASSERT_EQUALS(sm_xor(false), false);
-    TS_ASSERT_EQUALS(sm_xor(true, true), false);
-    TS_ASSERT_EQUALS(sm_xor(true, false), true);
-    TS_ASSERT_EQUALS(sm_xor(false, true), true);
-    TS_ASSERT_EQUALS(sm_xor(false, false), false);
-    TS_ASSERT_EQUALS(sm_xor(false, true, false), true);
-    TS_ASSERT_EQUALS(sm_xor(true, false, true), false);
+    TS_ASSERT_EQUALS(sm::xor_(), false);
+    TS_ASSERT_EQUALS(sm::xor_(true), true);
+    TS_ASSERT_EQUALS(sm::xor_(false), false);
+    TS_ASSERT_EQUALS(sm::xor_(true, true), false);
+    TS_ASSERT_EQUALS(sm::xor_(true, false), true);
+    TS_ASSERT_EQUALS(sm::xor_(false, true), true);
+    TS_ASSERT_EQUALS(sm::xor_(false, false), false);
+    TS_ASSERT_EQUALS(sm::xor_(false, true, false), true);
+    TS_ASSERT_EQUALS(sm::xor_(true, false, true), false);
   }
 
   // Relational =================================
   void TestEq()
   {
-    TS_ASSERT_EQUALS(sm_eq(1.0, 1.0), true);
-    TS_ASSERT_EQUALS(sm_eq(2.0, 2.0), true);
-    TS_ASSERT_EQUALS(sm_eq(1.0, 2.0), false);
-    TS_ASSERT_EQUALS(sm_eq(2.0, 1.0), false);
-    TS_ASSERT_EQUALS(sm_geq(1.0, 1.0, 1.0), true);
-    TS_ASSERT_EQUALS(sm_geq(2.0, 2.0, 2.0), true);
-    TS_ASSERT_EQUALS(sm_geq(1.0, 2.0, 2.0), false);
-    TS_ASSERT_EQUALS(sm_geq(1.0, 1.0, 2.0), false);
-    TS_ASSERT_EQUALS(sm_geq(1.0, 1.0, 1.0, 1.0), true);
-    TS_ASSERT_EQUALS(sm_geq(1.0, 2.0, 1.0, 1.0), false);
-    TS_ASSERT_EQUALS(sm_geq(1.0, 1.0, 2.0, 1.0), false);
-    TS_ASSERT_EQUALS(sm_geq(1.0, 1.0, 1.0, 2.0), false);
+    TS_ASSERT_EQUALS(sm::eq(1.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm::eq(2.0, 2.0), true);
+    TS_ASSERT_EQUALS(sm::eq(1.0, 2.0), false);
+    TS_ASSERT_EQUALS(sm::eq(2.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm::geq(1.0, 1.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm::geq(2.0, 2.0, 2.0), true);
+    TS_ASSERT_EQUALS(sm::geq(1.0, 2.0, 2.0), false);
+    TS_ASSERT_EQUALS(sm::geq(1.0, 1.0, 2.0), false);
+    TS_ASSERT_EQUALS(sm::geq(1.0, 1.0, 1.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm::geq(1.0, 2.0, 1.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm::geq(1.0, 1.0, 2.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm::geq(1.0, 1.0, 1.0, 2.0), false);
 
-    TS_ASSERT_EQUALS(sm_eq(2, 2), true);
-    TS_ASSERT_EQUALS(sm_eq(1, 2), false);
+    TS_ASSERT_EQUALS(sm::eq(2, 2), true);
+    TS_ASSERT_EQUALS(sm::eq(1, 2), false);
   }
 
   void TestGeq()
   {
-    TS_ASSERT_EQUALS(sm_geq(1.0, 1.0), true);
-    TS_ASSERT_EQUALS(sm_geq(2.0, 1.0), true);
-    TS_ASSERT_EQUALS(sm_geq(1.0, 2.0), false);
-    TS_ASSERT_EQUALS(sm_geq(1.0, 1.0, 1.0), true);
-    TS_ASSERT_EQUALS(sm_geq(3.0, 2.0, 1.0), true);
-    TS_ASSERT_EQUALS(sm_geq(2.0, 3.0, 1.0), false);
-    TS_ASSERT_EQUALS(sm_geq(3.0, 1.0, 2.0), false);
-    TS_ASSERT_EQUALS(sm_geq(1.0, 1.0, 1.0, 1.0), true);
-    TS_ASSERT_EQUALS(sm_geq(4.0, 3.0, 2.0, 1.0), true);
-    TS_ASSERT_EQUALS(sm_geq(3.0, 2.0, 2.0, 1.0), true);
-    TS_ASSERT_EQUALS(sm_geq(3.0, 2.0, 1.0, 1.5), false);
+    TS_ASSERT_EQUALS(sm::geq(1.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm::geq(2.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm::geq(1.0, 2.0), false);
+    TS_ASSERT_EQUALS(sm::geq(1.0, 1.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm::geq(3.0, 2.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm::geq(2.0, 3.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm::geq(3.0, 1.0, 2.0), false);
+    TS_ASSERT_EQUALS(sm::geq(1.0, 1.0, 1.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm::geq(4.0, 3.0, 2.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm::geq(3.0, 2.0, 2.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm::geq(3.0, 2.0, 1.0, 1.5), false);
 
-    TS_ASSERT_EQUALS(sm_geq(2, 1), true);
-    TS_ASSERT_EQUALS(sm_geq(1, 2), false);
+    TS_ASSERT_EQUALS(sm::geq(2, 1), true);
+    TS_ASSERT_EQUALS(sm::geq(1, 2), false);
   }
 
   void TestGt()
   {
-    TS_ASSERT_EQUALS(sm_gt(1.0, 1.0), false);
-    TS_ASSERT_EQUALS(sm_gt(2.0, 1.0), true);
-    TS_ASSERT_EQUALS(sm_gt(1.0, 2.0), false);
-    TS_ASSERT_EQUALS(sm_gt(1.0, 1.0, 1.0), false);
-    TS_ASSERT_EQUALS(sm_gt(3.0, 2.0, 1.0), true);
-    TS_ASSERT_EQUALS(sm_gt(2.0, 3.0, 1.0), false);
-    TS_ASSERT_EQUALS(sm_gt(3.0, 1.0, 2.0), false);
-    TS_ASSERT_EQUALS(sm_gt(1.0, 1.0, 1.0, 1.0), false);
-    TS_ASSERT_EQUALS(sm_gt(4.0, 3.0, 2.0, 1.0), true);
-    TS_ASSERT_EQUALS(sm_gt(3.0, 2.0, 2.0, 1.0), false);
-    TS_ASSERT_EQUALS(sm_gt(3.0, 2.0, 1.0, 1.5), false);
+    TS_ASSERT_EQUALS(sm::gt(1.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm::gt(2.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm::gt(1.0, 2.0), false);
+    TS_ASSERT_EQUALS(sm::gt(1.0, 1.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm::gt(3.0, 2.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm::gt(2.0, 3.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm::gt(3.0, 1.0, 2.0), false);
+    TS_ASSERT_EQUALS(sm::gt(1.0, 1.0, 1.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm::gt(4.0, 3.0, 2.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm::gt(3.0, 2.0, 2.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm::gt(3.0, 2.0, 1.0, 1.5), false);
 
-    TS_ASSERT_EQUALS(sm_gt(1, 1), false);
-    TS_ASSERT_EQUALS(sm_gt(2, 1), true);
+    TS_ASSERT_EQUALS(sm::gt(1, 1), false);
+    TS_ASSERT_EQUALS(sm::gt(2, 1), true);
   }
 
   void TestLeq()
   {
-    TS_ASSERT_EQUALS(sm_leq(1.0, 1.0), true);
-    TS_ASSERT_EQUALS(sm_leq(1.0, 2.0), true);
-    TS_ASSERT_EQUALS(sm_leq(2.0, 1.0), false);
-    TS_ASSERT_EQUALS(sm_leq(1.0, 1.0, 1.0), true);
-    TS_ASSERT_EQUALS(sm_leq(1.0, 2.0, 3.0), true);
-    TS_ASSERT_EQUALS(sm_leq(1.0, 3.0, 2.0), false);
-    TS_ASSERT_EQUALS(sm_leq(2.0, 1.0, 3.0), false);
-    TS_ASSERT_EQUALS(sm_leq(1.0, 1.0, 1.0, 1.0), true);
-    TS_ASSERT_EQUALS(sm_leq(1.0, 2.0, 3.0, 4.0), true);
-    TS_ASSERT_EQUALS(sm_leq(1.0, 2.0, 2.0, 3.0), true);
-    TS_ASSERT_EQUALS(sm_leq(1.0, 2.0, 3.0, 2.5), false);
+    TS_ASSERT_EQUALS(sm::leq(1.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm::leq(1.0, 2.0), true);
+    TS_ASSERT_EQUALS(sm::leq(2.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm::leq(1.0, 1.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm::leq(1.0, 2.0, 3.0), true);
+    TS_ASSERT_EQUALS(sm::leq(1.0, 3.0, 2.0), false);
+    TS_ASSERT_EQUALS(sm::leq(2.0, 1.0, 3.0), false);
+    TS_ASSERT_EQUALS(sm::leq(1.0, 1.0, 1.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm::leq(1.0, 2.0, 3.0, 4.0), true);
+    TS_ASSERT_EQUALS(sm::leq(1.0, 2.0, 2.0, 3.0), true);
+    TS_ASSERT_EQUALS(sm::leq(1.0, 2.0, 3.0, 2.5), false);
 
-    TS_ASSERT_EQUALS(sm_leq(1, 1), true);
-    TS_ASSERT_EQUALS(sm_leq(2, 1), false);
+    TS_ASSERT_EQUALS(sm::leq(1, 1), true);
+    TS_ASSERT_EQUALS(sm::leq(2, 1), false);
   }
 
   void TestLt()
   {
-    TS_ASSERT_EQUALS(sm_lt(1.0, 1.0), false);
-    TS_ASSERT_EQUALS(sm_lt(1.0, 2.0), true);
-    TS_ASSERT_EQUALS(sm_lt(2.0, 1.0), false);
-    TS_ASSERT_EQUALS(sm_lt(1.0, 1.0, 1.0), false);
-    TS_ASSERT_EQUALS(sm_lt(1.0, 2.0, 3.0), true);
-    TS_ASSERT_EQUALS(sm_lt(1.0, 3.0, 2.0), false);
-    TS_ASSERT_EQUALS(sm_lt(2.0, 1.0, 3.0), false);
-    TS_ASSERT_EQUALS(sm_lt(1.0, 1.0, 1.0, 1.0), false);
-    TS_ASSERT_EQUALS(sm_lt(1.0, 2.0, 3.0, 4.0), true);
-    TS_ASSERT_EQUALS(sm_lt(1.0, 2.0, 2.0, 3.0), false);
-    TS_ASSERT_EQUALS(sm_lt(1.0, 2.0, 3.0, 2.5), false);
+    TS_ASSERT_EQUALS(sm::lt(1.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm::lt(1.0, 2.0), true);
+    TS_ASSERT_EQUALS(sm::lt(2.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm::lt(1.0, 1.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm::lt(1.0, 2.0, 3.0), true);
+    TS_ASSERT_EQUALS(sm::lt(1.0, 3.0, 2.0), false);
+    TS_ASSERT_EQUALS(sm::lt(2.0, 1.0, 3.0), false);
+    TS_ASSERT_EQUALS(sm::lt(1.0, 1.0, 1.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm::lt(1.0, 2.0, 3.0, 4.0), true);
+    TS_ASSERT_EQUALS(sm::lt(1.0, 2.0, 2.0, 3.0), false);
+    TS_ASSERT_EQUALS(sm::lt(1.0, 2.0, 3.0, 2.5), false);
 
-    TS_ASSERT_EQUALS(sm_lt(1, 1), false);
-    TS_ASSERT_EQUALS(sm_lt(1, 2), true);
+    TS_ASSERT_EQUALS(sm::lt(1, 1), false);
+    TS_ASSERT_EQUALS(sm::lt(1, 2), true);
   }
 
   void TestNeq()
   {
-    TS_ASSERT_EQUALS(sm_neq(1.0, 1.0), false);
-    TS_ASSERT_EQUALS(sm_neq(2.0, 2.0), false);
-    TS_ASSERT_EQUALS(sm_neq(1.0, 2.0), true);
-    TS_ASSERT_EQUALS(sm_neq(2.0, 1.0), true);
+    TS_ASSERT_EQUALS(sm::neq(1.0, 1.0), false);
+    TS_ASSERT_EQUALS(sm::neq(2.0, 2.0), false);
+    TS_ASSERT_EQUALS(sm::neq(1.0, 2.0), true);
+    TS_ASSERT_EQUALS(sm::neq(2.0, 1.0), true);
 
-    TS_ASSERT_EQUALS(sm_neq(1, 1), false);
-    TS_ASSERT_EQUALS(sm_neq(1, 2), true);
+    TS_ASSERT_EQUALS(sm::neq(1, 1), false);
+    TS_ASSERT_EQUALS(sm::neq(1, 2), true);
   }
 
   // Trigonometry ===============================
 
   void TestArccot()
   {
-    TS_ASSERT_DELTA(sm_acot(0.0), M_PI / 2.0, 1e-6);
-    TS_ASSERT_DELTA(sm_acot(1.0), M_PI / 4.0, 1e-6);
+    TS_ASSERT_DELTA(sm::acot(0.0), M_PI / 2.0, 1e-6);
+    TS_ASSERT_DELTA(sm::acot(1.0), M_PI / 4.0, 1e-6);
   }
 
   void TestArccoth()
   {
-    TS_ASSERT_DELTA(sm_acoth(2.0), 0.549306, 1e-6);
-    TS_ASSERT_DELTA(sm_acoth(10.0), 0.100335, 1e-6);
+    TS_ASSERT_DELTA(sm::acoth(2.0), 0.549306, 1e-6);
+    TS_ASSERT_DELTA(sm::acoth(10.0), 0.100335, 1e-6);
   }
 
   void TestArccsc()
   {
-    TS_ASSERT_DELTA(sm_acsc(1.0), 1.570796, 1e-6);
-    TS_ASSERT_DELTA(sm_acsc(10.0), 0.100167, 1e-6);
+    TS_ASSERT_DELTA(sm::acsc(1.0), 1.570796, 1e-6);
+    TS_ASSERT_DELTA(sm::acsc(10.0), 0.100167, 1e-6);
   }
 
   void TestArccsch()
   {
-    TS_ASSERT_DELTA(sm_acsch(1.0), 0.881373, 1e-6);
-    TS_ASSERT_DELTA(sm_acsch(10.0), 0.099834, 1e-6);
+    TS_ASSERT_DELTA(sm::acsch(1.0), 0.881373, 1e-6);
+    TS_ASSERT_DELTA(sm::acsch(10.0), 0.099834, 1e-6);
   }
 
   void TestArcsec()
   {
-    TS_ASSERT_DELTA(sm_asec(1.0), 0.0, 1e-6);
-    TS_ASSERT_DELTA(sm_asec(10.0), 1.470629, 1e-6);
+    TS_ASSERT_DELTA(sm::asec(1.0), 0.0, 1e-6);
+    TS_ASSERT_DELTA(sm::asec(10.0), 1.470629, 1e-6);
   }
 
   void TestArcsech()
   {
-    TS_ASSERT_DELTA(sm_asech(0.1), 2.993223, 1e-6);
-    TS_ASSERT_DELTA(sm_asech(1.0), 0.0, 1e-6);
+    TS_ASSERT_DELTA(sm::asech(0.1), 2.993223, 1e-6);
+    TS_ASSERT_DELTA(sm::asech(1.0), 0.0, 1e-6);
   }
 
   void TestCot()
   {
-    TS_ASSERT_DELTA(sm_cot(M_PI / 2.0), 0.0, 1e-6);
-    TS_ASSERT_DELTA(sm_cot(M_PI / 4.0), 1.0, 1e-6);
+    TS_ASSERT_DELTA(sm::cot(M_PI / 2.0), 0.0, 1e-6);
+    TS_ASSERT_DELTA(sm::cot(M_PI / 4.0), 1.0, 1e-6);
   }
 
   void TestCoth()
   {
-    TS_ASSERT_DELTA(sm_coth(1.0), 1.313035, 1e-6);
-    TS_ASSERT_DELTA(sm_coth(10.0), 1.0, 1e-6);
+    TS_ASSERT_DELTA(sm::coth(1.0), 1.313035, 1e-6);
+    TS_ASSERT_DELTA(sm::coth(10.0), 1.0, 1e-6);
   }
 
   void TestCsc()
   {
-    TS_ASSERT_DELTA(sm_csc(M_PI / 2.0), 1.0, 1e-6);
-    TS_ASSERT_DELTA(sm_csc(M_PI / 4.0), std::sqrt(2), 1e-6);
+    TS_ASSERT_DELTA(sm::csc(M_PI / 2.0), 1.0, 1e-6);
+    TS_ASSERT_DELTA(sm::csc(M_PI / 4.0), std::sqrt(2), 1e-6);
   }
 
   void TestCsch()
   {
-    TS_ASSERT_DELTA(sm_csch(1.0), 0.850918, 1e-6);
-    TS_ASSERT_DELTA(sm_csch(10.0), 0.000091, 1e-6);
+    TS_ASSERT_DELTA(sm::csch(1.0), 0.850918, 1e-6);
+    TS_ASSERT_DELTA(sm::csch(10.0), 0.000091, 1e-6);
   }
 
   void TestSec()
   {
-    TS_ASSERT_DELTA(sm_sec(0.0), 1.0, 1e-6);
-    TS_ASSERT_DELTA(sm_sec(M_PI), -1.0, 1e-6);
+    TS_ASSERT_DELTA(sm::sec(0.0), 1.0, 1e-6);
+    TS_ASSERT_DELTA(sm::sec(M_PI), -1.0, 1e-6);
   }
 
   void TestSech()
   {
-    TS_ASSERT_DELTA(sm_sech(0.0), 1.0, 1e-6);
-    TS_ASSERT_DELTA(sm_sech(10.0), 0.000091, 1e-6);
+    TS_ASSERT_DELTA(sm::sech(0.0), 1.0, 1e-6);
+    TS_ASSERT_DELTA(sm::sech(10.0), 0.000091, 1e-6);
   }
 
   // Other functions ============================
 
   void TestFactorial()
   {
-    TS_ASSERT_EQUALS(sm_factorial(0.0), 1.0);
-    TS_ASSERT_EQUALS(sm_factorial(1.0), 1.0);
-    TS_ASSERT_EQUALS(sm_factorial(2.0), 2.0);
-    TS_ASSERT_EQUALS(sm_factorial(3.0), 6.0);
-    TS_ASSERT_EQUALS(sm_factorial(10.0), 3628800.0);
+    TS_ASSERT_EQUALS(sm::factorial(0.0), 1.0);
+    TS_ASSERT_EQUALS(sm::factorial(1.0), 1.0);
+    TS_ASSERT_EQUALS(sm::factorial(2.0), 2.0);
+    TS_ASSERT_EQUALS(sm::factorial(3.0), 6.0);
+    TS_ASSERT_EQUALS(sm::factorial(10.0), 3628800.0);
 
-    TS_ASSERT_EQUALS(sm_factorial(0), 1);
-    TS_ASSERT_EQUALS(sm_factorial(1), 1);
+    TS_ASSERT_EQUALS(sm::factorial(0), 1);
+    TS_ASSERT_EQUALS(sm::factorial(1), 1);
   }
 
   void TestMax()
   {
-    TS_ASSERT_EQUALS(sm_max(1.0, 2.0), 2.0);
-    TS_ASSERT_EQUALS(sm_max(2.0, 1.0), 2.0);
-    TS_ASSERT_EQUALS(sm_max(1.0, 2.0, 3.0), 3.0);
-    TS_ASSERT_EQUALS(sm_max(1.0, 2.0, 3.0, 4.0), 4.0);
-    TS_ASSERT_EQUALS(sm_max(1.0, 2.0, 3.0, 5.0, 4.0), 5.0);
-    TS_ASSERT_EQUALS(sm_max(1.0, 2.0, 3.0, 6.0, 4.0, 5.0), 6.0);
+    TS_ASSERT_EQUALS(sm::max(1.0, 2.0), 2.0);
+    TS_ASSERT_EQUALS(sm::max(2.0, 1.0), 2.0);
+    TS_ASSERT_EQUALS(sm::max(1.0, 2.0, 3.0), 3.0);
+    TS_ASSERT_EQUALS(sm::max(1.0, 2.0, 3.0, 4.0), 4.0);
+    TS_ASSERT_EQUALS(sm::max(1.0, 2.0, 3.0, 5.0, 4.0), 5.0);
+    TS_ASSERT_EQUALS(sm::max(1.0, 2.0, 3.0, 6.0, 4.0, 5.0), 6.0);
 
-    TS_ASSERT_EQUALS(sm_max(1, 2), 2);
-    TS_ASSERT_EQUALS(sm_max(2, 1), 2);
+    TS_ASSERT_EQUALS(sm::max(1, 2), 2);
+    TS_ASSERT_EQUALS(sm::max(2, 1), 2);
   }
 
   void TestMin()
   {
-    TS_ASSERT_EQUALS(sm_min(1.0, 2.0), 1.0);
-    TS_ASSERT_EQUALS(sm_min(2.0, 1.0), 1.0);
-    TS_ASSERT_EQUALS(sm_min(3.0, 2.0, 1.0), 1.0);
-    TS_ASSERT_EQUALS(sm_min(4.0, 3.0, 2.0, 1.0), 1.0);
-    TS_ASSERT_EQUALS(sm_min(4.0, 3.0, 2.0, 1.0, 5.0), 1.0);
-    TS_ASSERT_EQUALS(sm_min(5.0, 4.0, 3.0, 1.0, 2.0, 6.0), 1.0);
+    TS_ASSERT_EQUALS(sm::min(1.0, 2.0), 1.0);
+    TS_ASSERT_EQUALS(sm::min(2.0, 1.0), 1.0);
+    TS_ASSERT_EQUALS(sm::min(3.0, 2.0, 1.0), 1.0);
+    TS_ASSERT_EQUALS(sm::min(4.0, 3.0, 2.0, 1.0), 1.0);
+    TS_ASSERT_EQUALS(sm::min(4.0, 3.0, 2.0, 1.0, 5.0), 1.0);
+    TS_ASSERT_EQUALS(sm::min(5.0, 4.0, 3.0, 1.0, 2.0, 6.0), 1.0);
 
-    TS_ASSERT_EQUALS(sm_min(1, 2), 1);
-    TS_ASSERT_EQUALS(sm_min(2, 1), 1);
+    TS_ASSERT_EQUALS(sm::min(1, 2), 1);
+    TS_ASSERT_EQUALS(sm::min(2, 1), 1);
   }
 
   void TestPiecewise()
   {
-    TS_ASSERT_EQUALS(sm_piecewise(1.0, true, 2.0), 1.0);
-    TS_ASSERT_EQUALS(sm_piecewise(1.0, false, 2.0), 2.0);
-    TS_ASSERT_EQUALS(sm_piecewise(1.0, false, 2.0, true, 3.0), 2.0);
-    TS_ASSERT_EQUALS(sm_piecewise(1.0, false, 2.0, false, 3.0), 3.0);
+    TS_ASSERT_EQUALS(sm::piecewise(1.0, true, 2.0), 1.0);
+    TS_ASSERT_EQUALS(sm::piecewise(1.0, false, 2.0), 2.0);
+    TS_ASSERT_EQUALS(sm::piecewise(1.0, false, 2.0, true, 3.0), 2.0);
+    TS_ASSERT_EQUALS(sm::piecewise(1.0, false, 2.0, false, 3.0), 3.0);
 
-    TS_ASSERT_EQUALS(sm_piecewise(1, true, 2), 1);
-    TS_ASSERT_EQUALS(sm_piecewise(1, false, 2), 2);
+    TS_ASSERT_EQUALS(sm::piecewise(1, true, 2), 1);
+    TS_ASSERT_EQUALS(sm::piecewise(1, false, 2), 2);
   }
 
   void TestQuotient()
   {
-    TS_ASSERT_EQUALS(sm_quotient(1.0, 1.0), 1.0);
-    TS_ASSERT_EQUALS(sm_quotient(1.0, 2.0), 0.0);
-    TS_ASSERT_EQUALS(sm_quotient(2.0, 1.0), 2.0);
+    TS_ASSERT_EQUALS(sm::quotient(1.0, 1.0), 1.0);
+    TS_ASSERT_EQUALS(sm::quotient(1.0, 2.0), 0.0);
+    TS_ASSERT_EQUALS(sm::quotient(2.0, 1.0), 2.0);
 
-    TS_ASSERT_EQUALS(sm_quotient(1, 1), 1);
-    TS_ASSERT_EQUALS(sm_quotient(1, 2), 0);
+    TS_ASSERT_EQUALS(sm::quotient(1, 1), 1);
+    TS_ASSERT_EQUALS(sm::quotient(1, 2), 0);
   }
 };
 
