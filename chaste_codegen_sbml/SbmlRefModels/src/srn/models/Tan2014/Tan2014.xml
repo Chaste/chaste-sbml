@@ -503,7 +503,8 @@
             boundaryCondition="false" constant="false" />
       </listOfSpecies>
       <listOfParameters>
-         <parameter name="wnt_level" constant="false" id="wnt_level" />
+         <!-- Update: set missing wnt_level value to 0 -->
+         <parameter name="wnt_level" constant="false" id="wnt_level" value="0" />
          <parameter value="0.0163" id="kdegradation" />
          <parameter value="1.306" id="Bsyn" />
          <parameter value="17.16" id="K_n_active_k" />
@@ -513,16 +514,19 @@
          <parameter value="0.00349" id="kN_k2" />
          <parameter value="39.13" id="kdiffusion_k" />
          <parameter value="4.5" id="K_c_active_k" />
-         <parameter name="gamma" constant="false" id="gamma" />
+         <!-- Update: set missing gamma value to 1 -->
+         <parameter name="gamma" constant="false" id="gamma" value="1" />
          <parameter id="ComplexTransitThreshold" name="ComplexTransitThreshold" value="1"
             constant="true" />
       </listOfParameters>
       <listOfRules>
          <assignmentRule variable="drag">
-            <!-- Converted from `max((complex_cm - 700)/10, 1)`
-          to `piecewise((complex_cm - 700)/10, ((complex_cm - 700)/10) > 1, 1)`
-          because SBML 2 does not support max function
-          -->
+            <!-- Update: converted rule from
+                     `max((complex_cm - 700)/10, 1)`
+                 into
+                     `piecewise((complex_cm - 700)/10, ((complex_cm - 700)/10) > 1, 1)`
+                 because SBML Level 2 Version 1 does not support the `max` function
+            -->
             <math xmlns="http://www.w3.org/1998/Math/MathML">
                <piecewise>
                   <piece>
