@@ -158,6 +158,8 @@ namespace sbmlmath
   constexpr double sm_min(double first, double second, Args... rest);
 
   // piecewise
+  constexpr double sm_piecewise(double otherwise);
+
   constexpr double sm_piecewise(double value, bool condition, double otherwise);
 
   template <typename... Args>
@@ -289,6 +291,11 @@ constexpr double sbmlmath::sm_min(double first, double second, Args... rest)
 }
 
 // piecewise
+constexpr double sbmlmath::sm_piecewise(double otherwise)
+{
+  return otherwise;
+}
+
 constexpr double sbmlmath::sm_piecewise(double value, bool condition, double otherwise)
 {
   return condition ? value : otherwise;

@@ -54,6 +54,9 @@ public:
     TS_ASSERT_EQUALS(sm_divide(1.0, 1.0), 1.0);
     TS_ASSERT_EQUALS(sm_divide(1.0, 2.0), 0.5);
     TS_ASSERT_EQUALS(sm_divide(2.0, 1.0), 2.0);
+
+    TS_ASSERT_EQUALS(sm_divide(1, 2), 0.5);
+    TS_ASSERT_EQUALS(sm_divide(2, 1), 2);
   }
 
   void TestMinus()
@@ -61,6 +64,9 @@ public:
     TS_ASSERT_EQUALS(sm_minus(1.0, 1.0), 0.0);
     TS_ASSERT_EQUALS(sm_minus(1.0, 2.0), -1.0);
     TS_ASSERT_EQUALS(sm_minus(2.0, 1.0), 1.0);
+
+    TS_ASSERT_EQUALS(sm_minus(1, 2), -1);
+    TS_ASSERT_EQUALS(sm_minus(2, 1), 1);
   }
 
   void TestPlus()
@@ -69,6 +75,9 @@ public:
     TS_ASSERT_EQUALS(sm_plus(1.0), 1.0);
     TS_ASSERT_EQUALS(sm_plus(1.0, 2.0), 3.0);
     TS_ASSERT_EQUALS(sm_plus(1.0, 2.0, 3.0), 6.0);
+
+    TS_ASSERT_EQUALS(sm_plus(1, 2), 3);
+    TS_ASSERT_EQUALS(sm_plus(2, 1), 3);
   }
 
   void TestTimes()
@@ -78,6 +87,9 @@ public:
     TS_ASSERT_EQUALS(sm_times(2.0), 2.0);
     TS_ASSERT_EQUALS(sm_times(1.0, 2.0), 2.0);
     TS_ASSERT_EQUALS(sm_times(1.0, 2.0, 3.0), 6.0);
+
+    TS_ASSERT_EQUALS(sm_times(1, 2), 2);
+    TS_ASSERT_EQUALS(sm_times(2, 1), 2);
   }
 
   // Logs and exponents =========================
@@ -171,6 +183,9 @@ public:
     TS_ASSERT_EQUALS(sm_geq(1.0, 2.0, 1.0, 1.0), false);
     TS_ASSERT_EQUALS(sm_geq(1.0, 1.0, 2.0, 1.0), false);
     TS_ASSERT_EQUALS(sm_geq(1.0, 1.0, 1.0, 2.0), false);
+
+    TS_ASSERT_EQUALS(sm_eq(2, 2), true);
+    TS_ASSERT_EQUALS(sm_eq(1, 2), false);
   }
 
   void TestGeq()
@@ -186,6 +201,9 @@ public:
     TS_ASSERT_EQUALS(sm_geq(4.0, 3.0, 2.0, 1.0), true);
     TS_ASSERT_EQUALS(sm_geq(3.0, 2.0, 2.0, 1.0), true);
     TS_ASSERT_EQUALS(sm_geq(3.0, 2.0, 1.0, 1.5), false);
+
+    TS_ASSERT_EQUALS(sm_geq(2, 1), true);
+    TS_ASSERT_EQUALS(sm_geq(1, 2), false);
   }
 
   void TestGt()
@@ -201,6 +219,9 @@ public:
     TS_ASSERT_EQUALS(sm_gt(4.0, 3.0, 2.0, 1.0), true);
     TS_ASSERT_EQUALS(sm_gt(3.0, 2.0, 2.0, 1.0), false);
     TS_ASSERT_EQUALS(sm_gt(3.0, 2.0, 1.0, 1.5), false);
+
+    TS_ASSERT_EQUALS(sm_gt(1, 1), false);
+    TS_ASSERT_EQUALS(sm_gt(2, 1), true);
   }
 
   void TestLeq()
@@ -216,6 +237,9 @@ public:
     TS_ASSERT_EQUALS(sm_leq(1.0, 2.0, 3.0, 4.0), true);
     TS_ASSERT_EQUALS(sm_leq(1.0, 2.0, 2.0, 3.0), true);
     TS_ASSERT_EQUALS(sm_leq(1.0, 2.0, 3.0, 2.5), false);
+
+    TS_ASSERT_EQUALS(sm_leq(1, 1), true);
+    TS_ASSERT_EQUALS(sm_leq(2, 1), false);
   }
 
   void TestLt()
@@ -231,6 +255,9 @@ public:
     TS_ASSERT_EQUALS(sm_lt(1.0, 2.0, 3.0, 4.0), true);
     TS_ASSERT_EQUALS(sm_lt(1.0, 2.0, 2.0, 3.0), false);
     TS_ASSERT_EQUALS(sm_lt(1.0, 2.0, 3.0, 2.5), false);
+
+    TS_ASSERT_EQUALS(sm_lt(1, 1), false);
+    TS_ASSERT_EQUALS(sm_lt(1, 2), true);
   }
 
   void TestNeq()
@@ -239,6 +266,9 @@ public:
     TS_ASSERT_EQUALS(sm_neq(2.0, 2.0), false);
     TS_ASSERT_EQUALS(sm_neq(1.0, 2.0), true);
     TS_ASSERT_EQUALS(sm_neq(2.0, 1.0), true);
+
+    TS_ASSERT_EQUALS(sm_neq(1, 1), false);
+    TS_ASSERT_EQUALS(sm_neq(1, 2), true);
   }
 
   // Trigonometry ===============================
@@ -324,6 +354,9 @@ public:
     TS_ASSERT_EQUALS(sm_factorial(2.0), 2.0);
     TS_ASSERT_EQUALS(sm_factorial(3.0), 6.0);
     TS_ASSERT_EQUALS(sm_factorial(10.0), 3628800.0);
+
+    TS_ASSERT_EQUALS(sm_factorial(0), 1);
+    TS_ASSERT_EQUALS(sm_factorial(1), 1);
   }
 
   void TestMax()
@@ -334,6 +367,9 @@ public:
     TS_ASSERT_EQUALS(sm_max(1.0, 2.0, 3.0, 4.0), 4.0);
     TS_ASSERT_EQUALS(sm_max(1.0, 2.0, 3.0, 5.0, 4.0), 5.0);
     TS_ASSERT_EQUALS(sm_max(1.0, 2.0, 3.0, 6.0, 4.0, 5.0), 6.0);
+
+    TS_ASSERT_EQUALS(sm_max(1, 2), 2);
+    TS_ASSERT_EQUALS(sm_max(2, 1), 2);
   }
 
   void TestMin()
@@ -344,6 +380,9 @@ public:
     TS_ASSERT_EQUALS(sm_min(4.0, 3.0, 2.0, 1.0), 1.0);
     TS_ASSERT_EQUALS(sm_min(4.0, 3.0, 2.0, 1.0, 5.0), 1.0);
     TS_ASSERT_EQUALS(sm_min(5.0, 4.0, 3.0, 1.0, 2.0, 6.0), 1.0);
+
+    TS_ASSERT_EQUALS(sm_min(1, 2), 1);
+    TS_ASSERT_EQUALS(sm_min(2, 1), 1);
   }
 
   void TestPiecewise()
@@ -352,6 +391,9 @@ public:
     TS_ASSERT_EQUALS(sm_piecewise(1.0, false, 2.0), 2.0);
     TS_ASSERT_EQUALS(sm_piecewise(1.0, false, 2.0, true, 3.0), 2.0);
     TS_ASSERT_EQUALS(sm_piecewise(1.0, false, 2.0, false, 3.0), 3.0);
+
+    TS_ASSERT_EQUALS(sm_piecewise(1, true, 2), 1);
+    TS_ASSERT_EQUALS(sm_piecewise(1, false, 2), 2);
   }
 
   void TestQuotient()
@@ -359,6 +401,9 @@ public:
     TS_ASSERT_EQUALS(sm_quotient(1.0, 1.0), 1.0);
     TS_ASSERT_EQUALS(sm_quotient(1.0, 2.0), 0.0);
     TS_ASSERT_EQUALS(sm_quotient(2.0, 1.0), 2.0);
+
+    TS_ASSERT_EQUALS(sm_quotient(1, 1), 1);
+    TS_ASSERT_EQUALS(sm_quotient(1, 2), 0);
   }
 };
 
