@@ -26,19 +26,19 @@ private:
     double CytosolMembrane;
     double nucleus;
 
-    // PARAMETERS:
-    double wnt_level;
-    double kdegradation;
-    double Bsyn;
-    double K_n_active_k;
-    double kC_k1;
-    double kC_k2;
-    double kN_k1;
-    double kN_k2;
-    double kdiffusion_k;
-    double K_c_active_k;
-    double gamma;
-    double ComplexTransitThreshold;
+    // CONST PARAMETERS:
+    const double kdegradation = 0.0163;
+    const double Bsyn = 1.306;
+    const double K_n_active_k = 17.16;
+    const double kC_k1 = 1e-05;
+    const double kC_k2 = 0.000647;
+    const double kN_k1 = 0.0001;
+    const double kN_k2 = 0.00349;
+    const double kdiffusion_k = 39.13;
+    const double K_c_active_k = 4.5;
+    const double ComplexTransitThreshold = 1.0;
+
+    // RULES:
 
 
 public:
@@ -85,12 +85,12 @@ namespace
 #include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
 
-typedef SbmlSrnWrapperModel<Tan2014SbmlOdeSystem, 6> Tan2014SbmlSrnModel;
+typedef SbmlSrnWrapperModel<Tan2014SbmlOdeSystem, 7> Tan2014SbmlSrnModel;
 
 // Declare identifiers for the serializer
 #include "SerializationExportWrapper.hpp"
 CHASTE_CLASS_EXPORT(Tan2014SbmlOdeSystem)
-EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, Tan2014SbmlOdeSystem, 6)
+EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, Tan2014SbmlOdeSystem, 7)
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
 EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Tan2014SbmlSrnModel)

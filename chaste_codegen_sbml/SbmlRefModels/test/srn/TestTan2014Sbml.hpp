@@ -73,21 +73,21 @@ public:
             state_variables.push_back(6.0);
             state_variables.push_back(7.0);
             state_variables.push_back(8.0);
-            // state_variables.push_back(9.0);
+            state_variables.push_back(9.0);
 
             Tan2014SbmlOdeSystem ode_system(state_variables);
 
             ode_system.SetDefaultInitialCondition(2, 3.25);
 
             std::vector<double> initial_conditions = ode_system.GetInitialConditions();
-            TS_ASSERT_EQUALS(initial_conditions.size(), 6u);
+            TS_ASSERT_EQUALS(initial_conditions.size(), 7u);
             TS_ASSERT_DELTA(initial_conditions[0], 46.60, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[1], 581.10, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[2], 3.25, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[3], 32.60, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[4], 516.80, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[5], 483.20, 1e-3);
-            // TS_ASSERT_DELTA(initial_conditions[6], 1.00, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[6], 1.00, 1e-3);
 
             double var1 = ode_system.GetStateVariable(0);
             double var2 = ode_system.GetStateVariable(1);
@@ -95,7 +95,7 @@ public:
             double var4 = ode_system.GetStateVariable(3);
             double var5 = ode_system.GetStateVariable(4);
             double var6 = ode_system.GetStateVariable(5);
-            // double var7 = ode_system.GetStateVariable(6);
+            double var7 = ode_system.GetStateVariable(6);
 
             TS_ASSERT_DELTA(var1, 3.0, 1e-3);
             TS_ASSERT_DELTA(var2, 4.0, 1e-3);
@@ -103,7 +103,7 @@ public:
             TS_ASSERT_DELTA(var4, 6.0, 1e-3);
             TS_ASSERT_DELTA(var5, 7.0, 1e-3);
             TS_ASSERT_DELTA(var6, 8.0, 1e-3);
-            // TS_ASSERT_DELTA(var7, 9.0, 1e-3);
+            TS_ASSERT_DELTA(var7, 9.0, 1e-3);
 
             // Create an output archive
             std::ofstream ofs(archive_filename.c_str());
@@ -126,14 +126,14 @@ public:
 
             // Check that archiving worked correctly
             std::vector<double> initial_conditions = p_ode_system->GetInitialConditions();
-            TS_ASSERT_EQUALS(initial_conditions.size(), 6u);
+            TS_ASSERT_EQUALS(initial_conditions.size(), 7u);
             TS_ASSERT_DELTA(initial_conditions[0], 46.60, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[1], 581.10, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[2], 418.90, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[3], 32.60, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[4], 516.80, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[5], 483.20, 1e-3);
-            // TS_ASSERT_DELTA(initial_conditions[6], 1.00, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[6], 1.00, 1e-3);
 
             double var1 = p_ode_system->GetStateVariable(0);
             double var2 = p_ode_system->GetStateVariable(1);
@@ -141,7 +141,7 @@ public:
             double var4 = p_ode_system->GetStateVariable(3);
             double var5 = p_ode_system->GetStateVariable(4);
             double var6 = p_ode_system->GetStateVariable(5);
-            // double var7 = p_ode_system->GetStateVariable(6);
+            double var7 = p_ode_system->GetStateVariable(6);
 
             TS_ASSERT_DELTA(var1, 3.0, 1e-3);
             TS_ASSERT_DELTA(var2, 4.0, 1e-3);
@@ -149,7 +149,7 @@ public:
             TS_ASSERT_DELTA(var4, 6.0, 1e-3);
             TS_ASSERT_DELTA(var5, 7.0, 1e-3);
             TS_ASSERT_DELTA(var6, 8.0, 1e-3);
-            // TS_ASSERT_DELTA(var7, 9.0, 1e-3);
+            TS_ASSERT_DELTA(var7, 9.0, 1e-3);
 
             // Tidy up
             delete p_ode_system;
@@ -173,7 +173,7 @@ public:
         std::vector<double> derivs(initial_conditions.size());
         ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
-        // Test derivatives are correct (default wnt-level=0)
+        // Test derivatives are correct (default wnt_level=0)
         TS_ASSERT_EQUALS(ode_system.GetParameter("wnt_level"), 0);
         TS_ASSERT_DELTA(derivs[0], -170.2326, 1e-3);
         TS_ASSERT_DELTA(derivs[1], 0.0002357000000, 1e-6);
@@ -189,7 +189,7 @@ public:
 
         ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
-        TS_ASSERT_DELTA(derivs[0], -170.2326, 1e-3);
+        TS_ASSERT_DELTA(derivs[0], -169.8528, 1e-3);
         TS_ASSERT_DELTA(derivs[1], 0.0002357000000, 1e-6);
         TS_ASSERT_DELTA(derivs[2], -0.0002357000000, 1e-6);
         TS_ASSERT_DELTA(derivs[3], 304.7769846153847, 1e-3);
@@ -207,7 +207,7 @@ public:
             // Solve system using RK4 solver
 
             double dt = 0.01;
-            double end_time = 5000.0; //1000.0 * 60.0;
+            double end_time = 5000.0; // 1000.0 * 60.0;
 
             // RK4 solver solution worked out
             RungeKutta4IvpOdeSolver rk4_solver;
@@ -225,8 +225,8 @@ public:
             TS_ASSERT_DELTA(solutions.rGetSolutions()[end][3], 62.0477, 1e-3);
             TS_ASSERT_DELTA(solutions.rGetSolutions()[end][4], 360.0130, 1e-3);
             TS_ASSERT_DELTA(solutions.rGetSolutions()[end][5], 639.9869, 1e-3);
-            // TS_ASSERT_DELTA(solutions.rGetSolutions()[end][6], 1.0, 1e-6);
-            
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][6], 1.0, 1e-6);
+
             // The following code provides nice output for gnuplot
             // use the command
             // plot "tan_2014.dat" u 1:2
@@ -235,13 +235,19 @@ public:
             // or
             // plot "tan_2014.dat" u 1:2, "" u 1:3, "" u 1:4 ... for all species
 
-            OutputFileHandler handler("");
-            out_stream file=handler.OpenOutputFile("tan_2014.dat");
-            for (unsigned i=0; i<=end; i++)
-            {
-                (*file) << solutions.rGetTimes()[i]<< "\t" << solutions.rGetSolutions()[i][0] << "\t" << solutions.rGetSolutions()[i][1] << "\t" << solutions.rGetSolutions()[i][2] << "\t" << solutions.rGetSolutions()[i][3] << "\t" << solutions.rGetSolutions()[i][4] << "\t" << solutions.rGetSolutions()[i][5] << "\n" << std::flush;
-            }
-            file->close();
+            // OutputFileHandler handler("");
+            // out_stream file = handler.OpenOutputFile("tan_2014.dat");
+            // for (unsigned i = 0; i < solutions.rGetSolutions().size(); i++)
+            // {
+            //     (*file) << solutions.rGetTimes()[i];
+            //     for (unsigned j = 0; j < solutions.rGetSolutions()[i].size(); j++)
+            //     {
+            //         (*file) << "\t" << solutions.rGetSolutions()[i][j];
+            //     }
+            //     (*file) << "\n"
+            //             << std::flush;
+            // }
+            // file->close();
         }
         catch (Exception &e)
         {
@@ -259,7 +265,7 @@ public:
         {
             Tan2014SbmlOdeSystem ode_system;
 
-            double end_time = 5000.0; //1000.0 * 60.0;
+            double end_time = 5000.0; // 1000.0 * 60.0;
             double h_value = 0.01;
 
             CvodeAdaptor solver;
