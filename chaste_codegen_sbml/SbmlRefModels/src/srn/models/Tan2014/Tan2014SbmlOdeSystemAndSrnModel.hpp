@@ -38,7 +38,19 @@ private:
     const double K_c_active_k = 4.5;
     const double ComplexTransitThreshold = 1.0;
 
-    // RULES:
+    // STATE VARIABLES:
+    double bcat_cm; // bcat_cm
+    double ligand_cm; // ligand_cm
+    double complex_cm; // complex_cm
+    double bcat_nu; // bcat_nu
+    double ligand_nu; // ligand_nu
+    double complex_nu; // complex_nu
+    double drag; // drag
+
+    // STATE PARAMETERS:
+
+    double wnt_level;
+    double gamma;
 
 
 public:
