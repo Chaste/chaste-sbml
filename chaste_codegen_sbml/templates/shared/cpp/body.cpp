@@ -3,30 +3,81 @@
 
 #include "{{ model_hpp_file }}"
 
-/* SBML ODE System */
+namespace sm = sbmlmath;
+
 {{ ode_class_name }}::{{ ode_class_name }}(std::vector<double> stateVariables)
     : AbstractOdeSystem({{ num_state_vars }})
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<{{ ode_class_name }}>);
 
-    Init();
+{% if compartments %}
+    // COMPARTMENTS:
+{% for comp in compartments %}
+    {{ comp["id"] }} = {{ comp["size"] }};
+{% endfor %}
+{% endif %}
+
+    // STATE VARIABLES:
+{% for sp in species %}
+{% if sp["is_state_variable"] is true() %}
+    {{ sp["id"] }} = {{ sp["concentration"] }}; // {{ sp["name"] }}
+{% endif %}
+{% endfor %}
 
 {% for sp in species %}
 {% if sp["is_state_variable"] is true() %}
-    SetDefaultInitialCondition({{ sp["state_variable_index"] }}, {{ sp["concentration"] }}); // {{ sp["name"] }}
+    SetDefaultInitialCondition({{ sp["state_variable_index"] }}, {{ sp["id"] }});
+{% endif %}
+{% endfor %}
+
+    if (stateVariables.size() == {{ num_state_vars }})
+    {
+{% for sp in species %}
+{% if sp["is_state_variable"] is true() %}
+        {{ sp["id"] }} = stateVariables[{{ sp["state_variable_index"] }}];
+{% endif %}
+{% endfor %}
+    }
+    else if (stateVariables.size() != 0)
+    {
+        EXCEPTION("{{ ode_class_name }}: Expected {{ num_state_vars }} state variables, got " + std::to_string(stateVariables.size()));
+    }
+
+{% for sp in species %}
+{% if sp["is_state_variable"] is true() %}
+    mStateVariables.push_back({{ sp["id"] }});
+{% endif %}
+{% endfor %}
+
+    // STATE PARAMETERS:
+{% for sp in species %}
+{% if sp["is_state_parameter"] is true() %}
+    {{ sp["id"] }} = {{ sp["concentration"] }};
+{% endif %}
+{% endfor %}
+
+{% for parameter in parameters %}
+{% if parameter["is_state_parameter"] is true() %}
+    {{ parameter["id"] }} = {{ parameter["value"] }};
+{% endif %}
+{% endfor %}
+
+{% for sp in species %}
+{% if sp["is_state_parameter"] is true() %}
+    mParameters.push_back({{ sp["id"] }});
 {% endif %}
 {% endfor %}
 
 {% for param in parameters %}
-{% if param["is_defined"] is false() %}
-    this->mParameters.push_back({{ param["default"] }}); // {{ param["id"] }}
+{% if param["is_state_parameter"] is true() %}
+    mParameters.push_back({{ param["id"] }});
 {% endif %}
 {% endfor %}
 
-    if (stateVariables != std::vector<double>())
-    {
-        SetStateVariables(stateVariables);
-    }
+{% if events %}
+    // EVENTS:
+    eventsSatisfied.resize({{ events|length }}, false);
+{% endif %}
 }
 
 {{ ode_class_name }}::~{{ ode_class_name }}()
@@ -40,36 +91,49 @@ double {{ ode_class_name }}::{{ fd["id"] }}({{ fd["args"] }})
 }
 {% endfor %}
 
-void {{ ode_class_name }}::Init()
-{
-{% if compartments %}
-    /* Initialise model compartments. */
-{% for comp in compartments %}
-    {{ comp["id"] }} = {{ comp["size"] }};
-{% endfor %}
-{% endif %}
-
-{% if parameters %}
-    /* Initialise model parameters. */
-{% for param in parameters %}
-    {{ param["id"] }} = {{ param["value"] }};
-{% endfor %}
-{% endif %}
-
-{% if events %}
-    /* Initialise vector to check if events have been triggered. */
-    eventsSatisfied.resize({{ events|length }}, false);
-{% endif %}
-}
-
 void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-    /* Define algebraic rules. */
-{% for rule in rules %}
-    {%+ if rule["is_parameter"] is false() %}double {%+ endif %}{{ rule["lhs"] }} = {{ rule["rhs"] }};
+    // STATE VARIABLES:
+{% for sp in species %}
+{% if sp["is_state_variable"] is true() %}
+    {{ sp["id"] }} = rY[{{ sp["state_variable_index"] }}];
+{% endif %}
 {% endfor %}
 
-    /* Define the reactions in this model. */
+    // STATE PARAMETERS:
+{% for sp in species %}
+{% if sp["is_state_parameter"] is true() %}
+    {{ sp["id"] }} = GetParameter("{{ sp['id'] }}");
+{% endif %}
+{% endfor %}
+
+{% for param in parameters %}
+{% if param["is_state_parameter"] is true() %}
+    {{ param["id"] }} = GetParameter("{{ param['id'] }}");
+{% endif %}
+{% endfor %}
+
+    // RULES:
+{% for rule in rules %}
+    {{ rule["lhs"] }} = {{ rule["rhs"] }};
+{% endfor %}
+
+    // UPDATE STATE PARAMETERS:
+{% for sp in species %}
+{% if sp["is_state_parameter"] is true() %}
+    SetParameter("{{ sp['id'] }}", {{ sp['id'] }});
+{% endif %}
+{% endfor %}
+
+{% for param in parameters %}
+{% if param["is_state_parameter"] is true() %}
+    SetParameter("{{ param['id'] }}", {{ param['id'] }});
+{% endif %}
+{% endfor %}
+
+{% if reactions %}
+    // REACTIONS:
+
 {% for reaction in reactions %}
   {% if reaction["name"] %}
     // {{ reaction["name"] }}
@@ -78,7 +142,7 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
     double {{ reaction["varname"] }} = 0.0;
     {
   {% for param in reaction["parameters"] %}
-        double {{ param["id"] }} = {{ param["value"] }};
+        double {{ param["varname"] }} = {{ param["value"] }};
   {% endfor %}
         {{ reaction["varname"] }} = {{ reaction["rhs"] }};
     }
@@ -87,75 +151,95 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
   {% endif %}
 
 {% endfor %}
-
+{% endif %}
+    // ODES:
 {% for sp in species %}
 {% if sp["ode"] %}
-    {{ sp["ode"]["lhs"] }} = {{ sp["ode"]["rhs"] }}; // d{{ sp["name"] }}/dt
+    {{ sp["ode"]["lhs"] }} = {{ sp["ode"]["rhs"] }}; // d[{{ sp["name"] }}]/dt
 {% endif %}
 {% endfor %}
 
-    /* Account for the differences in timescales. */
+    // Scale time appropriately
 }
 
 {% if events %}
 bool {{ ode_class_name }}::CalculateStoppingEvent(double time, const std::vector<double> & rY)
 {
-    // Return true if all events have been triggered.
-    return AreAllEventsSatisfied(time, rY);
-}
+    if (time <= 0.0)
+    {
+        return false;
+    }
 
-void {{ ode_class_name }}::CheckAndUpdateEvents(double time, const std::vector<double> & rY)
-{
+    // STATE VARIABLES:
+{% for sp in species %}
+{% if sp["is_state_variable"] is true() %}
+    double {{ sp["id"] }} = rY[{{ sp["state_variable_index"] }}];
+{% endif %}
+{% endfor %}
+
+    // STATE PARAMETERS:
+{% for sp in species %}
+{% if sp["is_state_parameter"] is true() %}
+    {{ sp["id"] }} = GetParameter("{{ sp['id'] }}");
+{% endif %}
+{% endfor %}
+
+{% for param in parameters %}
+{% if param["is_state_parameter"] is true() %}
+    {{ param["id"] }} = GetParameter("{{ param['id'] }}");
+{% endif %}
+{% endfor %}
+
+    bool stop = false;
+
     std::vector<double> dy(rY.size()); // Initialise derivatives vector
     EvaluateYDerivatives(time, rY, dy);
 
 {% for event in events %}
     if ({{ event["trigger"] }})
     {
+        if (!eventsSatisfied[{{ loop.index0 }}])
+        {
+            stop = true;
 {% for assignment in event["assignments"] %}
-        {{ assignment }}
+            {{ assignment }}
 {% endfor %}
+        }
         eventsSatisfied[{{ loop.index0 }}] = true;
     }
+    else
+    {
+        eventsSatisfied[{{ loop.index0 }}] = false;
+    }
 {% endfor %}
-}
 
-bool {{ ode_class_name }}::AreAllEventsSatisfied(double time, const std::vector<double>& rY)
-{
-    CheckAndUpdateEvents(time, rY);
-    bool events_satisfied = true;
-    if (std::find(eventsSatisfied.begin(), eventsSatisfied.end(), false) != eventsSatisfied.end())
-    {
-        events_satisfied = false;
-    }
-    if (events_satisfied) // Reset events vector if cell division is triggered
-    {
-        std::fill(eventsSatisfied.begin(), eventsSatisfied.end(), false);
-    }
-    return events_satisfied;
+    return stop;
 }
 {% endif %}
 
 template <>
 void CellwiseOdeSystemInformation<{{ ode_class_name }}>::Initialise()
 {
+    // STATE VARIABLES:
 {% for sp in species %}
 {% if sp["is_state_variable"] is true() %}
     this->mVariableNames.push_back("{{ sp['id'] }}");
     this->mVariableUnits.push_back("{{ sp['units'] }}");
     this->mInitialConditions.push_back({{ sp['concentration'] }});
 
-{% elif sp["is_state_parameter"] is true() %}
+{% endif %}
+{% endfor %}
+
+    // STATE PARAMETERS:
+{% for sp in species %}
+{% if sp["is_state_parameter"] is true() %}
     this->mParameterNames.push_back("{{ sp['id'] }}");
     this->mParameterUnits.push_back("{{ sp['units'] }}");
 
 {% endif %}
 {% endfor %}
-
-    /* Define state parameters. */
-    // Parameters without set values must be externally defined
 {% for param in parameters %}
-{% if param["is_defined"] is false() %}
+{% if param["is_state_parameter"] is true() %}
     this->mParameterNames.push_back("{{ param['id'] }}");
     this->mParameterUnits.push_back("{{ param['units'] }}");
 
@@ -164,7 +248,7 @@ void CellwiseOdeSystemInformation<{{ ode_class_name }}>::Initialise()
     this->mInitialised = true;
 }
 
-/* Define {{ wrapper_class_name }} using wrappers. */
+// Define {{ wrapper_class_name }} using wrappers
 #include "{{ wrapper_class_name }}.hpp"
 #include "{{ wrapper_class_name }}.cpp"
 

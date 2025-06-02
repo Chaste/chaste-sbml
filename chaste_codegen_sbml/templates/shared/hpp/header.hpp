@@ -5,7 +5,6 @@
 #include <iostream>
 
 #include <boost/serialization/base_object.hpp>
-#include <boost/serialization/shared_ptr.hpp>
 
 #include "AbstractOdeSystem.hpp"
 #include "ChasteSerialization.hpp"
@@ -13,91 +12,107 @@
 class {{ ode_class_name }} : public AbstractOdeSystem
 {
 private:
+    // (De-)serialize {{ ode_class_name }}
+    friend class boost::serialization::access;
 
-    /* Declare model compartments. */
+    template <class Archive>
+    void serialize(Archive &ar, const unsigned int version)
+    {
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractOdeSystem);
+    }
+
+{% if compartments %}
+    // COMPARTMENTS:
 {% for compartment in compartments %}
     double {{ compartment["id"] }};
 {% endfor %}
+{% endif %}
 
-    /* Declare model parameters. */
+    // CONST PARAMETERS:
 {% for parameter in parameters %}
+{% if parameter["is_state_parameter"] is false() %}
+    const double {{ parameter["id"] }} = {{ parameter["value"] }};
+{% endif %}
+{% endfor %}
+
+    // STATE VARIABLES:
+{% for sp in species %}
+{% if sp["is_state_variable"] is true() %}
+    double {{ sp["id"] }}; // {{ sp["name"] }}
+{% endif %}
+{% endfor %}
+
+    // STATE PARAMETERS:
+{% for sp in species %}
+{% if sp["is_state_parameter"] is true() %}
+    double {{ sp["id"] }};
+{% endif %}
+{% endfor %}
+
+{% for parameter in parameters %}
+{% if parameter["is_state_parameter"] is true() %}
     double {{ parameter["id"] }};
+{% endif %}
 {% endfor %}
 
 {% if events %}
+    // EVENTS:
     std::vector<bool> eventsSatisfied;
 {% endif %}
 
-    friend class boost::serialization::access;
-    template <class Archive>
-    void serialize(Archive &archive, const unsigned int version)
-    {
-        archive &boost::serialization::base_object<AbstractOdeSystem>(*this);
-    }
-
 public:
-
-    /* Default constructor. */
     {{ ode_class_name }}(std::vector<double> stateVariables = std::vector<double>());
 
-    /* Destructor. */
     ~{{ ode_class_name }}();
-
-    /* Declare model functions. */
-{% for fd in function_definitions %}
-    double {{ fd["id"] }}({{ fd["args"] }});
-{% endfor %}
 
     void Init();
 
     void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
 
 {% if events %}
-    // Stopping event is required for Cell Cycle Models to divide.
     bool CalculateStoppingEvent(double time, const std::vector<double>& rY);
-
-    // Checks if any events have been triggered and updates the system accordingly.
-    void CheckAndUpdateEvents(double time, const std::vector<double>& rY);
-
-    // Checks whether all events are satisifed.
-    bool AreAllEventsSatisfied(double time, const std::vector<double>& rY);
 {% endif %}
+
+    // FUNCTION DEFINITIONS:
+{% for fd in function_definitions %}
+    double {{ fd["id"] }}({{ fd["args"] }});
+{% endfor %}
 };
 
 namespace
 {
-namespace serialization
-{
-/* Serialize information required to construct a {{ ode_class_name }}. */
-template <class Archive>
-inline void save_construct_data(
-    Archive &ar, const {{ ode_class_name }} *t, const unsigned int file_version)
-{
-    const std::vector<double> state_variables = t->rGetConstStateVariables();
-    ar & state_variables;
-}
+    namespace serialization
+    {
+        // Provide constructor for serializing {{ ode_class_name }}
+        template <class Archive>
+        inline void save_construct_data(Archive &ar, const {{ode_class_name}} * t, const unsigned int version)
+        {
+            // Save data required to construct instance
+            const std::vector<double> state_variables = t->rGetConstStateVariables();
+            ar << state_variables;
+        }
 
-/* De-serialize constructor parameters and intitialise a {{ ode_class_name }}. */
-template <class Archive>
-inline void load_construct_data(
-    Archive &ar, {{ ode_class_name }} *t, const unsigned int file_version)
-{
-    std::vector<double> state_variables;
-    ar & state_variables;
+        // Provide constructor for de-serializing {{ ode_class_name }}
+        template <class Archive>
+        inline void load_construct_data(Archive &ar, {{ode_class_name}} * t, const unsigned int version)
+        {
+            // Retrieve data from archive required to construct new instance
+            std::vector<double> state_variables;
+            ar >> state_variables;
 
-    // Invoke inplace constructor to initialise instance
-    ::new (t) {{ ode_class_name }}(state_variables);
-}
-}
+            // Invoke inplace constructor to initialise instance
+            ::new (t){{ode_class_name}}(state_variables);
+        }
+    } // namespace serialization
 } // namespace ...
 
-/* Define {{ wrapper_class_name }} using wrappers. */
+// Define {{ wrapper_class_name }} using wrappers
 #include "{{ wrapper_class_name }}.hpp"
 #include "{{ wrapper_class_name }}.cpp"
 
 typedef {{ wrapper_class_name }}<{{ ode_class_name }}, {{ num_state_vars }}> {{ model_class_name }};
 
-/* Declare identifiers for the serializer */
+// Declare identifiers for the serializer
 #include "SerializationExportWrapper.hpp"
 CHASTE_CLASS_EXPORT({{ ode_class_name }})
 EXPORT_TEMPLATE_CLASS2({{ wrapper_class_name }}, {{ ode_class_name }}, {{ num_state_vars }})
