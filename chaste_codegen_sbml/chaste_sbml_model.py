@@ -36,8 +36,6 @@ class ChasteSbmlModel:
         lstrip_blocks=True,
     )
 
-    SPECIAL_PARAMETER_NAMES = ["wnt", "gamma", "ComplexTransit"]
-
     # -- PUBLIC ---------------------------------------
 
     def __init__(self, sbml_file: str, model_name: str = None, model_suffix: str = None) -> None:
@@ -55,7 +53,8 @@ class ChasteSbmlModel:
             self._model_name = model_name
         else:
             filename = os.path.splitext(os.path.basename(self._sbml_file))[0]
-            self._model_name = varname_camelcase(filename).title()
+            model_name = varname_camelcase(filename) + "Sbml"
+            self._model_name = model_name[0].upper() + model_name[1:]
 
         self._model_suffix = model_suffix
         self._ode_class_name = self._model_name + ODE_SUFFIX
@@ -139,20 +138,19 @@ class ChasteSbmlModel:
         """
         self._outputs[filename] = code
 
-    def _convert_ast_formula(self, ast_formula: "ASTNode", convert_names=True) -> str:
+    def _convert_ast_formula(self, ast_formula: "ASTNode") -> str:
         """Convert SBML AST formula to equivalent C++ string.
 
         :param ast: The AST formula.
         :param convert_names: Whether to convert state variable and parameter names.
         :return: The equivalent C++ string.
         """
-        return self._convert_str_formula(formulaToString(ast_formula), convert_names)
+        return self._convert_str_formula(formulaToString(ast_formula))
 
-    def _convert_str_formula(self, formula: str, convert_names=True) -> str:
+    def _convert_str_formula(self, formula: str) -> str:
         """Convert SBML string formula to equivalent C++ string.
 
         :param ast: The string formula.
-        :param convert_names: Whether to convert state variable and parameter names.
         :return: The equivalent C++ string.
         """
 
@@ -209,42 +207,42 @@ class ChasteSbmlModel:
 
         # SBML functions with custom implementations
         custom_functions = {
-            "and": "sm_and",
-            "acot": "sm_acot",
-            "acoth": "sm_acoth",
-            "acsc": "sm_acsc",
-            "acsch": "sm_acsch",
-            "asec": "sm_asec",
-            "asech": "sm_asech",
-            "arccot": "sm_acot",
-            "arccoth": "sm_acoth",
-            "arccsc": "sm_acsc",
-            "arccsch": "sm_acsch",
-            "arcsec": "sm_asec",
-            "arcsech": "sm_asech",
-            "cot": "sm_cot",
-            "coth": "sm_coth",
-            "csc": "sm_csc",
-            "csch": "sm_csch",
-            "eq": "sm_eq",
-            "factorial": "sm_factorial",
-            "geq": "sm_geq",
-            "gt": "sm_gt",
-            "leq": "sm_leq",
-            "log": "sm_log",
-            "lt": "sm_lt",
-            "max": "sm_max",
-            "min": "sm_min",
-            "neq": "sm_neq",
-            "not": "sm_not",
-            "or": "sm_or",
-            "piecewise": "sm_piecewise",
-            "quotient": "sm_quotient",
-            "root": "sm_root",
-            "sec": "sm_sec",
-            "sech": "sm_sech",
-            "sqr": "sm_sqr",
-            "xor": "sm_xor",
+            "and": "and_",
+            "acot": "acot",
+            "acoth": "acoth",
+            "acsc": "acsc",
+            "acsch": "acsch",
+            "asec": "asec",
+            "asech": "asech",
+            "arccot": "acot",
+            "arccoth": "acoth",
+            "arccsc": "acsc",
+            "arccsch": "acsch",
+            "arcsec": "asec",
+            "arcsech": "asech",
+            "cot": "cot",
+            "coth": "coth",
+            "csc": "csc",
+            "csch": "csch",
+            "eq": "eq",
+            "factorial": "factorial",
+            "geq": "geq",
+            "gt": "gt",
+            "leq": "leq",
+            "log": "log",
+            "lt": "lt",
+            "max": "max",
+            "min": "min",
+            "neq": "neq",
+            "not": "not_",
+            "or": "or_",
+            "piecewise": "piecewise",
+            "quotient": "quotient",
+            "root": "root",
+            "sec": "sec",
+            "sech": "sech",
+            "sqr": "sqr",
+            "xor": "xor_",
         }
 
         tokens = re.findall(r"\w+|\W+", formula)
@@ -264,17 +262,7 @@ class ChasteSbmlModel:
                 cpp_token = f"std::{renamed_functions[token]}"
 
             elif token in custom_functions:
-                cpp_token = f"sbmlmath::{custom_functions[token]}"
-
-            # Replace state parameter and variable names.
-            elif convert_names:
-                if self._is_state_variable(token):
-                    index = self._get_state_variable_index(token)
-                    cpp_token = f"rY[{index}]"
-
-                elif self._is_state_parameter(token):
-                    index = self._get_state_parameter_index(token)
-                    cpp_token = f"this->mParameters[{index}]"
+                cpp_token = f"sm::{custom_functions[token]}"
 
             cpp_tokens.append(cpp_token)
         cpp_formula = "".join(cpp_tokens)
@@ -312,9 +300,13 @@ class ChasteSbmlModel:
 
                 lhs = assignment.getVariable()
                 if self._is_state_variable(lhs):
-                    assignment_formulas.append(f'this->SetStateVariable("{lhs}", {rhs});')
+                    assignment_formulas.append(
+                        f'SetStateVariable("{lhs}", {rhs});'
+                    )
                 elif self._is_state_parameter(lhs):
-                    assignment_formulas.append(f'this->SetParameter("{lhs}", {rhs});')
+                    assignment_formulas.append(
+                        f'SetParameter("{lhs}", {rhs});'
+                    )
                 else:
                     assignment_formulas.append(f"{lhs} = {rhs};")
 
@@ -366,30 +358,15 @@ class ChasteSbmlModel:
             name = param.getName()
             varname = self._get_varname(param)
 
-            default = 0.0
-            is_special = self._is_special_parameter(param)
-            if is_special:
-                # Special strings in the parameter name
-                # TODO: Review how to handle these special parameters
-                if any(x in name for x in ["gamma", "ComplexTransit"]):
-                    default = 1.0
-                # 0.0 for wnt and everything else
-            elif param.isSetValue():
-                default = param.getValue()
-
-            value = param.getValue()  # TODO: if param.isSetValue() else p_default ?
+            value = param.getValue() if param.isSetValue() else 0.0
             units = param.getUnits() if param.isSetUnits() else "non-dim"
-
-            is_defined = (param.isSetValue() or param_id in self._rules_dict) and not is_special
 
             is_state_parameter = self._is_state_parameter(param_id)
             state_parameter_index = self._get_state_parameter_index(param_id)
 
             parameter_dicts.append(
                 {
-                    "default": default,
                     "id": param_id,
-                    "is_defined": is_defined,
                     "is_state_parameter": is_state_parameter,
                     "name": name,
                     "state_parameter_index": state_parameter_index,
@@ -453,14 +430,12 @@ class ChasteSbmlModel:
             name = rule.getName()
             lhs = rule.getVariable()
             rhs = self._convert_str_formula(rule.getFormula())
-            is_parameter = self._is_parameter(lhs)
 
             rule_dict = {
                 "id": rule_id,
                 "name": name,
                 "rhs": rhs,
                 "lhs": lhs,
-                "is_parameter": is_parameter,
             }
             rule_dicts.append(rule_dict)
         return rule_dicts
@@ -476,7 +451,7 @@ class ChasteSbmlModel:
 
         for species in self._species:
             species_id = species.getId()
-            name = species.getName()
+            name = self._get_name(species)
             varname = self._get_varname(species)
             concentration = get_species_concentration(species)
 
@@ -490,7 +465,7 @@ class ChasteSbmlModel:
             comp = self._compartments.get(comp_id)
             comp_varname = self._get_varname(comp)
 
-            # If there's a compartment we'll normalise the ODE so declare it as non-dimensional
+            # If there's a compartment we'll normalise the ODE, so declare it as non-dimensional
             units = "non-dim" if comp else species.getSubstanceUnits()
 
             species_dict = {
@@ -526,22 +501,22 @@ class ChasteSbmlModel:
                 rhs = f"(drag - rY[{state_variable_index}]) / {comp_varname}"
                 ode_index += 1
 
-            elif species_id in self._rules_dict:
-                # Species defined by algebraic rules are not in odes_dict
-                # Assuming these are assignments where variables are added together to represent a total
-                formula = self._rules_dict[species_id]
-                tokens = formula.split(" ")
-                rhs_tokens = []
-                for token in tokens:
-                    state_var_index = self._get_state_variable_index(token)
-                    if state_var_index is not None:
-                        rhs_tokens.append(f"rDY[{state_var_index}]")
+            # elif species_id in self._rules_dict:
+            #     # Species defined by algebraic rules are not in odes_dict
+            #     # Assuming these are assignments where variables are added together to represent a total
+            #     formula = self._rules_dict[species_id]
+            #     tokens = formula.split(" ")
+            #     rhs_tokens = []
+            #     for token in tokens:
+            #         state_var_index = self._get_state_variable_index(token)
+            #         if state_var_index is not None:
+            #             rhs_tokens.append(f"rDY[{state_var_index}]")
 
-                if rhs_tokens:
-                    index = ode_index
-                    lhs = f"rDY[{index}]"
-                    rhs = f"({' + '.join(rhs_tokens)}) / {comp_varname}"
-                    ode_index += 1
+            #     if rhs_tokens:
+            #         index = ode_index
+            #         lhs = f"rDY[{index}]"
+            #         rhs = f"({' + '.join(rhs_tokens)}) / {comp_varname}"
+            #         ode_index += 1
 
             # TODO: include other rules
 
@@ -586,7 +561,7 @@ class ChasteSbmlModel:
         """
         return self._jinja_env.get_template(name)
 
-    def _get_template_vars(self, hpp_filename: str) -> dict[str, str]:
+    def _get_template_vars(self, hpp_filename: str) -> dict[str, "Any"]:
         """Generate the template variables for the model cpp file.
 
         :param hpp_filename: The hpp filename for the model.
@@ -661,14 +636,13 @@ class ChasteSbmlModel:
         """
         return any(obj_id == p.getId() for p in self._parameters)
 
-    def _is_special_parameter(self, parameter: "Parameter") -> bool:
-        """Check if a parameter has a special name.
+    def _is_species(self, obj_id: str) -> bool:
+        """Check if ID belongs to a species.
 
-        :param parameter: The Parameter.
-        :return: True if special, False otherwise.
+        :param obj_id: The ID to check.
+        :return: True if the ID belongs to a species.
         """
-        name = parameter.getName()
-        return name and any(s in name for s in self.SPECIAL_PARAMETER_NAMES)
+        return any(obj_id == p.getId() for p in self._species)
 
     def _is_state_parameter(self, obj_id: str) -> bool:
         """Check if a Species or Parameter is defined as a state parameter for Chaste.
@@ -691,24 +665,19 @@ class ChasteSbmlModel:
         self._state_parameters = {}
         self._state_variables = {}
 
+        # Any species defined by an ODE or rule is a state variable.
+        # Any other species is a state parameter.
         for species in self._species:
             species_id = species.getId()
             if (species_id in self._odes_dict) or (species_id in self._rules_dict):
-                # Any species defined by an ODE or rule is a state variable
                 self._add_state_variable(species_id)
             else:
-                # All other species are defined as state parameters
                 self._add_state_parameter(species_id)
 
+        # Non-constant parameters are state parameters.
         for param in self._parameters:
-            param_id = param.getId()
-            if self._is_special_parameter(param):
-                # Parameters with special strings in their name are defined as state parameters.
-                self._add_state_parameter(param_id)
-
-            elif not (param.isSetValue() or (param_id in self._rules_dict)):
-                # Parameters with unset values are also defined as state parameters.
-                self._add_state_parameter(param_id)
+            if param.isSetConstant() and not param.getConstant():
+                self._add_state_parameter(param.getId())
 
     def _update_odes_dict(self) -> None:
         """Set the ODEs dictionary of equations corresponding to each species.
