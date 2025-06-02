@@ -39,16 +39,16 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ChasteSerialization.hpp"
 #include <boost/serialization/base_object.hpp>
 
-//#include "Goldbeter1991OdeSystem.hpp"
-#include "AbstractOdeSrnModel.hpp"
+//#include "Goldbeter1991SbmlOdeSystem.hpp"
+#include "AbstractOdeBasedCellCycleModel.hpp"
 
 
 /**
- * A wrapper around AbstractOdeSrnModel that can be templated on the ODE system for
+ * A wrapper around AbstractOdeBasedCellCycleModel that can be templated on the ODE system for
  * use with SBML generated models
  */
 template<typename SBMLODE, unsigned SIZE>
-class SbmlCellCycleWrapperModel : public AbstractOdeSrnModel
+class SbmlCellCycleWrapperModel : public AbstractOdeBasedCellCycleModel
 {
 private:
 
@@ -63,21 +63,21 @@ private:
     template<class Archive>
     void serialize(Archive & archive, const unsigned int version)
     {
-        archive & boost::serialization::base_object<AbstractOdeSrnModel>(*this);
+        archive & boost::serialization::base_object<AbstractOdeBasedCellCycleModel>(*this);
     }
 
 protected:
     /**
-     * Protected copy-constructor for use by CreateSrnModel.  The only way for external code to create a copy of a SRN model
+     * Protected copy-constructor for use by CreateCellCycleModel.  The only way for external code to create a copy of a Cell Cycle model
      * is by calling that method, to ensure that a model of the correct subclass is created.
      * This copy-constructor helps subclasses to ensure that all member variables are correctly copied when this happens.
      *
      * This method is called by child classes to set member variables for a daughter cell upon cell division.
-     * Note that the parent SRN model will have had ResetForDivision() called just before CreateSrnModel() is called,
+     * Note that the parent Cell Cycle model will have had ResetForDivision() called just before CreateCellCycleModel() is called,
      * so performing an exact copy of the parent is suitable behaviour. Any daughter-cell-specific initialisation
      * can be done in InitialiseDaughterCell().
      *
-     * @param rModel the SRN model to copy.
+     * @param rModel the Cell Cycle model to copy.
      */
     SbmlCellCycleWrapperModel(const SbmlCellCycleWrapperModel& rModel);
 
@@ -93,12 +93,11 @@ public:
 
 
     /**
-     * Overridden builder method to create new copies of
-     * this srn model.
+     * Overridden builder method to create new copies of this Cell Cycle model.
      *
-     * @return Returns a copy of the current srn model.
+     * @return Returns a copy of the current Cell Cycle model.
      */
-    AbstractSrnModel* CreateSrnModel();
+    AbstractCellCycleModel* CreateCellCycleModel();
 
     /**
      * Initialise the cell-cycle model at the start of a simulation.
@@ -108,16 +107,11 @@ public:
     void Initialise(); // override
 
     /**
-     * Overridden SimulateToTime() method for custom behaviour
-     */
-    void SimulateToCurrentTime();
-
-    /**
      * Outputs cell-cycle model parameters to file.
      *
      * @param rParamsFile the file stream to which the parameters are output
      */
-    void OutputSrnModelParameters(out_stream& rParamsFile);
+    void OutputCellCycleModelParameters(out_stream& rParamsFile);
 
     /**
      * @return the value of a given state variable.

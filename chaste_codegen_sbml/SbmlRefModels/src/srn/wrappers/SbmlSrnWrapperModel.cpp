@@ -107,34 +107,30 @@ void SbmlSrnWrapperModel<SBMLODE, SIZE>::SimulateToCurrentTime()
     assert(mpOdeSystem != NULL);
     assert(mpCell != NULL);
 
-    /* Custom behaviour: store the state variables as cell data and set any parameters
-     * using cell data, so that we can visualise different concentrations in Paraview.
+    /* Custom behaviour: store the state variables and state parameters as
+     * cell data so that we can visualise different concentrations in Paraview.
      */
 
+    // Set state parameters as cell data
     std::vector<std::string> parameterNames = mpOdeSystem->rGetParameterNames();
-    // Set parameters that need to be set
     for (unsigned i = 0; i < parameterNames.size(); i++)
     {
         std::string parameterName = parameterNames[i];
-
-        // Get the value from cell data
-        double parameterValue = mpCell->GetCellData()->GetItem(parameterName);
-
-        mpOdeSystem->SetParameter(parameterName, parameterValue);
+        double parameterValue = mpOdeSystem->GetParameter(i);
+        mpCell->GetCellData()->SetItem(parameterName, parameterValue);
     }
 
+    // Set state variables as cell data
     std::vector<std::string> stateVariableNames = mpOdeSystem->rGetStateVariableNames();
 
     for (unsigned i = 0; i < stateVariableNames.size(); i++)
     {
         std::string stateName = stateVariableNames[i];
-        double stateValue = mpOdeSystem->rGetStateVariables()[i];
-
-        // Set current state variable value as cell data
+        double stateValue = mpOdeSystem->GetStateVariable(i);
         mpCell->GetCellData()->SetItem(stateName, stateValue);
     }
 
-    // run the ODE simulation as needed
+    // Run the ODE simulation as needed
     AbstractOdeSrnModel::SimulateToCurrentTime();
 }
 

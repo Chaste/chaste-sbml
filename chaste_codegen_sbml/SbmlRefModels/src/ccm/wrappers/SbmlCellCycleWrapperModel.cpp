@@ -40,7 +40,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SbmlCellCycleWrapperModel.hpp"
 #include "CellCycleModelOdeSolver.hpp"
 #include "RungeKutta4IvpOdeSolver.hpp"
-#include "AbstractOdeSrnModel.hpp"
+#include "AbstractOdeBasedCellCycleModel.hpp"
 #include "CvodeAdaptor.hpp"
 //#include "Exception.hpp"
 #include "Debug.hpp"
@@ -48,7 +48,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 template<typename SBMLODE, unsigned SIZE>
 SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SbmlCellCycleWrapperModel(boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver)
-    : AbstractOdeSrnModel(SIZE, pOdeSolver)
+    : AbstractOdeBasedCellCycleModel(SIZE, pOdeSolver)
 {
 
 	// TODO add CVODE solver. See VanLeeuwen CCM in trunk
@@ -75,18 +75,18 @@ SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SbmlCellCycleWrapperModel(boost::share
 //New method for copy constructor
 template<typename SBMLODE, unsigned SIZE>
 SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SbmlCellCycleWrapperModel(const SbmlCellCycleWrapperModel& rModel)
-    : AbstractOdeSrnModel(rModel)
+    : AbstractOdeBasedCellCycleModel(rModel)
 {
     /*
-     * Set each member variable of the new SRN model that inherits
+     * Set each member variable of the new Cell Cycle model that inherits
      * its value from the parent.
      *
-     * Note 1: some of the new SRN model's member variables
+     * Note 1: some of the new Cell Cycle model's member variables
      * will already have been correctly initialized in its constructor.
      *
-     * Note 2: one or more of the new SRN model's member variables
+     * Note 2: one or more of the new Cell Cycle model's member variables
      * may be set/overwritten as soon as InitialiseDaughterCell() is called on
-     * the new SRN model.
+     * the new Cell Cycle model.
      *
      * Note 3: Only set the variables defined in this class. Variables defined
      * in parent classes will be defined there.
@@ -97,87 +97,53 @@ SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SbmlCellCycleWrapperModel(const SbmlCe
 }
 
 template<typename SBMLODE, unsigned SIZE>
-AbstractSrnModel* SbmlCellCycleWrapperModel<SBMLODE, SIZE>::CreateSrnModel()
+AbstractCellCycleModel* SbmlCellCycleWrapperModel<SBMLODE, SIZE>::CreateCellCycleModel()
 {
 	return new SbmlCellCycleWrapperModel(*this);
-}
-
-
-template<typename SBMLODE, unsigned SIZE>
-void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SimulateToCurrentTime()
-{
-
-	assert(mpOdeSystem != NULL);
-	assert(mpCell != NULL);
-
-	/* Custom behaviour: store the state variables as cell data and set any parameters
-	 * using cell data, so that we can visualise different concentrations in Paraview.
-	 */
-
-	std::vector<std::string> parameterNames = mpOdeSystem->rGetParameterNames();
-	//Set parameters that need to be set
-	for (unsigned i = 0; i < parameterNames.size(); i++)
-	{
-		std::string parameterName = parameterNames[i];
-
-		//Get the value from cell data
-		double parameterValue = mpCell->GetCellData()->GetItem(parameterName);
-
-		mpOdeSystem->SetParameter(parameterName, parameterValue);
-	}
-
-	std::vector<std::string> stateVariableNames = mpOdeSystem->rGetStateVariableNames();
-
-	for (unsigned i = 0; i < stateVariableNames.size(); i++)
-	{
-		std::string stateName = stateVariableNames[i];
-		double stateValue = mpOdeSystem->rGetStateVariables()[i];
-
-		//Set current state variable value as cell data
-		mpCell->GetCellData()->SetItem(stateName, stateValue);
-	}
-
-
-    // run the ODE simulation as needed
-    AbstractOdeSrnModel::SimulateToCurrentTime();
-
-
 }
 
 template<typename SBMLODE, unsigned SIZE>
 void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::Initialise()
 {
-	AbstractOdeSrnModel::Initialise(new SBMLODE);
+	AbstractOdeBasedCellCycleModel::Initialise(new SBMLODE);
 
 	//Initialise cell data
 	assert(mpOdeSystem != NULL);
 	assert(mpCell != NULL);
 
-	/* Custom behaviour: store the state variables as cell data and set any parameters
-	 * using cell data, so that we can visualise different concentrations in Paraview.
-	 */
+    /* Store the state variables and state parameters as
+     * cell data so that we can visualise different concentrations in Paraview.
+     */
 
-	std::vector<std::string> stateVariableNames = mpOdeSystem->rGetStateVariableNames();
+    // Set state parameters as cell data
+    std::vector<std::string> parameterNames = mpOdeSystem->rGetParameterNames();
+    for (unsigned i = 0; i < parameterNames.size(); i++)
+    {
+        std::string parameterName = parameterNames[i];
+        double parameterValue = mpOdeSystem->GetParameter(i);
+        mpCell->GetCellData()->SetItem(parameterName, parameterValue);
+    }
 
-	for (unsigned i = 0; i < stateVariableNames.size(); i++)
-	{
-		std::string stateName = stateVariableNames[i];
-		double stateValue = mpOdeSystem->rGetStateVariables()[i];
+    // Set state variables as cell data
+    std::vector<std::string> stateVariableNames = mpOdeSystem->rGetStateVariableNames();
 
-		//Set current state variable value as cell data
-		mpCell->GetCellData()->SetItem(stateName, stateValue);
-	}
+    for (unsigned i = 0; i < stateVariableNames.size(); i++)
+    {
+        std::string stateName = stateVariableNames[i];
+        double stateValue = mpOdeSystem->GetStateVariable(i);
+        mpCell->GetCellData()->SetItem(stateName, stateValue);
+    }
 
 }
 
 
 template<typename SBMLODE, unsigned SIZE>
-void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::OutputSrnModelParameters(out_stream& rParamsFile)
+void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::OutputCellCycleModelParameters(out_stream& rParamsFile)
 {
     // No new parameters to output.
 
     // Call direct parent class
-    AbstractOdeSrnModel::OutputSrnModelParameters(rParamsFile);
+    AbstractOdeBasedCellCycleModel::OutputCellCycleModelParameters(rParamsFile);
 }
 
 template<typename SBMLODE, unsigned SIZE>
