@@ -1,6 +1,6 @@
 TestSbmlMath.hpp
-ccm/TestTysonNovak2001SBML.hpp
-srn/TestGoldbeter1991SBML.hpp
-srn/TestTan2014SBML.hpp
-srn/TestVanLeeuwen2007NonDimSBML.hpp
-srn/TestVanLeeuwen2007SBML.hpp
+ccm/TestTysonNovak2001Sbml.hpp
+srn/TestGoldbeter1991Sbml.hpp
+srn/TestTan2014Sbml.hpp
+srn/TestVanLeeuwen2007NonDimSbml.hpp
+srn/TestVanLeeuwen2007Sbml.hpp
