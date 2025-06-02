@@ -187,19 +187,19 @@ public:
       // or
       // plot "goldbeter_1991.dat" u 1:2, "" u 1:3, "" u 1:4 ... for all species
 
-      OutputFileHandler handler("");
-      out_stream file = handler.OpenOutputFile("goldbeter_1991.dat");
-      for (unsigned i = 0; i < solutions.rGetSolutions().size(); i++)
-      {
-        (*file) << solutions.rGetTimes()[i];
-        for (unsigned j = 0; j < solutions.rGetSolutions()[i].size(); j++)
-        {
-          (*file) << "\t" << solutions.rGetSolutions()[i][j];
-        }
-        (*file) << "\n"
-                << std::flush;
-      }
-      file->close();
+      // OutputFileHandler handler("");
+      // out_stream file = handler.OpenOutputFile("goldbeter_1991.dat");
+      // for (unsigned i = 0; i < solutions.rGetSolutions().size(); i++)
+      // {
+      //   (*file) << solutions.rGetTimes()[i];
+      //   for (unsigned j = 0; j < solutions.rGetSolutions()[i].size(); j++)
+      //   {
+      //     (*file) << "\t" << solutions.rGetSolutions()[i][j];
+      //   }
+      //   (*file) << "\n"
+      //           << std::flush;
+      // }
+      // file->close();
     }
     catch (Exception &e)
     {

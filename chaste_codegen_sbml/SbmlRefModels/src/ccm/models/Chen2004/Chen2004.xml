@@ -5508,6 +5508,7 @@
         </kineticLaw>
       </reaction>
     </listOfReactions>
+
     <listOfEvents>
       <event id="reset_ORI" metaid="metaid_0000359" name="reset ORI">
         <annotation>
@@ -5527,8 +5528,6 @@
                 </rdf:Bag>
               </bqbiol:isVersionOf>
             </rdf:Description>
-
-
           </rdf:RDF>
         </annotation>
         <trigger metaid="_596399">
@@ -5556,6 +5555,7 @@
           </eventAssignment>
         </listOfEventAssignments>
       </event>
+
       <event id="start_S" metaid="metaid_0000360" name="start DNA synthesis">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -5579,8 +5579,6 @@
                 </rdf:Bag>
               </bqbiol:isVersionOf>
             </rdf:Description>
-
-
           </rdf:RDF>
         </annotation>
         <trigger metaid="_596423">
@@ -5621,8 +5619,6 @@
                 </rdf:Bag>
               </bqbiol:isVersionOf>
             </rdf:Description>
-
-
           </rdf:RDF>
         </annotation>
         <trigger metaid="_596459">
@@ -5668,8 +5664,6 @@
                 </rdf:Bag>
               </bqbiol:isVersionOf>
             </rdf:Description>
-
-
           </rdf:RDF>
         </annotation>
         <trigger metaid="_596507">

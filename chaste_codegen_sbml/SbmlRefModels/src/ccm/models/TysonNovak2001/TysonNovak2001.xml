@@ -1361,6 +1361,7 @@
         </kineticLaw>
       </reaction>
     </listOfReactions>
+
     <listOfEvents>
       <event metaid="metaid_0000079" name="Cell division">
         <annotation>
@@ -1373,8 +1374,6 @@
                 </rdf:Bag>
               </bqbiol:is>
             </rdf:Description>
-
-
           </rdf:RDF>
         </annotation>
         <trigger metaid="_241261">
@@ -1404,5 +1403,6 @@
         </listOfEventAssignments>
       </event>
     </listOfEvents>
+
   </model>
 </sbml>

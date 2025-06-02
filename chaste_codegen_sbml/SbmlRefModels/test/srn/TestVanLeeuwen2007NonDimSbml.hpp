@@ -33,8 +33,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef TESTVANLEEUWEN2007SBML_HPP_
-#define TESTVANLEEUWEN2007SBML_HPP_
+#ifndef TESTVANLEEUWEN2007NONDIMSBML_HPP_
+#define TESTVANLEEUWEN2007NONDIMSBML_HPP_
 
 #include <iostream>
 #include <vector>
@@ -52,18 +52,18 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RungeKutta4IvpOdeSolver.hpp"
 #include "Timer.hpp"
 
-#include "VanLeeuwen2007OdeSystemAndSrnModel.hpp"
+#include "VanLeeuwen2007NonDimSbmlOdeSystemAndSrnModel.hpp"
 
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
-class TestVanLeeuwen2007SBML : public AbstractCellBasedTestSuite
+class TestVanLeeuwen2007NonDimSbml : public AbstractCellBasedTestSuite
 {
 public:
     void TestOdeArchiving()
     {
         OutputFileHandler handler("archive", false);
-        std::string archive_filename = handler.GetOutputDirectoryFullPath() + "van_leeuwen_2007_ode.arch";
+        std::string archive_filename = handler.GetOutputDirectoryFullPath() + "van_leeuwen_2007_nondim_ode.arch";
 
         {
             std::vector<double> state_variables;
@@ -82,25 +82,25 @@ public:
             state_variables.push_back(15.0);
             state_variables.push_back(16.0);
 
-            VanLeeuwen2007OdeSystem ode_system(state_variables);
+            VanLeeuwen2007NonDimSbmlOdeSystem ode_system(state_variables);
 
             ode_system.SetDefaultInitialCondition(2, 3.25);
 
             std::vector<double> initial_conditions = ode_system.GetInitialConditions();
             TS_ASSERT_EQUALS(initial_conditions.size(), 14u);
-            TS_ASSERT_DELTA(initial_conditions[0], 0.067, 1e-3);
-            TS_ASSERT_DELTA(initial_conditions[1], 0.67, 1e-3);
-            TS_ASSERT_DELTA(initial_conditions[2], 3.25, 1e-3);
-            TS_ASSERT_DELTA(initial_conditions[3], 0.45, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[0], 0.268, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[1], 2.68, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[2], 3.2500, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[3], 13.5, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[4], 0.0, 1e-3);
-            TS_ASSERT_DELTA(initial_conditions[5], 10.0, 1e-3);
-            TS_ASSERT_DELTA(initial_conditions[6], 18.14, 1e-3);
-            TS_ASSERT_DELTA(initial_conditions[7], 25.0, 1e-3);
-            TS_ASSERT_DELTA(initial_conditions[8], 2.54, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[5], 300.0, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[6], 544.2, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[7], 750.0, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[8], 76.2, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[9], 0.0, 1e-3);
-            TS_ASSERT_DELTA(initial_conditions[10], 0.48, 1e-3);
-            TS_ASSERT_DELTA(initial_conditions[11], 2.54, 1e-3);
-            TS_ASSERT_DELTA(initial_conditions[12], 2.54, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[10], 36.0, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[11], 76.2, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[12], 76.2, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[13], 1.0, 1e-3);
 
             double var1 = ode_system.GetStateVariable(0);
@@ -155,19 +155,19 @@ public:
             // Check that archiving worked correctly
             std::vector<double> initial_conditions = p_ode_system->GetInitialConditions();
             TS_ASSERT_EQUALS(initial_conditions.size(), 14u);
-            TS_ASSERT_DELTA(initial_conditions[0], 0.067, 1e-3);
-            TS_ASSERT_DELTA(initial_conditions[1], 0.67, 1e-3);
-            TS_ASSERT_DELTA(initial_conditions[2], 2.54, 1e-3);
-            TS_ASSERT_DELTA(initial_conditions[3], 0.45, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[0], 0.268, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[1], 2.68, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[2], 76.2, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[3], 13.5, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[4], 0.0, 1e-3);
-            TS_ASSERT_DELTA(initial_conditions[5], 10.0, 1e-3);
-            TS_ASSERT_DELTA(initial_conditions[6], 18.14, 1e-3);
-            TS_ASSERT_DELTA(initial_conditions[7], 25.0, 1e-3);
-            TS_ASSERT_DELTA(initial_conditions[8], 2.54, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[5], 300.0, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[6], 544.2, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[7], 750.0, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[8], 76.2, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[9], 0.0, 1e-3);
-            TS_ASSERT_DELTA(initial_conditions[10], 0.48, 1e-3);
-            TS_ASSERT_DELTA(initial_conditions[11], 2.54, 1e-3);
-            TS_ASSERT_DELTA(initial_conditions[12], 2.54, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[10], 36.0, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[11], 76.2, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[12], 76.2, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[13], 1.0, 1e-3);
 
             double var1 = p_ode_system->GetStateVariable(0);
@@ -207,41 +207,41 @@ public:
 
     void TestOdeEquation()
     {
-        VanLeeuwen2007OdeSystem ode_system;
+        VanLeeuwen2007NonDimSbmlOdeSystem ode_system;
 
         double time = 0.0;
         std::vector<double> initial_conditions;
-        initial_conditions.push_back(0.067); // X
-        initial_conditions.push_back(0.67);  // D
-        initial_conditions.push_back(2.54);  // C_o
-        initial_conditions.push_back(0.45);  // C_u
-        initial_conditions.push_back(0.00);  // C_c
-        initial_conditions.push_back(10.0);  // A
-        initial_conditions.push_back(18.14); // C_A
-        initial_conditions.push_back(25.0);  // T
-        initial_conditions.push_back(2.54);  // C_oT
-        initial_conditions.push_back(0.00);  // C_cT
-        initial_conditions.push_back(0.48);  // Y
-        initial_conditions.push_back(2.54);  // C_F
-        initial_conditions.push_back(2.54);  // C_T
-        initial_conditions.push_back(1.0);   // drag
+        initial_conditions.push_back(100 * 0.067 / 25.0); // X
+        initial_conditions.push_back(100 * 0.67 / 25.0);  // D
+        initial_conditions.push_back(750 * 2.54 / 25.0);  // C_o
+        initial_conditions.push_back(750 * 0.45 / 25.0);  // C_u
+        initial_conditions.push_back(0.00);               // C_c
+        initial_conditions.push_back(750 * 10 / 25.0);    // A
+        initial_conditions.push_back(750 * 18.14 / 25.0); // C_A
+        initial_conditions.push_back(750 * 25 / 25.0);    // T
+        initial_conditions.push_back(750 * 2.54 / 25.0);  // C_oT
+        initial_conditions.push_back(0.00);               // C_cT
+        initial_conditions.push_back(750 * 0.48 / 10.0);  // Y
+        initial_conditions.push_back(750 * 2.54 / 25.0);  // C_F
+        initial_conditions.push_back(750 * 2.54 / 25.0);  // C_T
+        initial_conditions.push_back(1.00);               // drag
 
         std::vector<double> derivs(initial_conditions.size());
         ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
-        // Test derivatives are correct (default wnt-level=0)
-        TS_ASSERT_DELTA(derivs[0], -0.0500, 1e-5);
+        // Test derivatives are correct (default wnt-level=0, gamma1=1, gamma2=1)
+        TS_ASSERT_DELTA(derivs[0], -2.6667e-04, 1e-5);
         TS_ASSERT_DELTA(derivs[1], 0.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[2], -1.1103, 1e-5);
-        TS_ASSERT_DELTA(derivs[3], 0.0703, 1e-5);
+        TS_ASSERT_DELTA(derivs[2], -0.0444117, 1e-5);
+        TS_ASSERT_DELTA(derivs[3], 0.0028, 1e-4);
         TS_ASSERT_DELTA(derivs[4], 0.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[5], -1.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[6], 1.0, 1e-5);
+        TS_ASSERT_DELTA(derivs[5], -0.04, 1e-5);
+        TS_ASSERT_DELTA(derivs[6], 0.04, 1e-5);
         TS_ASSERT_DELTA(derivs[7], 0.0, 1e-5);
         TS_ASSERT_DELTA(derivs[8], 0.0, 1e-5);
         TS_ASSERT_DELTA(derivs[9], 0.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[10], 0.00344, 1e-5);
-        TS_ASSERT_DELTA(derivs[11], -1.1103, 1e-5);
+        TS_ASSERT_DELTA(derivs[10], 3.4412e-04, 1e-5);
+        TS_ASSERT_DELTA(derivs[11], -0.0444, 1e-4);
         TS_ASSERT_DELTA(derivs[12], 0.0, 1e-5);
         TS_ASSERT_DELTA(derivs[13], 0.0, 1e-5);
 
@@ -249,18 +249,18 @@ public:
         ode_system.SetParameter("wnt_level", 1);
         ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
-        TS_ASSERT_DELTA(derivs[0], -10.1, 1e-5);
-        TS_ASSERT_DELTA(derivs[1], -6.7, 1e-5);
-        TS_ASSERT_DELTA(derivs[2], -1.1103, 1e-5);
-        TS_ASSERT_DELTA(derivs[3], 0.0703, 1e-5);
+        TS_ASSERT_DELTA(derivs[0], -0.053867, 1e-5);
+        TS_ASSERT_DELTA(derivs[1], -0.03573333, 1e-5);
+        TS_ASSERT_DELTA(derivs[2], -0.0444117, 1e-4);
+        TS_ASSERT_DELTA(derivs[3], 0.0028, 1e-4);
         TS_ASSERT_DELTA(derivs[4], 0.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[5], -1.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[6], 1.0, 1e-5);
+        TS_ASSERT_DELTA(derivs[5], -0.039999, 1e-5);
+        TS_ASSERT_DELTA(derivs[6], 0.039999, 1e-5);
         TS_ASSERT_DELTA(derivs[7], 0.0, 1e-5);
         TS_ASSERT_DELTA(derivs[8], 0.0, 1e-5);
         TS_ASSERT_DELTA(derivs[9], 0.0, 1e-5);
-        TS_ASSERT_DELTA(derivs[10], 0.00344, 1e-5);
-        TS_ASSERT_DELTA(derivs[11], -1.1103, 1e-5);
+        TS_ASSERT_DELTA(derivs[10], 0.00034412, 1e-5);
+        TS_ASSERT_DELTA(derivs[11], -0.0444117, 1e-4);
         TS_ASSERT_DELTA(derivs[12], 0.0, 1e-5);
         TS_ASSERT_DELTA(derivs[13], 0.0, 1e-5);
     }
@@ -269,7 +269,7 @@ public:
     {
         try
         {
-            VanLeeuwen2007OdeSystem ode_system;
+            VanLeeuwen2007NonDimSbmlOdeSystem ode_system;
 
             // Solve system using RK4 solver
 
@@ -282,7 +282,7 @@ public:
 
             Timer::Reset();
             OdeSolution solutions = rk4_solver.Solve(&ode_system, state_variables, 0.0, 10.0, dt, dt);
-            Timer::Print("1. VanLeeuwen RK4");
+            Timer::Print("1. VanLeeuwenNonDim RK4");
 
             unsigned end = solutions.rGetSolutions().size() - 1;
 
@@ -300,19 +300,19 @@ public:
             // }
             // file->close();
 
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 0.067, 2e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 0.67, 1e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 2.54, 1e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][3], 0.45, 2e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][4], 0.0, 5e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][5], 10.0, 5e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][6], 18.14, 5e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][7], 25.0, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][8], 2.54, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][9], 0.0, 1e-5);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][10], 0.48, 5e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][11], 2.54, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][12], 2.54, 1e-3);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 100 * 0.067 / 25.0, 1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 100 * 0.67 / 25.0, 1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 750 * 2.54 / 25.0, 1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][3], 750 * 0.45 / 25.0, 1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][4], 0.0, 1e-3);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][5], 750 * 10 / 25, 1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][6], 750 * 18.14 / 25.0, 1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][7], 750 * 25 / 25.0, 1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][8], 750 * 2.54 / 25.0, 1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][9], 0.0, 1e-3);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][10], 750 * 0.48 / 10.0, 1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][11], 750 * 2.54 / 25.0, 1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][12], 750 * 2.54 / 25.0, 1);
             TS_ASSERT_DELTA(solutions.rGetSolutions()[end][13], 1.0, 1e-3);
         }
         catch (Exception &e)
@@ -329,9 +329,9 @@ public:
     {
         try
         {
-            VanLeeuwen2007OdeSystem ode_system;
+            VanLeeuwen2007NonDimSbmlOdeSystem ode_system;
 
-            double end_time = 1000;
+            double end_time = 24000;
             double h_value = 0.01;
 
             CvodeAdaptor solver;
@@ -359,19 +359,19 @@ public:
             // }
             // file->close();
 
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 0.067, 2e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 0.67, 1e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 2.54, 1e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][3], 0.45, 2e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][4], 0.0, 5e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][5], 10.0, 5e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][6], 18.14, 5e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][7], 25.0, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][8], 2.54, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][9], 0.0, 1e-5);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][10], 0.48, 5e-2);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][11], 2.54, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][12], 2.54, 1e-3);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 100 * 0.067 / 25.0, 1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 100 * 0.67 / 25.0, 1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 750 * 2.54 / 25.0, 1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][3], 750 * 0.45 / 25.0, 1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][4], 0.0, 1e-3);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][5], 750 * 10 / 25, 1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][6], 750 * 18.14 / 25.0, 1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][7], 750 * 25 / 25.0, 1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][8], 750 * 2.54 / 25.0, 1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][9], 0.0, 1e-3);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][10], 750 * 0.48 / 10.0, 1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][11], 750 * 2.54 / 25.0, 1);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][12], 750 * 2.54 / 25.0, 1);
             TS_ASSERT_DELTA(solutions.rGetSolutions()[end][13], 1.0, 1e-3);
         }
         catch (Exception &e)
@@ -385,4 +385,4 @@ public:
     }
 };
 
-#endif // TESTVANLEEUWEN2007SBML_HPP_
+#endif // TESTVANLEEUWEN2007NONDIMSBML_HPP_
