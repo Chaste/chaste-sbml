@@ -50,6 +50,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DifferentiatedCellProliferativeType.hpp"
 #include "FileComparison.hpp"
 #include "FixedG1GenerationalCellCycleModel.hpp"
+#include "OutputFileHandler.hpp"
 #include "SmartPointers.hpp"
 #include "Timer.hpp"
 #include "TransitCellProliferativeType.hpp"
@@ -57,12 +58,12 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "UniformG1GenerationalCellCycleModel.hpp"
 #include "WildTypeCellMutationState.hpp"
 
-#include "Goldbeter1991OdeSystemAndSrnModel.hpp"
+#include "Goldbeter1991SbmlOdeSystemAndSrnModel.hpp"
 
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
-class TestGoldbeter1991SBML : public AbstractCellBasedTestSuite
+class TestGoldbeter1991Sbml : public AbstractCellBasedTestSuite
 {
 public:
   void TestOdeArchiving()
@@ -76,7 +77,7 @@ public:
       state_variables.push_back(4.0);
       state_variables.push_back(5.0);
 
-      Goldbeter1991OdeSystem ode_system(state_variables);
+      Goldbeter1991SbmlOdeSystem ode_system(state_variables);
 
       ode_system.SetDefaultInitialCondition(2, 3.25);
 
@@ -135,7 +136,7 @@ public:
 
   void TestOdeEquation()
   {
-    Goldbeter1991OdeSystem ode_system;
+    Goldbeter1991SbmlOdeSystem ode_system;
 
     double time = 0.0;
     std::vector<double> initial_conditions;
@@ -156,7 +157,7 @@ public:
   {
     try
     {
-      Goldbeter1991OdeSystem ode_system;
+      Goldbeter1991SbmlOdeSystem ode_system;
 
       // Solve system using RK4 solver
 
@@ -177,6 +178,28 @@ public:
       TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 0.5470, 1e-3);
       TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 0.2936, 1e-3);
       TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 0.0067, 1e-3);
+
+      // The following code provides nice output for gnuplot
+      // use the command
+      // plot "goldbeter_1991.dat" u 1:2
+      // or
+      // plot "goldbeter_1991.dat" u 1:3 etc. for the various species...
+      // or
+      // plot "goldbeter_1991.dat" u 1:2, "" u 1:3, "" u 1:4 ... for all species
+
+      OutputFileHandler handler("");
+      out_stream file = handler.OpenOutputFile("goldbeter_1991.dat");
+      for (unsigned i = 0; i < solutions.rGetSolutions().size(); i++)
+      {
+        (*file) << solutions.rGetTimes()[i];
+        for (unsigned j = 0; j < solutions.rGetSolutions()[i].size(); j++)
+        {
+          (*file) << "\t" << solutions.rGetSolutions()[i][j];
+        }
+        (*file) << "\n"
+                << std::flush;
+      }
+      file->close();
     }
     catch (Exception &e)
     {
@@ -192,7 +215,7 @@ public:
   {
     try
     {
-      Goldbeter1991OdeSystem ode_system;
+      Goldbeter1991SbmlOdeSystem ode_system;
 
       double end_time = 100;
       double h_value = 0.01;
@@ -238,7 +261,7 @@ public:
       UniformCellCycleModel *p_cc_model = new UniformCellCycleModel();
 
       // As usual, we archive via a pointer to the most abstract class possible
-      AbstractSrnModel *p_srn_model = new Goldbeter1991SrnModel;
+      AbstractSrnModel *p_srn_model = new Goldbeter1991SbmlSrnModel;
 
       MAKE_PTR(WildTypeCellMutationState, p_healthy_state);
       MAKE_PTR(TransitCellProliferativeType, p_transit_type);
@@ -260,9 +283,9 @@ public:
         p_srn_model->SimulateToCurrentTime();
       }
 
-      C0 = dynamic_cast<Goldbeter1991SrnModel *>(p_srn_model)->GetStateVariable("C");
-      M0 = dynamic_cast<Goldbeter1991SrnModel *>(p_srn_model)->GetStateVariable("M");
-      X0 = dynamic_cast<Goldbeter1991SrnModel *>(p_srn_model)->GetStateVariable("X");
+      C0 = dynamic_cast<Goldbeter1991SbmlSrnModel *>(p_srn_model)->GetStateVariable("C");
+      M0 = dynamic_cast<Goldbeter1991SbmlSrnModel *>(p_srn_model)->GetStateVariable("M");
+      X0 = dynamic_cast<Goldbeter1991SbmlSrnModel *>(p_srn_model)->GetStateVariable("X");
 
       output_arch << p_srn_model;
 
@@ -281,9 +304,9 @@ public:
 
       input_arch >> p_srn_model;
 
-      double C1 = dynamic_cast<Goldbeter1991SrnModel *>(p_srn_model)->GetStateVariable("C");
-      double M1 = dynamic_cast<Goldbeter1991SrnModel *>(p_srn_model)->GetStateVariable("M");
-      double X1 = dynamic_cast<Goldbeter1991SrnModel *>(p_srn_model)->GetStateVariable("X");
+      double C1 = dynamic_cast<Goldbeter1991SbmlSrnModel *>(p_srn_model)->GetStateVariable("C");
+      double M1 = dynamic_cast<Goldbeter1991SbmlSrnModel *>(p_srn_model)->GetStateVariable("M");
+      double X1 = dynamic_cast<Goldbeter1991SbmlSrnModel *>(p_srn_model)->GetStateVariable("X");
       TS_ASSERT_DELTA(C1, C0, 1e-6);
       TS_ASSERT_DELTA(M1, M0, 1e-6);
       TS_ASSERT_DELTA(X1, X0, 1e-6);
@@ -295,9 +318,9 @@ public:
 
   void TestSrnCorrectBehaviour()
   {
-    TS_ASSERT_THROWS_NOTHING(Goldbeter1991SrnModel srn_model);
+    TS_ASSERT_THROWS_NOTHING(Goldbeter1991SbmlSrnModel srn_model);
 
-    Goldbeter1991SrnModel *p_srn_model = new Goldbeter1991SrnModel();
+    Goldbeter1991SbmlSrnModel *p_srn_model = new Goldbeter1991SbmlSrnModel();
 
     // Create a vector of initial conditions
     std::vector<double> starter_conditions;
@@ -332,8 +355,8 @@ public:
 
   void TestSrnCreateCopy()
   {
-    // Test with Goldbeter1991SrnModel
-    Goldbeter1991SrnModel *p_model = new Goldbeter1991SrnModel;
+    // Test with Goldbeter1991SbmlSrnModel
+    Goldbeter1991SbmlSrnModel *p_model = new Goldbeter1991SbmlSrnModel;
 
     // Set ODE system
     std::vector<double> state_variables;
@@ -341,15 +364,15 @@ public:
     state_variables.push_back(3.0);
     state_variables.push_back(4.0);
 
-    p_model->SetOdeSystem(new Goldbeter1991OdeSystem(state_variables));
+    p_model->SetOdeSystem(new Goldbeter1991SbmlOdeSystem(state_variables));
 
     // Create a copy
-    Goldbeter1991SrnModel *p_model2 = static_cast<Goldbeter1991SrnModel *>(p_model->CreateSrnModel());
+    Goldbeter1991SbmlSrnModel *p_model2 = static_cast<Goldbeter1991SbmlSrnModel *>(p_model->CreateSrnModel());
 
     // Check correct initializations
-    double C = dynamic_cast<Goldbeter1991SrnModel *>(p_model2)->GetStateVariable("C");
-    double M = dynamic_cast<Goldbeter1991SrnModel *>(p_model2)->GetStateVariable("M");
-    double X = dynamic_cast<Goldbeter1991SrnModel *>(p_model2)->GetStateVariable("X");
+    double C = dynamic_cast<Goldbeter1991SbmlSrnModel *>(p_model2)->GetStateVariable("C");
+    double M = dynamic_cast<Goldbeter1991SbmlSrnModel *>(p_model2)->GetStateVariable("M");
+    double X = dynamic_cast<Goldbeter1991SbmlSrnModel *>(p_model2)->GetStateVariable("X");
     TS_ASSERT_EQUALS(C, 2.0);
     TS_ASSERT_EQUALS(M, 3.0);
     TS_ASSERT_EQUALS(X, 4.0);
@@ -364,9 +387,9 @@ public:
     std::string output_directory = "TestSrnModelOutputParameters";
     OutputFileHandler output_file_handler(output_directory, false);
 
-    Goldbeter1991SrnModel srn_model;
+    Goldbeter1991SbmlSrnModel srn_model;
 
-    TS_ASSERT_EQUALS(srn_model.GetIdentifier(), "SbmlSrnWrapperModel-Goldbeter1991OdeSystem-3");
+    TS_ASSERT_EQUALS(srn_model.GetIdentifier(), "SbmlSrnWrapperModel-Goldbeter1991SbmlOdeSystem-3");
 
     out_stream parameter_file = output_file_handler.OpenOutputFile("goldbeter_1991_srn_results.parameters");
     srn_model.OutputSrnModelParameters(parameter_file);
@@ -398,7 +421,7 @@ public:
     boost::shared_ptr<AbstractCellProperty> p_transit_type(CellPropertyRegistry::Instance()->Get<TransitCellProliferativeType>());
 
     FixedG1GenerationalCellCycleModel *p_cell_model = new FixedG1GenerationalCellCycleModel();
-    Goldbeter1991SrnModel *p_srn_model = new Goldbeter1991SrnModel();
+    Goldbeter1991SbmlSrnModel *p_srn_model = new Goldbeter1991SbmlSrnModel();
 
     CellPtr p_tn_cell(new Cell(p_healthy_state, p_cell_model, p_srn_model, false, CellPropertyCollection()));
     p_tn_cell->SetCellProliferativeType(p_transit_type);
@@ -416,18 +439,18 @@ public:
     }
 
     // Direct access to state variables
-    double C = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("C");
-    double M = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("M");
-    double X = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("X");
+    double C = dynamic_cast<Goldbeter1991SbmlSrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("C");
+    double M = dynamic_cast<Goldbeter1991SbmlSrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("M");
+    double X = dynamic_cast<Goldbeter1991SbmlSrnModel *>(p_tn_cell->GetSrnModel())->GetStateVariable("X");
 
     TS_ASSERT_DELTA(C, 0.5470, 1e-2);
     TS_ASSERT_DELTA(M, 0.2936, 1e-2);
     TS_ASSERT_DELTA(X, 0.0067, 1e-3);
 
     // Indirect access to state vector
-    C = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetProteinConcentrations()[0];
-    M = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetProteinConcentrations()[1];
-    X = dynamic_cast<Goldbeter1991SrnModel *>(p_tn_cell->GetSrnModel())->GetProteinConcentrations()[2];
+    C = dynamic_cast<Goldbeter1991SbmlSrnModel *>(p_tn_cell->GetSrnModel())->GetProteinConcentrations()[0];
+    M = dynamic_cast<Goldbeter1991SbmlSrnModel *>(p_tn_cell->GetSrnModel())->GetProteinConcentrations()[1];
+    X = dynamic_cast<Goldbeter1991SbmlSrnModel *>(p_tn_cell->GetSrnModel())->GetProteinConcentrations()[2];
 
     TS_ASSERT_DELTA(C, 0.5470, 1e-2);
     TS_ASSERT_DELTA(M, 0.2936, 1e-2);
