@@ -115,7 +115,9 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
 
     // RULES:
 {% for rule in rules %}
+{% if rule["is_state_variable"] is false() %}
     {{ rule["lhs"] }} = {{ rule["rhs"] }};
+{% endif %}
 {% endfor %}
 
     // UPDATE STATE PARAMETERS:

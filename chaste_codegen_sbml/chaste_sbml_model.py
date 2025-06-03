@@ -430,12 +430,14 @@ class ChasteSbmlModel:
             name = rule.getName()
             lhs = rule.getVariable()
             rhs = self._convert_str_formula(rule.getFormula())
+            is_state_variable = self._is_state_variable(lhs)
 
             rule_dict = {
                 "id": rule_id,
                 "name": name,
                 "rhs": rhs,
                 "lhs": lhs,
+                "is_state_variable": is_state_variable,
             }
             rule_dicts.append(rule_dict)
         return rule_dicts
@@ -463,7 +465,6 @@ class ChasteSbmlModel:
 
             comp_id = species.getCompartment()
             comp = self._compartments.get(comp_id)
-            comp_varname = self._get_varname(comp)
 
             # If there's a compartment we'll normalise the ODE, so declare it as non-dimensional
             units = "non-dim" if comp else species.getSubstanceUnits()
@@ -483,44 +484,23 @@ class ChasteSbmlModel:
             # ODE system
             lhs = None
             rhs = None
-            if species_id in self._odes_dict:
-                if not species.getBoundaryCondition():
-                    index = ode_index
-                    lhs = f"rDY[{index}]"
-                    rhs = f"({self._odes_dict[species_id]}) / {comp_varname}"
-                    ode_index += 1
+            if is_state_variable:
+                lhs = f"rDY[{state_variable_index}]"
+                # TODO: Do something different for boundary conditions
+                # if not species.getBoundaryCondition():
+                if species_id in self._odes_dict:
+                    # Species defined by ODEs
+                    rhs = f"({self._odes_dict[species_id]}) / {comp_id}"
+
+                elif species_id in self._rules_dict:
+                    # Species defined by algebraic rules
+                    rhs = f"(({self._rules_dict[species_id]}) - rY[{state_variable_index}]) / {comp_id}"
 
                 # TODO: Handle time scaling
                 # if time_multiplier != 1.0:
                 #     # This does not include species defined in algebraic rules
-                #     f"rDY[{index}] *= {time_multiplier};"
+                #     f"rDY[{state_variable_index}] *= {time_multiplier};"
 
-            elif is_state_variable and (species_id == "drag" or varname == "drag"):
-                index = ode_index
-                lhs = f"rDY[{index}]"
-                rhs = f"(drag - rY[{state_variable_index}]) / {comp_varname}"
-                ode_index += 1
-
-            # elif species_id in self._rules_dict:
-            #     # Species defined by algebraic rules are not in odes_dict
-            #     # Assuming these are assignments where variables are added together to represent a total
-            #     formula = self._rules_dict[species_id]
-            #     tokens = formula.split(" ")
-            #     rhs_tokens = []
-            #     for token in tokens:
-            #         state_var_index = self._get_state_variable_index(token)
-            #         if state_var_index is not None:
-            #             rhs_tokens.append(f"rDY[{state_var_index}]")
-
-            #     if rhs_tokens:
-            #         index = ode_index
-            #         lhs = f"rDY[{index}]"
-            #         rhs = f"({' + '.join(rhs_tokens)}) / {comp_varname}"
-            #         ode_index += 1
-
-            # TODO: include other rules
-
-            if lhs and rhs:
                 species_dict["ode"] = {"lhs": lhs, "rhs": rhs}
 
             species_dicts.append(species_dict)
