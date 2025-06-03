@@ -331,7 +331,7 @@ public:
         {
             VanLeeuwen2007NonDimSbmlOdeSystem ode_system;
 
-            double end_time = 24000;
+            double end_time = 1000;
             double h_value = 0.01;
 
             CvodeAdaptor solver;
@@ -347,15 +347,21 @@ public:
 
             // The following code provides nice output for gnuplot
             // use the command
-            // plot "VanLeeuwen.dat" u 1:2
+            // plot "vanleeuwen_nondim_2007.dat" u 1:2 etc. for the various species...
             // or
-            // plot "VanLeeuwen.dat" u 1:3 etc. for the various proteins...
+            // plot "vanleeuwen_nondim_2007.dat" u 1:2, "" u 1:3, "" u 1:4 etc. for all species
 
             // OutputFileHandler handler("");
-            // out_stream file=handler.OpenOutputFile("VanLeeuwen.dat");
-            // for (unsigned i=0; i<=end; i++)
+            // out_stream file = handler.OpenOutputFile("vanleeuwen_nondim_2007.dat");
+            // for (unsigned i = 0; i < solutions.rGetSolutions().size(); i++)
             // {
-            //     (*file) << solutions.rGetTimes()[i]<< "\t" << solutions.rGetSolutions()[i][0] << "\t" << solutions.rGetSolutions()[i][1] << "\t" << solutions.rGetSolutions()[i][2] << "\t" << solutions.rGetSolutions()[i][3] << "\t" << solutions.rGetSolutions()[i][4] << "\t" << solutions.rGetSolutions()[i][5] << "\n" << std::flush;
+            //     (*file) << solutions.rGetTimes()[i];
+            //     for (unsigned j = 0; j < solutions.rGetSolutions()[i].size(); j++)
+            //     {
+            //         (*file) << "\t" << solutions.rGetSolutions()[i][j];
+            //     }
+            //     (*file) << "\n"
+            //             << std::flush;
             // }
             // file->close();
 

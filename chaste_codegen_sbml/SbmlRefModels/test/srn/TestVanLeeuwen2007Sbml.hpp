@@ -273,8 +273,7 @@ public:
 
             // Solve system using RK4 solver
 
-            double dt = 0.01;
-            double end_time = 1000.0;
+            double dt = 0.0001;
 
             // RK4 solver solution worked out
             RungeKutta4IvpOdeSolver rk4_solver;
@@ -282,7 +281,7 @@ public:
             std::vector<double> state_variables = ode_system.GetInitialConditions();
 
             Timer::Reset();
-            OdeSolution solutions = rk4_solver.Solve(&ode_system, state_variables, 0.0, end_time, dt, dt);
+            OdeSolution solutions = rk4_solver.Solve(&ode_system, state_variables, 0.0, 10.0, dt, dt);
             Timer::Print("1. VanLeeuwen RK4");
 
             unsigned end = solutions.rGetSolutions().size() - 1;
