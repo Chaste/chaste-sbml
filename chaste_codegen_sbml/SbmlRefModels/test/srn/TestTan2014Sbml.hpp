@@ -207,7 +207,7 @@ public:
             // Solve system using RK4 solver
 
             double dt = 0.01;
-            double end_time = 5000.0; // 1000.0 * 60.0;
+            double end_time = 5000.0;
 
             // RK4 solver solution worked out
             RungeKutta4IvpOdeSolver rk4_solver;
@@ -217,15 +217,6 @@ public:
             Timer::Reset();
             OdeSolution solutions = rk4_solver.Solve(&ode_system, state_variables, 0.0, end_time, dt, dt);
             Timer::Print("1. Tan RK4");
-
-            unsigned end = solutions.rGetSolutions().size() - 1;
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 80.0519, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 447.5976, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 552.4023, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][3], 62.0477, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][4], 360.0130, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][5], 639.9869, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][6], 1.0, 1e-6);
 
             // The following code provides nice output for gnuplot
             // use the command
@@ -248,6 +239,15 @@ public:
             //             << std::flush;
             // }
             // file->close();
+
+            unsigned end = solutions.rGetSolutions().size() - 1;
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 80.0519, 1e-3);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 447.5976, 1e-3);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 552.4023, 1e-3);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][3], 62.0477, 1e-3);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][4], 360.0130, 1e-3);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][5], 639.9869, 1e-3);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][6], 1.0, 1e-6);
         }
         catch (Exception &e)
         {

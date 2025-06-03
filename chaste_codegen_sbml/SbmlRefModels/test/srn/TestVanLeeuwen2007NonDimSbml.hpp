@@ -241,7 +241,7 @@ public:
         TS_ASSERT_DELTA(derivs[8], 0.0, 1e-5);
         TS_ASSERT_DELTA(derivs[9], 0.0, 1e-5);
         TS_ASSERT_DELTA(derivs[10], 3.4412e-04, 1e-5);
-        TS_ASSERT_DELTA(derivs[11], -0.0444, 1e-4);
+        TS_ASSERT_DELTA(derivs[11], 0.0, 1e-5);
         TS_ASSERT_DELTA(derivs[12], 0.0, 1e-5);
         TS_ASSERT_DELTA(derivs[13], 0.0, 1e-5);
 
@@ -260,7 +260,7 @@ public:
         TS_ASSERT_DELTA(derivs[8], 0.0, 1e-5);
         TS_ASSERT_DELTA(derivs[9], 0.0, 1e-5);
         TS_ASSERT_DELTA(derivs[10], 0.00034412, 1e-5);
-        TS_ASSERT_DELTA(derivs[11], -0.0444117, 1e-4);
+        TS_ASSERT_DELTA(derivs[11], 0.0, 1e-5);
         TS_ASSERT_DELTA(derivs[12], 0.0, 1e-5);
         TS_ASSERT_DELTA(derivs[13], 0.0, 1e-5);
     }

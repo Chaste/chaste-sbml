@@ -88,7 +88,6 @@ void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<d
     gamma = GetParameter("gamma");
 
     // RULES:
-    drag = sm::piecewise((complex_cm - 700) / 10, sm::gt((complex_cm - 700) / 10, 1), 1);
 
     // UPDATE STATE PARAMETERS:
 
@@ -118,7 +117,7 @@ void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<d
     rDY[3] = (-kN + kdiffusion + K_c_active - K_n_active) / nucleus; // d[bcat_nu]/dt
     rDY[4] = (-kN) / nucleus; // d[ligand_nu]/dt
     rDY[5] = (kN) / nucleus; // d[complex_nu]/dt
-    rDY[6] = (drag - rY[6]) / CytosolMembrane; // d[drag]/dt
+    rDY[6] = ((sm::piecewise((complex_cm - 700) / 10, sm::gt((complex_cm - 700) / 10, 1), 1)) - rY[6]) / CytosolMembrane; // d[drag]/dt
 
     // Scale time appropriately
 }

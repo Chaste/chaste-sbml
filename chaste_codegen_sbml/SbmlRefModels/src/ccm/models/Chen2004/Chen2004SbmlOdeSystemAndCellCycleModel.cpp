@@ -421,9 +421,7 @@ void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     F = GetParameter("F");
 
     // RULES:
-    BCK2 = b0 * MASS;
     Visbf = kisbf_p + kisbf_p_p * CLB2;
-    CLN3 = C0 * Dn3 * MASS / (Jn3 + Dn3 * MASS);
     Vppc1 = kppc1 * CDC14;
     Vppf6 = kppf6 * CDC14;
     Vaiep = kaiep * CLB2;
@@ -432,8 +430,6 @@ void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     Vkpnet = (kkpnet_p + kkpnet_p_p * CDC15) * MASS;
     Vppnet = kppnet_p + kppnet_p_p * PPX;
     Vasbf = kasbf * (esbfn2 * CLN2 + esbfn3 * (CLN3 + BCK2) + esbfb5 * CLB5);
-    SBF = GK_219(Vasbf, Visbf, Jasbf, Jisbf);
-    MCM1 = GK_219(kamcm * CLB2, kimcm, Jamcm, Jimcm);
     mu = sm::log(2) / mdt;
     D = 1.026 / mu - 32;
     F = std::exp(-mu * D);
@@ -445,17 +441,6 @@ void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     Vdb5 = kdb5_p + kdb5_p_p * CDC20;
     Vdpds = kd1pds_p + kd2pds_p_p * CDC20 + kd3pds_p_p * CDH1;
     Vdppx = kdppx_p + kdppx_p_p * (J20ppx + CDC20) * Jpds / (Jpds + PDS1);
-    CLB2T = CLB2 + C2 + C2P + F2 + F2P;
-    CLB5T = CLB5 + C5 + C5P + F5 + F5P;
-    CDC14T = CDC14 + RENT + RENTP;
-    NET1T = NET1 + NET1P + RENT + RENTP;
-    SIC1T = SIC1 + C2 + C5 + SIC1P + C2P + C5P;
-    CDC6T = CDC6 + F2 + F5 + CDC6P + F2P + F5P;
-    CKIT = SIC1T + CDC6T;
-    CDC15i = CDC15T - CDC15;
-    IE = IET - IEP;
-    PE = ESP1T - ESP1;
-    TEM1GDP = TEM1T - TEM1GTP;
 
     // UPDATE STATE PARAMETERS:
     SetParameter("BUB2", BUB2);
@@ -782,42 +767,57 @@ void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     double Spindle_disassembly = Mass_Action_1_222(kdspn, SPN);
 
     // ODES:
-    rDY[0] = (Budding - Negative_regulation_of_Cell_budding) / cell; // d[BUD]/dt
-    rDY[1] = (Assoc_of_CLB2_and_SIC1 - Dissoc_of_CLB2SIC1_complex - Phosphorylation_of_C2 + Dephosphorylation_of_C2P - Degradation_of_CLB2_in_C2) / cell; // d[C2]/dt
-    rDY[2] = (Phosphorylation_of_C2 - Dephosphorylation_of_C2P - Degradation_of_SIC1_in_C2P - Degradation_of_CLB2_in_C2P) / cell; // d[C2P]/dt
-    rDY[3] = (Assoc_of_CLB5_and_SIC1 - Dissoc_of_CLB5SIC1 - Phosphorylation_of_C5 + Dephosphorylation_of_C5P - Degradation_of_CLB5_in_C5) / cell; // d[C5]/dt
-    rDY[4] = (Phosphorylation_of_C5 - Dephosphorylation_of_C5P - Degradation_of_SIC1P_in_C5P - Degradation_of_CLB5_in_C5P) / cell; // d[C5P]/dt
-    rDY[5] = (CDC14_synthesis - CDC14_degradation - Assoc_with_NET1_to_form_RENT + Dissoc_from_RENT - Assoc_with_NET1P_to_form_RENTP + Dissoc_from_RENP + Degradation_of_NET1_in_RENT + Degradation_of_NET1P_in_RENTP) / cell; // d[CDC14]/dt
-    rDY[6] = (CDC15_activation - inactivation_0) / cell; // d[CDC15]/dt
-    rDY[7] = (-Degradation_of_active_CDC20 + Activation_of_CDC20 - Inactivation_0) / cell; // d[CDC20]/dt
-    rDY[8] = (Synthesis_of_inactive_CDC20 - Degradation_of_inactiveCDC20 - Activation_of_CDC20 + Inactivation_0) / cell; // d[CDC20i]/dt
-    rDY[9] = (CDC6_synthesis - Phosphorylation_of_CDC6 + Dephosphorylation_of_CDC6 - CLB2CDC6_complex_formation + CLB2CDC6_dissociation - CLB5CDC6_complex_formation + CLB5CDC6_dissociation + CLB2_degradation_in_F2 + CLB5_degradation_in_F5) / cell; // d[CDC6]/dt
-    rDY[10] = (Phosphorylation_of_CDC6 - Dephosphorylation_of_CDC6 - Degradation_of_CDC6P + CLB2_degradation_in_F2P + CLB5_degradation_in_F5P) / cell; // d[CDC6P]/dt
-    rDY[11] = (CDH1_synthesis - CDH1_degradation + CDH1i_activation - Inactivation_1) / cell; // d[CDH1]/dt
-    rDY[12] = (-CDH1i_degradation - CDH1i_activation + Inactivation_1) / cell; // d[CDH1i]/dt
-    rDY[13] = (Synthesis_of_CLB2 - Degradation_of_CLB2 - Assoc_of_CLB2_and_SIC1 + Dissoc_of_CLB2SIC1_complex + Degradation_of_SIC1_in_C2P - CLB2CDC6_complex_formation + CLB2CDC6_dissociation + CDC6_degradation_in_F2P) / cell; // d[CLB2]/dt
-    rDY[14] = (Synthesis_of_CLB5 - Degradation_of_CLB5 - Assoc_of_CLB5_and_SIC1 + Dissoc_of_CLB5SIC1 + Degradation_of_SIC1P_in_C5P - CLB5CDC6_complex_formation + CLB5CDC6_dissociation + CDC6_degradation_in_F5P) / cell; // d[CLB5]/dt
-    rDY[15] = (Synthesis_of_CLN2 - Degradation_of_CLN2) / cell; // d[CLN2]/dt
-    rDY[16] = (Degradation_of_PDS1_in_PE - Assoc_with_ESP1_to_form_PE + Disso_from_PE) / cell; // d[ESP1]/dt
-    rDY[17] = (CLB2CDC6_complex_formation - CLB2CDC6_dissociation - F2_phosphorylation + F2P_dephosphorylation - CLB2_degradation_in_F2) / cell; // d[F2]/dt
-    rDY[18] = (F2_phosphorylation - F2P_dephosphorylation - CDC6_degradation_in_F2P - CLB2_degradation_in_F2P) / cell; // d[F2P]/dt
-    rDY[19] = (CLB5CDC6_complex_formation - CLB5CDC6_dissociation - F5_phosphorylation + F5P_dephosphorylation - CLB5_degradation_in_F5) / cell; // d[F5]/dt
-    rDY[20] = (F5_phosphorylation - F5P_dephosphorylation - CDC6_degradation_in_F5P - CLB5_degradation_in_F5P) / cell; // d[F5P]/dt
-    rDY[21] = (Activation_of_IEP - Inactivation) / cell; // d[IEP]/dt
-    rDY[22] = (Growth) / cell; // d[MASS]/dt
-    rDY[23] = (-Assoc_with_NET1_to_form_RENT + Dissoc_from_RENT + Net1_synthesis - Net1_degradation - NET1_phosphorylation + dephosphorylation + Degradation_of_CDC14_in_RENT) / cell; // d[NET1]/dt
-    rDY[24] = (-Assoc_with_NET1P_to_form_RENTP + Dissoc_from_RENP - Net1P_degradation + NET1_phosphorylation - dephosphorylation + Degradation_of_CDC14_in_RENTP) / cell; // d[NET1P]/dt
-    rDY[25] = (DNA_synthesis - Negative_regulation_of_DNA_synthesis) / cell; // d[ORI]/dt
-    rDY[26] = (PDS1_synthesis - degradation_0 - Assoc_with_ESP1_to_form_PE + Disso_from_PE) / cell; // d[PDS1]/dt
-    rDY[27] = (PPX_synthesis - degradation) / cell; // d[PPX]/dt
-    rDY[28] = (Assoc_with_NET1_to_form_RENT - Dissoc_from_RENT - RENT_phosphorylation + dephosphorylation_0 - Degradation_of_NET1_in_RENT - Degradation_of_CDC14_in_RENT) / cell; // d[RENT]/dt
-    rDY[29] = (Assoc_with_NET1P_to_form_RENTP - Dissoc_from_RENP + RENT_phosphorylation - dephosphorylation_0 - Degradation_of_NET1P_in_RENTP - Degradation_of_CDC14_in_RENTP) / cell; // d[RENTP]/dt
-    rDY[30] = (Synthesis_of_SIC1 - Phosphorylation_of_SIC1 + Dephosphorylation_of_SIC1 - Assoc_of_CLB2_and_SIC1 + Dissoc_of_CLB2SIC1_complex - Assoc_of_CLB5_and_SIC1 + Dissoc_of_CLB5SIC1 + Degradation_of_CLB2_in_C2 + Degradation_of_CLB5_in_C5) / cell; // d[SIC1]/dt
-    rDY[31] = (Phosphorylation_of_SIC1 - Dephosphorylation_of_SIC1 - Fast_Degradation_of_SIC1P + Degradation_of_CLB2_in_C2P + Degradation_of_CLB5_in_C5P) / cell; // d[SIC1P]/dt
-    rDY[32] = (Spindle_formation - Spindle_disassembly) / cell; // d[SPN]/dt
-    rDY[33] = (Synthesis_of_SWI5 - Degradation_of_SWI5 + Activation_of_SWI5 - Inactivation_of_SWI5) / cell; // d[SWI5]/dt
-    rDY[34] = (-Degradation_of_SWI5P - Activation_of_SWI5 + Inactivation_of_SWI5) / cell; // d[SWI5P]/dt
-    rDY[35] = (TEM1_activation - inactivation) / cell; // d[TEM1GTP]/dt
+    rDY[0] = ((b0 * MASS) - rY[0]) / cell; // d[BCK2]/dt
+    rDY[1] = (Budding - Negative_regulation_of_Cell_budding) / cell; // d[BUD]/dt
+    rDY[2] = (Assoc_of_CLB2_and_SIC1 - Dissoc_of_CLB2SIC1_complex - Phosphorylation_of_C2 + Dephosphorylation_of_C2P - Degradation_of_CLB2_in_C2) / cell; // d[C2]/dt
+    rDY[3] = (Phosphorylation_of_C2 - Dephosphorylation_of_C2P - Degradation_of_SIC1_in_C2P - Degradation_of_CLB2_in_C2P) / cell; // d[C2P]/dt
+    rDY[4] = (Assoc_of_CLB5_and_SIC1 - Dissoc_of_CLB5SIC1 - Phosphorylation_of_C5 + Dephosphorylation_of_C5P - Degradation_of_CLB5_in_C5) / cell; // d[C5]/dt
+    rDY[5] = (Phosphorylation_of_C5 - Dephosphorylation_of_C5P - Degradation_of_SIC1P_in_C5P - Degradation_of_CLB5_in_C5P) / cell; // d[C5P]/dt
+    rDY[6] = (CDC14_synthesis - CDC14_degradation - Assoc_with_NET1_to_form_RENT + Dissoc_from_RENT - Assoc_with_NET1P_to_form_RENTP + Dissoc_from_RENP + Degradation_of_NET1_in_RENT + Degradation_of_NET1P_in_RENTP) / cell; // d[CDC14]/dt
+    rDY[7] = ((CDC14 + RENT + RENTP) - rY[7]) / cell; // d[CDC14T]/dt
+    rDY[8] = (CDC15_activation - inactivation_0) / cell; // d[CDC15]/dt
+    rDY[9] = (-CDC15_activation + inactivation_0) / cell; // d[CDC15i]/dt
+    rDY[10] = (-Degradation_of_active_CDC20 + Activation_of_CDC20 - Inactivation_0) / cell; // d[CDC20]/dt
+    rDY[11] = (Synthesis_of_inactive_CDC20 - Degradation_of_inactiveCDC20 - Activation_of_CDC20 + Inactivation_0) / cell; // d[CDC20i]/dt
+    rDY[12] = (CDC6_synthesis - Phosphorylation_of_CDC6 + Dephosphorylation_of_CDC6 - CLB2CDC6_complex_formation + CLB2CDC6_dissociation - CLB5CDC6_complex_formation + CLB5CDC6_dissociation + CLB2_degradation_in_F2 + CLB5_degradation_in_F5) / cell; // d[CDC6]/dt
+    rDY[13] = (Phosphorylation_of_CDC6 - Dephosphorylation_of_CDC6 - Degradation_of_CDC6P + CLB2_degradation_in_F2P + CLB5_degradation_in_F5P) / cell; // d[CDC6P]/dt
+    rDY[14] = ((CDC6 + F2 + F5 + CDC6P + F2P + F5P) - rY[14]) / cell; // d[CDC6T]/dt
+    rDY[15] = (CDH1_synthesis - CDH1_degradation + CDH1i_activation - Inactivation_1) / cell; // d[CDH1]/dt
+    rDY[16] = (-CDH1i_degradation - CDH1i_activation + Inactivation_1) / cell; // d[CDH1i]/dt
+    rDY[17] = ((SIC1T + CDC6T) - rY[17]) / cell; // d[CKIT]/dt
+    rDY[18] = (Synthesis_of_CLB2 - Degradation_of_CLB2 - Assoc_of_CLB2_and_SIC1 + Dissoc_of_CLB2SIC1_complex + Degradation_of_SIC1_in_C2P - CLB2CDC6_complex_formation + CLB2CDC6_dissociation + CDC6_degradation_in_F2P) / cell; // d[CLB2]/dt
+    rDY[19] = ((CLB2 + C2 + C2P + F2 + F2P) - rY[19]) / cell; // d[CLB2T]/dt
+    rDY[20] = (Synthesis_of_CLB5 - Degradation_of_CLB5 - Assoc_of_CLB5_and_SIC1 + Dissoc_of_CLB5SIC1 + Degradation_of_SIC1P_in_C5P - CLB5CDC6_complex_formation + CLB5CDC6_dissociation + CDC6_degradation_in_F5P) / cell; // d[CLB5]/dt
+    rDY[21] = ((CLB5 + C5 + C5P + F5 + F5P) - rY[21]) / cell; // d[CLB5T]/dt
+    rDY[22] = (Synthesis_of_CLN2 - Degradation_of_CLN2) / cell; // d[CLN2]/dt
+    rDY[23] = ((C0 * Dn3 * MASS / (Jn3 + Dn3 * MASS)) - rY[23]) / cell; // d[CLN3]/dt
+    rDY[24] = (Degradation_of_PDS1_in_PE - Assoc_with_ESP1_to_form_PE + Disso_from_PE) / cell; // d[ESP1]/dt
+    rDY[25] = (CLB2CDC6_complex_formation - CLB2CDC6_dissociation - F2_phosphorylation + F2P_dephosphorylation - CLB2_degradation_in_F2) / cell; // d[F2]/dt
+    rDY[26] = (F2_phosphorylation - F2P_dephosphorylation - CDC6_degradation_in_F2P - CLB2_degradation_in_F2P) / cell; // d[F2P]/dt
+    rDY[27] = (CLB5CDC6_complex_formation - CLB5CDC6_dissociation - F5_phosphorylation + F5P_dephosphorylation - CLB5_degradation_in_F5) / cell; // d[F5]/dt
+    rDY[28] = (F5_phosphorylation - F5P_dephosphorylation - CDC6_degradation_in_F5P - CLB5_degradation_in_F5P) / cell; // d[F5P]/dt
+    rDY[29] = (-Activation_of_IEP + Inactivation) / cell; // d[IE]/dt
+    rDY[30] = (Activation_of_IEP - Inactivation) / cell; // d[IEP]/dt
+    rDY[31] = (Growth) / cell; // d[MASS]/dt
+    rDY[32] = ((GK_219(kamcm * CLB2, kimcm, Jamcm, Jimcm)) - rY[32]) / cell; // d[MCM1]/dt
+    rDY[33] = (-Assoc_with_NET1_to_form_RENT + Dissoc_from_RENT + Net1_synthesis - Net1_degradation - NET1_phosphorylation + dephosphorylation + Degradation_of_CDC14_in_RENT) / cell; // d[NET1]/dt
+    rDY[34] = (-Assoc_with_NET1P_to_form_RENTP + Dissoc_from_RENP - Net1P_degradation + NET1_phosphorylation - dephosphorylation + Degradation_of_CDC14_in_RENTP) / cell; // d[NET1P]/dt
+    rDY[35] = ((NET1 + NET1P + RENT + RENTP) - rY[35]) / cell; // d[NET1T]/dt
+    rDY[36] = (DNA_synthesis - Negative_regulation_of_DNA_synthesis) / cell; // d[ORI]/dt
+    rDY[37] = (PDS1_synthesis - degradation_0 - Assoc_with_ESP1_to_form_PE + Disso_from_PE) / cell; // d[PDS1]/dt
+    rDY[38] = (-Degradation_of_PDS1_in_PE + Assoc_with_ESP1_to_form_PE - Disso_from_PE) / cell; // d[PE]/dt
+    rDY[39] = (PPX_synthesis - degradation) / cell; // d[PPX]/dt
+    rDY[40] = (Assoc_with_NET1_to_form_RENT - Dissoc_from_RENT - RENT_phosphorylation + dephosphorylation_0 - Degradation_of_NET1_in_RENT - Degradation_of_CDC14_in_RENT) / cell; // d[RENT]/dt
+    rDY[41] = (Assoc_with_NET1P_to_form_RENTP - Dissoc_from_RENP + RENT_phosphorylation - dephosphorylation_0 - Degradation_of_NET1P_in_RENTP - Degradation_of_CDC14_in_RENTP) / cell; // d[RENTP]/dt
+    rDY[42] = ((GK_219(Vasbf, Visbf, Jasbf, Jisbf)) - rY[42]) / cell; // d[SBF]/dt
+    rDY[43] = (Synthesis_of_SIC1 - Phosphorylation_of_SIC1 + Dephosphorylation_of_SIC1 - Assoc_of_CLB2_and_SIC1 + Dissoc_of_CLB2SIC1_complex - Assoc_of_CLB5_and_SIC1 + Dissoc_of_CLB5SIC1 + Degradation_of_CLB2_in_C2 + Degradation_of_CLB5_in_C5) / cell; // d[SIC1]/dt
+    rDY[44] = (Phosphorylation_of_SIC1 - Dephosphorylation_of_SIC1 - Fast_Degradation_of_SIC1P + Degradation_of_CLB2_in_C2P + Degradation_of_CLB5_in_C5P) / cell; // d[SIC1P]/dt
+    rDY[45] = ((SIC1 + C2 + C5 + SIC1P + C2P + C5P) - rY[45]) / cell; // d[SIC1T]/dt
+    rDY[46] = (Spindle_formation - Spindle_disassembly) / cell; // d[SPN]/dt
+    rDY[47] = (Synthesis_of_SWI5 - Degradation_of_SWI5 + Activation_of_SWI5 - Inactivation_of_SWI5) / cell; // d[SWI5]/dt
+    rDY[48] = (-Degradation_of_SWI5P - Activation_of_SWI5 + Inactivation_of_SWI5) / cell; // d[SWI5P]/dt
+    rDY[49] = (-TEM1_activation + inactivation) / cell; // d[TEM1GDP]/dt
+    rDY[50] = (TEM1_activation - inactivation) / cell; // d[TEM1GTP]/dt
 
     // Scale time appropriately
 }

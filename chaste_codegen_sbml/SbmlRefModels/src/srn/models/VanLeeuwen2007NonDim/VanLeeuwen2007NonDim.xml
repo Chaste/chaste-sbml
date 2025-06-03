@@ -37,7 +37,7 @@
       <parameter id="K_C" name="K_C" value="6000" constant="true"/>
       <parameter id="K_D" name="K_D" value="150" constant="true"/>
       <parameter id="p_u" name="p_u" value="1" constant="true"/>
-      <parameter id="wnt_level" name="wnt_level" value="0" constant="true"/>
+      <parameter id="wnt_level" name="wnt_level" value="0" constant="false"/>
       <parameter id="xi_D" name="xi_D" value="0.00666666666666667" constant="true"/>
       <parameter id="xi_Dx" name="xi_Dx" value="0.00666666666666667" constant="true"/>
       <parameter id="xi_X" name="xi_X" value="0.266666666666667" constant="true"/>
@@ -46,8 +46,8 @@
       <parameter id="d_X" name="d_X" value="0.133333333333333" constant="true"/>
       <parameter id="d_D" name="d_D" value="0.00666666666666667" constant="true"/>
       <parameter id="p_c" name="p_c" value="0" constant="true"/>
-      <parameter id="gamma1" name="gamma1" value="1" constant="true"/>
-      <parameter id="gamma2" name="gamma2" value="1" constant="true"/>
+      <parameter id="gamma1" name="gamma1" value="1" constant="false"/>
+      <parameter id="gamma2" name="gamma2" value="1" constant="false"/>
       <parameter id="s_D" name="s_D" value="0.133333333333333" constant="true"/>
       <parameter id="s_X" name="s_X" value="0.0533333333333333" constant="true"/>
       <parameter id="d_u" name="d_u" value="0.0666666666666667" constant="true"/>
@@ -63,7 +63,7 @@
       <parameter id="d_T" name="d_T" value="0.000533333333333333" constant="true"/>
       <parameter id="s_Y" name="s_Y" value="1" constant="true"/>
       <parameter id="d_Y" name="d_Y" value="0.00133333333333333" constant="true"/>
-      <parameter id="ComplexTransitThreshold" name="ComplexTransitThreshold" value="1" constant="true"/>
+      <parameter id="ComplexTransitThreshold" name="ComplexTransitThreshold" value="1" constant="false"/>
     </listOfParameters>
     <listOfRules>
       <assignmentRule variable="C_F">

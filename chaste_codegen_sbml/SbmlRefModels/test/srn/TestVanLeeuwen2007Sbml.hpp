@@ -241,7 +241,7 @@ public:
         TS_ASSERT_DELTA(derivs[8], 0.0, 1e-5);
         TS_ASSERT_DELTA(derivs[9], 0.0, 1e-5);
         TS_ASSERT_DELTA(derivs[10], 0.00344, 1e-5);
-        TS_ASSERT_DELTA(derivs[11], -1.1103, 1e-5);
+        TS_ASSERT_DELTA(derivs[11], 0.0, 1e-5);
         TS_ASSERT_DELTA(derivs[12], 0.0, 1e-5);
         TS_ASSERT_DELTA(derivs[13], 0.0, 1e-5);
 
@@ -260,7 +260,7 @@ public:
         TS_ASSERT_DELTA(derivs[8], 0.0, 1e-5);
         TS_ASSERT_DELTA(derivs[9], 0.0, 1e-5);
         TS_ASSERT_DELTA(derivs[10], 0.00344, 1e-5);
-        TS_ASSERT_DELTA(derivs[11], -1.1103, 1e-5);
+        TS_ASSERT_DELTA(derivs[11], 0.0, 1e-5);
         TS_ASSERT_DELTA(derivs[12], 0.0, 1e-5);
         TS_ASSERT_DELTA(derivs[13], 0.0, 1e-5);
     }
@@ -273,7 +273,8 @@ public:
 
             // Solve system using RK4 solver
 
-            double dt = 0.0001;
+            double dt = 0.01;
+            double end_time = 1000.0;
 
             // RK4 solver solution worked out
             RungeKutta4IvpOdeSolver rk4_solver;
@@ -281,25 +282,10 @@ public:
             std::vector<double> state_variables = ode_system.GetInitialConditions();
 
             Timer::Reset();
-            OdeSolution solutions = rk4_solver.Solve(&ode_system, state_variables, 0.0, 10.0, dt, dt);
+            OdeSolution solutions = rk4_solver.Solve(&ode_system, state_variables, 0.0, end_time, dt, dt);
             Timer::Print("1. VanLeeuwen RK4");
 
             unsigned end = solutions.rGetSolutions().size() - 1;
-
-            // The following code provides nice output for gnuplot
-            // use the command
-            // plot "VanLeeuwen.dat" u 1:2
-            // or
-            // plot "VanLeeuwen.dat" u 1:3 etc. for the various proteins...
-
-            // OutputFileHandler handler("");
-            // out_stream file=handler.OpenOutputFile("VanLeeuwen.dat");
-            // for (unsigned i=0; i<=end; i++)
-            // {
-            //     (*file) << solutions.rGetTimes()[i]<< "\t" << solutions.rGetSolutions()[i][0] << "\t" << solutions.rGetSolutions()[i][1] << "\t" << solutions.rGetSolutions()[i][2] << "\t" << solutions.rGetSolutions()[i][3] << "\t" << solutions.rGetSolutions()[i][4] << "\t" << solutions.rGetSolutions()[i][5] << "\t" << solutions.rGetSolutions()[i][6] << "\t" << solutions.rGetSolutions()[i][7] << "\t" << solutions.rGetSolutions()[i][8] << "\t" << solutions.rGetSolutions()[i][9] << "\t" << solutions.rGetSolutions()[i][10] << "\n" << std::flush;
-            // }
-            // file->close();
-
             TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 0.067, 2e-2);
             TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 0.67, 1e-2);
             TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 2.54, 1e-2);
@@ -343,22 +329,27 @@ public:
             solutions = solver.Solve(&ode_system, state_variables, 0.0, end_time, h_value, 0.1);
             Timer::Print("1. VanLeeuwen CVODE");
 
-            unsigned end = solutions.rGetSolutions().size() - 1;
-
             // The following code provides nice output for gnuplot
             // use the command
-            // plot "VanLeeuwen.dat" u 1:2
+            // plot "vanleeuwen_2007.dat" u 1:2 etc. for the various species...
             // or
-            // plot "VanLeeuwen.dat" u 1:3 etc. for the various proteins...
+            // plot "vanleeuwen_2007.dat" u 1:2, "" u 1:3, "" u 1:4 etc. for all species
 
             // OutputFileHandler handler("");
-            // out_stream file=handler.OpenOutputFile("VanLeeuwen.dat");
-            // for (unsigned i=0; i<=end; i++)
+            // out_stream file = handler.OpenOutputFile("vanleeuwen_2007.dat");
+            // for (unsigned i = 0; i < solutions.rGetSolutions().size(); i++)
             // {
-            //     (*file) << solutions.rGetTimes()[i]<< "\t" << solutions.rGetSolutions()[i][0] << "\t" << solutions.rGetSolutions()[i][1] << "\t" << solutions.rGetSolutions()[i][2] << "\t" << solutions.rGetSolutions()[i][3] << "\t" << solutions.rGetSolutions()[i][4] << "\t" << solutions.rGetSolutions()[i][5] << "\n" << std::flush;
+            //     (*file) << solutions.rGetTimes()[i];
+            //     for (unsigned j = 0; j < solutions.rGetSolutions()[i].size(); j++)
+            //     {
+            //         (*file) << "\t" << solutions.rGetSolutions()[i][j];
+            //     }
+            //     (*file) << "\n"
+            //             << std::flush;
             // }
             // file->close();
 
+            unsigned end = solutions.rGetSolutions().size() - 1;
             TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 0.067, 2e-2);
             TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 0.67, 1e-2);
             TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 2.54, 1e-2);

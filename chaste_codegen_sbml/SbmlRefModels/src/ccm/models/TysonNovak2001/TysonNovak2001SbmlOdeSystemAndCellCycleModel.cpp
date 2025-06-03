@@ -109,10 +109,7 @@ void TysonNovak2001SbmlOdeSystem::EvaluateYDerivatives(double time, const std::v
     TF = GetParameter("TF");
 
     // RULES:
-    CycB = CycBt - 2 * CycBt * CKIt / (CycBt + CKIt + 1 / Keq + std::pow(std::pow(CycBt + CKIt + 1 / Keq, 2) - 4 * CycBt * CKIt, 1 / 2));
-    Trimer = 2 * CycBt * CKIt / (CycBt + CKIt + 1 / Keq + std::pow(std::pow(CycBt + CKIt + 1 / Keq, 2) - 4 * CycBt * CKIt, 1 / 2));
     TF = GK(k15p * m + k15pp * SK, k16p + k16pp * m * CycB, J15, J16);
-    Mad = 1;
 
     // UPDATE STATE PARAMETERS:
 
@@ -182,13 +179,16 @@ void TysonNovak2001SbmlOdeSystem::EvaluateYDerivatives(double time, const std::v
 
     // ODES:
     rDY[0] = (CycBt_synthesis - CycBdegradation - CycBdegradationviaCdh1 - CycBtdegradationviaCdc20a) / cell; // d[CycBt]/dt
-    rDY[1] = (Cdc20activation - Cdc20ainhibition - Cdc20adegradation) / cell; // d[Cdc20a]/dt
-    rDY[2] = (Cdh1synthesis - Cdh1degradation) / cell; // d[Cdh1]/dt
-    rDY[3] = (growth) / cell; // d[m]/dt
-    rDY[4] = (Cdc20tsynthesis - Cdc20t_deg) / cell; // d[Cdc20t]/dt
-    rDY[5] = (IEPsynthesis - IEPdegradation) / cell; // d[IEP]/dt
-    rDY[6] = (CKItsynthesis - CKIdegradation - CKItphosphorilationviaSK - eq_7) / cell; // d[CKIt]/dt
-    rDY[7] = (SKsynthesis - SKdegradation) / cell; // d[SK]/dt
+    rDY[1] = ((CycBt - 2 * CycBt * CKIt / (CycBt + CKIt + 1 / Keq + std::pow(std::pow(CycBt + CKIt + 1 / Keq, 2) - 4 * CycBt * CKIt, 1 / 2))) - rY[1]) / cell; // d[CycB]/dt
+    rDY[2] = (Cdc20activation - Cdc20ainhibition - Cdc20adegradation) / cell; // d[Cdc20a]/dt
+    rDY[3] = ((2 * CycBt * CKIt / (CycBt + CKIt + 1 / Keq + std::pow(std::pow(CycBt + CKIt + 1 / Keq, 2) - 4 * CycBt * CKIt, 1 / 2))) - rY[3]) / cell; // d[Trimer]/dt
+    rDY[4] = (Cdh1synthesis - Cdh1degradation) / cell; // d[Cdh1]/dt
+    rDY[5] = (growth) / cell; // d[m]/dt
+    rDY[6] = (Cdc20tsynthesis - Cdc20t_deg) / cell; // d[Cdc20t]/dt
+    rDY[7] = (IEPsynthesis - IEPdegradation) / cell; // d[IEP]/dt
+    rDY[8] = ((1) - rY[8]) / cell; // d[Mad]/dt
+    rDY[9] = (CKItsynthesis - CKIdegradation - CKItphosphorilationviaSK - eq_7) / cell; // d[CKIt]/dt
+    rDY[10] = (SKsynthesis - SKdegradation) / cell; // d[SK]/dt
 
     // Scale time appropriately
 }

@@ -29,9 +29,6 @@ private:
     const double K_C = 200.0;
     const double K_D = 5.0;
     const double p_u = 100.0;
-    const double wnt_level = 0.0;
-    const double gamma1 = 1.0;
-    const double gamma2 = 1.0;
     const double xi_D = 5.0;
     const double xi_Dx = 5.0;
     const double xi_X = 200.0;
@@ -55,7 +52,6 @@ private:
     const double s_Y = 10.0;
     const double d_Y = 1.0;
     const double d_D = 5.0;
-    const double ComplexTransitThreshold = 1.0;
 
     // STATE VARIABLES:
     double X; // X
@@ -75,6 +71,10 @@ private:
 
     // STATE PARAMETERS:
 
+    double wnt_level;
+    double gamma1;
+    double gamma2;
+    double ComplexTransitThreshold;
 
 
 public:

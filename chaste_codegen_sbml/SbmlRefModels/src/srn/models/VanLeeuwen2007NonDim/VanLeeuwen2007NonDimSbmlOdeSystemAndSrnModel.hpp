@@ -29,7 +29,6 @@ private:
     const double K_C = 6000.0;
     const double K_D = 150.0;
     const double p_u = 1.0;
-    const double wnt_level = 0.0;
     const double xi_D = 0.00666666666666667;
     const double xi_Dx = 0.00666666666666667;
     const double xi_X = 0.266666666666667;
@@ -38,8 +37,6 @@ private:
     const double d_X = 0.133333333333333;
     const double d_D = 0.00666666666666667;
     const double p_c = 0.0;
-    const double gamma1 = 1.0;
-    const double gamma2 = 1.0;
     const double s_D = 0.133333333333333;
     const double s_X = 0.0533333333333333;
     const double d_u = 0.0666666666666667;
@@ -55,7 +52,6 @@ private:
     const double d_T = 0.000533333333333333;
     const double s_Y = 1.0;
     const double d_Y = 0.00133333333333333;
-    const double ComplexTransitThreshold = 1.0;
 
     // STATE VARIABLES:
     double X; // X
@@ -75,6 +71,10 @@ private:
 
     // STATE PARAMETERS:
 
+    double wnt_level;
+    double gamma1;
+    double gamma2;
+    double ComplexTransitThreshold;
 
 
 public:

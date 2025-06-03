@@ -83,8 +83,16 @@ VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem(std::vector<double> sta
 
     // STATE PARAMETERS:
 
+    wnt_level = 0.0;
+    gamma1 = 1.0;
+    gamma2 = 1.0;
+    ComplexTransitThreshold = 1.0;
 
 
+    mParameters.push_back(wnt_level);
+    mParameters.push_back(gamma1);
+    mParameters.push_back(gamma2);
+    mParameters.push_back(ComplexTransitThreshold);
 
 }
 
@@ -113,14 +121,19 @@ void VanLeeuwen2007SbmlOdeSystem::EvaluateYDerivatives(double time, const std::v
 
     // STATE PARAMETERS:
 
+    wnt_level = GetParameter("wnt_level");
+    gamma1 = GetParameter("gamma1");
+    gamma2 = GetParameter("gamma2");
+    ComplexTransitThreshold = GetParameter("ComplexTransitThreshold");
 
     // RULES:
-    C_F = C_o + C_c;
-    C_T = C_oT + C_cT;
-    drag = sm::max((C_A - 100) / 3, 1);
 
     // UPDATE STATE PARAMETERS:
 
+    SetParameter("wnt_level", wnt_level);
+    SetParameter("gamma1", gamma1);
+    SetParameter("gamma2", gamma2);
+    SetParameter("ComplexTransitThreshold", ComplexTransitThreshold);
 
     // REACTIONS:
 
@@ -208,7 +221,9 @@ void VanLeeuwen2007SbmlOdeSystem::EvaluateYDerivatives(double time, const std::v
     rDY[8] = (r11 - r12 + r13 - r13) / cytosolmembraneandnucleus; // d[C_oT]/dt
     rDY[9] = (r18 - r19) / cytosolmembraneandnucleus; // d[C_cT]/dt
     rDY[10] = (r13 - r14) / cytosolmembraneandnucleus; // d[Y]/dt
-    rDY[11] = (drag - rY[13]) / cytosolmembraneandnucleus; // d[drag]/dt
+    rDY[11] = ((C_o + C_c) - rY[11]) / cytosolmembraneandnucleus; // d[C_F]/dt
+    rDY[12] = ((C_oT + C_cT) - rY[12]) / cytosolmembraneandnucleus; // d[C_T]/dt
+    rDY[13] = ((sm::max((C_A - 100) / 3, 1)) - rY[13]) / cytosolmembraneandnucleus; // d[drag]/dt
 
     // Scale time appropriately
 }
@@ -276,6 +291,18 @@ void CellwiseOdeSystemInformation<VanLeeuwen2007SbmlOdeSystem>::Initialise()
 
 
     // STATE PARAMETERS:
+    this->mParameterNames.push_back("wnt_level");
+    this->mParameterUnits.push_back("non-dim");
+
+    this->mParameterNames.push_back("gamma1");
+    this->mParameterUnits.push_back("non-dim");
+
+    this->mParameterNames.push_back("gamma2");
+    this->mParameterUnits.push_back("non-dim");
+
+    this->mParameterNames.push_back("ComplexTransitThreshold");
+    this->mParameterUnits.push_back("non-dim");
+
     this->mInitialised = true;
 }
 
