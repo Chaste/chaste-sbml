@@ -20,6 +20,7 @@ def test_varname_camelcase():
         ("abstract_foo_bar", "abstractFooBar"),
         ("foo1bar", "foo1Bar"),
         ("foo100bar", "foo100Bar"),
+        ("TysonNovak2001", "tysonNovak2001")
     ]
 
     for test_input, expected_output in test_cases:
