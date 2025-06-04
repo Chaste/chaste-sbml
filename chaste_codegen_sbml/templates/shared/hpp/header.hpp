@@ -1,8 +1,7 @@
 #ifndef {{ header_guard }}
 #define {{ header_guard }}
 
-#include <cmath>
-#include <iostream>
+#include <vector>
 
 #include <boost/serialization/base_object.hpp>
 
@@ -65,11 +64,12 @@ public:
 
     ~{{ ode_class_name }}();
 
-    void Init();
-
     void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
+    void RefreshState(const std::vector<double> &rY);
 
 {% if events %}
+    double ProcessEvents(double time, const std::vector<double>& rY);
+    double CalculateRootFunction(double time, const std::vector<double>& rY);
     bool CalculateStoppingEvent(double time, const std::vector<double>& rY);
 {% endif %}
 

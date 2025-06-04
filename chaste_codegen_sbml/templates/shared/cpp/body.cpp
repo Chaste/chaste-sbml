@@ -1,3 +1,6 @@
+#include <cmath>
+#include <limits>
+
 #include "CellwiseOdeSystemInformation.hpp"
 #include "SbmlMath.hpp"
 
@@ -84,34 +87,9 @@ namespace sm = sbmlmath;
 {
 }
 
-{% for fd in function_definitions %}
-double {{ ode_class_name }}::{{ fd["id"] }}({{ fd["args"] }})
-{
-    return {{ fd["body"]}};
-}
-{% endfor %}
-
 void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-    // STATE VARIABLES:
-{% for sp in species %}
-{% if sp["is_state_variable"] is true() %}
-    {{ sp["id"] }} = rY[{{ sp["state_variable_index"] }}];
-{% endif %}
-{% endfor %}
-
-    // STATE PARAMETERS:
-{% for sp in species %}
-{% if sp["is_state_parameter"] is true() %}
-    {{ sp["id"] }} = GetParameter("{{ sp['id'] }}");
-{% endif %}
-{% endfor %}
-
-{% for param in parameters %}
-{% if param["is_state_parameter"] is true() %}
-    {{ param["id"] }} = GetParameter("{{ param['id'] }}");
-{% endif %}
-{% endfor %}
+    RefreshState(rY);
 
     // RULES:
 {% for rule in rules %}
@@ -164,18 +142,12 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
     // Scale time appropriately
 }
 
-{% if events %}
-bool {{ ode_class_name }}::CalculateStoppingEvent(double time, const std::vector<double> & rY)
+void {{ ode_class_name }}::RefreshState(const std::vector<double> &rY)
 {
-    if (time <= 0.0)
-    {
-        return false;
-    }
-
     // STATE VARIABLES:
 {% for sp in species %}
 {% if sp["is_state_variable"] is true() %}
-    double {{ sp["id"] }} = rY[{{ sp["state_variable_index"] }}];
+    {{ sp["id"] }} = rY[{{ sp["state_variable_index"] }}];
 {% endif %}
 {% endfor %}
 
@@ -191,33 +163,58 @@ bool {{ ode_class_name }}::CalculateStoppingEvent(double time, const std::vector
     {{ param["id"] }} = GetParameter("{{ param['id'] }}");
 {% endif %}
 {% endfor %}
+}
 
-    bool stop = false;
-
-    std::vector<double> dy(rY.size()); // Initialise derivatives vector
+{% if events %}
+double {{ ode_class_name }}::ProcessEvents(double time, const std::vector<double> & rY)
+{
+    // Initialise derivatives vector
+    std::vector<double> dy(rY.size());
     EvaluateYDerivatives(time, rY, dy);
+    RefreshState(rY);
+
+    double stop_dist = std::numeric_limits<double>::max();
 
 {% for event in events %}
     if ({{ event["trigger"] }})
     {
-        if (!eventsSatisfied[{{ loop.index0 }}])
+        if (!eventsSatisfied[{{ loop.index0 }}] && time > 0.0)
         {
-            stop = true;
 {% for assignment in event["assignments"] %}
             {{ assignment }}
 {% endfor %}
+            stop_dist = 0.0;
         }
         eventsSatisfied[{{ loop.index0 }}] = true;
     }
     else
     {
+        stop_dist = 0.0; // TODO: stop_dist = std::min(stop_dist, event_dist);
         eventsSatisfied[{{ loop.index0 }}] = false;
     }
 {% endfor %}
 
-    return stop;
+    return stop_dist;
+}
+
+double {{ ode_class_name }}::CalculateRootFunction(double time, const std::vector<double> &rY)
+{
+    return ProcessEvents(time, rY);
+}
+
+bool {{ ode_class_name }}::CalculateStoppingEvent(double time, const std::vector<double> &rY)
+{
+    return ProcessEvents(time, rY) < 0.0;
 }
 {% endif %}
+
+// FUNCTION DEFINITIONS:
+{% for fd in function_definitions %}
+double {{ ode_class_name }}::{{ fd["id"] }}({{ fd["args"] }})
+{
+    return {{ fd["body"]}};
+}
+{% endfor %}
 
 template <>
 void CellwiseOdeSystemInformation<{{ ode_class_name }}>::Initialise()
