@@ -1,3 +1,6 @@
+#include <cmath>
+#include <limits>
+
 #include "CellwiseOdeSystemInformation.hpp"
 #include "SbmlMath.hpp"
 
@@ -84,29 +87,9 @@ TysonNovak2001SbmlOdeSystem::~TysonNovak2001SbmlOdeSystem()
 {
 }
 
-double TysonNovak2001SbmlOdeSystem::GK(double A1, double A2, double A3, double A4)
-{
-    return 2 * A4 * A1 / (A2 - A1 + A3 * A2 + A4 * A1 + sm::root(2, std::pow(A2 - A1 + A3 * A2 + A4 * A1, 2) - 4 * (A2 - A1) * A4 * A1));
-}
-
 void TysonNovak2001SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-    // STATE VARIABLES:
-    CycBt = rY[0];
-    CycB = rY[1];
-    Cdc20a = rY[2];
-    Trimer = rY[3];
-    Cdh1 = rY[4];
-    m = rY[5];
-    Cdc20t = rY[6];
-    IEP = rY[7];
-    Mad = rY[8];
-    CKIt = rY[9];
-    SK = rY[10];
-
-    // STATE PARAMETERS:
-
-    TF = GetParameter("TF");
+    RefreshState(rY);
 
     // RULES:
     TF = GK(k15p * m + k15pp * SK, k16p + k16pp * m * CycB, J15, J16);
@@ -193,50 +176,67 @@ void TysonNovak2001SbmlOdeSystem::EvaluateYDerivatives(double time, const std::v
     // Scale time appropriately
 }
 
-bool TysonNovak2001SbmlOdeSystem::CalculateStoppingEvent(double time, const std::vector<double> & rY)
+void TysonNovak2001SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
 {
-    if (time <= 0.0)
-    {
-        return false;
-    }
-
     // STATE VARIABLES:
-    double CycBt = rY[0];
-    double CycB = rY[1];
-    double Cdc20a = rY[2];
-    double Trimer = rY[3];
-    double Cdh1 = rY[4];
-    double m = rY[5];
-    double Cdc20t = rY[6];
-    double IEP = rY[7];
-    double Mad = rY[8];
-    double CKIt = rY[9];
-    double SK = rY[10];
+    CycBt = rY[0];
+    CycB = rY[1];
+    Cdc20a = rY[2];
+    Trimer = rY[3];
+    Cdh1 = rY[4];
+    m = rY[5];
+    Cdc20t = rY[6];
+    IEP = rY[7];
+    Mad = rY[8];
+    CKIt = rY[9];
+    SK = rY[10];
 
     // STATE PARAMETERS:
 
     TF = GetParameter("TF");
+}
 
-    bool stop = false;
-
-    std::vector<double> dy(rY.size()); // Initialise derivatives vector
+double TysonNovak2001SbmlOdeSystem::ProcessEvents(double time, const std::vector<double> & rY)
+{
+    // Initialise derivatives vector
+    std::vector<double> dy(rY.size());
     EvaluateYDerivatives(time, rY, dy);
+    RefreshState(rY);
+
+    double stop_dist = std::numeric_limits<double>::max();
 
     if (sm::lt(CycB, 0.1))
     {
-        if (!eventsSatisfied[0])
+        if (!eventsSatisfied[0] && time > 0.0)
         {
-            stop = true;
             SetStateVariable("m", static_cast<double>(m / 2));
+            stop_dist = 0.0;
         }
         eventsSatisfied[0] = true;
     }
     else
     {
+        stop_dist = 0.0; // TODO: stop_dist = std::min(stop_dist, event_dist);
         eventsSatisfied[0] = false;
     }
 
-    return stop;
+    return stop_dist;
+}
+
+double TysonNovak2001SbmlOdeSystem::CalculateRootFunction(double time, const std::vector<double> &rY)
+{
+    return ProcessEvents(time, rY);
+}
+
+bool TysonNovak2001SbmlOdeSystem::CalculateStoppingEvent(double time, const std::vector<double> &rY)
+{
+    return ProcessEvents(time, rY) < 0.0;
+}
+
+// FUNCTION DEFINITIONS:
+double TysonNovak2001SbmlOdeSystem::GK(double A1, double A2, double A3, double A4)
+{
+    return 2 * A4 * A1 / (A2 - A1 + A3 * A2 + A4 * A1 + sm::root(2, std::pow(A2 - A1 + A3 * A2 + A4 * A1, 2) - 4 * (A2 - A1) * A4 * A1));
 }
 
 template <>

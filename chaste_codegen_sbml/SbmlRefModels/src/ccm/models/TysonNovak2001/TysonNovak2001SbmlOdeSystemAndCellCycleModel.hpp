@@ -1,8 +1,7 @@
 #ifndef TYSONNOVAK2001SBMLODESYSTEMANDCELLCYCLEMODEL_HPP_
 #define TYSONNOVAK2001SBMLODESYSTEMANDCELLCYCLEMODEL_HPP_
 
-#include <cmath>
-#include <iostream>
+#include <vector>
 
 #include <boost/serialization/base_object.hpp>
 
@@ -87,10 +86,11 @@ public:
 
     ~TysonNovak2001SbmlOdeSystem();
 
-    void Init();
-
     void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
+    void RefreshState(const std::vector<double> &rY);
 
+    double ProcessEvents(double time, const std::vector<double>& rY);
+    double CalculateRootFunction(double time, const std::vector<double>& rY);
     bool CalculateStoppingEvent(double time, const std::vector<double>& rY);
 
     // FUNCTION DEFINITIONS:

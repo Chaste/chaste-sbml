@@ -1,3 +1,6 @@
+#include <cmath>
+#include <limits>
+
 #include "CellwiseOdeSystemInformation.hpp"
 #include "SbmlMath.hpp"
 
@@ -308,117 +311,9 @@ Chen2004SbmlOdeSystem::~Chen2004SbmlOdeSystem()
 {
 }
 
-double Chen2004SbmlOdeSystem::BB_218(double A1, double A2, double A3, double A4)
-{
-    return A2 - A1 + A3 * A2 + A4 * A1;
-}
-double Chen2004SbmlOdeSystem::GK_219(double A1, double A2, double A3, double A4)
-{
-    return 2 * A4 * A1 / (A2 - A1 + A3 * A2 + A4 * A1 + sm::root(2, std::pow(A2 - A1 + A3 * A2 + A4 * A1, 2) - 4 * (A2 - A1) * A4 * A1));
-}
-double Chen2004SbmlOdeSystem::MichaelisMenten_220(double M1, double J1, double k1, double S1)
-{
-    return k1 * S1 * M1 / (J1 + S1);
-}
-double Chen2004SbmlOdeSystem::Mass_Action_2_221(double k1, double S1, double S2)
-{
-    return k1 * S1 * S2;
-}
-double Chen2004SbmlOdeSystem::Mass_Action_1_222(double k1, double S1)
-{
-    return k1 * S1;
-}
-
 void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-    // STATE VARIABLES:
-    BCK2 = rY[0];
-    BUD = rY[1];
-    C2 = rY[2];
-    C2P = rY[3];
-    C5 = rY[4];
-    C5P = rY[5];
-    CDC14 = rY[6];
-    CDC14T = rY[7];
-    CDC15 = rY[8];
-    CDC15i = rY[9];
-    CDC20 = rY[10];
-    CDC20i = rY[11];
-    CDC6 = rY[12];
-    CDC6P = rY[13];
-    CDC6T = rY[14];
-    CDH1 = rY[15];
-    CDH1i = rY[16];
-    CKIT = rY[17];
-    CLB2 = rY[18];
-    CLB2T = rY[19];
-    CLB5 = rY[20];
-    CLB5T = rY[21];
-    CLN2 = rY[22];
-    CLN3 = rY[23];
-    ESP1 = rY[24];
-    F2 = rY[25];
-    F2P = rY[26];
-    F5 = rY[27];
-    F5P = rY[28];
-    IE = rY[29];
-    IEP = rY[30];
-    MASS = rY[31];
-    MCM1 = rY[32];
-    NET1 = rY[33];
-    NET1P = rY[34];
-    NET1T = rY[35];
-    ORI = rY[36];
-    PDS1 = rY[37];
-    PE = rY[38];
-    PPX = rY[39];
-    RENT = rY[40];
-    RENTP = rY[41];
-    SBF = rY[42];
-    SIC1 = rY[43];
-    SIC1P = rY[44];
-    SIC1T = rY[45];
-    SPN = rY[46];
-    SWI5 = rY[47];
-    SWI5P = rY[48];
-    TEM1GDP = rY[49];
-    TEM1GTP = rY[50];
-
-    // STATE PARAMETERS:
-    BUB2 = GetParameter("BUB2");
-    LTE1 = GetParameter("LTE1");
-    MAD2 = GetParameter("MAD2");
-
-    bub2l = GetParameter("bub2l");
-    CDC15T = GetParameter("CDC15T");
-    ESP1T = GetParameter("ESP1T");
-    IET = GetParameter("IET");
-    KEZ = GetParameter("KEZ");
-    KEZ2 = GetParameter("KEZ2");
-    lte1h = GetParameter("lte1h");
-    lte1l = GetParameter("lte1l");
-    mad2l = GetParameter("mad2l");
-    TEM1T = GetParameter("TEM1T");
-    D = GetParameter("D");
-    mu = GetParameter("mu");
-    Vdb5 = GetParameter("Vdb5");
-    Vdb2 = GetParameter("Vdb2");
-    Vasbf = GetParameter("Vasbf");
-    Visbf = GetParameter("Visbf");
-    Vkpc1 = GetParameter("Vkpc1");
-    Vkpf6 = GetParameter("Vkpf6");
-    Vacdh = GetParameter("Vacdh");
-    Vicdh = GetParameter("Vicdh");
-    Vppnet = GetParameter("Vppnet");
-    Vkpnet = GetParameter("Vkpnet");
-    Vdppx = GetParameter("Vdppx");
-    Vdpds = GetParameter("Vdpds");
-    Vaiep = GetParameter("Vaiep");
-    Vd2c1 = GetParameter("Vd2c1");
-    Vd2f6 = GetParameter("Vd2f6");
-    Vppc1 = GetParameter("Vppc1");
-    Vppf6 = GetParameter("Vppf6");
-    F = GetParameter("F");
+    RefreshState(rY);
 
     // RULES:
     Visbf = kisbf_p + kisbf_p_p * CLB2;
@@ -822,65 +717,60 @@ void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     // Scale time appropriately
 }
 
-bool Chen2004SbmlOdeSystem::CalculateStoppingEvent(double time, const std::vector<double> & rY)
+void Chen2004SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
 {
-    if (time <= 0.0)
-    {
-        return false;
-    }
-
     // STATE VARIABLES:
-    double BCK2 = rY[0];
-    double BUD = rY[1];
-    double C2 = rY[2];
-    double C2P = rY[3];
-    double C5 = rY[4];
-    double C5P = rY[5];
-    double CDC14 = rY[6];
-    double CDC14T = rY[7];
-    double CDC15 = rY[8];
-    double CDC15i = rY[9];
-    double CDC20 = rY[10];
-    double CDC20i = rY[11];
-    double CDC6 = rY[12];
-    double CDC6P = rY[13];
-    double CDC6T = rY[14];
-    double CDH1 = rY[15];
-    double CDH1i = rY[16];
-    double CKIT = rY[17];
-    double CLB2 = rY[18];
-    double CLB2T = rY[19];
-    double CLB5 = rY[20];
-    double CLB5T = rY[21];
-    double CLN2 = rY[22];
-    double CLN3 = rY[23];
-    double ESP1 = rY[24];
-    double F2 = rY[25];
-    double F2P = rY[26];
-    double F5 = rY[27];
-    double F5P = rY[28];
-    double IE = rY[29];
-    double IEP = rY[30];
-    double MASS = rY[31];
-    double MCM1 = rY[32];
-    double NET1 = rY[33];
-    double NET1P = rY[34];
-    double NET1T = rY[35];
-    double ORI = rY[36];
-    double PDS1 = rY[37];
-    double PE = rY[38];
-    double PPX = rY[39];
-    double RENT = rY[40];
-    double RENTP = rY[41];
-    double SBF = rY[42];
-    double SIC1 = rY[43];
-    double SIC1P = rY[44];
-    double SIC1T = rY[45];
-    double SPN = rY[46];
-    double SWI5 = rY[47];
-    double SWI5P = rY[48];
-    double TEM1GDP = rY[49];
-    double TEM1GTP = rY[50];
+    BCK2 = rY[0];
+    BUD = rY[1];
+    C2 = rY[2];
+    C2P = rY[3];
+    C5 = rY[4];
+    C5P = rY[5];
+    CDC14 = rY[6];
+    CDC14T = rY[7];
+    CDC15 = rY[8];
+    CDC15i = rY[9];
+    CDC20 = rY[10];
+    CDC20i = rY[11];
+    CDC6 = rY[12];
+    CDC6P = rY[13];
+    CDC6T = rY[14];
+    CDH1 = rY[15];
+    CDH1i = rY[16];
+    CKIT = rY[17];
+    CLB2 = rY[18];
+    CLB2T = rY[19];
+    CLB5 = rY[20];
+    CLB5T = rY[21];
+    CLN2 = rY[22];
+    CLN3 = rY[23];
+    ESP1 = rY[24];
+    F2 = rY[25];
+    F2P = rY[26];
+    F5 = rY[27];
+    F5P = rY[28];
+    IE = rY[29];
+    IEP = rY[30];
+    MASS = rY[31];
+    MCM1 = rY[32];
+    NET1 = rY[33];
+    NET1P = rY[34];
+    NET1T = rY[35];
+    ORI = rY[36];
+    PDS1 = rY[37];
+    PE = rY[38];
+    PPX = rY[39];
+    RENT = rY[40];
+    RENTP = rY[41];
+    SBF = rY[42];
+    SIC1 = rY[43];
+    SIC1P = rY[44];
+    SIC1T = rY[45];
+    SPN = rY[46];
+    SWI5 = rY[47];
+    SWI5P = rY[48];
+    TEM1GDP = rY[49];
+    TEM1GTP = rY[50];
 
     // STATE PARAMETERS:
     BUB2 = GetParameter("BUB2");
@@ -917,72 +807,113 @@ bool Chen2004SbmlOdeSystem::CalculateStoppingEvent(double time, const std::vecto
     Vppc1 = GetParameter("Vppc1");
     Vppf6 = GetParameter("Vppf6");
     F = GetParameter("F");
+}
 
-    bool stop = false;
-
-    std::vector<double> dy(rY.size()); // Initialise derivatives vector
+double Chen2004SbmlOdeSystem::ProcessEvents(double time, const std::vector<double> & rY)
+{
+    // Initialise derivatives vector
+    std::vector<double> dy(rY.size());
     EvaluateYDerivatives(time, rY, dy);
+    RefreshState(rY);
+
+    double stop_dist = std::numeric_limits<double>::max();
 
     if (sm::lt(CLB2 + CLB5 - KEZ2, 0))
     {
-        if (!eventsSatisfied[0])
+        if (!eventsSatisfied[0] && time > 0.0)
         {
-            stop = true;
             SetStateVariable("ORI", static_cast<double>(0));
+            stop_dist = 0.0;
         }
         eventsSatisfied[0] = true;
     }
     else
     {
+        stop_dist = 0.0; // TODO: stop_dist = std::min(stop_dist, event_dist);
         eventsSatisfied[0] = false;
     }
     if (sm::gt(ORI - 1, 0))
     {
-        if (!eventsSatisfied[1])
+        if (!eventsSatisfied[1] && time > 0.0)
         {
-            stop = true;
             SetParameter("MAD2", static_cast<double>(mad2h));
             SetParameter("BUB2", static_cast<double>(bub2h));
+            stop_dist = 0.0;
         }
         eventsSatisfied[1] = true;
     }
     else
     {
+        stop_dist = 0.0; // TODO: stop_dist = std::min(stop_dist, event_dist);
         eventsSatisfied[1] = false;
     }
     if (sm::gt(SPN - 1, 0))
     {
-        if (!eventsSatisfied[2])
+        if (!eventsSatisfied[2] && time > 0.0)
         {
-            stop = true;
             SetParameter("MAD2", static_cast<double>(mad2l));
             SetParameter("LTE1", static_cast<double>(lte1h));
             SetParameter("BUB2", static_cast<double>(bub2l));
+            stop_dist = 0.0;
         }
         eventsSatisfied[2] = true;
     }
     else
     {
+        stop_dist = 0.0; // TODO: stop_dist = std::min(stop_dist, event_dist);
         eventsSatisfied[2] = false;
     }
     if (sm::lt(CLB2 - KEZ, 0))
     {
-        if (!eventsSatisfied[3])
+        if (!eventsSatisfied[3] && time > 0.0)
         {
-            stop = true;
             SetStateVariable("MASS", static_cast<double>(F * MASS));
             SetParameter("LTE1", static_cast<double>(lte1l));
             SetStateVariable("BUD", static_cast<double>(0));
             SetStateVariable("SPN", static_cast<double>(0));
+            stop_dist = 0.0;
         }
         eventsSatisfied[3] = true;
     }
     else
     {
+        stop_dist = 0.0; // TODO: stop_dist = std::min(stop_dist, event_dist);
         eventsSatisfied[3] = false;
     }
 
-    return stop;
+    return stop_dist;
+}
+
+double Chen2004SbmlOdeSystem::CalculateRootFunction(double time, const std::vector<double> &rY)
+{
+    return ProcessEvents(time, rY);
+}
+
+bool Chen2004SbmlOdeSystem::CalculateStoppingEvent(double time, const std::vector<double> &rY)
+{
+    return ProcessEvents(time, rY) < 0.0;
+}
+
+// FUNCTION DEFINITIONS:
+double Chen2004SbmlOdeSystem::BB_218(double A1, double A2, double A3, double A4)
+{
+    return A2 - A1 + A3 * A2 + A4 * A1;
+}
+double Chen2004SbmlOdeSystem::GK_219(double A1, double A2, double A3, double A4)
+{
+    return 2 * A4 * A1 / (A2 - A1 + A3 * A2 + A4 * A1 + sm::root(2, std::pow(A2 - A1 + A3 * A2 + A4 * A1, 2) - 4 * (A2 - A1) * A4 * A1));
+}
+double Chen2004SbmlOdeSystem::MichaelisMenten_220(double M1, double J1, double k1, double S1)
+{
+    return k1 * S1 * M1 / (J1 + S1);
+}
+double Chen2004SbmlOdeSystem::Mass_Action_2_221(double k1, double S1, double S2)
+{
+    return k1 * S1 * S2;
+}
+double Chen2004SbmlOdeSystem::Mass_Action_1_222(double k1, double S1)
+{
+    return k1 * S1;
 }
 
 template <>

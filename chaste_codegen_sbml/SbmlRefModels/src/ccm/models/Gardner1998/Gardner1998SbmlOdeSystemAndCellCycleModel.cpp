@@ -1,3 +1,6 @@
+#include <cmath>
+#include <limits>
+
 #include "CellwiseOdeSystemInformation.hpp"
 #include "SbmlMath.hpp"
 
@@ -60,20 +63,9 @@ Gardner1998SbmlOdeSystem::~Gardner1998SbmlOdeSystem()
 {
 }
 
-
 void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-    // STATE VARIABLES:
-    C = rY[0];
-    X = rY[1];
-    M = rY[2];
-    Y = rY[3];
-    Z = rY[4];
-
-    // STATE PARAMETERS:
-
-    V1 = GetParameter("V1");
-    V3 = GetParameter("V3");
+    RefreshState(rY);
 
     // RULES:
     V1 = C * V1p * std::pow(C + K6, -1);
@@ -192,6 +184,23 @@ void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vect
     // Scale time appropriately
 }
 
+void Gardner1998SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
+{
+    // STATE VARIABLES:
+    C = rY[0];
+    X = rY[1];
+    M = rY[2];
+    Y = rY[3];
+    Z = rY[4];
+
+    // STATE PARAMETERS:
+
+    V1 = GetParameter("V1");
+    V3 = GetParameter("V3");
+}
+
+
+// FUNCTION DEFINITIONS:
 
 template <>
 void CellwiseOdeSystemInformation<Gardner1998SbmlOdeSystem>::Initialise()

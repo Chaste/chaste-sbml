@@ -1,3 +1,6 @@
+#include <cmath>
+#include <limits>
+
 #include "CellwiseOdeSystemInformation.hpp"
 #include "SbmlMath.hpp"
 
@@ -52,18 +55,9 @@ Goldbeter1991SbmlOdeSystem::~Goldbeter1991SbmlOdeSystem()
 {
 }
 
-
 void Goldbeter1991SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-    // STATE VARIABLES:
-    C = rY[0];
-    M = rY[1];
-    X = rY[2];
-
-    // STATE PARAMETERS:
-
-    V1 = GetParameter("V1");
-    V3 = GetParameter("V3");
+    RefreshState(rY);
 
     // RULES:
     V1 = C * VM1 * std::pow(C + Kc, -1);
@@ -136,6 +130,21 @@ void Goldbeter1991SbmlOdeSystem::EvaluateYDerivatives(double time, const std::ve
     // Scale time appropriately
 }
 
+void Goldbeter1991SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
+{
+    // STATE VARIABLES:
+    C = rY[0];
+    M = rY[1];
+    X = rY[2];
+
+    // STATE PARAMETERS:
+
+    V1 = GetParameter("V1");
+    V3 = GetParameter("V3");
+}
+
+
+// FUNCTION DEFINITIONS:
 
 template <>
 void CellwiseOdeSystemInformation<Goldbeter1991SbmlOdeSystem>::Initialise()

@@ -1,8 +1,7 @@
 #ifndef CHEN2000SBMLODESYSTEMANDCELLCYCLEMODEL_HPP_
 #define CHEN2000SBMLODESYSTEMANDCELLCYCLEMODEL_HPP_
 
-#include <cmath>
-#include <iostream>
+#include <vector>
 
 #include <boost/serialization/base_object.hpp>
 
@@ -136,9 +135,8 @@ public:
 
     ~Chen2000SbmlOdeSystem();
 
-    void Init();
-
     void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
+    void RefreshState(const std::vector<double> &rY);
 
 
     // FUNCTION DEFINITIONS:

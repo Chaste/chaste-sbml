@@ -1,3 +1,6 @@
+#include <cmath>
+#include <limits>
+
 #include "CellwiseOdeSystemInformation.hpp"
 #include "SbmlMath.hpp"
 
@@ -92,41 +95,9 @@ Chen2000SbmlOdeSystem::~Chen2000SbmlOdeSystem()
 {
 }
 
-
 void Chen2000SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-    // STATE VARIABLES:
-
-    // STATE PARAMETERS:
-
-    Cln2 = GetParameter("Cln2");
-    Clb2_T = GetParameter("Clb2_T");
-    Vd_b2 = GetParameter("Vd_b2");
-    Clb2 = GetParameter("Clb2");
-    Clb5 = GetParameter("Clb5");
-    Sic1 = GetParameter("Sic1");
-    Clb5_T = GetParameter("Clb5_T");
-    Vd_b5 = GetParameter("Vd_b5");
-    Bck2 = GetParameter("Bck2");
-    Cln3 = GetParameter("Cln3");
-    Sic1_T = GetParameter("Sic1_T");
-    Clb2_Sic1 = GetParameter("Clb2_Sic1");
-    Clb5_Sic1 = GetParameter("Clb5_Sic1");
-    Vd2_c1 = GetParameter("Vd2_c1");
-    Cdc20_T = GetParameter("Cdc20_T");
-    Cdc20 = GetParameter("Cdc20");
-    Vi_20 = GetParameter("Vi_20");
-    Hct1 = GetParameter("Hct1");
-    Vi_t1 = GetParameter("Vi_t1");
-    mass = GetParameter("mass");
-    ORI = GetParameter("ORI");
-    BUD = GetParameter("BUD");
-    SPN = GetParameter("SPN");
-    SBF = GetParameter("SBF");
-    Va_sbf = GetParameter("Va_sbf");
-    MBF = GetParameter("MBF");
-    Mcm1 = GetParameter("Mcm1");
-    Swi5 = GetParameter("Swi5");
+    RefreshState(rY);
 
     // RULES:
     Cln2 = mass * (ks_n2 + ks_n2_ * SBF) - kd_n2 * Cln2;
@@ -194,6 +165,44 @@ void Chen2000SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     // Scale time appropriately
 }
 
+void Chen2000SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
+{
+    // STATE VARIABLES:
+
+    // STATE PARAMETERS:
+
+    Cln2 = GetParameter("Cln2");
+    Clb2_T = GetParameter("Clb2_T");
+    Vd_b2 = GetParameter("Vd_b2");
+    Clb2 = GetParameter("Clb2");
+    Clb5 = GetParameter("Clb5");
+    Sic1 = GetParameter("Sic1");
+    Clb5_T = GetParameter("Clb5_T");
+    Vd_b5 = GetParameter("Vd_b5");
+    Bck2 = GetParameter("Bck2");
+    Cln3 = GetParameter("Cln3");
+    Sic1_T = GetParameter("Sic1_T");
+    Clb2_Sic1 = GetParameter("Clb2_Sic1");
+    Clb5_Sic1 = GetParameter("Clb5_Sic1");
+    Vd2_c1 = GetParameter("Vd2_c1");
+    Cdc20_T = GetParameter("Cdc20_T");
+    Cdc20 = GetParameter("Cdc20");
+    Vi_20 = GetParameter("Vi_20");
+    Hct1 = GetParameter("Hct1");
+    Vi_t1 = GetParameter("Vi_t1");
+    mass = GetParameter("mass");
+    ORI = GetParameter("ORI");
+    BUD = GetParameter("BUD");
+    SPN = GetParameter("SPN");
+    SBF = GetParameter("SBF");
+    Va_sbf = GetParameter("Va_sbf");
+    MBF = GetParameter("MBF");
+    Mcm1 = GetParameter("Mcm1");
+    Swi5 = GetParameter("Swi5");
+}
+
+
+// FUNCTION DEFINITIONS:
 
 template <>
 void CellwiseOdeSystemInformation<Chen2000SbmlOdeSystem>::Initialise()

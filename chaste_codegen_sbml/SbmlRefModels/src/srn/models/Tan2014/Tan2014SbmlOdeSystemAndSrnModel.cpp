@@ -1,3 +1,6 @@
+#include <cmath>
+#include <limits>
+
 #include "CellwiseOdeSystemInformation.hpp"
 #include "SbmlMath.hpp"
 
@@ -70,22 +73,9 @@ Tan2014SbmlOdeSystem::~Tan2014SbmlOdeSystem()
 {
 }
 
-
 void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-    // STATE VARIABLES:
-    bcat_cm = rY[0];
-    ligand_cm = rY[1];
-    complex_cm = rY[2];
-    bcat_nu = rY[3];
-    ligand_nu = rY[4];
-    complex_nu = rY[5];
-    drag = rY[6];
-
-    // STATE PARAMETERS:
-
-    wnt_level = GetParameter("wnt_level");
-    gamma = GetParameter("gamma");
+    RefreshState(rY);
 
     // RULES:
 
@@ -122,6 +112,25 @@ void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<d
     // Scale time appropriately
 }
 
+void Tan2014SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
+{
+    // STATE VARIABLES:
+    bcat_cm = rY[0];
+    ligand_cm = rY[1];
+    complex_cm = rY[2];
+    bcat_nu = rY[3];
+    ligand_nu = rY[4];
+    complex_nu = rY[5];
+    drag = rY[6];
+
+    // STATE PARAMETERS:
+
+    wnt_level = GetParameter("wnt_level");
+    gamma = GetParameter("gamma");
+}
+
+
+// FUNCTION DEFINITIONS:
 
 template <>
 void CellwiseOdeSystemInformation<Tan2014SbmlOdeSystem>::Initialise()

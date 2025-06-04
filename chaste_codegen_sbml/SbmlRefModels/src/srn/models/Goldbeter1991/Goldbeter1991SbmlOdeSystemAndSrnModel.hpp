@@ -1,8 +1,7 @@
 #ifndef GOLDBETER1991SBMLODESYSTEMANDSRNMODEL_HPP_
 #define GOLDBETER1991SBMLODESYSTEMANDSRNMODEL_HPP_
 
-#include <cmath>
-#include <iostream>
+#include <vector>
 
 #include <boost/serialization/base_object.hpp>
 
@@ -45,9 +44,8 @@ public:
 
     ~Goldbeter1991SbmlOdeSystem();
 
-    void Init();
-
     void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
+    void RefreshState(const std::vector<double> &rY);
 
 
     // FUNCTION DEFINITIONS:

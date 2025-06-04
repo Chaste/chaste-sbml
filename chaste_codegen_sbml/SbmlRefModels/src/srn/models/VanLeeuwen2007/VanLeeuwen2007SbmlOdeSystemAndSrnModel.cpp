@@ -1,3 +1,6 @@
+#include <cmath>
+#include <limits>
+
 #include "CellwiseOdeSystemInformation.hpp"
 #include "SbmlMath.hpp"
 
@@ -100,31 +103,9 @@ VanLeeuwen2007SbmlOdeSystem::~VanLeeuwen2007SbmlOdeSystem()
 {
 }
 
-
 void VanLeeuwen2007SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-    // STATE VARIABLES:
-    X = rY[0];
-    D = rY[1];
-    C_o = rY[2];
-    C_u = rY[3];
-    C_c = rY[4];
-    A = rY[5];
-    C_A = rY[6];
-    T = rY[7];
-    C_oT = rY[8];
-    C_cT = rY[9];
-    Y = rY[10];
-    C_F = rY[11];
-    C_T = rY[12];
-    drag = rY[13];
-
-    // STATE PARAMETERS:
-
-    wnt_level = GetParameter("wnt_level");
-    gamma1 = GetParameter("gamma1");
-    gamma2 = GetParameter("gamma2");
-    ComplexTransitThreshold = GetParameter("ComplexTransitThreshold");
+    RefreshState(rY);
 
     // RULES:
 
@@ -228,6 +209,34 @@ void VanLeeuwen2007SbmlOdeSystem::EvaluateYDerivatives(double time, const std::v
     // Scale time appropriately
 }
 
+void VanLeeuwen2007SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
+{
+    // STATE VARIABLES:
+    X = rY[0];
+    D = rY[1];
+    C_o = rY[2];
+    C_u = rY[3];
+    C_c = rY[4];
+    A = rY[5];
+    C_A = rY[6];
+    T = rY[7];
+    C_oT = rY[8];
+    C_cT = rY[9];
+    Y = rY[10];
+    C_F = rY[11];
+    C_T = rY[12];
+    drag = rY[13];
+
+    // STATE PARAMETERS:
+
+    wnt_level = GetParameter("wnt_level");
+    gamma1 = GetParameter("gamma1");
+    gamma2 = GetParameter("gamma2");
+    ComplexTransitThreshold = GetParameter("ComplexTransitThreshold");
+}
+
+
+// FUNCTION DEFINITIONS:
 
 template <>
 void CellwiseOdeSystemInformation<VanLeeuwen2007SbmlOdeSystem>::Initialise()
