@@ -17,7 +17,7 @@ private:
     template <class Archive>
     void serialize(Archive &ar, const unsigned int version)
     {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractOdeSystem);
+        ar &BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractOdeSystem);
     }
 
     // COMPARTMENTS:
@@ -62,24 +62,24 @@ private:
     const double J4 = 0.04;
 
     // STATE VARIABLES:
-    double CycBt; // CycBt
-    double CycB; // CycB
+    double CycBt;  // CycBt
+    double CycB;   // CycB
     double Cdc20a; // Cdc20a
     double Trimer; // Trimer
-    double Cdh1; // Cdh1
-    double m; // m
+    double Cdh1;   // Cdh1
+    double m;      // m
     double Cdc20t; // Cdc20t
-    double IEP; // IEP
-    double Mad; // Mad
-    double CKIt; // CKIt
-    double SK; // SK
+    double IEP;    // IEP
+    double Mad;    // Mad
+    double CKIt;   // CKIt
+    double SK;     // SK
 
     // STATE PARAMETERS:
 
     double TF;
 
     // EVENTS:
-    std::vector<bool> eventsSatisfied;
+    std::vector<bool> satisfiedEvents;
 
 public:
     TysonNovak2001SbmlOdeSystem(std::vector<double> stateVariables = std::vector<double>());
@@ -89,9 +89,8 @@ public:
     void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
     void RefreshState(const std::vector<double> &rY);
 
-    double ProcessEvents(double time, const std::vector<double>& rY);
-    double CalculateRootFunction(double time, const std::vector<double>& rY);
-    bool CalculateStoppingEvent(double time, const std::vector<double>& rY);
+    bool CalculateStoppingEvent(double time, const std::vector<double> &rY);
+    double CalculateRootFunction(double time, const std::vector<double> &rY);
 
     // FUNCTION DEFINITIONS:
     double GK(double A1, double A2, double A3, double A4);
@@ -103,7 +102,7 @@ namespace
     {
         // Provide constructor for serializing TysonNovak2001SbmlOdeSystem
         template <class Archive>
-        inline void save_construct_data(Archive &ar, const TysonNovak2001SbmlOdeSystem * t, const unsigned int version)
+        inline void save_construct_data(Archive &ar, const TysonNovak2001SbmlOdeSystem *t, const unsigned int version)
         {
             // Save data required to construct instance
             const std::vector<double> state_variables = t->rGetConstStateVariables();
@@ -112,14 +111,14 @@ namespace
 
         // Provide constructor for de-serializing TysonNovak2001SbmlOdeSystem
         template <class Archive>
-        inline void load_construct_data(Archive &ar, TysonNovak2001SbmlOdeSystem * t, const unsigned int version)
+        inline void load_construct_data(Archive &ar, TysonNovak2001SbmlOdeSystem *t, const unsigned int version)
         {
             // Retrieve data from archive required to construct new instance
             std::vector<double> state_variables;
             ar >> state_variables;
 
             // Invoke inplace constructor to initialise instance
-            ::new (t)TysonNovak2001SbmlOdeSystem(state_variables);
+            ::new (t) TysonNovak2001SbmlOdeSystem(state_variables);
         }
     } // namespace serialization
 } // namespace ...

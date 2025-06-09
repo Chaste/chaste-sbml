@@ -189,32 +189,75 @@ public:
 
     void TestOdeWithChasteSolver()
     {
+        // Solve system using backward Euler solver
         TysonNovak2001SbmlOdeSystem ode_system;
 
-        // Solve system using backward Euler solver
-
-        // Matlab's strictest bit uses 0.01 below and relaxes it on flatter bits
-
-        const double timescale = 60.0;
-        double dt = 0.1 / timescale;
-
-        // Euler solver solution worked out
         BackwardEulerIvpOdeSolver backward_euler_solver(11);
 
-        std::vector<double> state_variables = ode_system.GetInitialConditions();
+        const double time_step = 0.01;
+        const double sampling_interval = 0.01;
 
-        Timer::Reset();
-        OdeSolution solutions = backward_euler_solver.Solve(&ode_system, state_variables, 0.0, 500.0, 0.01, 0.01);
-        // OdeSolution solutions = backward_euler_solver.Solve(&ode_system, state_variables, 0.0, 75.8350 / timescale, dt, dt);
-        Timer::Print("1. Tyson Novak Backward Euler");
+        const double run_length = 200.0;
+        double start_time = 0.0;
+        double end_time = start_time + run_length;
 
-        // If you run it up to about 75min the ODE will stop, anything less and it will not and this test will fail
-        TS_ASSERT_EQUALS(backward_euler_solver.StoppingEventOccurred(), true);
+        std::vector<double> initial_conditions;
+        std::vector<OdeSolution> ode_solutions;
+        OdeSolution ode_solution;
 
-        // Proper values calculated using the Matlab stiff ODE solver ode15s. Note that
-        // large tolerances are required for the tests to pass with both chaste solvers
-        // and CVODE.
-        std::vector<double>& solution = solutions.rGetSolutions().back();
+        // Repeatedly run ODE until it stops, then start again with updated initial conditions
+        for (unsigned i = 0; i < 5; i++)
+        {
+            initial_conditions = ode_system.GetInitialConditions();
+
+            Timer::Reset();
+            ode_solution = backward_euler_solver.Solve(&ode_system, initial_conditions, start_time, end_time, time_step, sampling_interval);
+            Timer::Print(std::to_string(i) + ". Tyson Novak Backward Euler");
+
+            ode_solutions.push_back(ode_solution);
+
+            // ODE should have stopped
+            TS_ASSERT_EQUALS(backward_euler_solver.StoppingEventOccurred(), true);
+
+            // Update for next run
+            start_time = ode_solution.rGetTimes().back();
+            end_time = start_time + run_length;
+        }
+
+        // The following code provides nice output for gnuplot
+        // use the command
+        // plot "tysonnovak_2001.dat" u 1:2 etc. for the various species...
+        // or
+        // plot "tysonnovak_2001.dat" u 1:2, "" u 1:3, "" u 1:4 etc. for all species
+
+        // std::vector<std::vector<double>> solutions;
+        // for (const auto &ode_solution : ode_solutions)
+        // {
+        //     solutions.insert(solutions.end(), ode_solution.rGetSolutions().begin(), ode_solution.rGetSolutions().end());
+        // }
+
+        // std::vector<double> times;
+        // for (const auto &ode_solution : ode_solutions)
+        // {
+        //     times.insert(times.end(), ode_solution.rGetTimes().begin(), ode_solution.rGetTimes().end());
+        // }
+
+        // OutputFileHandler handler("");
+        // out_stream file = handler.OpenOutputFile("tysonnovak_2001.dat");
+        // for (unsigned i = 0; i < solutions.size(); i++)
+        // {
+        //     (*file) << times[i];
+        //     for (unsigned j = 0; j < solutions[i].size(); j++)
+        //     {
+        //         (*file) << "\t" << solutions[i][j];
+        //     }
+        //     (*file) << "\n"
+        //             << std::flush;
+        // }
+        // file->close();
+
+        // Values calculated using roadrunner
+        std::vector<double> &solution = ode_solutions.back().rGetSolutions().back();
         TS_ASSERT_DELTA(solution[0], 0.10000000000000, 1e-2);
         TS_ASSERT_DELTA(solution[1], 0.98913684535843, 1e-2);
         TS_ASSERT_DELTA(solution[2], 1.54216806705641, 1e-1);
@@ -232,19 +275,40 @@ public:
     {
         try
         {
+            // Solve system using CVODE solver
             TysonNovak2001SbmlOdeSystem ode_system;
 
-            double end_time = 500.0;
-            double h_value = 0.01;
+            CvodeAdaptor cvode_solver;
 
-            CvodeAdaptor solver;
-            OdeSolution solutions;
+            const double max_step = 0.01;
+            const double sampling_interval = 0.01;
 
-            std::vector<double> state_variables = ode_system.GetInitialConditions();
+            const double run_length = 200.0;
+            double start_time = 0.0;
+            double end_time = start_time + run_length;
 
-            Timer::Reset();
-            solutions = solver.Solve(&ode_system, state_variables, 0.0, end_time, h_value, 0.1);
-            Timer::Print("1. Tyson Novak CVODE");
+            std::vector<double> initial_conditions;
+            std::vector<OdeSolution> ode_solutions;
+            OdeSolution ode_solution;
+
+            // Repeatedly run ODE until it stops, then start again with updated initial conditions
+            for (unsigned i = 0; i < 5; i++)
+            {
+                initial_conditions = ode_system.GetInitialConditions();
+
+                Timer::Reset();
+                ode_solution = cvode_solver.Solve(&ode_system, initial_conditions, start_time, end_time, max_step, sampling_interval);
+                Timer::Print(std::to_string(i) + ". Tyson Novak CVODE");
+
+                ode_solutions.push_back(ode_solution);
+
+                // ODE should have stopped
+                TS_ASSERT_EQUALS(cvode_solver.StoppingEventOccurred(), true);
+
+                // Update for next run
+                start_time = ode_solution.rGetTimes().back();
+                end_time = start_time + run_length;
+            }
 
             // The following code provides nice output for gnuplot
             // use the command
@@ -252,21 +316,34 @@ public:
             // or
             // plot "tysonnovak_2001.dat" u 1:2, "" u 1:3, "" u 1:4 etc. for all species
 
+            std::vector<std::vector<double>> solutions;
+            for (const auto &ode_solution : ode_solutions)
+            {
+                solutions.insert(solutions.end(), ode_solution.rGetSolutions().begin(), ode_solution.rGetSolutions().end());
+            }
+
+            std::vector<double> times;
+            for (const auto &ode_solution : ode_solutions)
+            {
+                times.insert(times.end(), ode_solution.rGetTimes().begin(), ode_solution.rGetTimes().end());
+            }
+
             OutputFileHandler handler("");
             out_stream file = handler.OpenOutputFile("tysonnovak_2001.dat");
-            for (unsigned i = 0; i < solutions.rGetSolutions().size(); i++)
+            for (unsigned i = 0; i < solutions.size(); i++)
             {
-                (*file) << solutions.rGetTimes()[i];
-                for (unsigned j = 0; j < solutions.rGetSolutions()[i].size(); j++)
+                (*file) << times[i];
+                for (unsigned j = 0; j < solutions[i].size(); j++)
                 {
-                    (*file) << "\t" << solutions.rGetSolutions()[i][j];
+                    (*file) << "\t" << solutions[i][j];
                 }
                 (*file) << "\n"
                         << std::flush;
             }
             file->close();
 
-            std::vector<double>& solution = solutions.rGetSolutions().back();
+            // Values calculated using roadrunner
+            std::vector<double> &solution = ode_solutions.back().rGetSolutions().back();
             TS_ASSERT_DELTA(solution[0], 0.10000000000000, 1e-2);
             TS_ASSERT_DELTA(solution[1], 0.98913684535843, 1e-2);
             TS_ASSERT_DELTA(solution[2], 1.54216806705641, 1e-1);
