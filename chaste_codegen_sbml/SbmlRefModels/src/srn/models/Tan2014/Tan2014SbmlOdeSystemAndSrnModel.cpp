@@ -73,6 +73,23 @@ Tan2014SbmlOdeSystem::~Tan2014SbmlOdeSystem()
 {
 }
 
+void Tan2014SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
+{
+    // STATE VARIABLES:
+    bcat_cm = rY[0];
+    ligand_cm = rY[1];
+    complex_cm = rY[2];
+    bcat_nu = rY[3];
+    ligand_nu = rY[4];
+    complex_nu = rY[5];
+    drag = rY[6];
+
+    // STATE PARAMETERS:
+
+    wnt_level = GetParameter("wnt_level");
+    gamma = GetParameter("gamma");
+}
+
 void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
     RefreshState(rY);
@@ -88,7 +105,7 @@ void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<d
 
     double Bsynthesis = Bsyn * CytosolMembrane;
 
-    double kDegradation = CytosolMembrane * kdegradation * gamma * bcat_cm * (1 - 0.5 * wnt_level);
+    double kDegradation = CytosolMembrane * kdegradation * gamma * bcat_cm * (1.0 - 0.5 * wnt_level);
 
     double kC = CytosolMembrane * (kC_k1 * bcat_cm * ligand_cm - kC_k2 * complex_cm);
 
@@ -107,26 +124,9 @@ void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<d
     rDY[3] = (-kN + kdiffusion + K_c_active - K_n_active) / nucleus; // d[bcat_nu]/dt
     rDY[4] = (-kN) / nucleus; // d[ligand_nu]/dt
     rDY[5] = (kN) / nucleus; // d[complex_nu]/dt
-    rDY[6] = ((sm::piecewise((complex_cm - 700) / 10, sm::gt((complex_cm - 700) / 10, 1), 1)) - rY[6]) / CytosolMembrane; // d[drag]/dt
+    rDY[6] = ((sm::piecewise((complex_cm - 700.0) / 10.0, sm::gt((complex_cm - 700.0) / 10.0, 1.0), 1.0)) - rY[6]) / CytosolMembrane; // d[drag]/dt
 
     // Scale time appropriately
-}
-
-void Tan2014SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
-{
-    // STATE VARIABLES:
-    bcat_cm = rY[0];
-    ligand_cm = rY[1];
-    complex_cm = rY[2];
-    bcat_nu = rY[3];
-    ligand_nu = rY[4];
-    complex_nu = rY[5];
-    drag = rY[6];
-
-    // STATE PARAMETERS:
-
-    wnt_level = GetParameter("wnt_level");
-    gamma = GetParameter("gamma");
 }
 
 

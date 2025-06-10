@@ -103,6 +103,32 @@ VanLeeuwen2007NonDimSbmlOdeSystem::~VanLeeuwen2007NonDimSbmlOdeSystem()
 {
 }
 
+void VanLeeuwen2007NonDimSbmlOdeSystem::RefreshState(const std::vector<double> &rY)
+{
+    // STATE VARIABLES:
+    X = rY[0];
+    D = rY[1];
+    C_o = rY[2];
+    C_u = rY[3];
+    C_c = rY[4];
+    A = rY[5];
+    C_A = rY[6];
+    T = rY[7];
+    C_oT = rY[8];
+    C_cT = rY[9];
+    Y = rY[10];
+    C_F = rY[11];
+    C_T = rY[12];
+    drag = rY[13];
+
+    // STATE PARAMETERS:
+
+    wnt_level = GetParameter("wnt_level");
+    gamma1 = GetParameter("gamma1");
+    gamma2 = GetParameter("gamma2");
+    ComplexTransitThreshold = GetParameter("ComplexTransitThreshold");
+}
+
 void VanLeeuwen2007NonDimSbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
     RefreshState(rY);
@@ -204,35 +230,9 @@ void VanLeeuwen2007NonDimSbmlOdeSystem::EvaluateYDerivatives(double time, const 
     rDY[10] = (r13 - r14) / cytosolmembraneandnucleus; // d[Y]/dt
     rDY[11] = ((C_o + C_c) - rY[11]) / cytosolmembraneandnucleus; // d[C_F]/dt
     rDY[12] = ((C_oT + C_cT) - rY[12]) / cytosolmembraneandnucleus; // d[C_T]/dt
-    rDY[13] = ((sm::max((C_A - 2300) / 36, 1)) - rY[13]) / cytosolmembraneandnucleus; // d[drag]/dt
+    rDY[13] = ((sm::max((C_A - 2300.0) / 36.0, 1.0)) - rY[13]) / cytosolmembraneandnucleus; // d[drag]/dt
 
     // Scale time appropriately
-}
-
-void VanLeeuwen2007NonDimSbmlOdeSystem::RefreshState(const std::vector<double> &rY)
-{
-    // STATE VARIABLES:
-    X = rY[0];
-    D = rY[1];
-    C_o = rY[2];
-    C_u = rY[3];
-    C_c = rY[4];
-    A = rY[5];
-    C_A = rY[6];
-    T = rY[7];
-    C_oT = rY[8];
-    C_cT = rY[9];
-    Y = rY[10];
-    C_F = rY[11];
-    C_T = rY[12];
-    drag = rY[13];
-
-    // STATE PARAMETERS:
-
-    wnt_level = GetParameter("wnt_level");
-    gamma1 = GetParameter("gamma1");
-    gamma2 = GetParameter("gamma2");
-    ComplexTransitThreshold = GetParameter("ComplexTransitThreshold");
 }
 
 

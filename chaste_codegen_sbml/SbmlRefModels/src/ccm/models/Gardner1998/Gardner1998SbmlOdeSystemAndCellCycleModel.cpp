@@ -63,12 +63,27 @@ Gardner1998SbmlOdeSystem::~Gardner1998SbmlOdeSystem()
 {
 }
 
+void Gardner1998SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
+{
+    // STATE VARIABLES:
+    C = rY[0];
+    X = rY[1];
+    M = rY[2];
+    Y = rY[3];
+    Z = rY[4];
+
+    // STATE PARAMETERS:
+
+    V1 = GetParameter("V1");
+    V3 = GetParameter("V3");
+}
+
 void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
     RefreshState(rY);
 
     // RULES:
-    V1 = C * V1p * std::pow(C + K6, -1);
+    V1 = C * V1p * std::pow(C + K6, -1.0);
     V3 = M * V3p;
 
     // UPDATE STATE PARAMETERS:
@@ -90,7 +105,7 @@ void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vect
     {
         double k1 = 0.5;
         double K5 = 0.02;
-        reaction2 = C * k1 * X * std::pow(C + K5, -1);
+        reaction2 = C * k1 * X * std::pow(C + K5, -1.0);
     }
 
     // default degradation of cyclin
@@ -104,7 +119,7 @@ void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vect
     double reaction4 = 0.0;
     {
         double K1 = 0.1;
-        reaction4 = (1 + -1 * M) * V1 * std::pow(K1 + -1 * M + 1, -1);
+        reaction4 = (1.0 + -1.0 * M) * V1 * std::pow(K1 + -1.0 * M + 1.0, -1.0);
     }
 
     // deactivation of cdc2 kinase
@@ -112,14 +127,14 @@ void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vect
     {
         double V2 = 0.25;
         double K2 = 0.1;
-        reaction5 = M * V2 * std::pow(K2 + M, -1);
+        reaction5 = M * V2 * std::pow(K2 + M, -1.0);
     }
 
     // activation of cyclin protease
     double reaction6 = 0.0;
     {
         double K3 = 0.2;
-        reaction6 = V3 * (1 + -1 * X) * std::pow(K3 + -1 * X + 1, -1);
+        reaction6 = V3 * (1.0 + -1.0 * X) * std::pow(K3 + -1.0 * X + 1.0, -1.0);
     }
 
     // deactivation of cyclin protease
@@ -127,7 +142,7 @@ void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vect
     {
         double K4 = 0.1;
         double V4 = 0.1;
-        reaction7 = V4 * X * std::pow(K4 + X, -1);
+        reaction7 = V4 * X * std::pow(K4 + X, -1.0);
     }
 
     // reaction8
@@ -182,21 +197,6 @@ void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vect
     rDY[4] = (reaction8 - reaction9 - reaction10 - reaction11) / Cell; // d[complex inhibitor-cyclin]/dt
 
     // Scale time appropriately
-}
-
-void Gardner1998SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
-{
-    // STATE VARIABLES:
-    C = rY[0];
-    X = rY[1];
-    M = rY[2];
-    Y = rY[3];
-    Z = rY[4];
-
-    // STATE PARAMETERS:
-
-    V1 = GetParameter("V1");
-    V3 = GetParameter("V3");
 }
 
 

@@ -95,6 +95,42 @@ Chen2000SbmlOdeSystem::~Chen2000SbmlOdeSystem()
 {
 }
 
+void Chen2000SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
+{
+    // STATE VARIABLES:
+
+    // STATE PARAMETERS:
+
+    Cln2 = GetParameter("Cln2");
+    Clb2_T = GetParameter("Clb2_T");
+    Vd_b2 = GetParameter("Vd_b2");
+    Clb2 = GetParameter("Clb2");
+    Clb5 = GetParameter("Clb5");
+    Sic1 = GetParameter("Sic1");
+    Clb5_T = GetParameter("Clb5_T");
+    Vd_b5 = GetParameter("Vd_b5");
+    Bck2 = GetParameter("Bck2");
+    Cln3 = GetParameter("Cln3");
+    Sic1_T = GetParameter("Sic1_T");
+    Clb2_Sic1 = GetParameter("Clb2_Sic1");
+    Clb5_Sic1 = GetParameter("Clb5_Sic1");
+    Vd2_c1 = GetParameter("Vd2_c1");
+    Cdc20_T = GetParameter("Cdc20_T");
+    Cdc20 = GetParameter("Cdc20");
+    Vi_20 = GetParameter("Vi_20");
+    Hct1 = GetParameter("Hct1");
+    Vi_t1 = GetParameter("Vi_t1");
+    mass = GetParameter("mass");
+    ORI = GetParameter("ORI");
+    BUD = GetParameter("BUD");
+    SPN = GetParameter("SPN");
+    SBF = GetParameter("SBF");
+    Va_sbf = GetParameter("Va_sbf");
+    MBF = GetParameter("MBF");
+    Mcm1 = GetParameter("Mcm1");
+    Swi5 = GetParameter("Swi5");
+}
+
 void Chen2000SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
     RefreshState(rY);
@@ -121,13 +157,13 @@ void Chen2000SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     Bck2 = Bck2_0 * mass;
     Cln3 = Cln3_max * Dn3 * mass / (Jn3 + Dn3 * mass);
     Vd2_c1 = kd2_c1 * (epsilonc1_n3 * Cln3 + epsilonc1_k2 * Bck2 + Cln2 + epsilonc1_b5 * Clb5 + epsilonc1_b2 * Clb2);
-    Vi_20 = sm::piecewise(ki_20_, sm::geq(ORI, 1), ki_20, sm::geq(SPN, 1), 0.1);
+    Vi_20 = sm::piecewise(ki_20_, sm::geq(ORI, 1.0), ki_20, sm::geq(SPN, 1.0), 0.1);
     Vi_t1 = ki_t1 + ki_t1_ * (Cln3 + epsiloni_t1_n2 * Cln2 + epsiloni_t1_b5 * Clb5 + epsiloni_t1_b2 * Clb2);
-    SBF = 2 * Va_sbf * Ji_sbf / (ki_sbf + ki_sbf_ * Clb2 + Va_sbf * Ji_sbf + (ki_sbf + ki_sbf_ * Clb2) * Ja_sbf - Va_sbf + std::sqrt(std::pow(ki_sbf + ki_sbf_ * Clb2 + Va_sbf * Ji_sbf + (ki_sbf + ki_sbf_ * Clb2) * Ja_sbf - Va_sbf, 2) - 4 * Va_sbf * Ji_sbf * (ki_sbf + ki_sbf_ * Clb2 - Va_sbf)));
+    SBF = 2.0 * Va_sbf * Ji_sbf / (ki_sbf + ki_sbf_ * Clb2 + Va_sbf * Ji_sbf + (ki_sbf + ki_sbf_ * Clb2) * Ja_sbf - Va_sbf + std::sqrt(std::pow(ki_sbf + ki_sbf_ * Clb2 + Va_sbf * Ji_sbf + (ki_sbf + ki_sbf_ * Clb2) * Ja_sbf - Va_sbf, 2.0) - 4.0 * Va_sbf * Ji_sbf * (ki_sbf + ki_sbf_ * Clb2 - Va_sbf)));
     Va_sbf = ka_sbf * (Cln2 + epsilonsbf_n3 * (Cln3 + Bck2) + epsilonsbf_b5 * Clb5);
     MBF = SBF;
-    Mcm1 = 2 * ka_mcm * Clb2 * Ji_mcm / (ki_mcm + ka_mcm * Clb2 * Ji_mcm + ki_mcm * Ja_mcm - ka_mcm * Clb2 + std::sqrt(std::pow(ki_mcm + ka_mcm * Clb2 * Ji_mcm + ki_mcm * Ja_mcm - ka_mcm * Clb2, 2) - 4 * (ki_mcm - ka_mcm * Clb2) * ka_mcm * Clb2 * Ji_mcm));
-    Swi5 = 2 * ka_swi * Cdc20 * Ji_swi / (ki_swi + ki_swi_ * Clb2 + ka_swi * Cdc20 * Ji_swi + (ki_swi + ki_swi_ * Clb2) * Ja_swi - ka_swi * Cdc20 + std::sqrt(std::pow(ki_swi + ki_swi_ * Clb2 + ka_swi * Cdc20 * Ji_swi + (ki_swi + ki_swi_ * Clb2) * Ja_swi - ka_swi * Cdc20, 2) - 4 * (ki_swi + ki_swi_ * Clb2 - ka_swi * Cdc20) * ka_swi * Cdc20 * Ji_swi));
+    Mcm1 = 2.0 * ka_mcm * Clb2 * Ji_mcm / (ki_mcm + ka_mcm * Clb2 * Ji_mcm + ki_mcm * Ja_mcm - ka_mcm * Clb2 + std::sqrt(std::pow(ki_mcm + ka_mcm * Clb2 * Ji_mcm + ki_mcm * Ja_mcm - ka_mcm * Clb2, 2.0) - 4.0 * (ki_mcm - ka_mcm * Clb2) * ka_mcm * Clb2 * Ji_mcm));
+    Swi5 = 2.0 * ka_swi * Cdc20 * Ji_swi / (ki_swi + ki_swi_ * Clb2 + ka_swi * Cdc20 * Ji_swi + (ki_swi + ki_swi_ * Clb2) * Ja_swi - ka_swi * Cdc20 + std::sqrt(std::pow(ki_swi + ki_swi_ * Clb2 + ka_swi * Cdc20 * Ji_swi + (ki_swi + ki_swi_ * Clb2) * Ja_swi - ka_swi * Cdc20, 2.0) - 4.0 * (ki_swi + ki_swi_ * Clb2 - ka_swi * Cdc20) * ka_swi * Cdc20 * Ji_swi));
 
     // UPDATE STATE PARAMETERS:
 
@@ -163,42 +199,6 @@ void Chen2000SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     // ODES:
 
     // Scale time appropriately
-}
-
-void Chen2000SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
-{
-    // STATE VARIABLES:
-
-    // STATE PARAMETERS:
-
-    Cln2 = GetParameter("Cln2");
-    Clb2_T = GetParameter("Clb2_T");
-    Vd_b2 = GetParameter("Vd_b2");
-    Clb2 = GetParameter("Clb2");
-    Clb5 = GetParameter("Clb5");
-    Sic1 = GetParameter("Sic1");
-    Clb5_T = GetParameter("Clb5_T");
-    Vd_b5 = GetParameter("Vd_b5");
-    Bck2 = GetParameter("Bck2");
-    Cln3 = GetParameter("Cln3");
-    Sic1_T = GetParameter("Sic1_T");
-    Clb2_Sic1 = GetParameter("Clb2_Sic1");
-    Clb5_Sic1 = GetParameter("Clb5_Sic1");
-    Vd2_c1 = GetParameter("Vd2_c1");
-    Cdc20_T = GetParameter("Cdc20_T");
-    Cdc20 = GetParameter("Cdc20");
-    Vi_20 = GetParameter("Vi_20");
-    Hct1 = GetParameter("Hct1");
-    Vi_t1 = GetParameter("Vi_t1");
-    mass = GetParameter("mass");
-    ORI = GetParameter("ORI");
-    BUD = GetParameter("BUD");
-    SPN = GetParameter("SPN");
-    SBF = GetParameter("SBF");
-    Va_sbf = GetParameter("Va_sbf");
-    MBF = GetParameter("MBF");
-    Mcm1 = GetParameter("Mcm1");
-    Swi5 = GetParameter("Swi5");
 }
 
 

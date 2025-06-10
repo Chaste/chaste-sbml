@@ -311,6 +311,98 @@ Chen2004SbmlOdeSystem::~Chen2004SbmlOdeSystem()
 {
 }
 
+void Chen2004SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
+{
+    // STATE VARIABLES:
+    BCK2 = rY[0];
+    BUD = rY[1];
+    C2 = rY[2];
+    C2P = rY[3];
+    C5 = rY[4];
+    C5P = rY[5];
+    CDC14 = rY[6];
+    CDC14T = rY[7];
+    CDC15 = rY[8];
+    CDC15i = rY[9];
+    CDC20 = rY[10];
+    CDC20i = rY[11];
+    CDC6 = rY[12];
+    CDC6P = rY[13];
+    CDC6T = rY[14];
+    CDH1 = rY[15];
+    CDH1i = rY[16];
+    CKIT = rY[17];
+    CLB2 = rY[18];
+    CLB2T = rY[19];
+    CLB5 = rY[20];
+    CLB5T = rY[21];
+    CLN2 = rY[22];
+    CLN3 = rY[23];
+    ESP1 = rY[24];
+    F2 = rY[25];
+    F2P = rY[26];
+    F5 = rY[27];
+    F5P = rY[28];
+    IE = rY[29];
+    IEP = rY[30];
+    MASS = rY[31];
+    MCM1 = rY[32];
+    NET1 = rY[33];
+    NET1P = rY[34];
+    NET1T = rY[35];
+    ORI = rY[36];
+    PDS1 = rY[37];
+    PE = rY[38];
+    PPX = rY[39];
+    RENT = rY[40];
+    RENTP = rY[41];
+    SBF = rY[42];
+    SIC1 = rY[43];
+    SIC1P = rY[44];
+    SIC1T = rY[45];
+    SPN = rY[46];
+    SWI5 = rY[47];
+    SWI5P = rY[48];
+    TEM1GDP = rY[49];
+    TEM1GTP = rY[50];
+
+    // STATE PARAMETERS:
+    BUB2 = GetParameter("BUB2");
+    LTE1 = GetParameter("LTE1");
+    MAD2 = GetParameter("MAD2");
+
+    bub2l = GetParameter("bub2l");
+    CDC15T = GetParameter("CDC15T");
+    ESP1T = GetParameter("ESP1T");
+    IET = GetParameter("IET");
+    KEZ = GetParameter("KEZ");
+    KEZ2 = GetParameter("KEZ2");
+    lte1h = GetParameter("lte1h");
+    lte1l = GetParameter("lte1l");
+    mad2l = GetParameter("mad2l");
+    TEM1T = GetParameter("TEM1T");
+    D = GetParameter("D");
+    mu = GetParameter("mu");
+    Vdb5 = GetParameter("Vdb5");
+    Vdb2 = GetParameter("Vdb2");
+    Vasbf = GetParameter("Vasbf");
+    Visbf = GetParameter("Visbf");
+    Vkpc1 = GetParameter("Vkpc1");
+    Vkpf6 = GetParameter("Vkpf6");
+    Vacdh = GetParameter("Vacdh");
+    Vicdh = GetParameter("Vicdh");
+    Vppnet = GetParameter("Vppnet");
+    Vkpnet = GetParameter("Vkpnet");
+    Vdppx = GetParameter("Vdppx");
+    Vdpds = GetParameter("Vdpds");
+    Vaiep = GetParameter("Vaiep");
+    Vd2c1 = GetParameter("Vd2c1");
+    Vd2f6 = GetParameter("Vd2f6");
+    Vppc1 = GetParameter("Vppc1");
+    Vppf6 = GetParameter("Vppf6");
+    F = GetParameter("F");
+}
+
 void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
     RefreshState(rY);
@@ -325,8 +417,8 @@ void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     Vkpnet = (kkpnet_p + kkpnet_p_p * CDC15) * MASS;
     Vppnet = kppnet_p + kppnet_p_p * PPX;
     Vasbf = kasbf * (esbfn2 * CLN2 + esbfn3 * (CLN3 + BCK2) + esbfb5 * CLB5);
-    mu = sm::log(2) / mdt;
-    D = 1.026 / mu - 32;
+    mu = sm::log(2.0) / mdt;
+    D = 1.026 / mu - 32.0;
     F = std::exp(-mu * D);
     Vd2c1 = kd2c1 * (ec1n3 * CLN3 + ec1k2 * BCK2 + ec1n2 * CLN2 + ec1b5 * CLB5 + ec1b2 * CLB2);
     Vd2f6 = kd2f6 * (ef6n3 * CLN3 + ef6k2 * BCK2 + ef6n2 * CLN2 + ef6b5 * CLB5 + ef6b2 * CLB2);
@@ -520,10 +612,10 @@ void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     double Inactivation_of_SWI5 = Mass_Action_1_222(kiswi * CLB2, SWI5);
 
     // Activation of IEP
-    double Activation_of_IEP = MichaelisMenten_220(Vaiep, Jaiep, 1, IE);
+    double Activation_of_IEP = MichaelisMenten_220(Vaiep, Jaiep, 1.0, IE);
 
     // Inactivation
-    double Inactivation = MichaelisMenten_220(1, Jiiep, kiiep, IEP);
+    double Inactivation = MichaelisMenten_220(1.0, Jiiep, kiiep, IEP);
 
     // Synthesis of inactive CDC20
     double Synthesis_of_inactive_CDC20 = ks20_p + ks20_p_p * MCM1;
@@ -554,10 +646,10 @@ void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     double CDH1i_degradation = Mass_Action_1_222(kdcdh, CDH1i);
 
     // CDH1i activation
-    double CDH1i_activation = MichaelisMenten_220(Vacdh, Jacdh, 1, CDH1i);
+    double CDH1i_activation = MichaelisMenten_220(Vacdh, Jacdh, 1.0, CDH1i);
 
     // Inactivation
-    double Inactivation_1 = MichaelisMenten_220(Vicdh, Jicdh, 1, CDH1);
+    double Inactivation_1 = MichaelisMenten_220(Vicdh, Jicdh, 1.0, CDH1);
 
     // CDC14 synthesis
     double CDC14_synthesis = ks14;
@@ -611,10 +703,10 @@ void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     double Degradation_of_CDC14_in_RENTP = Mass_Action_1_222(kd14, RENTP);
 
     // TEM1 activation
-    double TEM1_activation = MichaelisMenten_220(LTE1, Jatem, 1, TEM1GDP);
+    double TEM1_activation = MichaelisMenten_220(LTE1, Jatem, 1.0, TEM1GDP);
 
     // inactivation
-    double inactivation = MichaelisMenten_220(BUB2, Jitem, 1, TEM1GTP);
+    double inactivation = MichaelisMenten_220(BUB2, Jitem, 1.0, TEM1GTP);
 
     // CDC15 activation
     double CDC15_activation = Mass_Action_1_222(ka15_p * TEM1GDP + ka15_p_p * TEM1GTP + ka15p * CDC14, CDC15i);
@@ -717,181 +809,208 @@ void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     // Scale time appropriately
 }
 
-void Chen2004SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
+double Chen2004SbmlOdeSystem::CalculateRootFunction(double time, const std::vector<double> &rY)
 {
-    // STATE VARIABLES:
-    BCK2 = rY[0];
-    BUD = rY[1];
-    C2 = rY[2];
-    C2P = rY[3];
-    C5 = rY[4];
-    C5P = rY[5];
-    CDC14 = rY[6];
-    CDC14T = rY[7];
-    CDC15 = rY[8];
-    CDC15i = rY[9];
-    CDC20 = rY[10];
-    CDC20i = rY[11];
-    CDC6 = rY[12];
-    CDC6P = rY[13];
-    CDC6T = rY[14];
-    CDH1 = rY[15];
-    CDH1i = rY[16];
-    CKIT = rY[17];
-    CLB2 = rY[18];
-    CLB2T = rY[19];
-    CLB5 = rY[20];
-    CLB5T = rY[21];
-    CLN2 = rY[22];
-    CLN3 = rY[23];
-    ESP1 = rY[24];
-    F2 = rY[25];
-    F2P = rY[26];
-    F5 = rY[27];
-    F5P = rY[28];
-    IE = rY[29];
-    IEP = rY[30];
-    MASS = rY[31];
-    MCM1 = rY[32];
-    NET1 = rY[33];
-    NET1P = rY[34];
-    NET1T = rY[35];
-    ORI = rY[36];
-    PDS1 = rY[37];
-    PE = rY[38];
-    PPX = rY[39];
-    RENT = rY[40];
-    RENTP = rY[41];
-    SBF = rY[42];
-    SIC1 = rY[43];
-    SIC1P = rY[44];
-    SIC1T = rY[45];
-    SPN = rY[46];
-    SWI5 = rY[47];
-    SWI5P = rY[48];
-    TEM1GDP = rY[49];
-    TEM1GTP = rY[50];
-
-    // STATE PARAMETERS:
-    BUB2 = GetParameter("BUB2");
-    LTE1 = GetParameter("LTE1");
-    MAD2 = GetParameter("MAD2");
-
-    bub2l = GetParameter("bub2l");
-    CDC15T = GetParameter("CDC15T");
-    ESP1T = GetParameter("ESP1T");
-    IET = GetParameter("IET");
-    KEZ = GetParameter("KEZ");
-    KEZ2 = GetParameter("KEZ2");
-    lte1h = GetParameter("lte1h");
-    lte1l = GetParameter("lte1l");
-    mad2l = GetParameter("mad2l");
-    TEM1T = GetParameter("TEM1T");
-    D = GetParameter("D");
-    mu = GetParameter("mu");
-    Vdb5 = GetParameter("Vdb5");
-    Vdb2 = GetParameter("Vdb2");
-    Vasbf = GetParameter("Vasbf");
-    Visbf = GetParameter("Visbf");
-    Vkpc1 = GetParameter("Vkpc1");
-    Vkpf6 = GetParameter("Vkpf6");
-    Vacdh = GetParameter("Vacdh");
-    Vicdh = GetParameter("Vicdh");
-    Vppnet = GetParameter("Vppnet");
-    Vkpnet = GetParameter("Vkpnet");
-    Vdppx = GetParameter("Vdppx");
-    Vdpds = GetParameter("Vdpds");
-    Vaiep = GetParameter("Vaiep");
-    Vd2c1 = GetParameter("Vd2c1");
-    Vd2f6 = GetParameter("Vd2f6");
-    Vppc1 = GetParameter("Vppc1");
-    Vppf6 = GetParameter("Vppf6");
-    F = GetParameter("F");
-}
-
-double Chen2004SbmlOdeSystem::ProcessEvents(double time, const std::vector<double> & rY)
-{
-    // Initialise derivatives vector
-    std::vector<double> dy(rY.size());
-    EvaluateYDerivatives(time, rY, dy);
     RefreshState(rY);
 
-    double stop_dist = std::numeric_limits<double>::max();
+    double dist = std::numeric_limits<double>::max();
 
-    if (sm::lt(CLB2 + CLB5 - KEZ2, 0))
+    if (sm::lt(CLB2 + CLB5 - KEZ2, 0.0))
     {
-        if (!eventsSatisfied[0] && time > 0.0)
+        if (time <= 0.0)
         {
-            SetStateVariable("ORI", static_cast<double>(0));
-            stop_dist = 0.0;
+            // Condition true at first timestep: don't trigger
+            dist = std::abs(dist) < 1.0 ? dist : 1.0;
         }
+        else if (eventsSatisfied[0])
+        {
+            // Condition already true: don't trigger (again)
+            dist = std::abs(dist) < 1.0 ? dist : 1.0;
+        }
+        else // if (!eventsSatisfied[0])
+        {
+            // Condition transitioning from false to true: trigger
+            dist = 0.0;
+            
+            UpdateDefaultInitialConditions(rY);
+            SetStateVariable(36, 0.0);
+            SetDefaultInitialCondition(36, 0.0);
+        }
+        // Mark condition true
         eventsSatisfied[0] = true;
     }
     else
     {
-        stop_dist = 0.0; // TODO: stop_dist = std::min(stop_dist, event_dist);
+        double event_dist = 2.0; // TODO: Calculate appropriate value
+        dist = std::abs(dist) < std::abs(event_dist) ? dist : event_dist;
+
+        // Mark condition false
         eventsSatisfied[0] = false;
     }
-    if (sm::gt(ORI - 1, 0))
+    if (sm::gt(ORI - 1.0, 0.0))
     {
-        if (!eventsSatisfied[1] && time > 0.0)
+        if (time <= 0.0)
         {
-            SetParameter("MAD2", static_cast<double>(mad2h));
-            SetParameter("BUB2", static_cast<double>(bub2h));
-            stop_dist = 0.0;
+            // Condition true at first timestep: don't trigger
+            dist = std::abs(dist) < 1.0 ? dist : 1.0;
         }
+        else if (eventsSatisfied[1])
+        {
+            // Condition already true: don't trigger (again)
+            dist = std::abs(dist) < 1.0 ? dist : 1.0;
+        }
+        else // if (!eventsSatisfied[1])
+        {
+            // Condition transitioning from false to true: trigger
+            dist = 0.0;
+            
+            UpdateDefaultInitialConditions(rY);
+            SetParameter("MAD2", mad2h);
+            SetParameter("BUB2", bub2h);
+        }
+        // Mark condition true
         eventsSatisfied[1] = true;
     }
     else
     {
-        stop_dist = 0.0; // TODO: stop_dist = std::min(stop_dist, event_dist);
+        double event_dist = 2.0; // TODO: Calculate appropriate value
+        dist = std::abs(dist) < std::abs(event_dist) ? dist : event_dist;
+
+        // Mark condition false
         eventsSatisfied[1] = false;
     }
-    if (sm::gt(SPN - 1, 0))
+    if (sm::gt(SPN - 1.0, 0.0))
     {
-        if (!eventsSatisfied[2] && time > 0.0)
+        if (time <= 0.0)
         {
-            SetParameter("MAD2", static_cast<double>(mad2l));
-            SetParameter("LTE1", static_cast<double>(lte1h));
-            SetParameter("BUB2", static_cast<double>(bub2l));
-            stop_dist = 0.0;
+            // Condition true at first timestep: don't trigger
+            dist = std::abs(dist) < 1.0 ? dist : 1.0;
         }
+        else if (eventsSatisfied[2])
+        {
+            // Condition already true: don't trigger (again)
+            dist = std::abs(dist) < 1.0 ? dist : 1.0;
+        }
+        else // if (!eventsSatisfied[2])
+        {
+            // Condition transitioning from false to true: trigger
+            dist = 0.0;
+            
+            UpdateDefaultInitialConditions(rY);
+            SetParameter("MAD2", mad2l);
+            SetParameter("LTE1", lte1h);
+            SetParameter("BUB2", bub2l);
+        }
+        // Mark condition true
         eventsSatisfied[2] = true;
     }
     else
     {
-        stop_dist = 0.0; // TODO: stop_dist = std::min(stop_dist, event_dist);
+        double event_dist = 2.0; // TODO: Calculate appropriate value
+        dist = std::abs(dist) < std::abs(event_dist) ? dist : event_dist;
+
+        // Mark condition false
         eventsSatisfied[2] = false;
     }
-    if (sm::lt(CLB2 - KEZ, 0))
+    if (sm::lt(CLB2 - KEZ, 0.0))
     {
-        if (!eventsSatisfied[3] && time > 0.0)
+        if (time <= 0.0)
         {
-            SetStateVariable("MASS", static_cast<double>(F * MASS));
-            SetParameter("LTE1", static_cast<double>(lte1l));
-            SetStateVariable("BUD", static_cast<double>(0));
-            SetStateVariable("SPN", static_cast<double>(0));
-            stop_dist = 0.0;
+            // Condition true at first timestep: don't trigger
+            dist = std::abs(dist) < 1.0 ? dist : 1.0;
         }
+        else if (eventsSatisfied[3])
+        {
+            // Condition already true: don't trigger (again)
+            dist = std::abs(dist) < 1.0 ? dist : 1.0;
+        }
+        else // if (!eventsSatisfied[3])
+        {
+            // Condition transitioning from false to true: trigger
+            dist = 0.0;
+            
+            UpdateDefaultInitialConditions(rY);
+            SetStateVariable(31, F * MASS);
+            SetDefaultInitialCondition(31, F * MASS);
+            SetParameter("LTE1", lte1l);
+            SetStateVariable(1, 0.0);
+            SetDefaultInitialCondition(1, 0.0);
+            SetStateVariable(46, 0.0);
+            SetDefaultInitialCondition(46, 0.0);
+        }
+        // Mark condition true
         eventsSatisfied[3] = true;
     }
     else
     {
-        stop_dist = 0.0; // TODO: stop_dist = std::min(stop_dist, event_dist);
+        double event_dist = 2.0; // TODO: Calculate appropriate value
+        dist = std::abs(dist) < std::abs(event_dist) ? dist : event_dist;
+
+        // Mark condition false
         eventsSatisfied[3] = false;
     }
 
-    return stop_dist;
-}
-
-double Chen2004SbmlOdeSystem::CalculateRootFunction(double time, const std::vector<double> &rY)
-{
-    return ProcessEvents(time, rY);
+    return dist;
 }
 
 bool Chen2004SbmlOdeSystem::CalculateStoppingEvent(double time, const std::vector<double> &rY)
 {
-    return ProcessEvents(time, rY) < 0.0;
+    return CalculateRootFunction(time, rY) == 0.0;
+}
+
+void Chen2004SbmlOdeSystem::UpdateDefaultInitialConditions(const std::vector<double> &rY)
+{
+    SetDefaultInitialCondition(0, rY[0]); // BCK2
+    SetDefaultInitialCondition(1, rY[1]); // BUD
+    SetDefaultInitialCondition(2, rY[2]); // C2
+    SetDefaultInitialCondition(3, rY[3]); // C2P
+    SetDefaultInitialCondition(4, rY[4]); // C5
+    SetDefaultInitialCondition(5, rY[5]); // C5P
+    SetDefaultInitialCondition(6, rY[6]); // CDC14
+    SetDefaultInitialCondition(7, rY[7]); // CDC14T
+    SetDefaultInitialCondition(8, rY[8]); // CDC15
+    SetDefaultInitialCondition(9, rY[9]); // CDC15i
+    SetDefaultInitialCondition(10, rY[10]); // CDC20
+    SetDefaultInitialCondition(11, rY[11]); // CDC20i
+    SetDefaultInitialCondition(12, rY[12]); // CDC6
+    SetDefaultInitialCondition(13, rY[13]); // CDC6P
+    SetDefaultInitialCondition(14, rY[14]); // CDC6T
+    SetDefaultInitialCondition(15, rY[15]); // CDH1
+    SetDefaultInitialCondition(16, rY[16]); // CDH1i
+    SetDefaultInitialCondition(17, rY[17]); // CKIT
+    SetDefaultInitialCondition(18, rY[18]); // CLB2
+    SetDefaultInitialCondition(19, rY[19]); // CLB2T
+    SetDefaultInitialCondition(20, rY[20]); // CLB5
+    SetDefaultInitialCondition(21, rY[21]); // CLB5T
+    SetDefaultInitialCondition(22, rY[22]); // CLN2
+    SetDefaultInitialCondition(23, rY[23]); // CLN3
+    SetDefaultInitialCondition(24, rY[24]); // ESP1
+    SetDefaultInitialCondition(25, rY[25]); // F2
+    SetDefaultInitialCondition(26, rY[26]); // F2P
+    SetDefaultInitialCondition(27, rY[27]); // F5
+    SetDefaultInitialCondition(28, rY[28]); // F5P
+    SetDefaultInitialCondition(29, rY[29]); // IE
+    SetDefaultInitialCondition(30, rY[30]); // IEP
+    SetDefaultInitialCondition(31, rY[31]); // MASS
+    SetDefaultInitialCondition(32, rY[32]); // MCM1
+    SetDefaultInitialCondition(33, rY[33]); // NET1
+    SetDefaultInitialCondition(34, rY[34]); // NET1P
+    SetDefaultInitialCondition(35, rY[35]); // NET1T
+    SetDefaultInitialCondition(36, rY[36]); // ORI
+    SetDefaultInitialCondition(37, rY[37]); // PDS1
+    SetDefaultInitialCondition(38, rY[38]); // PE
+    SetDefaultInitialCondition(39, rY[39]); // PPX
+    SetDefaultInitialCondition(40, rY[40]); // RENT
+    SetDefaultInitialCondition(41, rY[41]); // RENTP
+    SetDefaultInitialCondition(42, rY[42]); // SBF
+    SetDefaultInitialCondition(43, rY[43]); // SIC1
+    SetDefaultInitialCondition(44, rY[44]); // SIC1P
+    SetDefaultInitialCondition(45, rY[45]); // SIC1T
+    SetDefaultInitialCondition(46, rY[46]); // SPN
+    SetDefaultInitialCondition(47, rY[47]); // SWI5
+    SetDefaultInitialCondition(48, rY[48]); // SWI5P
+    SetDefaultInitialCondition(49, rY[49]); // TEM1GDP
+    SetDefaultInitialCondition(50, rY[50]); // TEM1GTP
 }
 
 // FUNCTION DEFINITIONS:
@@ -901,7 +1020,7 @@ double Chen2004SbmlOdeSystem::BB_218(double A1, double A2, double A3, double A4)
 }
 double Chen2004SbmlOdeSystem::GK_219(double A1, double A2, double A3, double A4)
 {
-    return 2 * A4 * A1 / (A2 - A1 + A3 * A2 + A4 * A1 + sm::root(2, std::pow(A2 - A1 + A3 * A2 + A4 * A1, 2) - 4 * (A2 - A1) * A4 * A1));
+    return 2.0 * A4 * A1 / (A2 - A1 + A3 * A2 + A4 * A1 + sm::root(2.0, std::pow(A2 - A1 + A3 * A2 + A4 * A1, 2.0) - 4.0 * (A2 - A1) * A4 * A1));
 }
 double Chen2004SbmlOdeSystem::MichaelisMenten_220(double M1, double J1, double k1, double S1)
 {

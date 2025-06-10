@@ -55,12 +55,25 @@ Goldbeter1991SbmlOdeSystem::~Goldbeter1991SbmlOdeSystem()
 {
 }
 
+void Goldbeter1991SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
+{
+    // STATE VARIABLES:
+    C = rY[0];
+    M = rY[1];
+    X = rY[2];
+
+    // STATE PARAMETERS:
+
+    V1 = GetParameter("V1");
+    V3 = GetParameter("V3");
+}
+
 void Goldbeter1991SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
     RefreshState(rY);
 
     // RULES:
-    V1 = C * VM1 * std::pow(C + Kc, -1);
+    V1 = C * VM1 * std::pow(C + Kc, -1.0);
     V3 = M * VM3;
 
     // UPDATE STATE PARAMETERS:
@@ -89,14 +102,14 @@ void Goldbeter1991SbmlOdeSystem::EvaluateYDerivatives(double time, const std::ve
     {
         double vd = 0.25;
         double Kd = 0.02;
-        reaction3 = C * cell * vd * X * std::pow(C + Kd, -1);
+        reaction3 = C * cell * vd * X * std::pow(C + Kd, -1.0);
     }
 
     // activation of cdc2 kinase
     double reaction4 = 0.0;
     {
         double K1 = 0.005;
-        reaction4 = cell * (1 + -1 * M) * V1 * std::pow(K1 + -1 * M + 1, -1);
+        reaction4 = cell * (1.0 + -1.0 * M) * V1 * std::pow(K1 + -1.0 * M + 1.0, -1.0);
     }
 
     // deactivation of cdc2 kinase
@@ -104,14 +117,14 @@ void Goldbeter1991SbmlOdeSystem::EvaluateYDerivatives(double time, const std::ve
     {
         double V2 = 1.5;
         double K2 = 0.005;
-        reaction5 = cell * M * V2 * std::pow(K2 + M, -1);
+        reaction5 = cell * M * V2 * std::pow(K2 + M, -1.0);
     }
 
     // activation of cyclin protease
     double reaction6 = 0.0;
     {
         double K3 = 0.005;
-        reaction6 = cell * V3 * (1 + -1 * X) * std::pow(K3 + -1 * X + 1, -1);
+        reaction6 = cell * V3 * (1.0 + -1.0 * X) * std::pow(K3 + -1.0 * X + 1.0, -1.0);
     }
 
     // deactivation of cyclin protease
@@ -119,7 +132,7 @@ void Goldbeter1991SbmlOdeSystem::EvaluateYDerivatives(double time, const std::ve
     {
         double K4 = 0.005;
         double V4 = 0.5;
-        reaction7 = cell * V4 * X * std::pow(K4 + X, -1);
+        reaction7 = cell * V4 * X * std::pow(K4 + X, -1.0);
     }
 
     // ODES:
@@ -128,19 +141,6 @@ void Goldbeter1991SbmlOdeSystem::EvaluateYDerivatives(double time, const std::ve
     rDY[2] = (reaction6 - reaction7) / cell; // d[Cyclin Protease]/dt
 
     // Scale time appropriately
-}
-
-void Goldbeter1991SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
-{
-    // STATE VARIABLES:
-    C = rY[0];
-    M = rY[1];
-    X = rY[2];
-
-    // STATE PARAMETERS:
-
-    V1 = GetParameter("V1");
-    V3 = GetParameter("V3");
 }
 
 

@@ -17,17 +17,17 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem(std::vector<double> sta
     cell = 1.0;
 
     // STATE VARIABLES:
-    CycBt = 0.001;  // CycBt
-    CycB = 0.0;     // CycB
+    CycBt = 0.001; // CycBt
+    CycB = 0.0; // CycB
     Cdc20a = 0.001; // Cdc20a
-    Trimer = 0.0;   // Trimer
-    Cdh1 = 0.001;   // Cdh1
-    m = 0.5;        // m
+    Trimer = 0.0; // Trimer
+    Cdh1 = 0.001; // Cdh1
+    m = 0.5; // m
     Cdc20t = 0.001; // Cdc20t
-    IEP = 0.001;    // IEP
-    Mad = 0.0;      // Mad
-    CKIt = 0.001;   // CKIt
-    SK = 0.001;     // SK
+    IEP = 0.001; // IEP
+    Mad = 0.0; // Mad
+    CKIt = 0.001; // CKIt
+    SK = 0.001; // SK
 
     SetDefaultInitialCondition(0, CycBt);
     SetDefaultInitialCondition(1, CycB);
@@ -76,14 +76,35 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem(std::vector<double> sta
 
     TF = 0.0;
 
+
     mParameters.push_back(TF);
 
     // EVENTS:
-    satisfiedEvents.resize(1, false);
+    eventsSatisfied.resize(1, false);
 }
 
 TysonNovak2001SbmlOdeSystem::~TysonNovak2001SbmlOdeSystem()
 {
+}
+
+void TysonNovak2001SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
+{
+    // STATE VARIABLES:
+    CycBt = rY[0];
+    CycB = rY[1];
+    Cdc20a = rY[2];
+    Trimer = rY[3];
+    Cdh1 = rY[4];
+    m = rY[5];
+    Cdc20t = rY[6];
+    IEP = rY[7];
+    Mad = rY[8];
+    CKIt = rY[9];
+    SK = rY[10];
+
+    // STATE PARAMETERS:
+
+    TF = GetParameter("TF");
 }
 
 void TysonNovak2001SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
@@ -112,13 +133,13 @@ void TysonNovak2001SbmlOdeSystem::EvaluateYDerivatives(double time, const std::v
     double CycBtdegradationviaCdc20a = k2ppp * Cdc20a * CycBt;
 
     // Cdh1 synthesis
-    double Cdh1synthesis = (k3p + k3pp * Cdc20a) * (1 - Cdh1) / (J3 + 1 - Cdh1);
+    double Cdh1synthesis = (k3p + k3pp * Cdc20a) * (1.0 - Cdh1) / (J3 + 1.0 - Cdh1);
 
     // Cdh1 degradation
     double Cdh1degradation = (k4p * SK * Cdh1 + k4 * m * CycB * Cdh1) / (J4 + Cdh1);
 
     // Cdc20t synthesis
-    double Cdc20tsynthesis = k5p + k5pp * std::pow(CycB * m / J5, n) / (1 + std::pow(CycB * m / J5, n));
+    double Cdc20tsynthesis = k5p + k5pp * std::pow(CycB * m / J5, n) / (1.0 + std::pow(CycB * m / J5, n));
 
     // Cdc20t degradation
     double Cdc20t_deg = k6 * Cdc20t;
@@ -133,13 +154,13 @@ void TysonNovak2001SbmlOdeSystem::EvaluateYDerivatives(double time, const std::v
     double Cdc20adegradation = k6 * Cdc20a;
 
     // IEP synthesis
-    double IEPsynthesis = k9 * m * CycB * (1 - IEP);
+    double IEPsynthesis = k9 * m * CycB * (1.0 - IEP);
 
     // IEP degradation
     double IEPdegradation = k10 * IEP;
 
     // growth
-    double growth = mu * m * (1 - m / mmax);
+    double growth = mu * m * (1.0 - m / mmax);
 
     // CKIt synthesis
     double CKItsynthesis = k11;
@@ -160,59 +181,19 @@ void TysonNovak2001SbmlOdeSystem::EvaluateYDerivatives(double time, const std::v
     double SKdegradation = k14 * SK;
 
     // ODES:
-    rDY[0] = (CycBt_synthesis - CycBdegradation - CycBdegradationviaCdh1 - CycBtdegradationviaCdc20a) / cell;                                                      // d[CycBt]/dt
-    rDY[1] = ((CycBt - 2 * CycBt * CKIt / (CycBt + CKIt + 1 / Keq + std::pow(std::pow(CycBt + CKIt + 1 / Keq, 2) - 4 * CycBt * CKIt, 1.0 / 2.0))) - rY[1]) / cell; // d[CycB]/dt
-    rDY[2] = (Cdc20activation - Cdc20ainhibition - Cdc20adegradation) / cell;                                                                                      // d[Cdc20a]/dt
-    rDY[3] = ((2 * CycBt * CKIt / (CycBt + CKIt + 1 / Keq + std::pow(std::pow(CycBt + CKIt + 1 / Keq, 2) - 4 * CycBt * CKIt, 1.0 / 2.0))) - rY[3]) / cell;         // d[Trimer]/dt
-    rDY[4] = (Cdh1synthesis - Cdh1degradation) / cell;                                                                                                             // d[Cdh1]/dt
-    rDY[5] = (growth) / cell;                                                                                                                                      // d[m]/dt
-    rDY[6] = (Cdc20tsynthesis - Cdc20t_deg) / cell;                                                                                                                // d[Cdc20t]/dt
-    rDY[7] = (IEPsynthesis - IEPdegradation) / cell;                                                                                                               // d[IEP]/dt
-    rDY[8] = ((1) - rY[8]) / cell;                                                                                                                                 // d[Mad]/dt
-    rDY[9] = (CKItsynthesis - CKIdegradation - CKItphosphorilationviaSK - eq_7) / cell;                                                                            // d[CKIt]/dt
-    rDY[10] = (SKsynthesis - SKdegradation) / cell;                                                                                                                // d[SK]/dt
+    rDY[0] = (CycBt_synthesis - CycBdegradation - CycBdegradationviaCdh1 - CycBtdegradationviaCdc20a) / cell; // d[CycBt]/dt
+    rDY[1] = ((CycBt - 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow(std::pow(CycBt + CKIt + 1.0 / Keq, 2.0) - 4.0 * CycBt * CKIt, 1.0 / 2.0))) - rY[1]) / cell; // d[CycB]/dt
+    rDY[2] = (Cdc20activation - Cdc20ainhibition - Cdc20adegradation) / cell; // d[Cdc20a]/dt
+    rDY[3] = ((2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow(std::pow(CycBt + CKIt + 1.0 / Keq, 2.0) - 4.0 * CycBt * CKIt, 1.0 / 2.0))) - rY[3]) / cell; // d[Trimer]/dt
+    rDY[4] = (Cdh1synthesis - Cdh1degradation) / cell; // d[Cdh1]/dt
+    rDY[5] = (growth) / cell; // d[m]/dt
+    rDY[6] = (Cdc20tsynthesis - Cdc20t_deg) / cell; // d[Cdc20t]/dt
+    rDY[7] = (IEPsynthesis - IEPdegradation) / cell; // d[IEP]/dt
+    rDY[8] = ((1.0) - rY[8]) / cell; // d[Mad]/dt
+    rDY[9] = (CKItsynthesis - CKIdegradation - CKItphosphorilationviaSK - eq_7) / cell; // d[CKIt]/dt
+    rDY[10] = (SKsynthesis - SKdegradation) / cell; // d[SK]/dt
 
     // Scale time appropriately
-}
-
-void TysonNovak2001SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
-{
-    // STATE VARIABLES:
-    CycBt = rY[0];
-    CycB = rY[1];
-    Cdc20a = rY[2];
-    Trimer = rY[3];
-    Cdh1 = rY[4];
-    m = rY[5];
-    Cdc20t = rY[6];
-    IEP = rY[7];
-    Mad = rY[8];
-    CKIt = rY[9];
-    SK = rY[10];
-
-    // STATE PARAMETERS:
-
-    TF = GetParameter("TF");
-}
-
-void TysonNovak2001SbmlOdeSystem::UpdateInitialConditions(const std::vector<double> &rY)
-{
-    SetDefaultInitialCondition(0, rY[0]);   // CycBt
-    SetDefaultInitialCondition(1, rY[1]);   // CycB
-    SetDefaultInitialCondition(2, rY[2]);   // Cdc20a
-    SetDefaultInitialCondition(3, rY[3]);   // Trimer
-    SetDefaultInitialCondition(4, rY[4]);   // Cdh1
-    SetDefaultInitialCondition(5, rY[5]);   // m
-    SetDefaultInitialCondition(6, rY[6]);   // Cdc20t
-    SetDefaultInitialCondition(7, rY[7]);   // IEP
-    SetDefaultInitialCondition(8, rY[8]);   // Mad
-    SetDefaultInitialCondition(9, rY[9]);   // CKIt
-    SetDefaultInitialCondition(10, rY[10]); // SK
-}
-
-bool TysonNovak2001SbmlOdeSystem::CalculateStoppingEvent(double time, const std::vector<double> &rY)
-{
-    return CalculateRootFunction(time, rY) == 0.0;
 }
 
 double TysonNovak2001SbmlOdeSystem::CalculateRootFunction(double time, const std::vector<double> &rY)
@@ -225,40 +206,62 @@ double TysonNovak2001SbmlOdeSystem::CalculateRootFunction(double time, const std
     {
         if (time <= 0.0)
         {
-            // Event satisfied at first timestep: mark but don't trigger
-            satisfiedEvents[0] = true;
+            // Condition true at first timestep: don't trigger
             dist = std::abs(dist) < 1.0 ? dist : 1.0;
         }
-        else if (satisfiedEvents[0])
+        else if (eventsSatisfied[0])
         {
-            // Event previously satisfied: don't trigger (again)
+            // Condition already true: don't trigger (again)
             dist = std::abs(dist) < 1.0 ? dist : 1.0;
         }
-        else // if (!satisfiedEvents[0])
+        else // if (!eventsSatisfied[0])
         {
-            // Event transitioning from unsatisfied to satisfied: trigger
-            satisfiedEvents[0] = true;
+            // Condition transitioning from false to true: trigger
             dist = 0.0;
-
-            UpdateInitialConditions();
+            
+            UpdateDefaultInitialConditions(rY);
+            SetStateVariable(5, m / 2.0);
             SetDefaultInitialCondition(5, m / 2.0);
         }
+        // Mark condition true
+        eventsSatisfied[0] = true;
     }
     else
     {
-        // Event not satisfied: unmark
-        satisfiedEvents[0] = false;
-        double dist_event = CycB - 0.1;
-        dist = std::abs(dist) < std::abs(dist_event) ? dist : dist_event;
+        double event_dist = 2.0; // TODO: Calculate appropriate value
+        dist = std::abs(dist) < std::abs(event_dist) ? dist : event_dist;
+
+        // Mark condition false
+        eventsSatisfied[0] = false;
     }
 
     return dist;
 }
 
+bool TysonNovak2001SbmlOdeSystem::CalculateStoppingEvent(double time, const std::vector<double> &rY)
+{
+    return CalculateRootFunction(time, rY) == 0.0;
+}
+
+void TysonNovak2001SbmlOdeSystem::UpdateDefaultInitialConditions(const std::vector<double> &rY)
+{
+    SetDefaultInitialCondition(0, rY[0]); // CycBt
+    SetDefaultInitialCondition(1, rY[1]); // CycB
+    SetDefaultInitialCondition(2, rY[2]); // Cdc20a
+    SetDefaultInitialCondition(3, rY[3]); // Trimer
+    SetDefaultInitialCondition(4, rY[4]); // Cdh1
+    SetDefaultInitialCondition(5, rY[5]); // m
+    SetDefaultInitialCondition(6, rY[6]); // Cdc20t
+    SetDefaultInitialCondition(7, rY[7]); // IEP
+    SetDefaultInitialCondition(8, rY[8]); // Mad
+    SetDefaultInitialCondition(9, rY[9]); // CKIt
+    SetDefaultInitialCondition(10, rY[10]); // SK
+}
+
 // FUNCTION DEFINITIONS:
 double TysonNovak2001SbmlOdeSystem::GK(double A1, double A2, double A3, double A4)
 {
-    return 2 * A4 * A1 / (A2 - A1 + A3 * A2 + A4 * A1 + sm::root(2, std::pow(A2 - A1 + A3 * A2 + A4 * A1, 2) - 4 * (A2 - A1) * A4 * A1));
+    return 2.0 * A4 * A1 / (A2 - A1 + A3 * A2 + A4 * A1 + sm::root(2.0, std::pow(A2 - A1 + A3 * A2 + A4 * A1, 2.0) - 4.0 * (A2 - A1) * A4 * A1));
 }
 
 template <>
@@ -308,6 +311,7 @@ void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
     this->mVariableNames.push_back("SK");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.001);
+
 
     // STATE PARAMETERS:
     this->mParameterNames.push_back("TF");
