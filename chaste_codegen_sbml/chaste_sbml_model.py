@@ -7,7 +7,7 @@ import re
 from typing import TYPE_CHECKING
 
 from jinja2 import Environment, PackageLoader, select_autoescape
-from libsbml import Parameter, SBMLReader, formulaToString
+from libsbml import SBMLReader, formulaToString
 
 from ._config import ODE_SUFFIX, SHORT_NAME_LEN
 from ._utils import (
@@ -154,11 +154,14 @@ class ChasteSbmlModel:
         :return: The equivalent C++ string.
         """
 
+        # Convert all integers to doubles
+        formula = re.sub(r"(?<!\.)\b[0-9]+\b(?!\.)", lambda x: f"{x[0]}.0", formula)
+
         # TODO: implies, lambda, delay
 
         # SBML contants to be replaced with C++ equivalents
         constants = {
-            "avogadro": "sbmlmath::SM_AVOGADRO",
+            "avogadro": "sm::AVOGADRO",
             "exponentiale": "M_E",
             "inf": "std::numeric_limits<double>::infinity()",
             "infinity": "std::numeric_limits<double>::infinity()",
@@ -290,25 +293,26 @@ class ChasteSbmlModel:
         """
         event_dicts = []
         for event in self._events:
-            trigger = event.getTrigger()
-            trigger_formula = self._convert_ast_formula(trigger.getMath())
+            trigger_math = event.getTrigger().getMath()
+            # TODO: Extract event trigger distance from math ast
+            # e.g. if (lt || gt || eq | ...) {dist = a - b}
+            trigger_formula = self._convert_ast_formula(trigger_math)
 
             assignment_formulas = []
             for assignment in event.getListOfEventAssignments():
-                rhs_math = self._convert_ast_formula(assignment.getMath())
-                rhs = f"static_cast<double>({rhs_math})"
+                rhs = self._convert_ast_formula(assignment.getMath())
 
                 lhs = assignment.getVariable()
                 if self._is_state_variable(lhs):
+                    state_variable_index = self._get_state_variable_index(lhs)
+                    assignment_formulas.append(f"SetStateVariable({state_variable_index}, {rhs})")
                     assignment_formulas.append(
-                        f'SetStateVariable("{lhs}", {rhs});'
+                        f"SetDefaultInitialCondition({state_variable_index}, {rhs})"
                     )
                 elif self._is_state_parameter(lhs):
-                    assignment_formulas.append(
-                        f'SetParameter("{lhs}", {rhs});'
-                    )
+                    assignment_formulas.append(f'SetParameter("{lhs}", {rhs})')
                 else:
-                    assignment_formulas.append(f"{lhs} = {rhs};")
+                    assignment_formulas.append(f"{lhs} = {rhs}")
 
             event_dicts.append(
                 {
@@ -449,7 +453,6 @@ class ChasteSbmlModel:
         """
         species_dicts = []
         # time_multiplier = self._get_timescale_multiplier()
-        ode_index = 0
 
         for species in self._species:
             species_id = species.getId()

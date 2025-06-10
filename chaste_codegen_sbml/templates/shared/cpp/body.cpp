@@ -87,6 +87,29 @@ namespace sm = sbmlmath;
 {
 }
 
+void {{ ode_class_name }}::RefreshState(const std::vector<double> &rY)
+{
+    // STATE VARIABLES:
+{% for sp in species %}
+{% if sp["is_state_variable"] is true() %}
+    {{ sp["id"] }} = rY[{{ sp["state_variable_index"] }}];
+{% endif %}
+{% endfor %}
+
+    // STATE PARAMETERS:
+{% for sp in species %}
+{% if sp["is_state_parameter"] is true() %}
+    {{ sp["id"] }} = GetParameter("{{ sp['id'] }}");
+{% endif %}
+{% endfor %}
+
+{% for param in parameters %}
+{% if param["is_state_parameter"] is true() %}
+    {{ param["id"] }} = GetParameter("{{ param['id'] }}");
+{% endif %}
+{% endfor %}
+}
+
 void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
     RefreshState(rY);
@@ -142,69 +165,64 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
     // Scale time appropriately
 }
 
-void {{ ode_class_name }}::RefreshState(const std::vector<double> &rY)
-{
-    // STATE VARIABLES:
-{% for sp in species %}
-{% if sp["is_state_variable"] is true() %}
-    {{ sp["id"] }} = rY[{{ sp["state_variable_index"] }}];
-{% endif %}
-{% endfor %}
-
-    // STATE PARAMETERS:
-{% for sp in species %}
-{% if sp["is_state_parameter"] is true() %}
-    {{ sp["id"] }} = GetParameter("{{ sp['id'] }}");
-{% endif %}
-{% endfor %}
-
-{% for param in parameters %}
-{% if param["is_state_parameter"] is true() %}
-    {{ param["id"] }} = GetParameter("{{ param['id'] }}");
-{% endif %}
-{% endfor %}
-}
-
 {% if events %}
-double {{ ode_class_name }}::ProcessEvents(double time, const std::vector<double> & rY)
+double {{ ode_class_name }}::CalculateRootFunction(double time, const std::vector<double> &rY)
 {
-    // Initialise derivatives vector
-    std::vector<double> dy(rY.size());
-    EvaluateYDerivatives(time, rY, dy);
     RefreshState(rY);
 
-    double stop_dist = std::numeric_limits<double>::max();
+    double dist = std::numeric_limits<double>::max();
 
 {% for event in events %}
     if ({{ event["trigger"] }})
     {
-        if (!eventsSatisfied[{{ loop.index0 }}] && time > 0.0)
+        if (time <= 0.0)
         {
-{% for assignment in event["assignments"] %}
-            {{ assignment }}
-{% endfor %}
-            stop_dist = 0.0;
+            // Condition true at first timestep: don't trigger
+            dist = std::abs(dist) < 1.0 ? dist : 1.0;
         }
+        else if (eventsSatisfied[{{ loop.index0 }}])
+        {
+            // Condition already true: don't trigger (again)
+            dist = std::abs(dist) < 1.0 ? dist : 1.0;
+        }
+        else // if (!eventsSatisfied[{{ loop.index0 }}])
+        {
+            // Condition transitioning from false to true: trigger
+            dist = 0.0;
+            
+            UpdateDefaultInitialConditions(rY);
+{% for assignment in event["assignments"] %}
+            {{ assignment }};
+{% endfor %}
+        }
+        // Mark condition true
         eventsSatisfied[{{ loop.index0 }}] = true;
     }
     else
     {
-        stop_dist = 0.0; // TODO: stop_dist = std::min(stop_dist, event_dist);
+        double event_dist = 2.0; // TODO: Calculate appropriate value
+        dist = std::abs(dist) < std::abs(event_dist) ? dist : event_dist;
+
+        // Mark condition false
         eventsSatisfied[{{ loop.index0 }}] = false;
     }
 {% endfor %}
 
-    return stop_dist;
-}
-
-double {{ ode_class_name }}::CalculateRootFunction(double time, const std::vector<double> &rY)
-{
-    return ProcessEvents(time, rY);
+    return dist;
 }
 
 bool {{ ode_class_name }}::CalculateStoppingEvent(double time, const std::vector<double> &rY)
 {
-    return ProcessEvents(time, rY) < 0.0;
+    return CalculateRootFunction(time, rY) == 0.0;
+}
+
+void {{ ode_class_name }}::UpdateDefaultInitialConditions(const std::vector<double> &rY)
+{
+{% for sp in species %}
+{% if sp["is_state_variable"] is true() %}
+    SetDefaultInitialCondition({{ sp["state_variable_index"] }}, rY[{{ sp["state_variable_index"] }}]); // {{ sp["id"] }}
+{% endif %}
+{% endfor %}
 }
 {% endif %}
 
