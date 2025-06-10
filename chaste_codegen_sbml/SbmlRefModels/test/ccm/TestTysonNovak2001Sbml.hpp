@@ -56,8 +56,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TysonNovak2001SbmlOdeSystemAndCellCycleModel.hpp"
 #include <boost/serialization/export.hpp>
 
-// #include "PetscTools.hpp"
-// #include "PetscSetupAndFinalize.hpp"
+// This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
 class TestTysonNovak2001Sbml : public AbstractCellBasedTestSuite
@@ -230,31 +229,31 @@ public:
         // or
         // plot "tysonnovak_2001.dat" u 1:2, "" u 1:3, "" u 1:4 etc. for all species
 
-        // std::vector<std::vector<double>> solutions;
-        // for (const auto &ode_solution : ode_solutions)
-        // {
-        //     solutions.insert(solutions.end(), ode_solution.rGetSolutions().begin(), ode_solution.rGetSolutions().end());
-        // }
+        std::vector<std::vector<double>> solutions;
+        for (const auto &ode_solution : ode_solutions)
+        {
+            solutions.insert(solutions.end(), ode_solution.rGetSolutions().begin(), ode_solution.rGetSolutions().end());
+        }
 
-        // std::vector<double> times;
-        // for (const auto &ode_solution : ode_solutions)
-        // {
-        //     times.insert(times.end(), ode_solution.rGetTimes().begin(), ode_solution.rGetTimes().end());
-        // }
+        std::vector<double> times;
+        for (const auto &ode_solution : ode_solutions)
+        {
+            times.insert(times.end(), ode_solution.rGetTimes().begin(), ode_solution.rGetTimes().end());
+        }
 
-        // OutputFileHandler handler("");
-        // out_stream file = handler.OpenOutputFile("tysonnovak_2001.dat");
-        // for (unsigned i = 0; i < solutions.size(); i++)
-        // {
-        //     (*file) << times[i];
-        //     for (unsigned j = 0; j < solutions[i].size(); j++)
-        //     {
-        //         (*file) << "\t" << solutions[i][j];
-        //     }
-        //     (*file) << "\n"
-        //             << std::flush;
-        // }
-        // file->close();
+        OutputFileHandler handler("");
+        out_stream file = handler.OpenOutputFile("tysonnovak_backeuler.dat");
+        for (unsigned i = 0; i < solutions.size(); i++)
+        {
+            (*file) << times[i];
+            for (unsigned j = 0; j < solutions[i].size(); j++)
+            {
+                (*file) << "\t" << solutions[i][j];
+            }
+            (*file) << "\n"
+                    << std::flush;
+        }
+        file->close();
 
         // Values calculated using roadrunner
         std::vector<double> &solution = ode_solutions.back().rGetSolutions().back();
@@ -279,8 +278,9 @@ public:
             TysonNovak2001SbmlOdeSystem ode_system;
 
             CvodeAdaptor cvode_solver;
+            cvode_solver.CheckForStoppingEvents();
 
-            const double max_step = 0.01;
+            const double max_step = 0.1;
             const double sampling_interval = 0.01;
 
             const double run_length = 200.0;
@@ -329,7 +329,7 @@ public:
             }
 
             OutputFileHandler handler("");
-            out_stream file = handler.OpenOutputFile("tysonnovak_2001.dat");
+            out_stream file = handler.OpenOutputFile("tysonnovak_cvode.dat");
             for (unsigned i = 0; i < solutions.size(); i++)
             {
                 (*file) << times[i];
