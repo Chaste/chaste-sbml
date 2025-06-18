@@ -305,6 +305,7 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
 
     // EVENTS:
     eventsSatisfied.resize(4, false);
+    eventsInitialised = false;
 }
 
 Chen2004SbmlOdeSystem::~Chen2004SbmlOdeSystem()
@@ -817,7 +818,7 @@ double Chen2004SbmlOdeSystem::CalculateRootFunction(double time, const std::vect
 
     if (sm::lt(CLB2 + CLB5 - KEZ2, 0.0))
     {
-        if (time <= 0.0)
+        if (!eventsInitialised)
         {
             // Condition true at first timestep: don't trigger
             dist = std::abs(dist) < 1.0 ? dist : 1.0;
@@ -841,7 +842,7 @@ double Chen2004SbmlOdeSystem::CalculateRootFunction(double time, const std::vect
     }
     else
     {
-        double event_dist = 2.0; // TODO: Calculate appropriate value
+        double event_dist = CLB2 + CLB5 - KEZ2 - 0.0 + std::numeric_limits<double>::epsilon();
         dist = std::abs(dist) < std::abs(event_dist) ? dist : event_dist;
 
         // Mark condition false
@@ -849,7 +850,7 @@ double Chen2004SbmlOdeSystem::CalculateRootFunction(double time, const std::vect
     }
     if (sm::gt(ORI - 1.0, 0.0))
     {
-        if (time <= 0.0)
+        if (!eventsInitialised)
         {
             // Condition true at first timestep: don't trigger
             dist = std::abs(dist) < 1.0 ? dist : 1.0;
@@ -873,7 +874,7 @@ double Chen2004SbmlOdeSystem::CalculateRootFunction(double time, const std::vect
     }
     else
     {
-        double event_dist = 2.0; // TODO: Calculate appropriate value
+        double event_dist = 0.0 - ORI - 1.0 + std::numeric_limits<double>::epsilon();
         dist = std::abs(dist) < std::abs(event_dist) ? dist : event_dist;
 
         // Mark condition false
@@ -881,7 +882,7 @@ double Chen2004SbmlOdeSystem::CalculateRootFunction(double time, const std::vect
     }
     if (sm::gt(SPN - 1.0, 0.0))
     {
-        if (time <= 0.0)
+        if (!eventsInitialised)
         {
             // Condition true at first timestep: don't trigger
             dist = std::abs(dist) < 1.0 ? dist : 1.0;
@@ -906,7 +907,7 @@ double Chen2004SbmlOdeSystem::CalculateRootFunction(double time, const std::vect
     }
     else
     {
-        double event_dist = 2.0; // TODO: Calculate appropriate value
+        double event_dist = 0.0 - SPN - 1.0 + std::numeric_limits<double>::epsilon();
         dist = std::abs(dist) < std::abs(event_dist) ? dist : event_dist;
 
         // Mark condition false
@@ -914,7 +915,7 @@ double Chen2004SbmlOdeSystem::CalculateRootFunction(double time, const std::vect
     }
     if (sm::lt(CLB2 - KEZ, 0.0))
     {
-        if (time <= 0.0)
+        if (!eventsInitialised)
         {
             // Condition true at first timestep: don't trigger
             dist = std::abs(dist) < 1.0 ? dist : 1.0;
@@ -943,12 +944,14 @@ double Chen2004SbmlOdeSystem::CalculateRootFunction(double time, const std::vect
     }
     else
     {
-        double event_dist = 2.0; // TODO: Calculate appropriate value
+        double event_dist = CLB2 - KEZ - 0.0 + std::numeric_limits<double>::epsilon();
         dist = std::abs(dist) < std::abs(event_dist) ? dist : event_dist;
 
         // Mark condition false
         eventsSatisfied[3] = false;
     }
+
+    eventsInitialised = true;
 
     return dist;
 }

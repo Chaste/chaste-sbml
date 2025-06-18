@@ -80,6 +80,7 @@ namespace sm = sbmlmath;
 {% if events %}
     // EVENTS:
     eventsSatisfied.resize({{ events|length }}, false);
+    eventsInitialised = false;
 {% endif %}
 }
 
@@ -175,7 +176,7 @@ double {{ ode_class_name }}::CalculateRootFunction(double time, const std::vecto
 {% for event in events %}
     if ({{ event["trigger"] }})
     {
-        if (time <= 0.0)
+        if (!eventsInitialised)
         {
             // Condition true at first timestep: don't trigger
             dist = std::abs(dist) < 1.0 ? dist : 1.0;
@@ -200,13 +201,15 @@ double {{ ode_class_name }}::CalculateRootFunction(double time, const std::vecto
     }
     else
     {
-        double event_dist = 2.0; // TODO: Calculate appropriate value
+        double event_dist = {{ event["distance"] }};
         dist = std::abs(dist) < std::abs(event_dist) ? dist : event_dist;
 
         // Mark condition false
         eventsSatisfied[{{ loop.index0 }}] = false;
     }
 {% endfor %}
+
+    eventsInitialised = true;
 
     return dist;
 }

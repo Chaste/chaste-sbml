@@ -80,6 +80,7 @@ private:
 
     // EVENTS:
     std::vector<bool> eventsSatisfied;
+    bool eventsInitialised;
 
 public:
     TysonNovak2001SbmlOdeSystem(std::vector<double> stateVariables = std::vector<double>());

@@ -249,6 +249,7 @@ private:
 
     // EVENTS:
     std::vector<bool> eventsSatisfied;
+    bool eventsInitialised;
 
 public:
     Chen2004SbmlOdeSystem(std::vector<double> stateVariables = std::vector<double>());

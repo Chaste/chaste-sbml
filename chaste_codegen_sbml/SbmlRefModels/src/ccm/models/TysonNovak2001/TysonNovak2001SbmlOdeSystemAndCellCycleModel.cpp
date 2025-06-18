@@ -81,6 +81,7 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem(std::vector<double> sta
 
     // EVENTS:
     eventsSatisfied.resize(1, false);
+    eventsInitialised = false;
 }
 
 TysonNovak2001SbmlOdeSystem::~TysonNovak2001SbmlOdeSystem()
@@ -204,7 +205,7 @@ double TysonNovak2001SbmlOdeSystem::CalculateRootFunction(double time, const std
 
     if (sm::lt(CycB, 0.1))
     {
-        if (time <= 0.0)
+        if (!eventsInitialised)
         {
             // Condition true at first timestep: don't trigger
             dist = std::abs(dist) < 1.0 ? dist : 1.0;
@@ -228,12 +229,14 @@ double TysonNovak2001SbmlOdeSystem::CalculateRootFunction(double time, const std
     }
     else
     {
-        double event_dist = 2.0; // TODO: Calculate appropriate value
+        double event_dist = CycB - 0.1 + std::numeric_limits<double>::epsilon();
         dist = std::abs(dist) < std::abs(event_dist) ? dist : event_dist;
 
         // Mark condition false
         eventsSatisfied[0] = false;
     }
+
+    eventsInitialised = true;
 
     return dist;
 }

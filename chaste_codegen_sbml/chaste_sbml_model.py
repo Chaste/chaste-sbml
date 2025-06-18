@@ -7,7 +7,16 @@ import re
 from typing import TYPE_CHECKING
 
 from jinja2 import Environment, PackageLoader, select_autoescape
-from libsbml import SBMLReader, formulaToString
+from libsbml import (
+    AST_RELATIONAL_EQ,
+    AST_RELATIONAL_GEQ,
+    AST_RELATIONAL_GT,
+    AST_RELATIONAL_LEQ,
+    AST_RELATIONAL_LT,
+    AST_RELATIONAL_NEQ,
+    SBMLReader,
+    formulaToString,
+)
 
 from ._config import ODE_SUFFIX, SHORT_NAME_LEN
 from ._utils import (
@@ -294,9 +303,32 @@ class ChasteSbmlModel:
         event_dicts = []
         for event in self._events:
             trigger_math = event.getTrigger().getMath()
-            # TODO: Extract event trigger distance from math ast
-            # e.g. if (lt || gt || eq | ...) {dist = a - b}
             trigger_formula = self._convert_ast_formula(trigger_math)
+
+            trigger_distance = "1.0"
+            node_type = trigger_math.getType()
+            if node_type in [
+                AST_RELATIONAL_LT,
+                AST_RELATIONAL_GT,
+                AST_RELATIONAL_EQ,
+                AST_RELATIONAL_LEQ,
+                AST_RELATIONAL_GEQ,
+                AST_RELATIONAL_NEQ,
+            ]:
+                lc = self._convert_ast_formula(trigger_math.getLeftChild())
+                rc = self._convert_ast_formula(trigger_math.getRightChild())
+                if node_type == AST_RELATIONAL_GT:
+                    trigger_distance = f"{rc} - {lc} + std::numeric_limits<double>::epsilon()"
+                elif node_type == AST_RELATIONAL_GEQ:
+                    trigger_distance = f"{rc} - {lc}"
+                elif node_type == AST_RELATIONAL_LT:
+                    trigger_distance = f"{lc} - {rc} + std::numeric_limits<double>::epsilon()"
+                elif node_type == AST_RELATIONAL_LEQ:
+                    trigger_distance = f"{lc} - {rc}"
+                elif node_type == AST_RELATIONAL_EQ:
+                    trigger_distance = f"{rc} - {lc}"
+                elif node_type == AST_RELATIONAL_NEQ:
+                    trigger_distance = f"{rc} - {lc} + std::numeric_limits<double>::epsilon()"
 
             assignment_formulas = []
             for assignment in event.getListOfEventAssignments():
@@ -318,6 +350,7 @@ class ChasteSbmlModel:
                 {
                     "trigger": trigger_formula,
                     "assignments": assignment_formulas,
+                    "distance": trigger_distance,
                 }
             )
         return event_dicts

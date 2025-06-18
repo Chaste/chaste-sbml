@@ -36,20 +36,16 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef SBMLCELLCYCLEWRAPPERMODEL_CPP_
 #define SBMLCELLCYCLEWRAPPERMODEL_CPP_
 
-//#include "UblasIncludes.hpp"
 #include "AbstractOdeBasedCellCycleModel.hpp"
 #include "BackwardEulerIvpOdeSolver.hpp"
 #include "CellCycleModelOdeSolver.hpp"
 #include "CvodeAdaptor.hpp"
 #include "StemCellProliferativeType.hpp"
 #include "TransitCellProliferativeType.hpp"
-//#include "Exception.hpp"
-// #include "Debug.hpp"
 
 #include "SbmlCellCycleWrapperModel.hpp"
 
-
-template<typename SBMLODE, unsigned SIZE>
+template <typename SBMLODE, unsigned SIZE>
 SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SbmlCellCycleWrapperModel(boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver)
     : AbstractOdeBasedCellCycleModel(SIZE, pOdeSolver)
 {
@@ -66,13 +62,13 @@ SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SbmlCellCycleWrapperModel(boost::share
         mpOdeSolver = CellCycleModelOdeSolver<SbmlCellCycleWrapperModel<SBMLODE, SIZE>, BackwardEulerIvpOdeSolver>::Instance();
         mpOdeSolver->SetSizeOfOdeSystem(SIZE);
         mpOdeSolver->Initialise();
-        SetDt(0.1/90.0);
-#endif //CHASTE_CVODE
+        SetDt(0.1 / 90.0);
+#endif // CHASTE_CVODE
     }
 }
 
-template<typename SBMLODE, unsigned SIZE>
-SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SbmlCellCycleWrapperModel(const SbmlCellCycleWrapperModel& rModel)
+template <typename SBMLODE, unsigned SIZE>
+SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SbmlCellCycleWrapperModel(const SbmlCellCycleWrapperModel &rModel)
     : AbstractOdeBasedCellCycleModel(rModel)
 {
     /*
@@ -94,25 +90,15 @@ SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SbmlCellCycleWrapperModel(const SbmlCe
     SetOdeSystem(new SBMLODE(rModel.GetOdeSystem()->rGetStateVariables()));
 }
 
-// template<typename SBMLODE, unsigned SIZE>
-// void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::Initialise()
-// {
-//     assert(mpOdeSystem == nullptr);
-//     mpOdeSystem = new SBMLODE;
-//     mpOdeSystem->SetStateVariables(mpOdeSystem->GetInitialConditions());
-
-//     AbstractOdeBasedCellCycleModel::Initialise();
-// }
-
-template<typename SBMLODE, unsigned SIZE>
+template <typename SBMLODE, unsigned SIZE>
 void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::Initialise()
-{    
+{
     assert(mpOdeSystem == nullptr);
     mpOdeSystem = new SBMLODE;
 
     AbstractOdeBasedCellCycleModel::Initialise();
 
-	//Initialise cell data
+    // Initialise cell data
 
     /* Store the state variables and state parameters as
      * cell data so that we can visualise different concentrations in Paraview.
@@ -136,37 +122,17 @@ void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::Initialise()
         double stateValue = mpOdeSystem->GetStateVariable(i);
         mpCell->GetCellData()->SetItem(stateName, stateValue);
     }
-
 }
 
-
-template<typename SBMLODE, unsigned SIZE>
+template <typename SBMLODE, unsigned SIZE>
 void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::ResetForDivision()
 {
     AbstractOdeBasedCellCycleModel::ResetForDivision();
 
     assert(mpOdeSystem != nullptr);
-
-    /**
-     * This model needs the protein concentrations and phase resetting to G0/G1.
-     *
-     * In theory, the solution to the Tyson-Novak equations should exhibit stable
-     * oscillations, and we only need to halve the mass of the cell each period.
-     *
-     * However, the backward Euler solver used to solve the equations
-     * currently returns a solution that diverges after long times, so
-     * we must reset the initial conditions each period.
-     *
-     * When running with CVODE however we can use the halving the mass of the cell method.
-     */
-// #ifdef CHASTE_CVODE
-//     mpOdeSystem->rGetStateVariables()[5] = 0.5*mpOdeSystem->rGetStateVariables()[5];
-// #else
-//     mpOdeSystem->SetStateVariables(mpOdeSystem->GetInitialConditions());
-// #endif //CHASTE_CVODE
 }
 
-template<typename SBMLODE, unsigned SIZE>
+template <typename SBMLODE, unsigned SIZE>
 void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::InitialiseDaughterCell()
 {
     if (mpCell->GetCellProliferativeType()->IsType<StemCellProliferativeType>())
@@ -181,43 +147,37 @@ void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::InitialiseDaughterCell()
          * CellPropertyCollection.
          */
         boost::shared_ptr<AbstractCellProperty> p_transit_type =
-        mpCell->rGetCellPropertyCollection().GetCellPropertyRegistry()->Get<TransitCellProliferativeType>();
+            mpCell->rGetCellPropertyCollection().GetCellPropertyRegistry()->Get<TransitCellProliferativeType>();
         mpCell->SetCellProliferativeType(p_transit_type);
     }
 }
 
-template<typename SBMLODE, unsigned SIZE>
-AbstractCellCycleModel* SbmlCellCycleWrapperModel<SBMLODE, SIZE>::CreateCellCycleModel()
+template <typename SBMLODE, unsigned SIZE>
+AbstractCellCycleModel *SbmlCellCycleWrapperModel<SBMLODE, SIZE>::CreateCellCycleModel()
 {
-	return new SbmlCellCycleWrapperModel(*this);
+    return new SbmlCellCycleWrapperModel(*this);
 }
 
-
-// AbstractCellCycleModel* TysonNovakCellCycleModel::CreateCellCycleModel()
-// {
-//     return new TysonNovakCellCycleModel(*this);
-// }
-
-template<typename SBMLODE, unsigned SIZE>
+template <typename SBMLODE, unsigned SIZE>
 double SbmlCellCycleWrapperModel<SBMLODE, SIZE>::GetAverageTransitCellCycleTime()
 {
     return 1.25;
 }
 
-template<typename SBMLODE, unsigned SIZE>
+template <typename SBMLODE, unsigned SIZE>
 double SbmlCellCycleWrapperModel<SBMLODE, SIZE>::GetAverageStemCellCycleTime()
 {
     return 1.25;
 }
 
-template<typename SBMLODE, unsigned SIZE>
+template <typename SBMLODE, unsigned SIZE>
 bool SbmlCellCycleWrapperModel<SBMLODE, SIZE>::CanCellTerminallyDifferentiate()
 {
     return false;
 }
 
-template<typename SBMLODE, unsigned SIZE>
-void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::OutputCellCycleModelParameters(out_stream& rParamsFile)
+template <typename SBMLODE, unsigned SIZE>
+void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::OutputCellCycleModelParameters(out_stream &rParamsFile)
 {
     // No new parameters to output.
 
@@ -225,11 +185,11 @@ void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::OutputCellCycleModelParameters(ou
     AbstractOdeBasedCellCycleModel::OutputCellCycleModelParameters(rParamsFile);
 }
 
-template<typename SBMLODE, unsigned SIZE>
-double SbmlCellCycleWrapperModel<SBMLODE, SIZE>::GetStateVariable(const std::string& rName)
+template <typename SBMLODE, unsigned SIZE>
+double SbmlCellCycleWrapperModel<SBMLODE, SIZE>::GetStateVariable(const std::string &rName)
 {
     assert(mpOdeSystem != nullptr);
     return mpOdeSystem->GetStateVariable(rName);
 }
 
-#endif /* SBMLCELLCYCLEWRAPPERMODEL_CPP_ */
+#endif // SBMLCELLCYCLEWRAPPERMODEL_CPP_

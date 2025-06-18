@@ -57,6 +57,7 @@ private:
 {% if events %}
     // EVENTS:
     std::vector<bool> eventsSatisfied;
+    bool eventsInitialised;
 {% endif %}
 
 public:
