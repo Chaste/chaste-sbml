@@ -37,42 +37,40 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SBMLCELLCYCLEWRAPPERMODEL_CPP_
 
 //#include "UblasIncludes.hpp"
-#include "SbmlCellCycleWrapperModel.hpp"
-#include "CellCycleModelOdeSolver.hpp"
-#include "RungeKutta4IvpOdeSolver.hpp"
 #include "AbstractOdeBasedCellCycleModel.hpp"
+#include "BackwardEulerIvpOdeSolver.hpp"
+#include "CellCycleModelOdeSolver.hpp"
 #include "CvodeAdaptor.hpp"
+#include "StemCellProliferativeType.hpp"
+#include "TransitCellProliferativeType.hpp"
 //#include "Exception.hpp"
-#include "Debug.hpp"
+// #include "Debug.hpp"
+
+#include "SbmlCellCycleWrapperModel.hpp"
 
 
 template<typename SBMLODE, unsigned SIZE>
 SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SbmlCellCycleWrapperModel(boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver)
     : AbstractOdeBasedCellCycleModel(SIZE, pOdeSolver)
 {
-
-	// TODO add CVODE solver. See VanLeeuwen CCM in trunk
-
-    if (mpOdeSolver == boost::shared_ptr<AbstractCellCycleModelOdeSolver>())
+    if (!mpOdeSolver)
     {
-
-    	#ifdef CHASTE_CVODE
+#ifdef CHASTE_CVODE
         mpOdeSolver = CellCycleModelOdeSolver<SbmlCellCycleWrapperModel<SBMLODE, SIZE>, CvodeAdaptor>::Instance();
         mpOdeSolver->Initialise();
         // Chaste solvers always check for stopping events, CVODE needs to be instructed to do so
         mpOdeSolver->CheckForStoppingEvents();
         mpOdeSolver->SetMaxSteps(10000);
-		#else
-        // TODO: Set solver type and dt from CLI
-        mpOdeSolver = CellCycleModelOdeSolver<SbmlCellCycleWrapperModel<SBMLODE, SIZE>, RungeKutta4IvpOdeSolver>::Instance();
+        mpOdeSolver->SetTolerances(1e-6, 1e-8);
+#else
+        mpOdeSolver = CellCycleModelOdeSolver<SbmlCellCycleWrapperModel<SBMLODE, SIZE>, BackwardEulerIvpOdeSolver>::Instance();
+        mpOdeSolver->SetSizeOfOdeSystem(SIZE);
         mpOdeSolver->Initialise();
-        SetDt(0.0001); // This is small enough for both examples to converge
-		#endif //CHASTE_CVODE
+        SetDt(0.1/90.0);
+#endif //CHASTE_CVODE
     }
-    assert(mpOdeSolver->IsSetUp());
 }
 
-//New method for copy constructor
 template<typename SBMLODE, unsigned SIZE>
 SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SbmlCellCycleWrapperModel(const SbmlCellCycleWrapperModel& rModel)
     : AbstractOdeBasedCellCycleModel(rModel)
@@ -96,20 +94,25 @@ SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SbmlCellCycleWrapperModel(const SbmlCe
     SetOdeSystem(new SBMLODE(rModel.GetOdeSystem()->rGetStateVariables()));
 }
 
-template<typename SBMLODE, unsigned SIZE>
-AbstractCellCycleModel* SbmlCellCycleWrapperModel<SBMLODE, SIZE>::CreateCellCycleModel()
-{
-	return new SbmlCellCycleWrapperModel(*this);
-}
+// template<typename SBMLODE, unsigned SIZE>
+// void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::Initialise()
+// {
+//     assert(mpOdeSystem == nullptr);
+//     mpOdeSystem = new SBMLODE;
+//     mpOdeSystem->SetStateVariables(mpOdeSystem->GetInitialConditions());
+
+//     AbstractOdeBasedCellCycleModel::Initialise();
+// }
 
 template<typename SBMLODE, unsigned SIZE>
 void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::Initialise()
-{
-	AbstractOdeBasedCellCycleModel::Initialise(new SBMLODE);
+{    
+    assert(mpOdeSystem == nullptr);
+    mpOdeSystem = new SBMLODE;
+
+    AbstractOdeBasedCellCycleModel::Initialise();
 
 	//Initialise cell data
-	assert(mpOdeSystem != NULL);
-	assert(mpCell != NULL);
 
     /* Store the state variables and state parameters as
      * cell data so that we can visualise different concentrations in Paraview.
@@ -136,6 +139,82 @@ void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::Initialise()
 
 }
 
+
+template<typename SBMLODE, unsigned SIZE>
+void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::ResetForDivision()
+{
+    AbstractOdeBasedCellCycleModel::ResetForDivision();
+
+    assert(mpOdeSystem != nullptr);
+
+    /**
+     * This model needs the protein concentrations and phase resetting to G0/G1.
+     *
+     * In theory, the solution to the Tyson-Novak equations should exhibit stable
+     * oscillations, and we only need to halve the mass of the cell each period.
+     *
+     * However, the backward Euler solver used to solve the equations
+     * currently returns a solution that diverges after long times, so
+     * we must reset the initial conditions each period.
+     *
+     * When running with CVODE however we can use the halving the mass of the cell method.
+     */
+// #ifdef CHASTE_CVODE
+//     mpOdeSystem->rGetStateVariables()[5] = 0.5*mpOdeSystem->rGetStateVariables()[5];
+// #else
+//     mpOdeSystem->SetStateVariables(mpOdeSystem->GetInitialConditions());
+// #endif //CHASTE_CVODE
+}
+
+template<typename SBMLODE, unsigned SIZE>
+void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::InitialiseDaughterCell()
+{
+    if (mpCell->GetCellProliferativeType()->IsType<StemCellProliferativeType>())
+    {
+        /*
+         * This method is usually called within a CellBasedSimulation, after the CellPopulation
+         * has called CellPropertyRegistry::TakeOwnership(). This means that were we to call
+         * CellPropertyRegistry::Instance() here when setting the CellProliferativeType, we
+         * would be creating a new CellPropertyRegistry. In this case the cell proliferative
+         * type counts, as returned by AbstractCellPopulation::GetCellProliferativeTypeCount(),
+         * would be incorrect. We must therefore access the CellProliferativeType via the cell's
+         * CellPropertyCollection.
+         */
+        boost::shared_ptr<AbstractCellProperty> p_transit_type =
+        mpCell->rGetCellPropertyCollection().GetCellPropertyRegistry()->Get<TransitCellProliferativeType>();
+        mpCell->SetCellProliferativeType(p_transit_type);
+    }
+}
+
+template<typename SBMLODE, unsigned SIZE>
+AbstractCellCycleModel* SbmlCellCycleWrapperModel<SBMLODE, SIZE>::CreateCellCycleModel()
+{
+	return new SbmlCellCycleWrapperModel(*this);
+}
+
+
+// AbstractCellCycleModel* TysonNovakCellCycleModel::CreateCellCycleModel()
+// {
+//     return new TysonNovakCellCycleModel(*this);
+// }
+
+template<typename SBMLODE, unsigned SIZE>
+double SbmlCellCycleWrapperModel<SBMLODE, SIZE>::GetAverageTransitCellCycleTime()
+{
+    return 1.25;
+}
+
+template<typename SBMLODE, unsigned SIZE>
+double SbmlCellCycleWrapperModel<SBMLODE, SIZE>::GetAverageStemCellCycleTime()
+{
+    return 1.25;
+}
+
+template<typename SBMLODE, unsigned SIZE>
+bool SbmlCellCycleWrapperModel<SBMLODE, SIZE>::CanCellTerminallyDifferentiate()
+{
+    return false;
+}
 
 template<typename SBMLODE, unsigned SIZE>
 void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::OutputCellCycleModelParameters(out_stream& rParamsFile)

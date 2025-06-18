@@ -91,6 +91,18 @@ public:
      */
     SbmlCellCycleWrapperModel(boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver = boost::shared_ptr<AbstractCellCycleModelOdeSolver>());
 
+    /**
+     * Initialise the cell-cycle model at the start of a simulation.
+     *
+     * This overridden method sets up a new Ode system.
+     */
+    void Initialise(); // override
+
+    /**
+     * Reset cell-cycle model by calling AbstractOdeBasedCellCycleModelWithStoppingEvent::ResetForDivision()
+     * and setting initial conditions for protein concentrations.
+     */
+    void ResetForDivision();
 
     /**
      * Overridden builder method to create new copies of this Cell Cycle model.
@@ -100,11 +112,27 @@ public:
     AbstractCellCycleModel* CreateCellCycleModel();
 
     /**
-     * Initialise the cell-cycle model at the start of a simulation.
-     *
-     * This overridden method sets up a new Ode system.
+     * If the daughter cell type is stem, change it to transit.
      */
-    void Initialise(); // override
+    void InitialiseDaughterCell();
+
+    /**
+     * Overridden GetAverageTransitCellCycleTime() method.
+     * @return time
+     */
+    double GetAverageTransitCellCycleTime();
+
+    /**
+     * Overridden GetAverageStemCellCycleTime() method.
+     * @return time
+     */
+    double GetAverageStemCellCycleTime();
+
+    /**
+     * Overridden CanCellTerminallyDifferentiate() method.
+     * @return whether cell can terminally differentiate
+     */
+    bool CanCellTerminallyDifferentiate();
 
     /**
      * Outputs cell-cycle model parameters to file.

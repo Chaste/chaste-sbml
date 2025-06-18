@@ -42,19 +42,28 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
+#include <boost/make_shared.hpp>
+#include <boost/serialization/export.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <cxxtest/TestSuite.h>
 
 #include "AbstractCellBasedTestSuite.hpp"
+#include "ApcOneHitCellMutationState.hpp"
 #include "BackwardEulerIvpOdeSolver.hpp"
+#include "CellCycleModelOdeSolver.hpp"
 #include "ColumnDataWriter.hpp"
 #include "CvodeAdaptor.hpp"
 #include "EulerIvpOdeSolver.hpp"
 #include "OdeSolution.hpp"
+#include "OutputFileHandler.hpp"
+#include "SimulationTime.hpp"
+#include "SmartPointers.hpp"
+#include "StemCellProliferativeType.hpp"
 #include "Timer.hpp"
+#include "WildTypeCellMutationState.hpp"
 
 #include "TysonNovak2001SbmlOdeSystemAndCellCycleModel.hpp"
-#include <boost/serialization/export.hpp>
 
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
@@ -62,6 +71,154 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class TestTysonNovak2001Sbml : public AbstractCellBasedTestSuite
 {
 public:
+    void TestCellCycleModel()
+    {
+        // Setup time
+        SimulationTime *p_simulation_time = SimulationTime::Instance();
+        const unsigned num_timesteps = 10000;
+        p_simulation_time->SetEndTimeAndNumberOfTimeSteps(220.0, num_timesteps);
+
+        // Create a healthy cell
+        auto p_wild_state = boost::make_shared<WildTypeCellMutationState>();
+        auto p_stem_type = boost::make_shared<StemCellProliferativeType>();
+
+        auto p_cell_0 = boost::make_shared<Cell>(p_wild_state, new TysonNovak2001SbmlCellCycleModel);
+        p_cell_0->SetCellProliferativeType(p_stem_type);
+
+        // Set up the cell cycle model - this should use CVODE by default
+        auto p_ccm_0 = static_cast<TysonNovak2001SbmlCellCycleModel *>(p_cell_0->GetCellCycleModel());
+        p_ccm_0->SetBirthTime(p_simulation_time->GetTime());
+        TS_ASSERT_EQUALS(p_ccm_0->CanCellTerminallyDifferentiate(), false);
+
+        p_cell_0->InitialiseCellCycleModel();
+        p_ccm_0->SetDt(0.1);
+
+        // Create another cell with a cell-cycle model that uses a BackwardEulerIvpOdeSolver
+        auto solver = CellCycleModelOdeSolver<TysonNovak2001SbmlCellCycleModel, BackwardEulerIvpOdeSolver>::Instance();
+        boost::shared_ptr<CellCycleModelOdeSolver<TysonNovak2001SbmlCellCycleModel, BackwardEulerIvpOdeSolver>> p_solver(solver);
+        p_solver->SetSizeOfOdeSystem(11);
+        p_solver->Initialise();
+
+        auto p_cell_1 = boost::make_shared<Cell>(p_wild_state, new TysonNovak2001SbmlCellCycleModel(p_solver));
+        p_cell_1->SetCellProliferativeType(p_stem_type);
+
+        auto p_ccm_1 = static_cast<TysonNovak2001SbmlCellCycleModel *>(p_cell_1->GetCellCycleModel());
+        p_ccm_1->SetBirthTime(p_simulation_time->GetTime());
+        TS_ASSERT_EQUALS(p_ccm_1->CanCellTerminallyDifferentiate(), false);
+        TS_ASSERT_EQUALS(p_ccm_1->GetOdeSolver()->GetSizeOfOdeSystem(), 11u);
+
+        p_cell_1->InitialiseCellCycleModel();
+        TS_ASSERT_EQUALS(p_ccm_1->GetDt(), 0.0001); // Timestep for non-adaptive solvers defaults to 0.0001
+        p_ccm_1->SetDt(0.1);
+
+        // Solvers divide at slightly different times, so we set a tolerance
+        double standard_divide_time = 105.75;
+        double tolerance = 0.05;
+
+        // Test the cell is ready to divide at the right time
+        for (unsigned i = 0; i < num_timesteps / 2; i++)
+        {
+            p_simulation_time->IncrementTimeOneStep();
+            double time = p_simulation_time->GetTime();
+
+            bool result_0 = p_ccm_0->ReadyToDivide();
+            bool result_1 = p_ccm_1->ReadyToDivide();
+
+            if (time > standard_divide_time + tolerance)
+            {
+                TS_ASSERT_EQUALS(result_0, true);
+                TS_ASSERT_EQUALS(result_1, true);
+                break;
+            }
+            else if (time < standard_divide_time - tolerance)
+            {
+                TS_ASSERT_EQUALS(result_0, false);
+                TS_ASSERT_EQUALS(result_1, false);
+            }
+        }
+
+        // Test ODE solution
+        std::vector<double> proteins_0 = p_ccm_0->GetProteinConcentrations();
+        TS_ASSERT_EQUALS(proteins_0.size(), 11u);
+        TS_ASSERT_DELTA(proteins_0[0], 0.0948, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[1], 0.0999, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[2], 0.3789, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[3], 0.0616, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[4], 0.8606, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[5], 0.8198, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[6], 1.1401, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[7], 0.5537, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[8], 0.9999, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[9], 0.0735, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[10], 0.1102, 1e-2);
+
+        std::vector<double> proteins_1 = p_ccm_1->GetProteinConcentrations();
+        TS_ASSERT_EQUALS(proteins_1.size(), 11u);
+        TS_ASSERT_DELTA(proteins_1[0], 0.0948, 1e-2);
+        TS_ASSERT_DELTA(proteins_1[1], 0.0999, 1e-2);
+        TS_ASSERT_DELTA(proteins_1[2], 0.3789, 1e-2);
+        TS_ASSERT_DELTA(proteins_1[3], 0.0616, 1e-2);
+        TS_ASSERT_DELTA(proteins_1[4], 0.8606, 1e-2);
+        TS_ASSERT_DELTA(proteins_1[5], 0.8198, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[6], 1.1401, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[7], 0.5537, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[8], 0.9999, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[9], 0.0735, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[10], 0.1102, 1e-2);
+
+        // Test for a mutant cell
+        TS_ASSERT_EQUALS(p_ccm_0->ReadyToDivide(), true);
+        p_ccm_0->ResetForDivision();
+        TS_ASSERT_EQUALS(p_ccm_0->ReadyToDivide(), false);
+
+        auto p_mutation = boost::make_shared<ApcOneHitCellMutationState>();
+        auto p_ccm_2 = static_cast<TysonNovak2001SbmlCellCycleModel *>(p_ccm_0->CreateCellCycleModel());
+        auto p_cell_2 = boost::make_shared<Cell>(p_mutation, p_ccm_2);
+        p_cell_2->SetCellProliferativeType(p_stem_type);
+
+        TS_ASSERT_EQUALS(p_cell_2->ReadyToDivide(), false);
+        TS_ASSERT_EQUALS(p_ccm_2->ReadyToDivide(), false);
+
+        // Test the cell is ready to divide at the right time
+        standard_divide_time = 148.34;
+
+        for (unsigned i = 0; i < num_timesteps / 2; i++)
+        {
+            p_simulation_time->IncrementTimeOneStep();
+            double time = p_simulation_time->GetTime();
+
+            bool result_0 = p_ccm_0->ReadyToDivide();
+            bool result_2 = p_ccm_2->ReadyToDivide();
+
+            if (time > standard_divide_time)
+            {
+                TS_ASSERT_EQUALS(result_0, true);
+                TS_ASSERT_EQUALS(result_2, true);
+                break;
+            }
+            else
+            {
+                TS_ASSERT_EQUALS(result_0, false);
+                TS_ASSERT_EQUALS(result_2, false);
+            }
+        }
+
+        // Test ODE solution
+        proteins_0 = p_ccm_0->GetProteinConcentrations();
+        TS_ASSERT_EQUALS(proteins_0.size(), 11u);
+        TS_ASSERT_DELTA(proteins_0[0], 0.1024, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[1], 0.0999, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[2], 0.3395, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[3], 0.0207, 2e-2);
+        TS_ASSERT_DELTA(proteins_0[4], 0.1488, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[5], 0.9950, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[6], 0.7371, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[7], 0.5336, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[8], 0.9999, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[9], 0.0182, 1e-2);
+        TS_ASSERT_DELTA(proteins_0[10], 0.8909, 1e-2);
+    }
+
     void TestOdeArchiving()
     {
         OutputFileHandler handler("archive", false);
@@ -229,31 +386,31 @@ public:
         // or
         // plot "tysonnovak_2001.dat" u 1:2, "" u 1:3, "" u 1:4 etc. for all species
 
-        std::vector<std::vector<double>> solutions;
-        for (const auto &ode_solution : ode_solutions)
-        {
-            solutions.insert(solutions.end(), ode_solution.rGetSolutions().begin(), ode_solution.rGetSolutions().end());
-        }
+        // std::vector<std::vector<double>> solutions;
+        // for (const auto &ode_solution : ode_solutions)
+        // {
+        //     solutions.insert(solutions.end(), ode_solution.rGetSolutions().begin(), ode_solution.rGetSolutions().end());
+        // }
 
-        std::vector<double> times;
-        for (const auto &ode_solution : ode_solutions)
-        {
-            times.insert(times.end(), ode_solution.rGetTimes().begin(), ode_solution.rGetTimes().end());
-        }
+        // std::vector<double> times;
+        // for (const auto &ode_solution : ode_solutions)
+        // {
+        //     times.insert(times.end(), ode_solution.rGetTimes().begin(), ode_solution.rGetTimes().end());
+        // }
 
-        OutputFileHandler handler("");
-        out_stream file = handler.OpenOutputFile("tysonnovak_backeuler.dat");
-        for (unsigned i = 0; i < solutions.size(); i++)
-        {
-            (*file) << times[i];
-            for (unsigned j = 0; j < solutions[i].size(); j++)
-            {
-                (*file) << "\t" << solutions[i][j];
-            }
-            (*file) << "\n"
-                    << std::flush;
-        }
-        file->close();
+        // OutputFileHandler handler("");
+        // out_stream file = handler.OpenOutputFile("tysonnovak_backeuler.dat");
+        // for (unsigned i = 0; i < solutions.size(); i++)
+        // {
+        //     (*file) << times[i];
+        //     for (unsigned j = 0; j < solutions[i].size(); j++)
+        //     {
+        //         (*file) << "\t" << solutions[i][j];
+        //     }
+        //     (*file) << "\n"
+        //             << std::flush;
+        // }
+        // file->close();
 
         // Values calculated using roadrunner
         std::vector<double> &solution = ode_solutions.back().rGetSolutions().back();
@@ -316,31 +473,31 @@ public:
             // or
             // plot "tysonnovak_2001.dat" u 1:2, "" u 1:3, "" u 1:4 etc. for all species
 
-            std::vector<std::vector<double>> solutions;
-            for (const auto &ode_solution : ode_solutions)
-            {
-                solutions.insert(solutions.end(), ode_solution.rGetSolutions().begin(), ode_solution.rGetSolutions().end());
-            }
+            // std::vector<std::vector<double>> solutions;
+            // for (const auto &ode_solution : ode_solutions)
+            // {
+            //     solutions.insert(solutions.end(), ode_solution.rGetSolutions().begin(), ode_solution.rGetSolutions().end());
+            // }
 
-            std::vector<double> times;
-            for (const auto &ode_solution : ode_solutions)
-            {
-                times.insert(times.end(), ode_solution.rGetTimes().begin(), ode_solution.rGetTimes().end());
-            }
+            // std::vector<double> times;
+            // for (const auto &ode_solution : ode_solutions)
+            // {
+            //     times.insert(times.end(), ode_solution.rGetTimes().begin(), ode_solution.rGetTimes().end());
+            // }
 
-            OutputFileHandler handler("");
-            out_stream file = handler.OpenOutputFile("tysonnovak_cvode.dat");
-            for (unsigned i = 0; i < solutions.size(); i++)
-            {
-                (*file) << times[i];
-                for (unsigned j = 0; j < solutions[i].size(); j++)
-                {
-                    (*file) << "\t" << solutions[i][j];
-                }
-                (*file) << "\n"
-                        << std::flush;
-            }
-            file->close();
+            // OutputFileHandler handler("");
+            // out_stream file = handler.OpenOutputFile("tysonnovak_cvode.dat");
+            // for (unsigned i = 0; i < solutions.size(); i++)
+            // {
+            //     (*file) << times[i];
+            //     for (unsigned j = 0; j < solutions[i].size(); j++)
+            //     {
+            //         (*file) << "\t" << solutions[i][j];
+            //     }
+            //     (*file) << "\n"
+            //             << std::flush;
+            // }
+            // file->close();
 
             // Values calculated using roadrunner
             std::vector<double> &solution = ode_solutions.back().rGetSolutions().back();
