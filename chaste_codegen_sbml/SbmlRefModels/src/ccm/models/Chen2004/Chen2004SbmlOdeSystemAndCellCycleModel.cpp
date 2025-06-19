@@ -842,7 +842,7 @@ double Chen2004SbmlOdeSystem::CalculateRootFunction(double time, const std::vect
     }
     else
     {
-        double event_dist = CLB2 + CLB5 - KEZ2 - 0.0 + std::numeric_limits<double>::epsilon();
+        double event_dist = (0.0) - (CLB2 + CLB5 - KEZ2) - std::numeric_limits<double>::epsilon();
         dist = std::abs(dist) < std::abs(event_dist) ? dist : event_dist;
 
         // Mark condition false
@@ -874,7 +874,7 @@ double Chen2004SbmlOdeSystem::CalculateRootFunction(double time, const std::vect
     }
     else
     {
-        double event_dist = 0.0 - ORI - 1.0 + std::numeric_limits<double>::epsilon();
+        double event_dist = (ORI - 1.0) - (0.0) - std::numeric_limits<double>::epsilon();
         dist = std::abs(dist) < std::abs(event_dist) ? dist : event_dist;
 
         // Mark condition false
@@ -907,7 +907,7 @@ double Chen2004SbmlOdeSystem::CalculateRootFunction(double time, const std::vect
     }
     else
     {
-        double event_dist = 0.0 - SPN - 1.0 + std::numeric_limits<double>::epsilon();
+        double event_dist = (SPN - 1.0) - (0.0) - std::numeric_limits<double>::epsilon();
         dist = std::abs(dist) < std::abs(event_dist) ? dist : event_dist;
 
         // Mark condition false
@@ -944,7 +944,7 @@ double Chen2004SbmlOdeSystem::CalculateRootFunction(double time, const std::vect
     }
     else
     {
-        double event_dist = CLB2 - KEZ - 0.0 + std::numeric_limits<double>::epsilon();
+        double event_dist = (0.0) - (CLB2 - KEZ) - std::numeric_limits<double>::epsilon();
         dist = std::abs(dist) < std::abs(event_dist) ? dist : event_dist;
 
         // Mark condition false

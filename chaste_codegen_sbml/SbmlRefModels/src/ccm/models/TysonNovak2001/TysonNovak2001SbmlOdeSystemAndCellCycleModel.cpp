@@ -229,7 +229,7 @@ double TysonNovak2001SbmlOdeSystem::CalculateRootFunction(double time, const std
     }
     else
     {
-        double event_dist = CycB - 0.1 + std::numeric_limits<double>::epsilon();
+        double event_dist = (0.1) - (CycB) - std::numeric_limits<double>::epsilon();
         dist = std::abs(dist) < std::abs(event_dist) ? dist : event_dist;
 
         // Mark condition false
