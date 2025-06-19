@@ -317,18 +317,54 @@ class ChasteSbmlModel:
             ]:
                 lc = self._convert_ast_formula(trigger_math.getLeftChild())
                 rc = self._convert_ast_formula(trigger_math.getRightChild())
+
+                # Distance is negative when the condition is false,
+                # zero at the point where the condition switches from false to true,
+                # and positive when the condition is true.
                 if node_type == AST_RELATIONAL_GT:
-                    trigger_distance = f"{rc} - {lc} + std::numeric_limits<double>::epsilon()"
+                    # gt(4.5    , 5.0    ) -> condition=false, dist=-0.5-eps
+                    # gt(5.0    , 5.0+eps) -> condition=false, dist=-eps-eps
+                    # gt(5.0    , 5.0    ) -> condition=false, dist=-eps
+                    # gt(5.0+eps, 5.0    ) -> condition=true, dist=0.0
+                    # gt(5.5    , 5.0    ) -> condition=true, dist=0.5-eps
+                    trigger_distance = f"({lc}) - ({rc}) - std::numeric_limits<double>::epsilon()"
                 elif node_type == AST_RELATIONAL_GEQ:
-                    trigger_distance = f"{rc} - {lc}"
+                    # geq(4.5    , 5.0    ) -> condition=false, dist=-0.5
+                    # geq(5.0    , 5.0+eps) -> condition=false, dist=-eps
+                    # geq(5.0    , 5.0    ) -> condition=true, dist=0.0
+                    # geq(5.0+eps, 5.0    ) -> condition=true, dist=eps
+                    # geq(5.5    , 5.0    ) -> condition=true, dist=0.5
+                    trigger_distance = f"({lc}) - ({rc})"
                 elif node_type == AST_RELATIONAL_LT:
-                    trigger_distance = f"{lc} - {rc} + std::numeric_limits<double>::epsilon()"
+                    # lt(5.5    , 5.0    ) -> condition=false, dist=-0.5-eps
+                    # lt(5.0+eps, 5.0    ) -> condition=false, dist=-eps-eps
+                    # lt(5.0    , 5.0    ) -> condition=false, dist=-eps
+                    # lt(5.0    , 5.0+eps) -> condition=true, dist=0.0
+                    # lt(4.5    , 5.0    ) -> condition=true, dist=0.5-eps
+                    trigger_distance = f"({rc}) - ({lc}) - std::numeric_limits<double>::epsilon()"
                 elif node_type == AST_RELATIONAL_LEQ:
-                    trigger_distance = f"{lc} - {rc}"
+                    # leq(5.5    , 5.0    ) -> condition=false, dist=-0.5
+                    # leq(5.0+eps, 5.0    ) -> condition=false, dist=-eps
+                    # leq(5.0    , 5.0    ) -> condition=true, dist=0.0
+                    # leq(5.0    , 5.0+eps) -> condition=true, dist=eps
+                    # leq(4.5    , 5.0    ) -> condition=true, dist=0.5
+                    trigger_distance = f"({rc}) - ({lc})"
                 elif node_type == AST_RELATIONAL_EQ:
-                    trigger_distance = f"{rc} - {lc}"
-                elif node_type == AST_RELATIONAL_NEQ:
-                    trigger_distance = f"{rc} - {lc} + std::numeric_limits<double>::epsilon()"
+                    # eq(4.5    , 5.0    ) -> condition=false, dist=-0.5
+                    # eq(5.0    , 5.0+eps) -> condition=false, dist=-eps
+                    # eq(5.0    , 5.0    ) -> condition=true, dist=0.0
+                    # eq(5.0+eps, 5.0    ) -> condition=false, dist=-eps
+                    # eq(5.5    , 5.0    ) -> condition=false, dist=-0.5
+                    trigger_distance = f"-std::abs(({lc}) - ({rc}))"
+                else:  # AST_RELATIONAL_NEQ
+                    # neq(4.5    , 5.0    ) -> condition=true, dist=0.5-eps
+                    # neq(5.0    , 5.0+eps) -> condition=true, dist=0.0
+                    # neq(5.0    , 5.0    ) -> condition=false, dist=-eps
+                    # neq(5.0+eps, 5.0    ) -> condition=true, dist=0.0
+                    # neq(5.5    , 5.0    ) -> condition=true, dist=0.5-eps
+                    trigger_distance = (
+                        f"std::abs(({lc}) - ({rc})) - std::numeric_limits<double>::epsilon()"
+                    )
 
             assignment_formulas = []
             for assignment in event.getListOfEventAssignments():
