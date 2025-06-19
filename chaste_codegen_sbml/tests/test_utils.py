@@ -1,13 +1,13 @@
 import logging
 
-from chaste_codegen_sbml._utils import varname_camelcase, varname_sanitize
+from chaste_codegen_sbml._utils import varname_staggercase, varname_sanitize
 
 logger = logging.getLogger(__name__)
 
 
-def test_varname_camelcase():
+def test_varname_staggercase():
     """
-    Test camel case variable name creation.
+    Test variable name case staggering.
     """
 
     test_cases = [
@@ -20,11 +20,11 @@ def test_varname_camelcase():
         ("abstract_foo_bar", "abstractFooBar"),
         ("foo1bar", "foo1Bar"),
         ("foo100bar", "foo100Bar"),
-        ("TysonNovak2001", "tysonNovak2001"),
+        ("TysonNovak2001", "TysonNovak2001"),
     ]
 
     for test_input, expected_output in test_cases:
-        assert varname_camelcase(test_input) == expected_output
+        assert varname_staggercase(test_input) == expected_output
 
 
 def test_varname_sanitize():

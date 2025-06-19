@@ -75,29 +75,29 @@ def sort_nodes(node: "ASTNode", node_list: list["ASTNode"] = None) -> list["ASTN
     return node_list
 
 
-def varname_camelcase(name: str) -> str:
-    """Convert an input string to a C++ compatible alphanumeric string in camel case.
+def varname_staggercase(name: str) -> str:
+    """Convert an input string to a C++ compatible alphanumeric string in staggered case.
 
     :param name: The variable name.
-    :return: The variable name in camel case.
+    :return: The variable name in staggered case.
     """
-    camel_name = []
+    staggered_name = []
 
     next_caps = False
     for char in name:
         if char.isalpha():
             if next_caps:
-                camel_name.append(char.upper())
+                staggered_name.append(char.upper())
                 next_caps = False
             else:
-                camel_name.append(char)
+                staggered_name.append(char)
         elif char.isdigit():
-            camel_name.append(char)
+            staggered_name.append(char)
             next_caps = True
         else:
             next_caps = True
 
-    return "".join(camel_name)
+    return "".join(staggered_name)
 
 
 def varname_sanitize(name: str) -> str:

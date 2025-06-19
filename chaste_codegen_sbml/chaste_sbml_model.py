@@ -22,7 +22,7 @@ from ._config import ODE_SUFFIX, SHORT_NAME_LEN
 from ._utils import (
     get_function_definition_arguments,
     get_species_concentration,
-    varname_camelcase,
+    varname_staggercase,
     varname_sanitize,
 )
 
@@ -62,7 +62,7 @@ class ChasteSbmlModel:
             self._model_name = model_name
         else:
             filename = os.path.splitext(os.path.basename(self._sbml_file))[0]
-            model_name = varname_camelcase(filename) + "Sbml"
+            model_name = varname_staggercase(filename) + "Sbml"
             self._model_name = model_name[0].upper() + model_name[1:]
 
         self._model_suffix = model_suffix
