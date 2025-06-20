@@ -1,5 +1,6 @@
 #include <cmath>
 #include <limits>
+#include <vector>
 
 #include "CellwiseOdeSystemInformation.hpp"
 #include "SbmlMath.hpp"
@@ -167,56 +168,66 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
 }
 
 {% if events %}
-double {{ ode_class_name }}::CalculateRootFunction(double time, const std::vector<double> &rY)
+double {{ ode_class_name }}::ProcessEvents(double time, const std::vector<double> &rY)
 {
     RefreshState(rY);
 
-    double dist = std::numeric_limits<double>::max();
+    double min_dist = std::numeric_limits<double>::max();
+    double event_dist = min_dist;
 
 {% for event in events %}
+    // EVENT: {{ event["trigger"] }}
+    event_dist = {{ event["distance"] }};
+
+    // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
+    if (std::abs(event_dist) < 1.0)
+    {
+        event_dist = 1.0;
+    }
+
+    // Update min_dist
+    if (std::abs(event_dist) < std::abs(min_dist))
+    {
+        min_dist = event_dist;
+    }
+
+    // Process the event
     if ({{ event["trigger"] }})
     {
-        if (!eventsInitialised)
+        if (!eventsSatisfied[{{ loop.index0 }}] && eventsInitialised)
         {
-            // Condition true at first timestep: don't trigger
-            dist = std::abs(dist) < 1.0 ? dist : 1.0;
-        }
-        else if (eventsSatisfied[{{ loop.index0 }}])
-        {
-            // Condition already true: don't trigger (again)
-            dist = std::abs(dist) < 1.0 ? dist : 1.0;
-        }
-        else // if (!eventsSatisfied[{{ loop.index0 }}])
-        {
-            // Condition transitioning from false to true: trigger
-            dist = 0.0;
-            
+            // The condition is transitioning from false to true,
+            // and this is not the first time-step => trigger the event.
+            event_dist = 0.0;
+            min_dist = 0.0;
+
             UpdateDefaultInitialConditions(rY);
 {% for assignment in event["assignments"] %}
             {{ assignment }};
 {% endfor %}
         }
-        // Mark condition true
-        eventsSatisfied[{{ loop.index0 }}] = true;
+        eventsSatisfied[{{ loop.index0 }}] = true; // Flag the condition true
     }
     else
     {
-        double event_dist = {{ event["distance"] }};
-        dist = std::abs(dist) < std::abs(event_dist) ? dist : event_dist;
-
-        // Mark condition false
-        eventsSatisfied[{{ loop.index0 }}] = false;
+        eventsSatisfied[{{ loop.index0 }}] = false; // Flag the condition false
     }
 {% endfor %}
 
-    eventsInitialised = true;
+    eventsInitialised = true; // Flag that events have been processed at least once
 
-    return dist;
+    // Distance to closest event
+    return min_dist;
+}
+
+double {{ ode_class_name }}::CalculateRootFunction(double time, const std::vector<double> &rY)
+{
+    return ProcessEvents(time, rY);
 }
 
 bool {{ ode_class_name }}::CalculateStoppingEvent(double time, const std::vector<double> &rY)
 {
-    return CalculateRootFunction(time, rY) == 0.0;
+    return ProcessEvents(time, rY) == 0.0;
 }
 
 void {{ ode_class_name }}::UpdateDefaultInitialConditions(const std::vector<double> &rY)

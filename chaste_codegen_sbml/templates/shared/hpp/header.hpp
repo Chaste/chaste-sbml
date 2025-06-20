@@ -69,6 +69,7 @@ public:
     void RefreshState(const std::vector<double> &rY);
 
 {% if events %}
+    double ProcessEvents(double time, const std::vector<double>& rY);
     double CalculateRootFunction(double time, const std::vector<double>& rY);
     bool CalculateStoppingEvent(double time, const std::vector<double>& rY);
     void UpdateDefaultInitialConditions(const std::vector<double> &rY);

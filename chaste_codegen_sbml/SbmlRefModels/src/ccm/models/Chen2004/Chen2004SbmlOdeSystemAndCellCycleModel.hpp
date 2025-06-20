@@ -259,6 +259,7 @@ public:
     void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
     void RefreshState(const std::vector<double> &rY);
 
+    double ProcessEvents(double time, const std::vector<double>& rY);
     double CalculateRootFunction(double time, const std::vector<double>& rY);
     bool CalculateStoppingEvent(double time, const std::vector<double>& rY);
     void UpdateDefaultInitialConditions(const std::vector<double> &rY);

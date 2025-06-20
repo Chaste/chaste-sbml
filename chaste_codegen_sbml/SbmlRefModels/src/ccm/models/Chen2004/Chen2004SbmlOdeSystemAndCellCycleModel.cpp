@@ -1,5 +1,6 @@
 #include <cmath>
 #include <limits>
+#include <vector>
 
 #include "CellwiseOdeSystemInformation.hpp"
 #include "SbmlMath.hpp"
@@ -810,126 +811,144 @@ void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     // Scale time appropriately
 }
 
-double Chen2004SbmlOdeSystem::CalculateRootFunction(double time, const std::vector<double> &rY)
+double Chen2004SbmlOdeSystem::ProcessEvents(double time, const std::vector<double> &rY)
 {
     RefreshState(rY);
 
-    double dist = std::numeric_limits<double>::max();
+    double min_dist = std::numeric_limits<double>::max();
+    double event_dist = min_dist;
 
+    // EVENT: sm::lt(CLB2 + CLB5 - KEZ2, 0.0)
+    event_dist = (0.0) - (CLB2 + CLB5 - KEZ2) - std::numeric_limits<double>::epsilon();
+
+    // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
+    if (std::abs(event_dist) < 1.0)
+    {
+        event_dist = 1.0;
+    }
+
+    // Update min_dist
+    if (std::abs(event_dist) < std::abs(min_dist))
+    {
+        min_dist = event_dist;
+    }
+
+    // Process the event
     if (sm::lt(CLB2 + CLB5 - KEZ2, 0.0))
     {
-        if (!eventsInitialised)
+        if (!eventsSatisfied[0] && eventsInitialised)
         {
-            // Condition true at first timestep: don't trigger
-            dist = std::abs(dist) < 1.0 ? dist : 1.0;
-        }
-        else if (eventsSatisfied[0])
-        {
-            // Condition already true: don't trigger (again)
-            dist = std::abs(dist) < 1.0 ? dist : 1.0;
-        }
-        else // if (!eventsSatisfied[0])
-        {
-            // Condition transitioning from false to true: trigger
-            dist = 0.0;
-            
+            // The condition is transitioning from false to true,
+            // and this is not the first time-step => trigger the event.
+            event_dist = 0.0;
+            min_dist = 0.0;
+
             UpdateDefaultInitialConditions(rY);
             SetStateVariable(36, 0.0);
             SetDefaultInitialCondition(36, 0.0);
         }
-        // Mark condition true
-        eventsSatisfied[0] = true;
+        eventsSatisfied[0] = true; // Flag the condition true
     }
     else
     {
-        double event_dist = (0.0) - (CLB2 + CLB5 - KEZ2) - std::numeric_limits<double>::epsilon();
-        dist = std::abs(dist) < std::abs(event_dist) ? dist : event_dist;
-
-        // Mark condition false
-        eventsSatisfied[0] = false;
+        eventsSatisfied[0] = false; // Flag the condition false
     }
+    // EVENT: sm::gt(ORI - 1.0, 0.0)
+    event_dist = (ORI - 1.0) - (0.0) - std::numeric_limits<double>::epsilon();
+
+    // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
+    if (std::abs(event_dist) < 1.0)
+    {
+        event_dist = 1.0;
+    }
+
+    // Update min_dist
+    if (std::abs(event_dist) < std::abs(min_dist))
+    {
+        min_dist = event_dist;
+    }
+
+    // Process the event
     if (sm::gt(ORI - 1.0, 0.0))
     {
-        if (!eventsInitialised)
+        if (!eventsSatisfied[1] && eventsInitialised)
         {
-            // Condition true at first timestep: don't trigger
-            dist = std::abs(dist) < 1.0 ? dist : 1.0;
-        }
-        else if (eventsSatisfied[1])
-        {
-            // Condition already true: don't trigger (again)
-            dist = std::abs(dist) < 1.0 ? dist : 1.0;
-        }
-        else // if (!eventsSatisfied[1])
-        {
-            // Condition transitioning from false to true: trigger
-            dist = 0.0;
-            
+            // The condition is transitioning from false to true,
+            // and this is not the first time-step => trigger the event.
+            event_dist = 0.0;
+            min_dist = 0.0;
+
             UpdateDefaultInitialConditions(rY);
             SetParameter("MAD2", mad2h);
             SetParameter("BUB2", bub2h);
         }
-        // Mark condition true
-        eventsSatisfied[1] = true;
+        eventsSatisfied[1] = true; // Flag the condition true
     }
     else
     {
-        double event_dist = (ORI - 1.0) - (0.0) - std::numeric_limits<double>::epsilon();
-        dist = std::abs(dist) < std::abs(event_dist) ? dist : event_dist;
-
-        // Mark condition false
-        eventsSatisfied[1] = false;
+        eventsSatisfied[1] = false; // Flag the condition false
     }
+    // EVENT: sm::gt(SPN - 1.0, 0.0)
+    event_dist = (SPN - 1.0) - (0.0) - std::numeric_limits<double>::epsilon();
+
+    // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
+    if (std::abs(event_dist) < 1.0)
+    {
+        event_dist = 1.0;
+    }
+
+    // Update min_dist
+    if (std::abs(event_dist) < std::abs(min_dist))
+    {
+        min_dist = event_dist;
+    }
+
+    // Process the event
     if (sm::gt(SPN - 1.0, 0.0))
     {
-        if (!eventsInitialised)
+        if (!eventsSatisfied[2] && eventsInitialised)
         {
-            // Condition true at first timestep: don't trigger
-            dist = std::abs(dist) < 1.0 ? dist : 1.0;
-        }
-        else if (eventsSatisfied[2])
-        {
-            // Condition already true: don't trigger (again)
-            dist = std::abs(dist) < 1.0 ? dist : 1.0;
-        }
-        else // if (!eventsSatisfied[2])
-        {
-            // Condition transitioning from false to true: trigger
-            dist = 0.0;
-            
+            // The condition is transitioning from false to true,
+            // and this is not the first time-step => trigger the event.
+            event_dist = 0.0;
+            min_dist = 0.0;
+
             UpdateDefaultInitialConditions(rY);
             SetParameter("MAD2", mad2l);
             SetParameter("LTE1", lte1h);
             SetParameter("BUB2", bub2l);
         }
-        // Mark condition true
-        eventsSatisfied[2] = true;
+        eventsSatisfied[2] = true; // Flag the condition true
     }
     else
     {
-        double event_dist = (SPN - 1.0) - (0.0) - std::numeric_limits<double>::epsilon();
-        dist = std::abs(dist) < std::abs(event_dist) ? dist : event_dist;
-
-        // Mark condition false
-        eventsSatisfied[2] = false;
+        eventsSatisfied[2] = false; // Flag the condition false
     }
+    // EVENT: sm::lt(CLB2 - KEZ, 0.0)
+    event_dist = (0.0) - (CLB2 - KEZ) - std::numeric_limits<double>::epsilon();
+
+    // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
+    if (std::abs(event_dist) < 1.0)
+    {
+        event_dist = 1.0;
+    }
+
+    // Update min_dist
+    if (std::abs(event_dist) < std::abs(min_dist))
+    {
+        min_dist = event_dist;
+    }
+
+    // Process the event
     if (sm::lt(CLB2 - KEZ, 0.0))
     {
-        if (!eventsInitialised)
+        if (!eventsSatisfied[3] && eventsInitialised)
         {
-            // Condition true at first timestep: don't trigger
-            dist = std::abs(dist) < 1.0 ? dist : 1.0;
-        }
-        else if (eventsSatisfied[3])
-        {
-            // Condition already true: don't trigger (again)
-            dist = std::abs(dist) < 1.0 ? dist : 1.0;
-        }
-        else // if (!eventsSatisfied[3])
-        {
-            // Condition transitioning from false to true: trigger
-            dist = 0.0;
-            
+            // The condition is transitioning from false to true,
+            // and this is not the first time-step => trigger the event.
+            event_dist = 0.0;
+            min_dist = 0.0;
+
             UpdateDefaultInitialConditions(rY);
             SetStateVariable(31, F * MASS);
             SetDefaultInitialCondition(31, F * MASS);
@@ -939,26 +958,27 @@ double Chen2004SbmlOdeSystem::CalculateRootFunction(double time, const std::vect
             SetStateVariable(46, 0.0);
             SetDefaultInitialCondition(46, 0.0);
         }
-        // Mark condition true
-        eventsSatisfied[3] = true;
+        eventsSatisfied[3] = true; // Flag the condition true
     }
     else
     {
-        double event_dist = (0.0) - (CLB2 - KEZ) - std::numeric_limits<double>::epsilon();
-        dist = std::abs(dist) < std::abs(event_dist) ? dist : event_dist;
-
-        // Mark condition false
-        eventsSatisfied[3] = false;
+        eventsSatisfied[3] = false; // Flag the condition false
     }
 
-    eventsInitialised = true;
+    eventsInitialised = true; // Flag that events have been processed at least once
 
-    return dist;
+    // Distance to closest event
+    return min_dist;
+}
+
+double Chen2004SbmlOdeSystem::CalculateRootFunction(double time, const std::vector<double> &rY)
+{
+    return ProcessEvents(time, rY);
 }
 
 bool Chen2004SbmlOdeSystem::CalculateStoppingEvent(double time, const std::vector<double> &rY)
 {
-    return CalculateRootFunction(time, rY) == 0.0;
+    return ProcessEvents(time, rY) == 0.0;
 }
 
 void Chen2004SbmlOdeSystem::UpdateDefaultInitialConditions(const std::vector<double> &rY)

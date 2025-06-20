@@ -1,5 +1,6 @@
 #include <cmath>
 #include <limits>
+#include <vector>
 
 #include "CellwiseOdeSystemInformation.hpp"
 #include "SbmlMath.hpp"
