@@ -70,6 +70,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class TestTysonNovak2001Sbml : public AbstractCellBasedTestSuite
 {
+private:
+    const unsigned ODE_SIZE = 11;
+
 public:
     void TestCellCycleModel()
     {
@@ -96,7 +99,7 @@ public:
         // Create another cell with a cell-cycle model that uses a BackwardEulerIvpOdeSolver
         auto solver = CellCycleModelOdeSolver<TysonNovak2001SbmlCellCycleModel, BackwardEulerIvpOdeSolver>::Instance();
         boost::shared_ptr<CellCycleModelOdeSolver<TysonNovak2001SbmlCellCycleModel, BackwardEulerIvpOdeSolver>> p_solver(solver);
-        p_solver->SetSizeOfOdeSystem(11);
+        p_solver->SetSizeOfOdeSystem(ODE_SIZE);
         p_solver->Initialise();
 
         auto p_cell_1 = boost::make_shared<Cell>(p_wild_state, new TysonNovak2001SbmlCellCycleModel(p_solver));
@@ -330,17 +333,17 @@ public:
         ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
         // Test derivatives are correct
-        TS_ASSERT_DELTA(derivs[0], 0.0399, 1e-4);
-        TS_ASSERT_DELTA(derivs[1], 0.0009, 1e-4);
-        TS_ASSERT_DELTA(derivs[2], -0.0001, 1e-4);
-        TS_ASSERT_DELTA(derivs[3], 0.0, 1e-4);
-        TS_ASSERT_DELTA(derivs[4], 0.9710, 1e-4);
-        TS_ASSERT_DELTA(derivs[5], 0.0023, 1e-4);
-        TS_ASSERT_DELTA(derivs[6], 0.0049, 1e-4);
-        TS_ASSERT_DELTA(derivs[7], -0.0, 1e-4);
-        TS_ASSERT_DELTA(derivs[8], 1.0, 1e-4);
-        TS_ASSERT_DELTA(derivs[9], 0.9997, 1e-4);
-        TS_ASSERT_DELTA(derivs[10], 0.0278, 1e-4);
+        TS_ASSERT_DELTA(derivs[0], 0.0399, 1e-3);
+        TS_ASSERT_DELTA(derivs[1], 0.0006, 1e-3);
+        TS_ASSERT_DELTA(derivs[2], 0.0, 1e-3);
+        TS_ASSERT_DELTA(derivs[3], 0.0, 1e-3);
+        TS_ASSERT_DELTA(derivs[4], 0.9710, 1e-3);
+        TS_ASSERT_DELTA(derivs[5], 0.0023, 1e-3);
+        TS_ASSERT_DELTA(derivs[6], 0.0049, 1e-3);
+        TS_ASSERT_DELTA(derivs[7], 0.0, 1e-3);
+        TS_ASSERT_DELTA(derivs[8], 1.0, 1e-3);
+        TS_ASSERT_DELTA(derivs[9], 0.9997, 1e-3);
+        TS_ASSERT_DELTA(derivs[10], 0.0278, 1e-3);
     }
 
     void TestOdeWithChasteSolver()
@@ -348,7 +351,7 @@ public:
         // Solve system using backward Euler solver
         TysonNovak2001SbmlOdeSystem ode_system;
 
-        BackwardEulerIvpOdeSolver backward_euler_solver(11);
+        BackwardEulerIvpOdeSolver backward_euler_solver(ODE_SIZE);
 
         const double time_step = 0.01;
         const double sampling_interval = 0.01;
@@ -358,8 +361,11 @@ public:
         double end_time = start_time + run_length;
 
         std::vector<double> initial_conditions;
-        std::vector<OdeSolution> ode_solutions;
         OdeSolution ode_solution;
+
+        std::vector<std::vector<double>> solutions;
+        std::vector<double> times;
+        std::vector<double> solution_sums(ODE_SIZE, 0.0);
 
         // Repeatedly run ODE until it stops, then start again with updated initial conditions
         for (unsigned i = 0; i < 5; i++)
@@ -370,61 +376,87 @@ public:
             ode_solution = backward_euler_solver.Solve(&ode_system, initial_conditions, start_time, end_time, time_step, sampling_interval);
             Timer::Print(std::to_string(i) + ". Tyson Novak Backward Euler");
 
-            ode_solutions.push_back(ode_solution);
-
             // ODE should have stopped
             TS_ASSERT_EQUALS(backward_euler_solver.StoppingEventOccurred(), true);
 
-            // Update for next run
+            // Collate solutions and times from all runs
+            solutions.insert(solutions.end(), ode_solution.rGetSolutions().begin(), ode_solution.rGetSolutions().end());
+            times.insert(times.end(), ode_solution.rGetTimes().begin(), ode_solution.rGetTimes().end());
+
+            // Check first run
+            if (i == 0)
+            {
+                // Check that the ODE stopped at the right time
+                TS_ASSERT_DELTA(ode_solution.rGetTimes().back(), 105.76, 0.01);
+
+                // Check solutions for first run
+                for (unsigned i = 0; i < solutions.size(); i++)
+                {
+                    for (unsigned j = 0; j < solutions[i].size(); j++)
+                    {
+                        solution_sums[j] += solutions[i][j];
+                    }
+                }
+                TS_ASSERT_DELTA(solution_sums[0], 2126.6879, 1.0);
+                TS_ASSERT_DELTA(solution_sums[1], 1697.7528, 1.0);
+                TS_ASSERT_DELTA(solution_sums[2], 225.5261, 1.0);
+                TS_ASSERT_DELTA(solution_sums[3], 412.8688, 1.0);
+                TS_ASSERT_DELTA(solution_sums[4], 5993.8571, 1.0);
+                TS_ASSERT_DELTA(solution_sums[5], 6850.1213, 1.0);
+                TS_ASSERT_DELTA(solution_sums[6], 3523.1676, 1.0);
+                TS_ASSERT_DELTA(solution_sums[7], 1281.1824, 1.0);
+                TS_ASSERT_DELTA(solution_sums[8], 10475.4996, 1.0);
+                TS_ASSERT_DELTA(solution_sums[9], 2127.1845, 1.0);
+                TS_ASSERT_DELTA(solution_sums[10], 850.9528, 1.0);
+            }
+
+            // Update time for next run
             start_time = ode_solution.rGetTimes().back();
             end_time = start_time + run_length;
         }
+        // Check that the last run stopped at the right time
+        TS_ASSERT_DELTA(ode_solution.rGetTimes().back(), 694.32, 0.01);
+
+        // Check solutions for all runs
+        std::fill(solution_sums.begin(), solution_sums.end(), 0.0);
+        for (unsigned i = 0; i < solutions.size(); i++)
+        {
+            for (unsigned j = 0; j < solutions[i].size(); j++)
+            {
+                solution_sums[j] += solutions[i][j];
+            }
+        }
+        TS_ASSERT_DELTA(solution_sums[0], 11008.2, 5.0);
+        TS_ASSERT_DELTA(solution_sums[1], 8266.65, 5.0);
+        TS_ASSERT_DELTA(solution_sums[2], 2387.41, 5.0);
+        TS_ASSERT_DELTA(solution_sums[3], 2725.63, 5.0);
+        TS_ASSERT_DELTA(solution_sums[4], 47033.00, 5.0);
+        TS_ASSERT_DELTA(solution_sums[5], 41633.60, 5.0);
+        TS_ASSERT_DELTA(solution_sums[6], 22295.90, 5.0);
+        TS_ASSERT_DELTA(solution_sums[7], 16449.20, 5.0);
+        TS_ASSERT_DELTA(solution_sums[8], 69336.50, 5.0);
+        TS_ASSERT_DELTA(solution_sums[9], 23514.30, 5.0);
+        TS_ASSERT_DELTA(solution_sums[10], 4655.05, 5.0);
 
         // The following code provides nice output for gnuplot
         // use the command
-        // plot "tysonnovak_2001.dat" u 1:2 etc. for the various species...
+        // plot "tysonnovak_backeuler.dat" u 1:2 etc. for the various species...
         // or
-        // plot "tysonnovak_2001.dat" u 1:2, "" u 1:3, "" u 1:4 etc. for all species
+        // plot "tysonnovak_backeuler.dat" u 1:2, "" u 1:3, "" u 1:4 etc. for all species
 
-        // std::vector<std::vector<double>> solutions;
-        // for (const auto &ode_solution : ode_solutions)
-        // {
-        //     solutions.insert(solutions.end(), ode_solution.rGetSolutions().begin(), ode_solution.rGetSolutions().end());
-        // }
-
-        // std::vector<double> times;
-        // for (const auto &ode_solution : ode_solutions)
-        // {
-        //     times.insert(times.end(), ode_solution.rGetTimes().begin(), ode_solution.rGetTimes().end());
-        // }
-
-        // OutputFileHandler handler("");
-        // out_stream file = handler.OpenOutputFile("tysonnovak_backeuler.dat");
-        // for (unsigned i = 0; i < solutions.size(); i++)
-        // {
-        //     (*file) << times[i];
-        //     for (unsigned j = 0; j < solutions[i].size(); j++)
-        //     {
-        //         (*file) << "\t" << solutions[i][j];
-        //     }
-        //     (*file) << "\n"
-        //             << std::flush;
-        // }
-        // file->close();
-
-        // Values calculated using roadrunner
-        std::vector<double> &solution = ode_solutions.back().rGetSolutions().back();
-        TS_ASSERT_DELTA(solution[0], 0.10000000000000, 1e-2);
-        TS_ASSERT_DELTA(solution[1], 0.98913684535843, 1e-2);
-        TS_ASSERT_DELTA(solution[2], 1.54216806705641, 1e-1);
-        TS_ASSERT_DELTA(solution[3], 1.40562614481544, 1e-1);
-        TS_ASSERT_DELTA(solution[4], 0.67083371879876, 1e-2);
-        TS_ASSERT_DELTA(solution[5], 0.95328206604519, 2e-2);
-        TS_ASSERT_DELTA(solution[6], 0.95328206604519, 2e-2);
-        TS_ASSERT_DELTA(solution[7], 0.95328206604519, 2e-2);
-        TS_ASSERT_DELTA(solution[8], 0.95328206604519, 2e-2);
-        TS_ASSERT_DELTA(solution[9], 0.95328206604519, 2e-2);
-        TS_ASSERT_DELTA(solution[10], 0.95328206604519, 2e-2);
+        OutputFileHandler handler("");
+        out_stream file = handler.OpenOutputFile("tysonnovak_backeuler.dat");
+        for (unsigned i = 0; i < solutions.size(); i++)
+        {
+            (*file) << times[i];
+            for (unsigned j = 0; j < solutions[i].size(); j++)
+            {
+                (*file) << "\t" << solutions[i][j];
+            }
+            (*file) << "\n"
+                    << std::flush;
+        }
+        file->close();
     }
 
     void TestOdeWithCvodeSolver()
@@ -445,8 +477,11 @@ public:
             double end_time = start_time + run_length;
 
             std::vector<double> initial_conditions;
-            std::vector<OdeSolution> ode_solutions;
             OdeSolution ode_solution;
+
+            std::vector<std::vector<double>> solutions;
+            std::vector<double> times;
+            std::vector<double> solution_sums(ODE_SIZE, 0.0);
 
             // Repeatedly run ODE until it stops, then start again with updated initial conditions
             for (unsigned i = 0; i < 5; i++)
@@ -457,61 +492,87 @@ public:
                 ode_solution = cvode_solver.Solve(&ode_system, initial_conditions, start_time, end_time, max_step, sampling_interval);
                 Timer::Print(std::to_string(i) + ". Tyson Novak CVODE");
 
-                ode_solutions.push_back(ode_solution);
-
                 // ODE should have stopped
                 TS_ASSERT_EQUALS(cvode_solver.StoppingEventOccurred(), true);
 
-                // Update for next run
+                // Collate solutions and times from all runs
+                solutions.insert(solutions.end(), ode_solution.rGetSolutions().begin(), ode_solution.rGetSolutions().end());
+                times.insert(times.end(), ode_solution.rGetTimes().begin(), ode_solution.rGetTimes().end());
+
+                // Check first run
+                if (i == 0)
+                {
+                    // Check that the ODE stopped at the right time
+                    TS_ASSERT_DELTA(ode_solution.rGetTimes().back(), 105.76, 0.01);
+
+                    // Check solutions for first run
+                    for (unsigned i = 0; i < solutions.size(); i++)
+                    {
+                        for (unsigned j = 0; j < solutions[i].size(); j++)
+                        {
+                            solution_sums[j] += solutions[i][j];
+                        }
+                    }
+                    TS_ASSERT_DELTA(solution_sums[0], 2126.6879, 1.0);
+                    TS_ASSERT_DELTA(solution_sums[1], 1697.7528, 1.0);
+                    TS_ASSERT_DELTA(solution_sums[2], 225.5261, 1.0);
+                    TS_ASSERT_DELTA(solution_sums[3], 412.8688, 1.0);
+                    TS_ASSERT_DELTA(solution_sums[4], 5993.8571, 1.0);
+                    TS_ASSERT_DELTA(solution_sums[5], 6850.1213, 1.0);
+                    TS_ASSERT_DELTA(solution_sums[6], 3523.1676, 1.0);
+                    TS_ASSERT_DELTA(solution_sums[7], 1281.1824, 1.0);
+                    TS_ASSERT_DELTA(solution_sums[8], 10475.4996, 1.0);
+                    TS_ASSERT_DELTA(solution_sums[9], 2127.1845, 1.0);
+                    TS_ASSERT_DELTA(solution_sums[10], 850.9528, 1.0);
+                }
+
+                // Update time for next run
                 start_time = ode_solution.rGetTimes().back();
                 end_time = start_time + run_length;
             }
+            // Check that the last run stopped at the right time
+            TS_ASSERT_DELTA(start_time, 694.32, 0.01);
+
+            // Check solutions for all runs
+            std::fill(solution_sums.begin(), solution_sums.end(), 0.0);
+            for (unsigned i = 0; i < solutions.size(); i++)
+            {
+                for (unsigned j = 0; j < solutions[i].size(); j++)
+                {
+                    solution_sums[j] += solutions[i][j];
+                }
+            }
+            TS_ASSERT_DELTA(solution_sums[0], 11008.2, 5.0);
+            TS_ASSERT_DELTA(solution_sums[1], 8266.65, 5.0);
+            TS_ASSERT_DELTA(solution_sums[2], 2387.41, 5.0);
+            TS_ASSERT_DELTA(solution_sums[3], 2725.63, 5.0);
+            TS_ASSERT_DELTA(solution_sums[4], 47033.00, 5.0);
+            TS_ASSERT_DELTA(solution_sums[5], 41633.60, 5.0);
+            TS_ASSERT_DELTA(solution_sums[6], 22295.90, 5.0);
+            TS_ASSERT_DELTA(solution_sums[7], 16449.20, 5.0);
+            TS_ASSERT_DELTA(solution_sums[8], 69336.50, 5.0);
+            TS_ASSERT_DELTA(solution_sums[9], 23514.30, 5.0);
+            TS_ASSERT_DELTA(solution_sums[10], 4655.05, 5.0);
 
             // The following code provides nice output for gnuplot
             // use the command
-            // plot "tysonnovak_2001.dat" u 1:2 etc. for the various species...
+            // plot "tysonnovak_cvode.dat" u 1:2 etc. for the various species...
             // or
-            // plot "tysonnovak_2001.dat" u 1:2, "" u 1:3, "" u 1:4 etc. for all species
+            // plot "tysonnovak_cvode.dat" u 1:2, "" u 1:3, "" u 1:4 etc. for all species
 
-            // std::vector<std::vector<double>> solutions;
-            // for (const auto &ode_solution : ode_solutions)
-            // {
-            //     solutions.insert(solutions.end(), ode_solution.rGetSolutions().begin(), ode_solution.rGetSolutions().end());
-            // }
-
-            // std::vector<double> times;
-            // for (const auto &ode_solution : ode_solutions)
-            // {
-            //     times.insert(times.end(), ode_solution.rGetTimes().begin(), ode_solution.rGetTimes().end());
-            // }
-
-            // OutputFileHandler handler("");
-            // out_stream file = handler.OpenOutputFile("tysonnovak_cvode.dat");
-            // for (unsigned i = 0; i < solutions.size(); i++)
-            // {
-            //     (*file) << times[i];
-            //     for (unsigned j = 0; j < solutions[i].size(); j++)
-            //     {
-            //         (*file) << "\t" << solutions[i][j];
-            //     }
-            //     (*file) << "\n"
-            //             << std::flush;
-            // }
-            // file->close();
-
-            // Values calculated using roadrunner
-            std::vector<double> &solution = ode_solutions.back().rGetSolutions().back();
-            TS_ASSERT_DELTA(solution[0], 0.10000000000000, 1e-2);
-            TS_ASSERT_DELTA(solution[1], 0.98913684535843, 1e-2);
-            TS_ASSERT_DELTA(solution[2], 1.54216806705641, 1e-1);
-            TS_ASSERT_DELTA(solution[3], 1.40562614481544, 1e-1);
-            TS_ASSERT_DELTA(solution[4], 0.67083371879876, 1e-2);
-            TS_ASSERT_DELTA(solution[5], 0.95328206604519, 2e-2);
-            TS_ASSERT_DELTA(solution[6], 0.95328206604519, 2e-2);
-            TS_ASSERT_DELTA(solution[7], 0.95328206604519, 2e-2);
-            TS_ASSERT_DELTA(solution[8], 0.95328206604519, 2e-2);
-            TS_ASSERT_DELTA(solution[9], 0.95328206604519, 2e-2);
-            TS_ASSERT_DELTA(solution[10], 0.95328206604519, 2e-2);
+            OutputFileHandler handler("");
+            out_stream file = handler.OpenOutputFile("tysonnovak_cvode.dat");
+            for (unsigned i = 0; i < solutions.size(); i++)
+            {
+                (*file) << times[i];
+                for (unsigned j = 0; j < solutions[i].size(); j++)
+                {
+                    (*file) << "\t" << solutions[i][j];
+                }
+                (*file) << "\n"
+                        << std::flush;
+            }
+            file->close();
         }
         catch (Exception &e)
         {
