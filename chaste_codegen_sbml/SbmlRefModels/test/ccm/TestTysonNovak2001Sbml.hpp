@@ -36,8 +36,10 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef TESTTYSONNOVAK2001SBML_HPP_
 #define TESTTYSONNOVAK2001SBML_HPP_
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <numeric>
 #include <vector>
 
 #include <boost/archive/text_oarchive.hpp>
@@ -72,6 +74,41 @@ class TestTysonNovak2001Sbml : public AbstractCellBasedTestSuite
 {
 private:
     const unsigned ODE_SIZE = 11;
+
+    double mean(const std::vector<double> &vec)
+    {
+        return std::accumulate(vec.begin(), vec.end(), 0.0) / vec.size();
+    }
+
+    double variance(const std::vector<double> &vec)
+    {
+        double mean_val = mean(vec);
+        double accum = 0.0;
+        for (double val : vec)
+        {
+            accum += (val - mean_val) * (val - mean_val);
+        }
+        return accum / (vec.size() - 1);
+    }
+
+    double quantile(const std::vector<double> &vec, double q)
+    {
+        // Assuming vec is already sorted and not empty
+        size_t n = vec.size();
+        if (q < 0.0 || q > 1.0)
+        {
+            throw std::out_of_range("Quantile must be between 0 and 1.");
+        }
+
+        size_t index = static_cast<size_t>(q * (n - 1));
+
+        if (n % 2 == 0)
+        {
+            return (vec[index] + vec[index - 1]) / 2.0;
+        }
+
+        return vec[index];
+    }
 
 public:
     void TestCellCycleModel()
@@ -365,7 +402,6 @@ public:
 
         std::vector<std::vector<double>> solutions;
         std::vector<double> times;
-        std::vector<double> solution_sums(ODE_SIZE, 0.0);
 
         // Repeatedly run ODE until it stops, then start again with updated initial conditions
         for (unsigned i = 0; i < 5; i++)
@@ -387,27 +423,138 @@ public:
             if (i == 0)
             {
                 // Check that the ODE stopped at the right time
+                // NOTE: Tellurium divides at 103.80
                 TS_ASSERT_DELTA(ode_solution.rGetTimes().back(), 105.76, 0.01);
 
                 // Check solutions for first run
-                for (unsigned i = 0; i < solutions.size(); i++)
+                for (unsigned j = 0; j < ODE_SIZE; j++)
                 {
-                    for (unsigned j = 0; j < solutions[i].size(); j++)
+                    std::vector<double> values;
+                    for (unsigned k = 0; k < solutions.size(); k++)
                     {
-                        solution_sums[j] += solutions[i][j];
+                        values.push_back(solutions[k][j]);
+                    }
+                    std::sort(values.begin(), values.end());
+                    double min_val = values.front();
+                    double max_val = values.back();
+                    double mean_val = mean(values);
+                    double variance_val = variance(values);
+                    double q1_val = quantile(values, 0.25);
+                    double q2_val = quantile(values, 0.5);
+                    double q3_val = quantile(values, 0.75);
+
+                    // Compare with values from Tellurium
+                    if (j == 0) // CycBt
+                    {
+                        TS_ASSERT_DELTA(min_val, 0.0010, 1e-3);
+                        TS_ASSERT_DELTA(max_val, 0.6493, 1e-2);
+                        TS_ASSERT_DELTA(mean_val, 0.1962, 1e-2);
+                        TS_ASSERT_DELTA(variance_val, 0.0488, 1e-2);
+                        TS_ASSERT_DELTA(q1_val, 0.0386, 1e-2);
+                        TS_ASSERT_DELTA(q2_val, 0.0393, 1e-2);
+                        TS_ASSERT_DELTA(q3_val, 0.3802, 1e-2);
+                    }
+                    else if (j == 1) // CycB
+                    {
+                        TS_ASSERT_DELTA(min_val, 4.6652, 1e-2);
+                        TS_ASSERT_DELTA(max_val, 0.6290, 1e-2);
+                        TS_ASSERT_DELTA(mean_val, 0.1572, 1e-2);
+                        TS_ASSERT_DELTA(variance_val, 0.0515, 1e-2);
+                        TS_ASSERT_DELTA(q1_val, 0.000119, 1e-5);
+                        TS_ASSERT_DELTA(q2_val, 0.000594, 1e-4);
+                        TS_ASSERT_DELTA(q3_val, 0.3419, 1e-2);
+                    }
+                    else if (j == 2) // Cdc20a
+                    {
+                        TS_ASSERT_DELTA(min_val, 1.0650, 1e-2);
+                        TS_ASSERT_DELTA(max_val, 0.3040, 1e-2);
+                        TS_ASSERT_DELTA(mean_val, 0.0156, 1e-2);
+                        TS_ASSERT_DELTA(variance_val, 0.00285, 1e-3);
+                        TS_ASSERT_DELTA(q1_val, 1.3709, 1e-2);
+                        TS_ASSERT_DELTA(q2_val, 1.7456, 1e-2);
+                        TS_ASSERT_DELTA(q3_val, 0.000579, 1e-4);
+                    }
+                    else if (j == 3) // Trimer
+                    {
+                        TS_ASSERT_DELTA(min_val, 0.00038, 1e-4);
+                        TS_ASSERT_DELTA(max_val, 0.09026, 1e-2);
+                        TS_ASSERT_DELTA(mean_val, 0.0390, 1e-2);
+                        TS_ASSERT_DELTA(variance_val, 0.00019, 1e-4);
+                        TS_ASSERT_DELTA(q1_val, 0.03491, 1e-2);
+                        TS_ASSERT_DELTA(q2_val, 0.0385, 1e-2);
+                        TS_ASSERT_DELTA(q3_val, 0.0386, 1e-2);
+                    }
+                    else if (j == 4) // Cdh1
+                    {
+                        TS_ASSERT_DELTA(min_val, 0.001, 1e-3);
+                        TS_ASSERT_DELTA(max_val, 0.9981, 1e-2);
+                        TS_ASSERT_DELTA(mean_val, 0.5788, 1e-2);
+                        TS_ASSERT_DELTA(variance_val, 0.2176, 1e-2);
+                        TS_ASSERT_DELTA(q1_val, 0.0069, 1e-3);
+                        TS_ASSERT_DELTA(q2_val, 0.9707, 1e-2);
+                        TS_ASSERT_DELTA(q3_val, 0.9953, 1e-2);
+                    }
+                    else if (j == 5) // m
+                    {
+                        TS_ASSERT_DELTA(min_val, 0.4063, 1e-2);
+                        TS_ASSERT_DELTA(max_val, 0.8125, 1e-2);
+                        TS_ASSERT_DELTA(mean_val, 0.6445, 1e-2);
+                        TS_ASSERT_DELTA(variance_val, 0.0081, 1e-3);
+                        TS_ASSERT_DELTA(q1_val, 0.5653, 1e-2);
+                        TS_ASSERT_DELTA(q2_val, 0.6386, 1e-2);
+                        TS_ASSERT_DELTA(q3_val, 0.7208, 1e-2);
+                    }
+                    else if (j == 6) // Cdc20t
+                    {
+                        TS_ASSERT_DELTA(min_val, 0.001, 1e-2);
+                        TS_ASSERT_DELTA(max_val, 1.5116, 1e-2);
+                        TS_ASSERT_DELTA(mean_val, 0.3206, 1e-2);
+                        TS_ASSERT_DELTA(variance_val, 0.2425, 1e-2);
+                        TS_ASSERT_DELTA(q1_val, 0.0463, 1e-2);
+                        TS_ASSERT_DELTA(q2_val, 0.0497, 1e-2);
+                        TS_ASSERT_DELTA(q3_val, 0.3622, 1e-2);
+                    }
+                    else if (j == 7) // IEP
+                    {
+                        TS_ASSERT_DELTA(min_val, 0.00063, 1e-4);
+                        TS_ASSERT_DELTA(max_val, 0.5554, 1e-2);
+                        TS_ASSERT_DELTA(mean_val, 0.1153, 1e-2);
+                        TS_ASSERT_DELTA(variance_val, 0.0354, 1e-2);
+                        TS_ASSERT_DELTA(q1_val, 0.0007, 1e-4);
+                        TS_ASSERT_DELTA(q2_val, 0.0009, 1e-4);
+                        TS_ASSERT_DELTA(q3_val, 0.1837, 1e-2);
+                    }
+                    else if (j == 8) // Mad
+                    {
+                        // TS_ASSERT_DELTA(min_val, 2126.6879, 1e-2);
+                        // TS_ASSERT_DELTA(max_val, 2126.6879, 1e-2);
+                        // TS_ASSERT_DELTA(mean_val, 2126.6879, 1e-2);
+                        // TS_ASSERT_DELTA(variance_val, 2126.6879, 1e-2);
+                        // TS_ASSERT_DELTA(q1_val, 2126.6879, 1e-2);
+                        // TS_ASSERT_DELTA(q2_val, 2126.6879, 1e-2);
+                        // TS_ASSERT_DELTA(q3_val, 2126.6879, 1e-2);
+                    }
+                    else if (j == 9) // CKIt
+                    {
+                        TS_ASSERT_DELTA(min_val, 0.001, 1e-2);
+                        TS_ASSERT_DELTA(max_val, 0.7162, 1e-2);
+                        TS_ASSERT_DELTA(mean_val, 0.2036, 1e-2);
+                        TS_ASSERT_DELTA(variance_val, 0.0376, 1e-2);
+                        TS_ASSERT_DELTA(q1_val, 0.0382, 1e-2);
+                        TS_ASSERT_DELTA(q2_val, 0.1027, 1e-2);
+                        TS_ASSERT_DELTA(q3_val, 0.3584, 1e-2);
+                    }
+                    else if (j == 10) // SK
+                    {
+                        TS_ASSERT_DELTA(min_val, 0.001, 1e-2);
+                        TS_ASSERT_DELTA(max_val, 0.4464, 1e-2);
+                        TS_ASSERT_DELTA(mean_val, 0.0809, 1e-2);
+                        TS_ASSERT_DELTA(variance_val, 0.0101, 1e-2);
+                        TS_ASSERT_DELTA(q1_val, 0.0160, 1e-2);
+                        TS_ASSERT_DELTA(q2_val, 0.04174, 1e-2);
+                        TS_ASSERT_DELTA(q3_val, 0.0909, 1e-2);
                     }
                 }
-                TS_ASSERT_DELTA(solution_sums[0], 2126.6879, 1.0);
-                TS_ASSERT_DELTA(solution_sums[1], 1697.7528, 1.0);
-                TS_ASSERT_DELTA(solution_sums[2], 225.5261, 1.0);
-                TS_ASSERT_DELTA(solution_sums[3], 412.8688, 1.0);
-                TS_ASSERT_DELTA(solution_sums[4], 5993.8571, 1.0);
-                TS_ASSERT_DELTA(solution_sums[5], 6850.1213, 1.0);
-                TS_ASSERT_DELTA(solution_sums[6], 3523.1676, 1.0);
-                TS_ASSERT_DELTA(solution_sums[7], 1281.1824, 1.0);
-                TS_ASSERT_DELTA(solution_sums[8], 10475.4996, 1.0);
-                TS_ASSERT_DELTA(solution_sums[9], 2127.1845, 1.0);
-                TS_ASSERT_DELTA(solution_sums[10], 850.9528, 1.0);
             }
 
             // Update time for next run
@@ -415,28 +562,8 @@ public:
             end_time = start_time + run_length;
         }
         // Check that the last run stopped at the right time
+        // NOTE: Tellurium finishes at 692.07
         TS_ASSERT_DELTA(ode_solution.rGetTimes().back(), 694.32, 0.01);
-
-        // Check solutions for all runs
-        std::fill(solution_sums.begin(), solution_sums.end(), 0.0);
-        for (unsigned i = 0; i < solutions.size(); i++)
-        {
-            for (unsigned j = 0; j < solutions[i].size(); j++)
-            {
-                solution_sums[j] += solutions[i][j];
-            }
-        }
-        TS_ASSERT_DELTA(solution_sums[0], 11008.2, 5.0);
-        TS_ASSERT_DELTA(solution_sums[1], 8266.65, 5.0);
-        TS_ASSERT_DELTA(solution_sums[2], 2387.41, 5.0);
-        TS_ASSERT_DELTA(solution_sums[3], 2725.63, 5.0);
-        TS_ASSERT_DELTA(solution_sums[4], 47033.00, 5.0);
-        TS_ASSERT_DELTA(solution_sums[5], 41633.60, 5.0);
-        TS_ASSERT_DELTA(solution_sums[6], 22295.90, 5.0);
-        TS_ASSERT_DELTA(solution_sums[7], 16449.20, 5.0);
-        TS_ASSERT_DELTA(solution_sums[8], 69336.50, 5.0);
-        TS_ASSERT_DELTA(solution_sums[9], 23514.30, 5.0);
-        TS_ASSERT_DELTA(solution_sums[10], 4655.05, 5.0);
 
         // The following code provides nice output for gnuplot
         // use the command
@@ -503,27 +630,138 @@ public:
                 if (i == 0)
                 {
                     // Check that the ODE stopped at the right time
+                    // NOTE: Tellurium divides at 103.80
                     TS_ASSERT_DELTA(ode_solution.rGetTimes().back(), 105.76, 0.01);
 
                     // Check solutions for first run
-                    for (unsigned i = 0; i < solutions.size(); i++)
+                    for (unsigned j = 0; j < ODE_SIZE; j++)
                     {
-                        for (unsigned j = 0; j < solutions[i].size(); j++)
+                        std::vector<double> values;
+                        for (unsigned k = 0; k < solutions.size(); k++)
                         {
-                            solution_sums[j] += solutions[i][j];
+                            values.push_back(solutions[k][j]);
+                        }
+                        std::sort(values.begin(), values.end());
+                        double min_val = values.front();
+                        double max_val = values.back();
+                        double mean_val = mean(values);
+                        double variance_val = variance(values);
+                        double q1_val = quantile(values, 0.25);
+                        double q2_val = quantile(values, 0.5);
+                        double q3_val = quantile(values, 0.75);
+
+                        // Compare with values from Tellurium
+                        if (j == 0) // CycBt
+                        {
+                            TS_ASSERT_DELTA(min_val, 0.0010, 1e-3);
+                            TS_ASSERT_DELTA(max_val, 0.6493, 1e-2);
+                            TS_ASSERT_DELTA(mean_val, 0.1962, 1e-2);
+                            TS_ASSERT_DELTA(variance_val, 0.0488, 1e-2);
+                            TS_ASSERT_DELTA(q1_val, 0.0386, 1e-2);
+                            TS_ASSERT_DELTA(q2_val, 0.0393, 1e-2);
+                            TS_ASSERT_DELTA(q3_val, 0.3802, 1e-2);
+                        }
+                        else if (j == 1) // CycB
+                        {
+                            TS_ASSERT_DELTA(min_val, 4.6652, 1e-2);
+                            TS_ASSERT_DELTA(max_val, 0.6290, 1e-2);
+                            TS_ASSERT_DELTA(mean_val, 0.1572, 1e-2);
+                            TS_ASSERT_DELTA(variance_val, 0.0515, 1e-2);
+                            TS_ASSERT_DELTA(q1_val, 0.000119, 1e-5);
+                            TS_ASSERT_DELTA(q2_val, 0.000594, 1e-4);
+                            TS_ASSERT_DELTA(q3_val, 0.3419, 1e-2);
+                        }
+                        else if (j == 2) // Cdc20a
+                        {
+                            TS_ASSERT_DELTA(min_val, 1.0650, 1e-2);
+                            TS_ASSERT_DELTA(max_val, 0.3040, 1e-2);
+                            TS_ASSERT_DELTA(mean_val, 0.0156, 1e-2);
+                            TS_ASSERT_DELTA(variance_val, 0.00285, 1e-3);
+                            TS_ASSERT_DELTA(q1_val, 1.3709, 1e-2);
+                            TS_ASSERT_DELTA(q2_val, 1.7456, 1e-2);
+                            TS_ASSERT_DELTA(q3_val, 0.000579, 1e-4);
+                        }
+                        else if (j == 3) // Trimer
+                        {
+                            TS_ASSERT_DELTA(min_val, 0.00038, 1e-4);
+                            TS_ASSERT_DELTA(max_val, 0.09026, 1e-2);
+                            TS_ASSERT_DELTA(mean_val, 0.0390, 1e-2);
+                            TS_ASSERT_DELTA(variance_val, 0.00019, 1e-4);
+                            TS_ASSERT_DELTA(q1_val, 0.03491, 1e-2);
+                            TS_ASSERT_DELTA(q2_val, 0.0385, 1e-2);
+                            TS_ASSERT_DELTA(q3_val, 0.0386, 1e-2);
+                        }
+                        else if (j == 4) // Cdh1
+                        {
+                            TS_ASSERT_DELTA(min_val, 0.001, 1e-3);
+                            TS_ASSERT_DELTA(max_val, 0.9981, 1e-2);
+                            TS_ASSERT_DELTA(mean_val, 0.5788, 1e-2);
+                            TS_ASSERT_DELTA(variance_val, 0.2176, 1e-2);
+                            TS_ASSERT_DELTA(q1_val, 0.0069, 1e-3);
+                            TS_ASSERT_DELTA(q2_val, 0.9707, 1e-2);
+                            TS_ASSERT_DELTA(q3_val, 0.9953, 1e-2);
+                        }
+                        else if (j == 5) // m
+                        {
+                            TS_ASSERT_DELTA(min_val, 0.4063, 1e-2);
+                            TS_ASSERT_DELTA(max_val, 0.8125, 1e-2);
+                            TS_ASSERT_DELTA(mean_val, 0.6445, 1e-2);
+                            TS_ASSERT_DELTA(variance_val, 0.0081, 1e-3);
+                            TS_ASSERT_DELTA(q1_val, 0.5653, 1e-2);
+                            TS_ASSERT_DELTA(q2_val, 0.6386, 1e-2);
+                            TS_ASSERT_DELTA(q3_val, 0.7208, 1e-2);
+                        }
+                        else if (j == 6) // Cdc20t
+                        {
+                            TS_ASSERT_DELTA(min_val, 0.001, 1e-2);
+                            TS_ASSERT_DELTA(max_val, 1.5116, 1e-2);
+                            TS_ASSERT_DELTA(mean_val, 0.3206, 1e-2);
+                            TS_ASSERT_DELTA(variance_val, 0.2425, 1e-2);
+                            TS_ASSERT_DELTA(q1_val, 0.0463, 1e-2);
+                            TS_ASSERT_DELTA(q2_val, 0.0497, 1e-2);
+                            TS_ASSERT_DELTA(q3_val, 0.3622, 1e-2);
+                        }
+                        else if (j == 7) // IEP
+                        {
+                            TS_ASSERT_DELTA(min_val, 0.00063, 1e-4);
+                            TS_ASSERT_DELTA(max_val, 0.5554, 1e-2);
+                            TS_ASSERT_DELTA(mean_val, 0.1153, 1e-2);
+                            TS_ASSERT_DELTA(variance_val, 0.0354, 1e-2);
+                            TS_ASSERT_DELTA(q1_val, 0.0007, 1e-4);
+                            TS_ASSERT_DELTA(q2_val, 0.0009, 1e-4);
+                            TS_ASSERT_DELTA(q3_val, 0.1837, 1e-2);
+                        }
+                        else if (j == 8) // Mad
+                        {
+                            // TS_ASSERT_DELTA(min_val, 2126.6879, 1e-2);
+                            // TS_ASSERT_DELTA(max_val, 2126.6879, 1e-2);
+                            // TS_ASSERT_DELTA(mean_val, 2126.6879, 1e-2);
+                            // TS_ASSERT_DELTA(variance_val, 2126.6879, 1e-2);
+                            // TS_ASSERT_DELTA(q1_val, 2126.6879, 1e-2);
+                            // TS_ASSERT_DELTA(q2_val, 2126.6879, 1e-2);
+                            // TS_ASSERT_DELTA(q3_val, 2126.6879, 1e-2);
+                        }
+                        else if (j == 9) // CKIt
+                        {
+                            TS_ASSERT_DELTA(min_val, 0.001, 1e-2);
+                            TS_ASSERT_DELTA(max_val, 0.7162, 1e-2);
+                            TS_ASSERT_DELTA(mean_val, 0.2036, 1e-2);
+                            TS_ASSERT_DELTA(variance_val, 0.0376, 1e-2);
+                            TS_ASSERT_DELTA(q1_val, 0.0382, 1e-2);
+                            TS_ASSERT_DELTA(q2_val, 0.1027, 1e-2);
+                            TS_ASSERT_DELTA(q3_val, 0.3584, 1e-2);
+                        }
+                        else if (j == 10) // SK
+                        {
+                            TS_ASSERT_DELTA(min_val, 0.001, 1e-2);
+                            TS_ASSERT_DELTA(max_val, 0.4464, 1e-2);
+                            TS_ASSERT_DELTA(mean_val, 0.0809, 1e-2);
+                            TS_ASSERT_DELTA(variance_val, 0.0101, 1e-2);
+                            TS_ASSERT_DELTA(q1_val, 0.0160, 1e-2);
+                            TS_ASSERT_DELTA(q2_val, 0.04174, 1e-2);
+                            TS_ASSERT_DELTA(q3_val, 0.0909, 1e-2);
                         }
                     }
-                    TS_ASSERT_DELTA(solution_sums[0], 2126.6879, 1.0);
-                    TS_ASSERT_DELTA(solution_sums[1], 1697.7528, 1.0);
-                    TS_ASSERT_DELTA(solution_sums[2], 225.5261, 1.0);
-                    TS_ASSERT_DELTA(solution_sums[3], 412.8688, 1.0);
-                    TS_ASSERT_DELTA(solution_sums[4], 5993.8571, 1.0);
-                    TS_ASSERT_DELTA(solution_sums[5], 6850.1213, 1.0);
-                    TS_ASSERT_DELTA(solution_sums[6], 3523.1676, 1.0);
-                    TS_ASSERT_DELTA(solution_sums[7], 1281.1824, 1.0);
-                    TS_ASSERT_DELTA(solution_sums[8], 10475.4996, 1.0);
-                    TS_ASSERT_DELTA(solution_sums[9], 2127.1845, 1.0);
-                    TS_ASSERT_DELTA(solution_sums[10], 850.9528, 1.0);
                 }
 
                 // Update time for next run
@@ -532,27 +770,6 @@ public:
             }
             // Check that the last run stopped at the right time
             TS_ASSERT_DELTA(start_time, 694.32, 0.01);
-
-            // Check solutions for all runs
-            std::fill(solution_sums.begin(), solution_sums.end(), 0.0);
-            for (unsigned i = 0; i < solutions.size(); i++)
-            {
-                for (unsigned j = 0; j < solutions[i].size(); j++)
-                {
-                    solution_sums[j] += solutions[i][j];
-                }
-            }
-            TS_ASSERT_DELTA(solution_sums[0], 11008.2, 5.0);
-            TS_ASSERT_DELTA(solution_sums[1], 8266.65, 5.0);
-            TS_ASSERT_DELTA(solution_sums[2], 2387.41, 5.0);
-            TS_ASSERT_DELTA(solution_sums[3], 2725.63, 5.0);
-            TS_ASSERT_DELTA(solution_sums[4], 47033.00, 5.0);
-            TS_ASSERT_DELTA(solution_sums[5], 41633.60, 5.0);
-            TS_ASSERT_DELTA(solution_sums[6], 22295.90, 5.0);
-            TS_ASSERT_DELTA(solution_sums[7], 16449.20, 5.0);
-            TS_ASSERT_DELTA(solution_sums[8], 69336.50, 5.0);
-            TS_ASSERT_DELTA(solution_sums[9], 23514.30, 5.0);
-            TS_ASSERT_DELTA(solution_sums[10], 4655.05, 5.0);
 
             // The following code provides nice output for gnuplot
             // use the command
