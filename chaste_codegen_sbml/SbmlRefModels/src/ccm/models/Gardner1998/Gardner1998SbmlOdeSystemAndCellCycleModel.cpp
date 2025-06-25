@@ -24,6 +24,7 @@ Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem(std::vector<double> stateVari
     Y = 1.0; // cyclin inhibitor
     Z = 1.0; // complex inhibitor-cyclin
 
+
     SetDefaultInitialCondition(0, C);
     SetDefaultInitialCondition(1, X);
     SetDefaultInitialCondition(2, M);
@@ -53,6 +54,9 @@ Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem(std::vector<double> stateVari
 
     V1 = 0.0;
     V3 = 0.0;
+
+    V1 = C * V1p * std::pow(C + K6, -1.0);
+    V3 = M * V3p;
 
 
     mParameters.push_back(V1);
@@ -84,6 +88,7 @@ void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vect
     RefreshState(rY);
 
     // RULES:
+
     V1 = C * V1p * std::pow(C + K6, -1.0);
     V3 = M * V3p;
 

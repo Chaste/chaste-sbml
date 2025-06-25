@@ -20,6 +20,7 @@ Chen2000SbmlOdeSystem::Chen2000SbmlOdeSystem(std::vector<double> stateVariables)
     // STATE VARIABLES:
 
 
+
     if (stateVariables.size() == 0)
     {
     }
@@ -59,6 +60,35 @@ Chen2000SbmlOdeSystem::Chen2000SbmlOdeSystem(std::vector<double> stateVariables)
     MBF = 0.0;
     Mcm1 = 0.0;
     Swi5 = 0.0;
+
+    Cln2 = mass * (ks_n2 + ks_n2_ * SBF) - kd_n2 * Cln2;
+    Clb2_T = mass * (ks_b2 + ks_b2_ * Mcm1) - Vd_b2 * Clb2_T;
+    Clb5_T = mass * (ks_b5 + ks_b5_ * MBF) - Vd_b5 * Clb5_T;
+    Sic1_T = ks_c1 + ks_c1_ * Swi5 - Sic1_T * (kd1_c1 + Vd2_c1 / (Jd2_c1 + Sic1_T));
+    Clb2_Sic1 = kas_b2 * Clb2 * Sic1 - Clb2_Sic1 * (kdi_b2 + Vd_b2 + kd1_c1 + Vd2_c1 / (Jd2_c1 + Sic1_T));
+    Clb5_Sic1 = kas_b5 * Clb5 * Sic1 - Clb5_Sic1 * (kdi_b5 + Vd_b5 + kd1_c1 + Vd2_c1 / (Jd2_c1 + Sic1_T));
+    Cdc20_T = ks_20 + ks_20_ * Clb2 - kd_20 * Cdc20_T;
+    Cdc20 = ka_20 * (Cdc20_T - Cdc20) - Cdc20 * (Vi_20 + kd_20);
+    Hct1 = (ka_t1 + ka_t1_ * Cdc20) * (Hct1_T - Hct1) / (Ja_t1 + Hct1_T - Hct1) - Vi_t1 * Hct1 / (Ji_t1 + Hct1);
+    mass = mu * mass;
+    ORI = ks_ori * (Clb5 + epsilonori_b2 * Clb2) - kd_ori * ORI;
+    BUD = ks_bud * (Cln2 + Cln3 + epsilonbud_b5 * Clb5) - kd_bud * BUD;
+    SPN = ks_spn * Clb2 / (J_spn + Clb2) - kd_spn * SPN;
+    Vd_b2 = kd_b2 * (Hct1_T - Hct1) + kd_b2_ * Hct1 + kd_b2__ * Cdc20;
+    Clb2 = Clb2_T - Clb2_Sic1;
+    Clb5 = Clb5_T - Clb5_Sic1;
+    Sic1 = Sic1_T - (Clb2_Sic1 + Clb5_Sic1);
+    Vd_b5 = kd_b5 + kd_b5_ * Cdc20;
+    Bck2 = Bck2_0 * mass;
+    Cln3 = Cln3_max * Dn3 * mass / (Jn3 + Dn3 * mass);
+    Vd2_c1 = kd2_c1 * (epsilonc1_n3 * Cln3 + epsilonc1_k2 * Bck2 + Cln2 + epsilonc1_b5 * Clb5 + epsilonc1_b2 * Clb2);
+    Vi_20 = sm::piecewise(ki_20_, sm::geq(ORI, 1.0), ki_20, sm::geq(SPN, 1.0), 0.1);
+    Vi_t1 = ki_t1 + ki_t1_ * (Cln3 + epsiloni_t1_n2 * Cln2 + epsiloni_t1_b5 * Clb5 + epsiloni_t1_b2 * Clb2);
+    SBF = 2.0 * Va_sbf * Ji_sbf / (ki_sbf + ki_sbf_ * Clb2 + Va_sbf * Ji_sbf + (ki_sbf + ki_sbf_ * Clb2) * Ja_sbf - Va_sbf + std::sqrt(std::pow(ki_sbf + ki_sbf_ * Clb2 + Va_sbf * Ji_sbf + (ki_sbf + ki_sbf_ * Clb2) * Ja_sbf - Va_sbf, 2.0) - 4.0 * Va_sbf * Ji_sbf * (ki_sbf + ki_sbf_ * Clb2 - Va_sbf)));
+    Va_sbf = ka_sbf * (Cln2 + epsilonsbf_n3 * (Cln3 + Bck2) + epsilonsbf_b5 * Clb5);
+    MBF = SBF;
+    Mcm1 = 2.0 * ka_mcm * Clb2 * Ji_mcm / (ki_mcm + ka_mcm * Clb2 * Ji_mcm + ki_mcm * Ja_mcm - ka_mcm * Clb2 + std::sqrt(std::pow(ki_mcm + ka_mcm * Clb2 * Ji_mcm + ki_mcm * Ja_mcm - ka_mcm * Clb2, 2.0) - 4.0 * (ki_mcm - ka_mcm * Clb2) * ka_mcm * Clb2 * Ji_mcm));
+    Swi5 = 2.0 * ka_swi * Cdc20 * Ji_swi / (ki_swi + ki_swi_ * Clb2 + ka_swi * Cdc20 * Ji_swi + (ki_swi + ki_swi_ * Clb2) * Ja_swi - ka_swi * Cdc20 + std::sqrt(std::pow(ki_swi + ki_swi_ * Clb2 + ka_swi * Cdc20 * Ji_swi + (ki_swi + ki_swi_ * Clb2) * Ja_swi - ka_swi * Cdc20, 2.0) - 4.0 * (ki_swi + ki_swi_ * Clb2 - ka_swi * Cdc20) * ka_swi * Cdc20 * Ji_swi));
 
 
     mParameters.push_back(Cln2);
@@ -137,6 +167,7 @@ void Chen2000SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     RefreshState(rY);
 
     // RULES:
+
     Cln2 = mass * (ks_n2 + ks_n2_ * SBF) - kd_n2 * Cln2;
     Clb2_T = mass * (ks_b2 + ks_b2_ * Mcm1) - Vd_b2 * Clb2_T;
     Clb5_T = mass * (ks_b5 + ks_b5_ * MBF) - Vd_b5 * Clb5_T;

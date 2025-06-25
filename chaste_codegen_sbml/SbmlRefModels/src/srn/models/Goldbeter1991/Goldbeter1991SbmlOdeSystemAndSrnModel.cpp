@@ -22,6 +22,7 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem(std::vector<double> state
     M = 0.01; // cdc_2_kinase
     X = 0.01; // Cyclin Protease
 
+
     SetDefaultInitialCondition(0, C);
     SetDefaultInitialCondition(1, M);
     SetDefaultInitialCondition(2, X);
@@ -45,6 +46,9 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem(std::vector<double> state
 
     V1 = 0.0;
     V3 = 0.0;
+
+    V1 = C * VM1 * std::pow(C + Kc, -1.0);
+    V3 = M * VM3;
 
 
     mParameters.push_back(V1);
@@ -74,6 +78,7 @@ void Goldbeter1991SbmlOdeSystem::EvaluateYDerivatives(double time, const std::ve
     RefreshState(rY);
 
     // RULES:
+
     V1 = C * VM1 * std::pow(C + Kc, -1.0);
     V3 = M * VM3;
 
