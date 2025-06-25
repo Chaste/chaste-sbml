@@ -23,8 +23,14 @@ namespace sm = sbmlmath;
 
     // STATE VARIABLES:
 {% for sp in species %}
-{% if sp["is_state_variable"] is true() %}
+{% if sp["has_ode"] is true() %}
     {{ sp["id"] }} = {{ sp["concentration"] }}; // {{ sp["name"] }}
+{% endif %}
+{% endfor %}
+
+{% for rule in rules %}
+{% if rule["is_state_variable"] is true() %}
+    {{ rule["lhs"] }} = {{ rule["rhs"] }};
 {% endif %}
 {% endfor %}
 
@@ -66,6 +72,12 @@ namespace sm = sbmlmath;
 {% endif %}
 {% endfor %}
 
+{% for rule in rules %}
+{% if rule["is_state_variable"] is false() %}
+    {{ rule["lhs"] }} = {{ rule["rhs"] }};
+{% endif %}
+{% endfor %}
+
 {% for sp in species %}
 {% if sp["is_state_parameter"] is true() %}
     mParameters.push_back({{ sp["id"] }});
@@ -93,7 +105,7 @@ void {{ ode_class_name }}::RefreshState(const std::vector<double> &rY)
 {
     // STATE VARIABLES:
 {% for sp in species %}
-{% if sp["is_state_variable"] is true() %}
+{% if sp["has_ode"] is true() %}
     {{ sp["id"] }} = rY[{{ sp["state_variable_index"] }}];
 {% endif %}
 {% endfor %}
@@ -117,6 +129,12 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
     RefreshState(rY);
 
     // RULES:
+{% for rule in rules %}
+{% if rule["is_state_variable"] is true() %}
+    {{ rule["lhs"] }} = {{ rule["rhs"] }};
+{% endif %}
+{% endfor %}
+
 {% for rule in rules %}
 {% if rule["is_state_variable"] is false() %}
     {{ rule["lhs"] }} = {{ rule["rhs"] }};

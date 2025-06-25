@@ -22,8 +22,8 @@ from ._config import ODE_SUFFIX, SHORT_NAME_LEN
 from ._utils import (
     get_function_definition_arguments,
     get_species_concentration,
-    varname_staggercase,
     varname_sanitize,
+    varname_staggercase,
 )
 
 if TYPE_CHECKING:
@@ -554,19 +554,22 @@ class ChasteSbmlModel:
             }
 
             # ODE system
-            lhs = None
-            rhs = None
             if is_state_variable:
                 lhs = f"rDY[{state_variable_index}]"
+                rhs = None
+                has_ode = False
+                has_rule = False
                 # TODO: Do something different for boundary conditions
                 # if not species.getBoundaryCondition():
                 if species_id in self._odes_dict:
                     # Species defined by ODEs
+                    has_ode = True
                     rhs = f"({self._odes_dict[species_id]}) / {comp_id}"
 
                 elif species_id in self._rules_dict:
                     # Species defined by algebraic rules
-                    rhs = f"(({self._rules_dict[species_id]}) - rY[{state_variable_index}]) / {comp_id}"
+                    has_rule = True
+                    rhs = f"({species_id} - rY[{state_variable_index}]) / {comp_id}"
 
                 # TODO: Handle time scaling
                 # if time_multiplier != 1.0:
@@ -574,6 +577,8 @@ class ChasteSbmlModel:
                 #     f"rDY[{state_variable_index}] *= {time_multiplier};"
 
                 species_dict["ode"] = {"lhs": lhs, "rhs": rhs}
+                species_dict["has_ode"] = has_ode
+                species_dict["has_rule"] = has_rule
 
             species_dicts.append(species_dict)
         return species_dicts
