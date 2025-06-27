@@ -20,12 +20,12 @@ Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem(std::vector<double> stateVariables)
     nucleus = 0.65;
 
     // STATE VARIABLES:
-    bcat_cm = 46.6; // bcat_cm
-    ligand_cm = 581.1; // ligand_cm
-    complex_cm = 418.9; // complex_cm
-    bcat_nu = 32.6; // bcat_nu
-    ligand_nu = 516.8; // ligand_nu
-    complex_nu = 483.2; // complex_nu
+    bcat_cm = 46.6;
+    ligand_cm = 581.1;
+    complex_cm = 418.9;
+    bcat_nu = 32.6;
+    ligand_nu = 516.8;
+    complex_nu = 483.2;
 
     drag = sm::piecewise((complex_cm - 700.0) / 10.0, sm::gt((complex_cm - 700.0) / 10.0, 1.0), 1.0);
 
@@ -45,7 +45,8 @@ Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem(std::vector<double> stateVariables)
         bcat_nu = stateVariables[3];
         ligand_nu = stateVariables[4];
         complex_nu = stateVariables[5];
-        drag = stateVariables[6];
+
+    drag = sm::piecewise((complex_cm - 700.0) / 10.0, sm::gt((complex_cm - 700.0) / 10.0, 1.0), 1.0);
     }
     else if (stateVariables.size() != 0)
     {
@@ -86,24 +87,18 @@ void Tan2014SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
     ligand_nu = rY[4];
     complex_nu = rY[5];
 
+    drag = sm::piecewise((complex_cm - 700.0) / 10.0, sm::gt((complex_cm - 700.0) / 10.0, 1.0), 1.0);
+
     // STATE PARAMETERS:
 
-    wnt_level = GetParameter("wnt_level");
-    gamma = GetParameter("gamma");
+
+    SetParameter("wnt_level", wnt_level);
+    SetParameter("gamma", gamma);
 }
 
 void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
     RefreshState(rY);
-
-    // RULES:
-    drag = sm::piecewise((complex_cm - 700.0) / 10.0, sm::gt((complex_cm - 700.0) / 10.0, 1.0), 1.0);
-
-
-    // UPDATE STATE PARAMETERS:
-
-    SetParameter("wnt_level", wnt_level);
-    SetParameter("gamma", gamma);
 
     // REACTIONS:
 
@@ -128,7 +123,7 @@ void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<d
     rDY[3] = (-kN + kdiffusion + K_c_active - K_n_active) / nucleus; // d[bcat_nu]/dt
     rDY[4] = (-kN) / nucleus; // d[ligand_nu]/dt
     rDY[5] = (kN) / nucleus; // d[complex_nu]/dt
-    rDY[6] = (drag - rY[6]) / CytosolMembrane; // d[drag]/dt
+    rDY[6] = (drag - rY[6]) * 10.0 / CytosolMembrane; // d[drag]/dt
 
     // Scale time appropriately
 }

@@ -18,9 +18,9 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem(std::vector<double> state
     cell = 1.0;
 
     // STATE VARIABLES:
-    C = 0.01; // Cyclin
-    M = 0.01; // cdc_2_kinase
-    X = 0.01; // Cyclin Protease
+    C = 0.01;
+    M = 0.01;
+    X = 0.01;
 
 
     SetDefaultInitialCondition(0, C);
@@ -32,6 +32,7 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem(std::vector<double> state
         C = stateVariables[0];
         M = stateVariables[1];
         X = stateVariables[2];
+
     }
     else if (stateVariables.size() != 0)
     {
@@ -44,8 +45,6 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem(std::vector<double> state
 
     // STATE PARAMETERS:
 
-    V1 = 0.0;
-    V3 = 0.0;
 
     V1 = C * VM1 * std::pow(C + Kc, -1.0);
     V3 = M * VM3;
@@ -67,25 +66,19 @@ void Goldbeter1991SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
     M = rY[1];
     X = rY[2];
 
-    // STATE PARAMETERS:
 
-    V1 = GetParameter("V1");
-    V3 = GetParameter("V3");
+    // STATE PARAMETERS:
+    V1 = C * VM1 * std::pow(C + Kc, -1.0);
+    V3 = M * VM3;
+
+
+    SetParameter("V1", V1);
+    SetParameter("V3", V3);
 }
 
 void Goldbeter1991SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
     RefreshState(rY);
-
-    // RULES:
-
-    V1 = C * VM1 * std::pow(C + Kc, -1.0);
-    V3 = M * VM3;
-
-    // UPDATE STATE PARAMETERS:
-
-    SetParameter("V1", V1);
-    SetParameter("V3", V3);
 
     // REACTIONS:
 

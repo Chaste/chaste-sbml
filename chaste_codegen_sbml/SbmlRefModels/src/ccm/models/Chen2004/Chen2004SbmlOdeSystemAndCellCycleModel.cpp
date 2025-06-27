@@ -18,46 +18,46 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
     cell = 1.0;
 
     // STATE VARIABLES:
-    BUD = 0.008473; // BUD
-    C2 = 0.238404; // C2
-    C2P = 0.024034; // C2P
-    C5 = 0.070081; // C5
-    C5P = 0.006878; // C5P
-    CDC14 = 0.468344; // CDC14
-    CDC15 = 0.656533; // CDC15
-    CDC15i = 0.0; // CDC15i
-    CDC20 = 0.444296; // CDC20
-    CDC20i = 1.472044; // CDC20i
-    CDC6 = 0.10758; // CDC6
-    CDC6P = 0.015486; // CDC6P
-    CDH1 = 0.930499; // CDH1
-    CDH1i = 0.0695; // CDH1i
-    CLB2 = 0.1469227; // CLB2
-    CLB5 = 0.0518014; // CLB5
-    CLN2 = 0.0652511; // CLN2
-    ESP1 = 0.301313; // ESP1
-    F2 = 0.236058; // F2
-    F2P = 0.0273938; // F2P
-    F5 = 7.24e-05; // F5
-    F5P = 7.91e-05; // F5P
-    IE = 0.0; // IE
-    IEP = 0.1015; // IEP
-    MASS = 1.206019; // MASS
-    NET1 = 0.018645; // NET1
-    NET1P = 0.970271; // NET1P
-    ORI = 0.000909; // ORI
-    PDS1 = 0.025612; // PDS1
-    PE = 0.0; // PE
-    PPX = 0.123179; // PPX
-    RENT = 1.04954; // RENT
-    RENTP = 0.6; // RENTP
-    SIC1 = 0.0228776; // SIC1
-    SIC1P = 0.00641; // SIC1P
-    SPN = 0.03; // SPN
-    SWI5 = 0.95; // SWI5
-    SWI5P = 0.02; // SWI5P
-    TEM1GDP = 0.0; // TEM1GDP
-    TEM1GTP = 0.9; // TEM1GTP
+    BUD = 0.008473;
+    C2 = 0.238404;
+    C2P = 0.024034;
+    C5 = 0.070081;
+    C5P = 0.006878;
+    CDC14 = 0.468344;
+    CDC15 = 0.656533;
+    CDC15i = 0.0;
+    CDC20 = 0.444296;
+    CDC20i = 1.472044;
+    CDC6 = 0.10758;
+    CDC6P = 0.015486;
+    CDH1 = 0.930499;
+    CDH1i = 0.0695;
+    CLB2 = 0.1469227;
+    CLB5 = 0.0518014;
+    CLN2 = 0.0652511;
+    ESP1 = 0.301313;
+    F2 = 0.236058;
+    F2P = 0.0273938;
+    F5 = 7.24e-05;
+    F5P = 7.91e-05;
+    IE = 0.0;
+    IEP = 0.1015;
+    MASS = 1.206019;
+    NET1 = 0.018645;
+    NET1P = 0.970271;
+    ORI = 0.000909;
+    PDS1 = 0.025612;
+    PE = 0.0;
+    PPX = 0.123179;
+    RENT = 1.04954;
+    RENTP = 0.6;
+    SIC1 = 0.0228776;
+    SIC1P = 0.00641;
+    SPN = 0.03;
+    SWI5 = 0.95;
+    SWI5P = 0.02;
+    TEM1GDP = 0.0;
+    TEM1GTP = 0.9;
 
     BCK2 = b0 * MASS;
     CLN3 = C0 * Dn3 * MASS / (Jn3 + Dn3 * MASS);
@@ -129,30 +129,23 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
 
     if (stateVariables.size() == 51)
     {
-        BCK2 = stateVariables[0];
         BUD = stateVariables[1];
         C2 = stateVariables[2];
         C2P = stateVariables[3];
         C5 = stateVariables[4];
         C5P = stateVariables[5];
         CDC14 = stateVariables[6];
-        CDC14T = stateVariables[7];
         CDC15 = stateVariables[8];
         CDC15i = stateVariables[9];
         CDC20 = stateVariables[10];
         CDC20i = stateVariables[11];
         CDC6 = stateVariables[12];
         CDC6P = stateVariables[13];
-        CDC6T = stateVariables[14];
         CDH1 = stateVariables[15];
         CDH1i = stateVariables[16];
-        CKIT = stateVariables[17];
         CLB2 = stateVariables[18];
-        CLB2T = stateVariables[19];
         CLB5 = stateVariables[20];
-        CLB5T = stateVariables[21];
         CLN2 = stateVariables[22];
-        CLN3 = stateVariables[23];
         ESP1 = stateVariables[24];
         F2 = stateVariables[25];
         F2P = stateVariables[26];
@@ -161,25 +154,37 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
         IE = stateVariables[29];
         IEP = stateVariables[30];
         MASS = stateVariables[31];
-        MCM1 = stateVariables[32];
         NET1 = stateVariables[33];
         NET1P = stateVariables[34];
-        NET1T = stateVariables[35];
         ORI = stateVariables[36];
         PDS1 = stateVariables[37];
         PE = stateVariables[38];
         PPX = stateVariables[39];
         RENT = stateVariables[40];
         RENTP = stateVariables[41];
-        SBF = stateVariables[42];
         SIC1 = stateVariables[43];
         SIC1P = stateVariables[44];
-        SIC1T = stateVariables[45];
         SPN = stateVariables[46];
         SWI5 = stateVariables[47];
         SWI5P = stateVariables[48];
         TEM1GDP = stateVariables[49];
         TEM1GTP = stateVariables[50];
+
+    BCK2 = b0 * MASS;
+    CLN3 = C0 * Dn3 * MASS / (Jn3 + Dn3 * MASS);
+    SBF = GK_219(Vasbf, Visbf, Jasbf, Jisbf);
+    MCM1 = GK_219(kamcm * CLB2, kimcm, Jamcm, Jimcm);
+    CLB2T = CLB2 + C2 + C2P + F2 + F2P;
+    CLB5T = CLB5 + C5 + C5P + F5 + F5P;
+    CDC14T = CDC14 + RENT + RENTP;
+    NET1T = NET1 + NET1P + RENT + RENTP;
+    SIC1T = SIC1 + C2 + C5 + SIC1P + C2P + C5P;
+    CDC6T = CDC6 + F2 + F5 + CDC6P + F2P + F5P;
+    CKIT = SIC1T + CDC6T;
+    CDC15i = CDC15T - CDC15;
+    IE = IET - IEP;
+    PE = ESP1T - ESP1;
+    TEM1GDP = TEM1T - TEM1GTP;
     }
     else if (stateVariables.size() != 0)
     {
@@ -239,9 +244,6 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
     mStateVariables.push_back(TEM1GTP);
 
     // STATE PARAMETERS:
-    BUB2 = 0.2;
-    LTE1 = 0.1;
-    MAD2 = 0.01;
 
     bub2l = 0.2;
     CDC15T = 1.0;
@@ -253,26 +255,6 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
     lte1l = 0.1;
     mad2l = 0.01;
     TEM1T = 1.0;
-    D = 0.0;
-    mu = 0.0;
-    Vdb5 = 0.0;
-    Vdb2 = 0.0;
-    Vasbf = 0.0;
-    Visbf = 0.0;
-    Vkpc1 = 0.0;
-    Vkpf6 = 0.0;
-    Vacdh = 0.0;
-    Vicdh = 0.0;
-    Vppnet = 0.0;
-    Vkpnet = 0.0;
-    Vdppx = 0.0;
-    Vdpds = 0.0;
-    Vaiep = 0.0;
-    Vd2c1 = 0.0;
-    Vd2f6 = 0.0;
-    Vppc1 = 0.0;
-    Vppf6 = 0.0;
-    F = 0.0;
 
     Visbf = kisbf_p + kisbf_p_p * CLB2;
     Vppc1 = kppc1 * CDC14;
@@ -383,48 +365,6 @@ void Chen2004SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
     TEM1GDP = rY[49];
     TEM1GTP = rY[50];
 
-    // STATE PARAMETERS:
-    BUB2 = GetParameter("BUB2");
-    LTE1 = GetParameter("LTE1");
-    MAD2 = GetParameter("MAD2");
-
-    bub2l = GetParameter("bub2l");
-    CDC15T = GetParameter("CDC15T");
-    ESP1T = GetParameter("ESP1T");
-    IET = GetParameter("IET");
-    KEZ = GetParameter("KEZ");
-    KEZ2 = GetParameter("KEZ2");
-    lte1h = GetParameter("lte1h");
-    lte1l = GetParameter("lte1l");
-    mad2l = GetParameter("mad2l");
-    TEM1T = GetParameter("TEM1T");
-    D = GetParameter("D");
-    mu = GetParameter("mu");
-    Vdb5 = GetParameter("Vdb5");
-    Vdb2 = GetParameter("Vdb2");
-    Vasbf = GetParameter("Vasbf");
-    Visbf = GetParameter("Visbf");
-    Vkpc1 = GetParameter("Vkpc1");
-    Vkpf6 = GetParameter("Vkpf6");
-    Vacdh = GetParameter("Vacdh");
-    Vicdh = GetParameter("Vicdh");
-    Vppnet = GetParameter("Vppnet");
-    Vkpnet = GetParameter("Vkpnet");
-    Vdppx = GetParameter("Vdppx");
-    Vdpds = GetParameter("Vdpds");
-    Vaiep = GetParameter("Vaiep");
-    Vd2c1 = GetParameter("Vd2c1");
-    Vd2f6 = GetParameter("Vd2f6");
-    Vppc1 = GetParameter("Vppc1");
-    Vppf6 = GetParameter("Vppf6");
-    F = GetParameter("F");
-}
-
-void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
-{
-    RefreshState(rY);
-
-    // RULES:
     BCK2 = b0 * MASS;
     CLN3 = C0 * Dn3 * MASS / (Jn3 + Dn3 * MASS);
     SBF = GK_219(Vasbf, Visbf, Jasbf, Jisbf);
@@ -441,6 +381,7 @@ void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     PE = ESP1T - ESP1;
     TEM1GDP = TEM1T - TEM1GTP;
 
+    // STATE PARAMETERS:
     Visbf = kisbf_p + kisbf_p_p * CLB2;
     Vppc1 = kppc1 * CDC14;
     Vppf6 = kppf6 * CDC14;
@@ -462,7 +403,6 @@ void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     Vdpds = kd1pds_p + kd2pds_p_p * CDC20 + kd3pds_p_p * CDH1;
     Vdppx = kdppx_p + kdppx_p_p * (J20ppx + CDC20) * Jpds / (Jpds + PDS1);
 
-    // UPDATE STATE PARAMETERS:
     SetParameter("BUB2", BUB2);
     SetParameter("LTE1", LTE1);
     SetParameter("MAD2", MAD2);
@@ -497,6 +437,11 @@ void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     SetParameter("Vppc1", Vppc1);
     SetParameter("Vppf6", Vppf6);
     SetParameter("F", F);
+}
+
+void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
+{
+    RefreshState(rY);
 
     // REACTIONS:
 
@@ -787,30 +732,30 @@ void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     double Spindle_disassembly = Mass_Action_1_222(kdspn, SPN);
 
     // ODES:
-    rDY[0] = (BCK2 - rY[0]) / cell; // d[BCK2]/dt
+    rDY[0] = (BCK2 - rY[0]) * 10.0 / cell; // d[BCK2]/dt
     rDY[1] = (Budding - Negative_regulation_of_Cell_budding) / cell; // d[BUD]/dt
     rDY[2] = (Assoc_of_CLB2_and_SIC1 - Dissoc_of_CLB2SIC1_complex - Phosphorylation_of_C2 + Dephosphorylation_of_C2P - Degradation_of_CLB2_in_C2) / cell; // d[C2]/dt
     rDY[3] = (Phosphorylation_of_C2 - Dephosphorylation_of_C2P - Degradation_of_SIC1_in_C2P - Degradation_of_CLB2_in_C2P) / cell; // d[C2P]/dt
     rDY[4] = (Assoc_of_CLB5_and_SIC1 - Dissoc_of_CLB5SIC1 - Phosphorylation_of_C5 + Dephosphorylation_of_C5P - Degradation_of_CLB5_in_C5) / cell; // d[C5]/dt
     rDY[5] = (Phosphorylation_of_C5 - Dephosphorylation_of_C5P - Degradation_of_SIC1P_in_C5P - Degradation_of_CLB5_in_C5P) / cell; // d[C5P]/dt
     rDY[6] = (CDC14_synthesis - CDC14_degradation - Assoc_with_NET1_to_form_RENT + Dissoc_from_RENT - Assoc_with_NET1P_to_form_RENTP + Dissoc_from_RENP + Degradation_of_NET1_in_RENT + Degradation_of_NET1P_in_RENTP) / cell; // d[CDC14]/dt
-    rDY[7] = (CDC14T - rY[7]) / cell; // d[CDC14T]/dt
+    rDY[7] = (CDC14T - rY[7]) * 10.0 / cell; // d[CDC14T]/dt
     rDY[8] = (CDC15_activation - inactivation_0) / cell; // d[CDC15]/dt
     rDY[9] = (-CDC15_activation + inactivation_0) / cell; // d[CDC15i]/dt
     rDY[10] = (-Degradation_of_active_CDC20 + Activation_of_CDC20 - Inactivation_0) / cell; // d[CDC20]/dt
     rDY[11] = (Synthesis_of_inactive_CDC20 - Degradation_of_inactiveCDC20 - Activation_of_CDC20 + Inactivation_0) / cell; // d[CDC20i]/dt
     rDY[12] = (CDC6_synthesis - Phosphorylation_of_CDC6 + Dephosphorylation_of_CDC6 - CLB2CDC6_complex_formation + CLB2CDC6_dissociation - CLB5CDC6_complex_formation + CLB5CDC6_dissociation + CLB2_degradation_in_F2 + CLB5_degradation_in_F5) / cell; // d[CDC6]/dt
     rDY[13] = (Phosphorylation_of_CDC6 - Dephosphorylation_of_CDC6 - Degradation_of_CDC6P + CLB2_degradation_in_F2P + CLB5_degradation_in_F5P) / cell; // d[CDC6P]/dt
-    rDY[14] = (CDC6T - rY[14]) / cell; // d[CDC6T]/dt
+    rDY[14] = (CDC6T - rY[14]) * 10.0 / cell; // d[CDC6T]/dt
     rDY[15] = (CDH1_synthesis - CDH1_degradation + CDH1i_activation - Inactivation_1) / cell; // d[CDH1]/dt
     rDY[16] = (-CDH1i_degradation - CDH1i_activation + Inactivation_1) / cell; // d[CDH1i]/dt
-    rDY[17] = (CKIT - rY[17]) / cell; // d[CKIT]/dt
+    rDY[17] = (CKIT - rY[17]) * 10.0 / cell; // d[CKIT]/dt
     rDY[18] = (Synthesis_of_CLB2 - Degradation_of_CLB2 - Assoc_of_CLB2_and_SIC1 + Dissoc_of_CLB2SIC1_complex + Degradation_of_SIC1_in_C2P - CLB2CDC6_complex_formation + CLB2CDC6_dissociation + CDC6_degradation_in_F2P) / cell; // d[CLB2]/dt
-    rDY[19] = (CLB2T - rY[19]) / cell; // d[CLB2T]/dt
+    rDY[19] = (CLB2T - rY[19]) * 10.0 / cell; // d[CLB2T]/dt
     rDY[20] = (Synthesis_of_CLB5 - Degradation_of_CLB5 - Assoc_of_CLB5_and_SIC1 + Dissoc_of_CLB5SIC1 + Degradation_of_SIC1P_in_C5P - CLB5CDC6_complex_formation + CLB5CDC6_dissociation + CDC6_degradation_in_F5P) / cell; // d[CLB5]/dt
-    rDY[21] = (CLB5T - rY[21]) / cell; // d[CLB5T]/dt
+    rDY[21] = (CLB5T - rY[21]) * 10.0 / cell; // d[CLB5T]/dt
     rDY[22] = (Synthesis_of_CLN2 - Degradation_of_CLN2) / cell; // d[CLN2]/dt
-    rDY[23] = (CLN3 - rY[23]) / cell; // d[CLN3]/dt
+    rDY[23] = (CLN3 - rY[23]) * 10.0 / cell; // d[CLN3]/dt
     rDY[24] = (Degradation_of_PDS1_in_PE - Assoc_with_ESP1_to_form_PE + Disso_from_PE) / cell; // d[ESP1]/dt
     rDY[25] = (CLB2CDC6_complex_formation - CLB2CDC6_dissociation - F2_phosphorylation + F2P_dephosphorylation - CLB2_degradation_in_F2) / cell; // d[F2]/dt
     rDY[26] = (F2_phosphorylation - F2P_dephosphorylation - CDC6_degradation_in_F2P - CLB2_degradation_in_F2P) / cell; // d[F2P]/dt
@@ -819,20 +764,20 @@ void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     rDY[29] = (-Activation_of_IEP + Inactivation) / cell; // d[IE]/dt
     rDY[30] = (Activation_of_IEP - Inactivation) / cell; // d[IEP]/dt
     rDY[31] = (Growth) / cell; // d[MASS]/dt
-    rDY[32] = (MCM1 - rY[32]) / cell; // d[MCM1]/dt
+    rDY[32] = (MCM1 - rY[32]) * 10.0 / cell; // d[MCM1]/dt
     rDY[33] = (-Assoc_with_NET1_to_form_RENT + Dissoc_from_RENT + Net1_synthesis - Net1_degradation - NET1_phosphorylation + dephosphorylation + Degradation_of_CDC14_in_RENT) / cell; // d[NET1]/dt
     rDY[34] = (-Assoc_with_NET1P_to_form_RENTP + Dissoc_from_RENP - Net1P_degradation + NET1_phosphorylation - dephosphorylation + Degradation_of_CDC14_in_RENTP) / cell; // d[NET1P]/dt
-    rDY[35] = (NET1T - rY[35]) / cell; // d[NET1T]/dt
+    rDY[35] = (NET1T - rY[35]) * 10.0 / cell; // d[NET1T]/dt
     rDY[36] = (DNA_synthesis - Negative_regulation_of_DNA_synthesis) / cell; // d[ORI]/dt
     rDY[37] = (PDS1_synthesis - degradation_0 - Assoc_with_ESP1_to_form_PE + Disso_from_PE) / cell; // d[PDS1]/dt
     rDY[38] = (-Degradation_of_PDS1_in_PE + Assoc_with_ESP1_to_form_PE - Disso_from_PE) / cell; // d[PE]/dt
     rDY[39] = (PPX_synthesis - degradation) / cell; // d[PPX]/dt
     rDY[40] = (Assoc_with_NET1_to_form_RENT - Dissoc_from_RENT - RENT_phosphorylation + dephosphorylation_0 - Degradation_of_NET1_in_RENT - Degradation_of_CDC14_in_RENT) / cell; // d[RENT]/dt
     rDY[41] = (Assoc_with_NET1P_to_form_RENTP - Dissoc_from_RENP + RENT_phosphorylation - dephosphorylation_0 - Degradation_of_NET1P_in_RENTP - Degradation_of_CDC14_in_RENTP) / cell; // d[RENTP]/dt
-    rDY[42] = (SBF - rY[42]) / cell; // d[SBF]/dt
+    rDY[42] = (SBF - rY[42]) * 10.0 / cell; // d[SBF]/dt
     rDY[43] = (Synthesis_of_SIC1 - Phosphorylation_of_SIC1 + Dephosphorylation_of_SIC1 - Assoc_of_CLB2_and_SIC1 + Dissoc_of_CLB2SIC1_complex - Assoc_of_CLB5_and_SIC1 + Dissoc_of_CLB5SIC1 + Degradation_of_CLB2_in_C2 + Degradation_of_CLB5_in_C5) / cell; // d[SIC1]/dt
     rDY[44] = (Phosphorylation_of_SIC1 - Dephosphorylation_of_SIC1 - Fast_Degradation_of_SIC1P + Degradation_of_CLB2_in_C2P + Degradation_of_CLB5_in_C5P) / cell; // d[SIC1P]/dt
-    rDY[45] = (SIC1T - rY[45]) / cell; // d[SIC1T]/dt
+    rDY[45] = (SIC1T - rY[45]) * 10.0 / cell; // d[SIC1T]/dt
     rDY[46] = (Spindle_formation - Spindle_disassembly) / cell; // d[SPN]/dt
     rDY[47] = (Synthesis_of_SWI5 - Degradation_of_SWI5 + Activation_of_SWI5 - Inactivation_of_SWI5) / cell; // d[SWI5]/dt
     rDY[48] = (-Degradation_of_SWI5P - Activation_of_SWI5 + Inactivation_of_SWI5) / cell; // d[SWI5P]/dt
@@ -849,7 +794,7 @@ double Chen2004SbmlOdeSystem::ProcessEvents(double time, const std::vector<doubl
     double min_dist = std::numeric_limits<double>::max();
     double event_dist = min_dist;
 
-    // EVENT: sm::lt(CLB2 + CLB5 - KEZ2, 0.0)
+    // EVENT: reset ORI
     event_dist = (0.0) - (CLB2 + CLB5 - KEZ2) - std::numeric_limits<double>::epsilon();
 
     // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
@@ -884,7 +829,7 @@ double Chen2004SbmlOdeSystem::ProcessEvents(double time, const std::vector<doubl
     {
         eventsSatisfied[0] = false; // Flag the condition false
     }
-    // EVENT: sm::gt(ORI - 1.0, 0.0)
+    // EVENT: start DNA synthesis
     event_dist = (ORI - 1.0) - (0.0) - std::numeric_limits<double>::epsilon();
 
     // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
@@ -919,7 +864,7 @@ double Chen2004SbmlOdeSystem::ProcessEvents(double time, const std::vector<doubl
     {
         eventsSatisfied[1] = false; // Flag the condition false
     }
-    // EVENT: sm::gt(SPN - 1.0, 0.0)
+    // EVENT: spindle checkpoint
     event_dist = (SPN - 1.0) - (0.0) - std::numeric_limits<double>::epsilon();
 
     // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
@@ -955,7 +900,7 @@ double Chen2004SbmlOdeSystem::ProcessEvents(double time, const std::vector<doubl
     {
         eventsSatisfied[2] = false; // Flag the condition false
     }
-    // EVENT: sm::lt(CLB2 - KEZ, 0.0)
+    // EVENT: cell division
     event_dist = (0.0) - (CLB2 - KEZ) - std::numeric_limits<double>::epsilon();
 
     // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered

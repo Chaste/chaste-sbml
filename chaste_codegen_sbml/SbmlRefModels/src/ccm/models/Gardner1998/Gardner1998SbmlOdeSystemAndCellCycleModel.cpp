@@ -18,11 +18,11 @@ Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem(std::vector<double> stateVari
     Cell = 1.0;
 
     // STATE VARIABLES:
-    C = 0.0; // cyclin
-    X = 0.0; // protease
-    M = 0.0; // cdc2k
-    Y = 1.0; // cyclin inhibitor
-    Z = 1.0; // complex inhibitor-cyclin
+    C = 0.0;
+    X = 0.0;
+    M = 0.0;
+    Y = 1.0;
+    Z = 1.0;
 
 
     SetDefaultInitialCondition(0, C);
@@ -38,6 +38,7 @@ Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem(std::vector<double> stateVari
         M = stateVariables[2];
         Y = stateVariables[3];
         Z = stateVariables[4];
+
     }
     else if (stateVariables.size() != 0)
     {
@@ -52,8 +53,6 @@ Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem(std::vector<double> stateVari
 
     // STATE PARAMETERS:
 
-    V1 = 0.0;
-    V3 = 0.0;
 
     V1 = C * V1p * std::pow(C + K6, -1.0);
     V3 = M * V3p;
@@ -77,25 +76,19 @@ void Gardner1998SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
     Y = rY[3];
     Z = rY[4];
 
-    // STATE PARAMETERS:
 
-    V1 = GetParameter("V1");
-    V3 = GetParameter("V3");
+    // STATE PARAMETERS:
+    V1 = C * V1p * std::pow(C + K6, -1.0);
+    V3 = M * V3p;
+
+
+    SetParameter("V1", V1);
+    SetParameter("V3", V3);
 }
 
 void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
     RefreshState(rY);
-
-    // RULES:
-
-    V1 = C * V1p * std::pow(C + K6, -1.0);
-    V3 = M * V3p;
-
-    // UPDATE STATE PARAMETERS:
-
-    SetParameter("V1", V1);
-    SetParameter("V3", V3);
 
     // REACTIONS:
 
