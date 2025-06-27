@@ -24,7 +24,7 @@ namespace sm = sbmlmath;
     // STATE VARIABLES:
 {% for sp in species %}
 {% if sp["has_ode"] is true() %}
-    {{ sp["id"] }} = {{ sp["concentration"] }}; // {{ sp["name"] }}
+    {{ sp["id"] }} = {{ sp["concentration"] }};
 {% endif %}
 {% endfor %}
 
@@ -43,8 +43,14 @@ namespace sm = sbmlmath;
     if (stateVariables.size() == {{ num_state_vars }})
     {
 {% for sp in species %}
-{% if sp["is_state_variable"] is true() %}
+{% if sp["has_ode"] is true() %}
         {{ sp["id"] }} = stateVariables[{{ sp["state_variable_index"] }}];
+{% endif %}
+{% endfor %}
+
+{% for rule in rules %}
+{% if rule["is_state_variable"] is true() %}
+    {{ rule["lhs"] }} = {{ rule["rhs"] }};
 {% endif %}
 {% endfor %}
     }
@@ -61,19 +67,19 @@ namespace sm = sbmlmath;
 
     // STATE PARAMETERS:
 {% for sp in species %}
-{% if sp["is_state_parameter"] is true() %}
+{% if sp["is_state_parameter"] is true() and sp["has_rule"] is false() %}
     {{ sp["id"] }} = {{ sp["concentration"] }};
 {% endif %}
 {% endfor %}
 
 {% for parameter in parameters %}
-{% if parameter["is_state_parameter"] is true() %}
+{% if parameter["is_state_parameter"] is true() and parameter["has_rule"] is false() %}
     {{ parameter["id"] }} = {{ parameter["value"] }};
 {% endif %}
 {% endfor %}
 
 {% for rule in rules %}
-{% if rule["is_state_variable"] is false() %}
+{% if rule["is_state_parameter"] is true() %}
     {{ rule["lhs"] }} = {{ rule["rhs"] }};
 {% endif %}
 {% endfor %}
@@ -110,38 +116,19 @@ void {{ ode_class_name }}::RefreshState(const std::vector<double> &rY)
 {% endif %}
 {% endfor %}
 
-    // STATE PARAMETERS:
-{% for sp in species %}
-{% if sp["is_state_parameter"] is true() %}
-    {{ sp["id"] }} = GetParameter("{{ sp['id'] }}");
-{% endif %}
-{% endfor %}
-
-{% for param in parameters %}
-{% if param["is_state_parameter"] is true() %}
-    {{ param["id"] }} = GetParameter("{{ param['id'] }}");
-{% endif %}
-{% endfor %}
-}
-
-void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
-{
-    RefreshState(rY);
-
-    // RULES:
 {% for rule in rules %}
 {% if rule["is_state_variable"] is true() %}
     {{ rule["lhs"] }} = {{ rule["rhs"] }};
 {% endif %}
 {% endfor %}
 
+    // STATE PARAMETERS:
 {% for rule in rules %}
 {% if rule["is_state_variable"] is false() %}
     {{ rule["lhs"] }} = {{ rule["rhs"] }};
 {% endif %}
 {% endfor %}
 
-    // UPDATE STATE PARAMETERS:
 {% for sp in species %}
 {% if sp["is_state_parameter"] is true() %}
     SetParameter("{{ sp['id'] }}", {{ sp['id'] }});
@@ -153,6 +140,11 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
     SetParameter("{{ param['id'] }}", {{ param['id'] }});
 {% endif %}
 {% endfor %}
+}
+
+void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
+{
+    RefreshState(rY);
 
 {% if reactions %}
     // REACTIONS:
@@ -194,7 +186,7 @@ double {{ ode_class_name }}::ProcessEvents(double time, const std::vector<double
     double event_dist = min_dist;
 
 {% for event in events %}
-    // EVENT: {{ event["trigger"] }}
+    // EVENT: {{ event["name"] }}
     event_dist = {{ event["distance"] }};
 
     // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered

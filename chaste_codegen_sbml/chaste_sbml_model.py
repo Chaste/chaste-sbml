@@ -302,6 +302,7 @@ class ChasteSbmlModel:
         """
         event_dicts = []
         for event in self._events:
+            name = event.getName()
             trigger_math = event.getTrigger().getMath()
             trigger_formula = self._convert_ast_formula(trigger_math)
 
@@ -384,9 +385,10 @@ class ChasteSbmlModel:
 
             event_dicts.append(
                 {
-                    "trigger": trigger_formula,
                     "assignments": assignment_formulas,
                     "distance": trigger_distance,
+                    "name": name,
+                    "trigger": trigger_formula,
                 }
             )
         return event_dicts
@@ -437,9 +439,12 @@ class ChasteSbmlModel:
             is_state_parameter = self._is_state_parameter(param_id)
             state_parameter_index = self._get_state_parameter_index(param_id)
 
+            has_rule = param_id in self._rules_dict
+
             parameter_dicts.append(
                 {
                     "id": param_id,
+                    "has_rule": has_rule,
                     "is_state_parameter": is_state_parameter,
                     "name": name,
                     "state_parameter_index": state_parameter_index,
@@ -504,12 +509,14 @@ class ChasteSbmlModel:
             lhs = rule.getVariable()
             rhs = self._convert_str_formula(rule.getFormula())
             is_state_variable = self._is_state_variable(lhs)
+            is_state_parameter = self._is_state_parameter(lhs)
 
             rule_dict = {
                 "id": rule_id,
                 "name": name,
                 "rhs": rhs,
                 "lhs": lhs,
+                "is_state_parameter": is_state_parameter,
                 "is_state_variable": is_state_variable,
             }
             rule_dicts.append(rule_dict)
@@ -569,7 +576,7 @@ class ChasteSbmlModel:
                 elif species_id in self._rules_dict:
                     # Species defined by algebraic rules
                     has_rule = True
-                    rhs = f"({species_id} - rY[{state_variable_index}]) / {comp_id}"
+                    rhs = f"({species_id} - rY[{state_variable_index}]) * 10.0 / {comp_id}"
 
                 # TODO: Handle time scaling
                 # if time_multiplier != 1.0:

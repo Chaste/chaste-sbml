@@ -1,6 +1,6 @@
 import logging
 
-from chaste_codegen_sbml._utils import varname_staggercase, varname_sanitize
+from chaste_codegen_sbml._utils import varname_sanitize, varname_staggercase
 
 logger = logging.getLogger(__name__)
 
