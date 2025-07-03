@@ -78,6 +78,230 @@ class TestTysonNovak2001Sbml : public AbstractCellBasedTestSuite
 private:
     const unsigned ODE_SIZE = 8u;
 
+    void RunOdeWithSolver(AbstractIvpOdeSolver &rSolver, const std::string solverName)
+    {
+        try
+        {
+            // Solve system using solver
+            TysonNovak2001SbmlOdeSystem ode_system;
+
+            const double max_step = 0.01;
+            const double sampling_interval = 0.01;
+
+            const double run_length = 200.0;
+            double start_time = 0.0;
+            double end_time = start_time + run_length;
+
+            std::vector<double> initial_conditions;
+            OdeSolution ode_solution;
+
+            std::vector<std::vector<double>> solutions;
+            std::vector<double> times;
+
+            // Run ODE until it stops, then start again with updated initial conditions
+            for (unsigned i = 0; i < 2; i++)
+            {
+                initial_conditions = ode_system.GetInitialConditions();
+
+                Timer::Reset();
+                ode_solution = rSolver.Solve(&ode_system, initial_conditions, start_time, end_time, max_step, sampling_interval);
+                Timer::Print(std::to_string(i) + ". Tyson Novak (" + solverName + ")");
+
+                // ODE should have stopped
+                TS_ASSERT_EQUALS(rSolver.StoppingEventOccurred(), true);
+
+                // Collate solutions and times from all runs
+                solutions.insert(solutions.end(), ode_solution.rGetSolutions().begin(), ode_solution.rGetSolutions().end());
+                times.insert(times.end(), ode_solution.rGetTimes().begin(), ode_solution.rGetTimes().end());
+
+                // Check first run
+                if (i == 0)
+                {
+                    // Check that the ODE stopped at the right time
+                    TS_ASSERT_DELTA(ode_solution.rGetTimes().back(), 103.80, 1e-2);
+
+                    // Compare solutions for first run with Tellurium values
+                    for (unsigned j = 0; j < ODE_SIZE; j++)
+                    {
+                        std::vector<double> values;
+                        for (unsigned k = 0; k < solutions.size(); k++)
+                        {
+                            values.push_back(solutions[k][j]);
+                        }
+                        double min_val = st::min(values);
+                        double max_val = st::max(values);
+                        double mean_val = st::mean(values);
+                        double std_val = st::stdev(values);
+                        double q1_val = st::quantile(values, 0.25);
+                        double q2_val = st::quantile(values, 0.5);
+                        double q3_val = st::quantile(values, 0.75);
+
+                        // Compare with values from Tellurium
+                        if (j == 0) // CycBt
+                        {
+                            TS_ASSERT_DELTA(min_val, 0.0010, 1e-4);
+                            TS_ASSERT_DELTA(max_val, 0.6493, 1e-2);
+                            TS_ASSERT_DELTA(mean_val, 0.1962, 1e-2);
+                            TS_ASSERT_DELTA(std_val, 0.2210, 1e-2);
+                            TS_ASSERT_DELTA(q1_val, 0.0386, 1e-3);
+                            TS_ASSERT_DELTA(q2_val, 0.0393, 1e-3);
+                            TS_ASSERT_DELTA(q3_val, 0.3806, 1e-2);
+                        }
+                        else if (j == 1) // Cdc20a
+                        {
+                            TS_ASSERT_DELTA(min_val, 0.00000107, 1e-5); // Matlab is -5.51016e-07
+                            TS_ASSERT_DELTA(max_val, 0.3022, 1e-2);
+                            TS_ASSERT_DELTA(mean_val, 0.0153, 1e-3);
+                            TS_ASSERT_DELTA(std_val, 0.0527, 1e-3);
+                            TS_ASSERT_DELTA(q1_val, 0.00000137, 1e-7);
+                            TS_ASSERT_DELTA(q2_val, 0.00000174, 1e-7);
+                            TS_ASSERT_DELTA(q3_val, 0.000571, 1e-5);
+                        }
+                        else if (j == 2) // Cdh1
+                        {
+                            TS_ASSERT_DELTA(min_val, 0.001, 1e-3);
+                            TS_ASSERT_DELTA(max_val, 0.9981, 1e-2);
+                            TS_ASSERT_DELTA(mean_val, 0.5790, 1e-2);
+                            TS_ASSERT_DELTA(std_val, 0.4666, 1e-2);
+                            TS_ASSERT_DELTA(q1_val, 0.00685, 1e-4);
+                            TS_ASSERT_DELTA(q2_val, 0.9710, 1e-2);
+                            TS_ASSERT_DELTA(q3_val, 0.9953, 1e-2);
+                        }
+                        else if (j == 3) // m
+                        {
+                            TS_ASSERT_DELTA(min_val, 0.50, 1e-2);
+                            TS_ASSERT_DELTA(max_val, 0.8122, 1e-2);
+                            TS_ASSERT_DELTA(mean_val, 0.6444, 1e-2);
+                            TS_ASSERT_DELTA(std_val, 0.0900, 1e-3);
+                            TS_ASSERT_DELTA(q1_val, 0.5653, 1e-2);
+                            TS_ASSERT_DELTA(q2_val, 0.6385, 1e-2);
+                            TS_ASSERT_DELTA(q3_val, 0.7205, 1e-2);
+                        }
+                        else if (j == 4) // Cdc20t
+                        {
+                            TS_ASSERT_DELTA(min_val, 0.001, 1e-3);
+                            TS_ASSERT_DELTA(max_val, 1.5116, 1e-2);
+                            TS_ASSERT_DELTA(mean_val, 0.3198, 1e-2);
+                            TS_ASSERT_DELTA(std_val, 0.4912, 1e-2);
+                            TS_ASSERT_DELTA(q1_val, 0.0463, 1e-3);
+                            TS_ASSERT_DELTA(q2_val, 0.0497, 1e-3);
+                            TS_ASSERT_DELTA(q3_val, 0.3572, 1e-2);
+                        }
+                        else if (j == 5) // IEP
+                        {
+                            TS_ASSERT_DELTA(min_val, 0.000635, 1e-5);
+                            TS_ASSERT_DELTA(max_val, 0.5554, 1e-2);
+                            TS_ASSERT_DELTA(mean_val, 0.1149, 1e-2);
+                            TS_ASSERT_DELTA(std_val, 0.1879, 1e-2);
+                            TS_ASSERT_DELTA(q1_val, 0.00070, 1e-5);
+                            TS_ASSERT_DELTA(q2_val, 0.000930, 1e-5);
+                            TS_ASSERT_DELTA(q3_val, 0.18219, 1e-2);
+                        }
+                        else if (j == 6) // CKIt
+                        {
+                            TS_ASSERT_DELTA(min_val, 0.001, 1e-3);
+                            TS_ASSERT_DELTA(max_val, 0.7162, 1e-2);
+                            TS_ASSERT_DELTA(mean_val, 0.2038, 1e-2);
+                            TS_ASSERT_DELTA(std_val, 0.1938, 1e-2);
+                            TS_ASSERT_DELTA(q1_val, 0.0382, 1e-3);
+                            TS_ASSERT_DELTA(q2_val, 0.1033, 1e-2);
+                            TS_ASSERT_DELTA(q3_val, 0.3586, 1e-2);
+                        }
+                        else if (j == 7) // SK
+                        {
+                            TS_ASSERT_DELTA(min_val, 0.001, 1e-3);
+                            TS_ASSERT_DELTA(max_val, 0.4464, 1e-2);
+                            TS_ASSERT_DELTA(mean_val, 0.0809, 1e-3);
+                            TS_ASSERT_DELTA(std_val, 0.1006, 1e-2);
+                            TS_ASSERT_DELTA(q1_val, 0.0160, 1e-3);
+                            TS_ASSERT_DELTA(q2_val, 0.0417, 1e-3);
+                            TS_ASSERT_DELTA(q3_val, 0.0910, 1e-3);
+                        }
+                    }
+
+                    // Compare derived quantities for first run with Tellurium values
+                    ode_solution.CalculateDerivedQuantitiesAndParameters(&ode_system);
+                    for (const std::string name : {"CycB", "Trimer", "Mad"})
+                    {
+                        std::vector<double> values = ode_solution.GetAnyVariable(name);
+                        double min_val = st::min(values);
+                        double max_val = st::max(values);
+                        double mean_val = st::mean(values);
+                        double std_val = st::stdev(values);
+                        double q1_val = st::quantile(values, 0.25);
+                        double q2_val = st::quantile(values, 0.5);
+                        double q3_val = st::quantile(values, 0.75);
+
+                        if (name == "CycB")
+                        {
+                            TS_ASSERT_DELTA(min_val, 0.000047, 1e-5);
+                            TS_ASSERT_DELTA(max_val, 0.6290, 1e-2);
+                            TS_ASSERT_DELTA(mean_val, 0.1572, 1e-2);
+                            TS_ASSERT_DELTA(std_val, 0.2270, 1e-2);
+                            TS_ASSERT_DELTA(q1_val, 0.000119, 1e-5);
+                            TS_ASSERT_DELTA(q2_val, 0.000589, 1e-5);
+                            TS_ASSERT_DELTA(q3_val, 0.3423, 1e-2);
+                        }
+                        else if (name == "Trimer")
+                        {
+                            TS_ASSERT_DELTA(min_val, 0.000382, 1e-5);
+                            TS_ASSERT_DELTA(max_val, 0.09026, 1e-3);
+                            TS_ASSERT_DELTA(mean_val, 0.0390, 1e-3);
+                            TS_ASSERT_DELTA(std_val, 0.0138, 1e-3);
+                            TS_ASSERT_DELTA(q1_val, 0.03488, 1e-3);
+                            TS_ASSERT_DELTA(q2_val, 0.03850, 1e-3);
+                            TS_ASSERT_DELTA(q3_val, 0.03862, 1e-3);
+                        }
+                        else if (name == "Mad")
+                        {
+                            TS_ASSERT_DELTA(min_val, 1.0, 1e-3);
+                            TS_ASSERT_DELTA(max_val, 1.0, 1e-3);
+                            TS_ASSERT_DELTA(mean_val, 1.0, 1e-3);
+                            TS_ASSERT_DELTA(std_val, 0.0, 1e-3);
+                            TS_ASSERT_DELTA(q1_val, 1.0, 1e-3);
+                            TS_ASSERT_DELTA(q2_val, 1.0, 1e-3);
+                            TS_ASSERT_DELTA(q3_val, 1.0, 1e-3);
+                        }
+                    }
+                }
+
+                // Update time for next run
+                start_time = ode_solution.rGetTimes().back();
+                end_time = start_time + run_length;
+            }
+            // Check that the last run stopped at the right time
+            TS_ASSERT_DELTA(ode_solution.rGetTimes().back(), 250.32, 1e-2);
+
+            // The following code provides nice output for gnuplot
+            // use the command
+            // plot "tysonnovak_cvode.dat" u 1:2 etc. for the various species...
+            // or
+            // plot "tysonnovak_cvode.dat" u 1:2, "" u 1:3, "" u 1:4 etc. for all species
+
+            OutputFileHandler handler("");
+            out_stream file = handler.OpenOutputFile("tysonnovak_" + solverName + ".dat");
+            for (unsigned i = 0; i < solutions.size(); i++)
+            {
+                (*file) << times[i];
+                for (unsigned j = 0; j < solutions[i].size(); j++)
+                {
+                    (*file) << "\t" << solutions[i][j];
+                }
+                (*file) << "\n"
+                        << std::flush;
+            }
+            file->close();
+        }
+        catch (Exception &e)
+        {
+            throw e;
+        }
+        catch (...)
+        {
+            exit(EXIT_FAILURE);
+        }
+    }
+
 public:
     void TestCellCycleModel()
     {
@@ -99,7 +323,7 @@ public:
         TS_ASSERT_EQUALS(p_ccm_0->CanCellTerminallyDifferentiate(), false);
 
         p_cell_0->InitialiseCellCycleModel();
-        p_ccm_0->SetDt(0.1);
+        p_ccm_0->SetDt(0.01);
 
         // Create another cell with a cell-cycle model that uses a BackwardEulerIvpOdeSolver
         auto solver = CellCycleModelOdeSolver<TysonNovak2001SbmlCellCycleModel, BackwardEulerIvpOdeSolver>::Instance();
@@ -117,55 +341,53 @@ public:
 
         p_cell_1->InitialiseCellCycleModel();
         TS_ASSERT_EQUALS(p_ccm_1->GetDt(), 0.0001); // Timestep for non-adaptive solvers defaults to 0.0001
-        p_ccm_1->SetDt(0.1);
+        p_ccm_1->SetDt(0.01);
 
         // Test the cell is ready to divide at the right time
         double standard_divide_time = 103.80;
         double tolerance = 0.05;
-
         for (unsigned i = 0; i < num_timesteps / 2; i++)
         {
             p_simulation_time->IncrementTimeOneStep();
             double time = p_simulation_time->GetTime();
 
-            bool result_0 = p_ccm_0->ReadyToDivide();
-            bool result_1 = p_ccm_1->ReadyToDivide();
+            bool division_ready_0 = p_ccm_0->ReadyToDivide();
+            bool division_ready_1 = p_ccm_1->ReadyToDivide();
 
             if (time > standard_divide_time + tolerance)
             {
-                TS_ASSERT_EQUALS(result_0, true);
-                TS_ASSERT_EQUALS(result_1, true);
-                break;
+                TS_ASSERT_EQUALS(division_ready_0, true);
+                TS_ASSERT_EQUALS(division_ready_1, true);
             }
             else if (time < standard_divide_time - tolerance)
             {
-                TS_ASSERT_EQUALS(result_0, false);
-                TS_ASSERT_EQUALS(result_1, false);
+                TS_ASSERT_EQUALS(division_ready_0, false);
+                TS_ASSERT_EQUALS(division_ready_1, false);
             }
         }
 
         // Check CVODE vs BackwardEuler solution
         std::vector<double> proteins_0 = p_ccm_0->GetProteinConcentrations();
         TS_ASSERT_EQUALS(proteins_0.size(), ODE_SIZE);
-        TS_ASSERT_DELTA(proteins_0[0], 0.1788, 1e-4); // CycBt
+        TS_ASSERT_DELTA(proteins_0[0], 0.1789, 1e-4); // CycBt
         TS_ASSERT_DELTA(proteins_0[1], 0.3039, 1e-4); // Cdc20a
-        TS_ASSERT_DELTA(proteins_0[2], 0.4464, 1e-4); // Cdh1
+        TS_ASSERT_DELTA(proteins_0[2], 0.4455, 1e-4); // Cdh1
         TS_ASSERT_DELTA(proteins_0[3], 0.8125, 1e-4); // m
-        TS_ASSERT_DELTA(proteins_0[4], 1.1625, 1e-4); // Cdc20t
+        TS_ASSERT_DELTA(proteins_0[4], 1.1626, 1e-4); // Cdc20t
         TS_ASSERT_DELTA(proteins_0[5], 0.5465, 1e-4); // IEP
         TS_ASSERT_DELTA(proteins_0[6], 0.0800, 1e-4); // CKIt
-        TS_ASSERT_DELTA(proteins_0[7], 0.0818, 1e-4); // SK
+        TS_ASSERT_DELTA(proteins_0[7], 0.0816, 1e-4); // SK
 
         std::vector<double> proteins_1 = p_ccm_1->GetProteinConcentrations();
         TS_ASSERT_EQUALS(proteins_1.size(), ODE_SIZE);
-        TS_ASSERT_DELTA(proteins_1[0], 0.1788, 1e-2); // CycBt
-        TS_ASSERT_DELTA(proteins_1[1], 0.3039, 1e-2); // Cdc20a
-        TS_ASSERT_DELTA(proteins_1[2], 0.4464, 1e-1); // Cdh1 ***
-        TS_ASSERT_DELTA(proteins_1[3], 0.8125, 1e-2); // m
-        TS_ASSERT_DELTA(proteins_1[4], 1.1625, 1e-2); // Cdc20t
-        TS_ASSERT_DELTA(proteins_1[5], 0.5465, 1e-2); // IEP
-        TS_ASSERT_DELTA(proteins_1[6], 0.0800, 1e-2); // CKIt
-        TS_ASSERT_DELTA(proteins_1[7], 0.0818, 1e-2); // SK
+        TS_ASSERT_DELTA(proteins_1[0], proteins_0[0], 1e-2); // CycBt
+        TS_ASSERT_DELTA(proteins_1[1], proteins_0[1], 1e-2); // Cdc20a
+        TS_ASSERT_DELTA(proteins_1[2], proteins_0[2], 1e-2); // Cdh1
+        TS_ASSERT_DELTA(proteins_1[3], proteins_0[3], 1e-2); // m
+        TS_ASSERT_DELTA(proteins_1[4], proteins_0[4], 1e-2); // Cdc20t
+        TS_ASSERT_DELTA(proteins_1[5], proteins_0[5], 1e-2); // IEP
+        TS_ASSERT_DELTA(proteins_1[6], proteins_0[6], 1e-2); // CKIt
+        TS_ASSERT_DELTA(proteins_1[7], proteins_0[7], 1e-2); // SK
 
         // Test for a mutant cell
         TS_ASSERT_EQUALS(p_ccm_0->ReadyToDivide(), true);
@@ -181,26 +403,25 @@ public:
         TS_ASSERT_EQUALS(p_ccm_2->ReadyToDivide(), false);
 
         // Test the cell is ready to divide at the right time
-        standard_divide_time = 243.75;
-        tolerance = 0.05;
+        standard_divide_time = 243.69;
         for (unsigned i = 0; i < num_timesteps / 2; i++)
         {
             p_simulation_time->IncrementTimeOneStep();
             double time = p_simulation_time->GetTime();
 
-            bool result_0 = p_ccm_0->ReadyToDivide();
-            bool result_2 = p_ccm_2->ReadyToDivide();
+            bool division_ready_0 = p_ccm_0->ReadyToDivide();
+            bool division_ready_2 = p_ccm_2->ReadyToDivide();
 
-            if (time > standard_divide_time + tolerance)
+            if (time > standard_divide_time)
             {
-                TS_ASSERT_EQUALS(result_0, true);
-                TS_ASSERT_EQUALS(result_2, true);
+                TS_ASSERT_EQUALS(division_ready_0, true);
+                TS_ASSERT_EQUALS(division_ready_2, true);
                 break;
             }
-            else if (time < standard_divide_time - tolerance)
+            else if (time < standard_divide_time)
             {
-                TS_ASSERT_EQUALS(result_0, false);
-                TS_ASSERT_EQUALS(result_2, false);
+                TS_ASSERT_EQUALS(division_ready_0, false);
+                TS_ASSERT_EQUALS(division_ready_2, false);
             }
         }
 
@@ -208,24 +429,24 @@ public:
         proteins_0 = p_ccm_0->GetProteinConcentrations();
         TS_ASSERT_EQUALS(proteins_0.size(), ODE_SIZE);
         TS_ASSERT_DELTA(proteins_0[0], 0.1153, 1e-4); // CycBt
-        TS_ASSERT_DELTA(proteins_0[1], 0.2756, 1e-4); // Cdc20a
-        TS_ASSERT_DELTA(proteins_0[2], 0.0395, 1e-4); // Cdh1
-        TS_ASSERT_DELTA(proteins_0[3], 1.5114, 1e-4); // m
-        TS_ASSERT_DELTA(proteins_0[4], 0.4786, 1e-4); // Cdc20t
-        TS_ASSERT_DELTA(proteins_0[5], 0.5203, 1e-4); // IEP
+        TS_ASSERT_DELTA(proteins_0[1], 0.2764, 1e-4); // Cdc20a
+        TS_ASSERT_DELTA(proteins_0[2], 0.0397, 1e-4); // Cdh1
+        TS_ASSERT_DELTA(proteins_0[3], 1.5108, 1e-4); // m
+        TS_ASSERT_DELTA(proteins_0[4], 0.4814, 1e-4); // Cdc20t
+        TS_ASSERT_DELTA(proteins_0[5], 0.5205, 1e-4); // IEP
         TS_ASSERT_DELTA(proteins_0[6], 0.0155, 1e-4); // CKIt
         TS_ASSERT_DELTA(proteins_0[7], 0.9831, 1e-4); // SK
 
         std::vector<double> proteins_2 = p_ccm_2->GetProteinConcentrations();
         TS_ASSERT_EQUALS(proteins_2.size(), ODE_SIZE);
-        TS_ASSERT_DELTA(proteins_2[0], 0.1153, 1e-3); // CycBt
-        TS_ASSERT_DELTA(proteins_2[1], 0.2756, 1e-3); // Cdc20a
-        TS_ASSERT_DELTA(proteins_2[2], 0.0395, 1e-3); // Cdh1
-        TS_ASSERT_DELTA(proteins_2[3], 1.5114, 1e-3); // m
-        TS_ASSERT_DELTA(proteins_2[4], 0.4786, 1e-3); // Cdc20t
-        TS_ASSERT_DELTA(proteins_2[5], 0.5203, 1e-3); // IEP
-        TS_ASSERT_DELTA(proteins_2[6], 0.0155, 1e-3); // CKIt
-        TS_ASSERT_DELTA(proteins_2[7], 0.9831, 1e-3); // SK
+        TS_ASSERT_DELTA(proteins_2[0], proteins_0[0], 1e-4); // CycBt
+        TS_ASSERT_DELTA(proteins_2[1], proteins_0[1], 1e-4); // Cdc20a
+        TS_ASSERT_DELTA(proteins_2[2], proteins_0[2], 1e-4); // Cdh1
+        TS_ASSERT_DELTA(proteins_2[3], proteins_0[3], 1e-4); // m
+        TS_ASSERT_DELTA(proteins_2[4], proteins_0[4], 1e-4); // Cdc20t
+        TS_ASSERT_DELTA(proteins_2[5], proteins_0[5], 1e-4); // IEP
+        TS_ASSERT_DELTA(proteins_2[6], proteins_0[6], 1e-4); // CKIt
+        TS_ASSERT_DELTA(proteins_2[7], proteins_0[7], 1e-4); // SK
     }
 
     void TestOdeArchiving()
@@ -349,452 +570,16 @@ public:
     void TestOdeWithChasteSolver()
     {
         // Solve system using backward Euler solver
-        TysonNovak2001SbmlOdeSystem ode_system;
-
         BackwardEulerIvpOdeSolver backward_euler_solver(ODE_SIZE);
-
-        const double time_step = 0.01;
-        const double sampling_interval = 0.01;
-
-        const double run_length = 200.0;
-        double start_time = 0.0;
-        double end_time = start_time + run_length;
-
-        std::vector<double> initial_conditions;
-        OdeSolution ode_solution;
-
-        std::vector<std::vector<double>> solutions;
-        std::vector<double> times;
-
-        // Run ODE until it stops, then start again with updated initial conditions
-        for (unsigned i = 0; i < 2; i++)
-        {
-            initial_conditions = ode_system.GetInitialConditions();
-
-            Timer::Reset();
-            ode_solution = backward_euler_solver.Solve(&ode_system, initial_conditions, start_time, end_time, time_step, sampling_interval);
-            Timer::Print(std::to_string(i) + ". Tyson Novak Backward Euler");
-
-            // ODE should have stopped
-            TS_ASSERT_EQUALS(backward_euler_solver.StoppingEventOccurred(), true);
-
-            // Collate solutions and times from all runs
-            solutions.insert(solutions.end(), ode_solution.rGetSolutions().begin(), ode_solution.rGetSolutions().end());
-            times.insert(times.end(), ode_solution.rGetTimes().begin(), ode_solution.rGetTimes().end());
-
-            // Check first run
-            if (i == 0)
-            {
-                // Check that the ODE stopped at the right time
-                TS_ASSERT_DELTA(ode_solution.rGetTimes().back(), 103.80, 0.05);
-
-                // Compare solutions for first run with Tellurium values
-                for (unsigned j = 0; j < ODE_SIZE; j++)
-                {
-                    std::vector<double> values;
-                    for (unsigned k = 0; k < solutions.size(); k++)
-                    {
-                        values.push_back(solutions[k][j]);
-                    }
-                    double min_val = st::min(values);
-                    double max_val = st::max(values);
-                    double mean_val = st::mean(values);
-                    double std_val = st::stdev(values);
-                    double q1_val = st::quantile(values, 0.25);
-                    double q2_val = st::quantile(values, 0.5);
-                    double q3_val = st::quantile(values, 0.75);
-
-                    // Compare with values from Tellurium
-                    if (j == 0) // CycBt
-                    {
-                        TS_ASSERT_DELTA(min_val, 0.0010, 1e-4);
-                        TS_ASSERT_DELTA(max_val, 0.6493, 1e-2);
-                        TS_ASSERT_DELTA(mean_val, 0.1962, 1e-2);
-                        TS_ASSERT_DELTA(std_val, 0.2210, 1e-2);
-                        TS_ASSERT_DELTA(q1_val, 0.0386, 1e-3);
-                        TS_ASSERT_DELTA(q2_val, 0.0393, 1e-3);
-                        TS_ASSERT_DELTA(q3_val, 0.3806, 1e-2);
-                    }
-                    else if (j == 1) // Cdc20a
-                    {
-                        TS_ASSERT_DELTA(min_val, 0.00000107, 1e-7);
-                        TS_ASSERT_DELTA(max_val, 0.3022, 1e-2);
-                        TS_ASSERT_DELTA(mean_val, 0.0153, 1e-3);
-                        TS_ASSERT_DELTA(std_val, 0.0527, 1e-3);
-                        TS_ASSERT_DELTA(q1_val, 0.00000137, 1e-7);
-                        TS_ASSERT_DELTA(q2_val, 0.00000174, 1e-7);
-                        TS_ASSERT_DELTA(q3_val, 0.000571, 1e-5);
-                    }
-                    else if (j == 2) // Cdh1
-                    {
-                        TS_ASSERT_DELTA(min_val, 0.001, 1e-3);
-                        TS_ASSERT_DELTA(max_val, 0.9981, 1e-2);
-                        TS_ASSERT_DELTA(mean_val, 0.5790, 1e-2);
-                        TS_ASSERT_DELTA(std_val, 0.4666, 1e-2);
-                        TS_ASSERT_DELTA(q1_val, 0.00685, 1e-4);
-                        TS_ASSERT_DELTA(q2_val, 0.9710, 1e-2);
-                        TS_ASSERT_DELTA(q3_val, 0.9953, 1e-2);
-                    }
-                    else if (j == 3) // m
-                    {
-                        TS_ASSERT_DELTA(min_val, 0.50, 1e-2);
-                        TS_ASSERT_DELTA(max_val, 0.8122, 1e-2);
-                        TS_ASSERT_DELTA(mean_val, 0.6444, 1e-2);
-                        TS_ASSERT_DELTA(std_val, 0.0900, 1e-3);
-                        TS_ASSERT_DELTA(q1_val, 0.5653, 1e-2);
-                        TS_ASSERT_DELTA(q2_val, 0.6385, 1e-2);
-                        TS_ASSERT_DELTA(q3_val, 0.7205, 1e-2);
-                    }
-                    else if (j == 4) // Cdc20t
-                    {
-                        TS_ASSERT_DELTA(min_val, 0.001, 1e-3);
-                        TS_ASSERT_DELTA(max_val, 1.5116, 1e-2);
-                        TS_ASSERT_DELTA(mean_val, 0.3198, 1e-2);
-                        TS_ASSERT_DELTA(std_val, 0.4912, 1e-2);
-                        TS_ASSERT_DELTA(q1_val, 0.0463, 1e-3);
-                        TS_ASSERT_DELTA(q2_val, 0.0497, 1e-3);
-                        TS_ASSERT_DELTA(q3_val, 0.3572, 1e-2);
-                    }
-                    else if (j == 5) // IEP
-                    {
-                        TS_ASSERT_DELTA(min_val, 0.000635, 1e-5);
-                        TS_ASSERT_DELTA(max_val, 0.5554, 1e-2);
-                        TS_ASSERT_DELTA(mean_val, 0.1149, 1e-2);
-                        TS_ASSERT_DELTA(std_val, 0.1879, 1e-2);
-                        TS_ASSERT_DELTA(q1_val, 0.00070, 1e-5);
-                        TS_ASSERT_DELTA(q2_val, 0.000930, 1e-5);
-                        TS_ASSERT_DELTA(q3_val, 0.18219, 1e-2);
-                    }
-                    else if (j == 6) // CKIt
-                    {
-                        TS_ASSERT_DELTA(min_val, 0.001, 1e-3);
-                        TS_ASSERT_DELTA(max_val, 0.7162, 1e-2);
-                        TS_ASSERT_DELTA(mean_val, 0.2038, 1e-2);
-                        TS_ASSERT_DELTA(std_val, 0.1938, 1e-2);
-                        TS_ASSERT_DELTA(q1_val, 0.0382, 1e-3);
-                        TS_ASSERT_DELTA(q2_val, 0.1033, 1e-2);
-                        TS_ASSERT_DELTA(q3_val, 0.3586, 1e-2);
-                    }
-                    else if (j == 7) // SK
-                    {
-                        TS_ASSERT_DELTA(min_val, 0.001, 1e-3);
-                        TS_ASSERT_DELTA(max_val, 0.4464, 1e-2);
-                        TS_ASSERT_DELTA(mean_val, 0.0809, 1e-3);
-                        TS_ASSERT_DELTA(std_val, 0.1006, 1e-2);
-                        TS_ASSERT_DELTA(q1_val, 0.0160, 1e-3);
-                        TS_ASSERT_DELTA(q2_val, 0.0417, 1e-3);
-                        TS_ASSERT_DELTA(q3_val, 0.0910, 1e-3);
-                    }
-                }
-
-                // Compare derived quantities for first run with Tellurium values
-                ode_solution.CalculateDerivedQuantitiesAndParameters(&ode_system);
-                for (const std::string name : {"CycB", "Trimer", "Mad"})
-                {
-                    std::vector<double> values = ode_solution.GetAnyVariable(name);
-                    double min_val = st::min(values);
-                    double max_val = st::max(values);
-                    double mean_val = st::mean(values);
-                    double std_val = st::stdev(values);
-                    double q1_val = st::quantile(values, 0.25);
-                    double q2_val = st::quantile(values, 0.5);
-                    double q3_val = st::quantile(values, 0.75);
-
-                    if (name == "CycB")
-                    {
-                        TS_ASSERT_DELTA(min_val, 0.000047, 1e-5);
-                        TS_ASSERT_DELTA(max_val, 0.6290, 1e-2);
-                        TS_ASSERT_DELTA(mean_val, 0.1572, 1e-2);
-                        TS_ASSERT_DELTA(std_val, 0.2270, 1e-2);
-                        TS_ASSERT_DELTA(q1_val, 0.000119, 1e-5);
-                        TS_ASSERT_DELTA(q2_val, 0.000589, 1e-5);
-                        TS_ASSERT_DELTA(q3_val, 0.3423, 1e-2);
-                    }
-                    else if (name == "Trimer")
-                    {
-                        TS_ASSERT_DELTA(min_val, 0.000382, 1e-5);
-                        TS_ASSERT_DELTA(max_val, 0.09026, 1e-3);
-                        TS_ASSERT_DELTA(mean_val, 0.0390, 1e-3);
-                        TS_ASSERT_DELTA(std_val, 0.0138, 1e-3);
-                        TS_ASSERT_DELTA(q1_val, 0.03488, 1e-3);
-                        TS_ASSERT_DELTA(q2_val, 0.03850, 1e-3);
-                        TS_ASSERT_DELTA(q3_val, 0.03862, 1e-3);
-                    }
-                    else if (name == "Mad")
-                    {
-                        TS_ASSERT_DELTA(min_val, 1.0, 1e-3);
-                        TS_ASSERT_DELTA(max_val, 1.0, 1e-3);
-                        TS_ASSERT_DELTA(mean_val, 1.0, 1e-3);
-                        TS_ASSERT_DELTA(std_val, 0.0, 1e-3);
-                        TS_ASSERT_DELTA(q1_val, 1.0, 1e-3);
-                        TS_ASSERT_DELTA(q2_val, 1.0, 1e-3);
-                        TS_ASSERT_DELTA(q3_val, 1.0, 1e-3);
-                    }
-                }
-            }
-
-            // Update time for next run
-            start_time = ode_solution.rGetTimes().back();
-            end_time = start_time + run_length;
-        }
-        // Check that the last run stopped at the right time
-        TS_ASSERT_DELTA(ode_solution.rGetTimes().back(), 250.35, 0.05);
-
-        // The following code provides nice output for gnuplot
-        // use the command
-        // plot "tysonnovak_backeuler.dat" u 1:2 etc. for the various species...
-        // or
-        // plot "tysonnovak_backeuler.dat" u 1:2, "" u 1:3, "" u 1:4 etc. for all species
-
-        // OutputFileHandler handler("");
-        // out_stream file = handler.OpenOutputFile("tysonnovak_backeuler.dat");
-        // for (unsigned i = 0; i < solutions.size(); i++)
-        // {
-        //     (*file) << times[i];
-        //     for (unsigned j = 0; j < solutions[i].size(); j++)
-        //     {
-        //         (*file) << "\t" << solutions[i][j];
-        //     }
-        //     (*file) << "\n"
-        //             << std::flush;
-        // }
-        // file->close();
+        RunOdeWithSolver(backward_euler_solver, "backward_euler");
     }
 
     void TestOdeWithCvodeSolver()
     {
-        try
-        {
-            // Solve system using CVODE solver
-            TysonNovak2001SbmlOdeSystem ode_system;
-
-            CvodeAdaptor cvode_solver;
-            cvode_solver.CheckForStoppingEvents();
-
-            const double max_step = 0.1;
-            const double sampling_interval = 0.01;
-
-            const double run_length = 200.0;
-            double start_time = 0.0;
-            double end_time = start_time + run_length;
-
-            std::vector<double> initial_conditions;
-            OdeSolution ode_solution;
-
-            std::vector<std::vector<double>> solutions;
-            std::vector<double> times;
-            std::vector<double> solution_sums(ODE_SIZE, 0.0);
-
-            // Run ODE until it stops, then start again with updated initial conditions
-            for (unsigned i = 0; i < 2; i++)
-            {
-                initial_conditions = ode_system.GetInitialConditions();
-
-                Timer::Reset();
-                ode_solution = cvode_solver.Solve(&ode_system, initial_conditions, start_time, end_time, max_step, sampling_interval);
-                Timer::Print(std::to_string(i) + ". Tyson Novak CVODE");
-
-                // ODE should have stopped
-                TS_ASSERT_EQUALS(cvode_solver.StoppingEventOccurred(), true);
-
-                // Collate solutions and times from all runs
-                solutions.insert(solutions.end(), ode_solution.rGetSolutions().begin(), ode_solution.rGetSolutions().end());
-                times.insert(times.end(), ode_solution.rGetTimes().begin(), ode_solution.rGetTimes().end());
-
-                // Check first run
-                if (i == 0)
-                {
-                    // Check that the ODE stopped at the right time
-                    TS_ASSERT_DELTA(ode_solution.rGetTimes().back(), 103.80, 0.05);
-
-                    // Check solutions for first run
-                    for (unsigned j = 0; j < ODE_SIZE; j++)
-                    {
-                        std::vector<double> values;
-                        for (unsigned k = 0; k < solutions.size(); k++)
-                        {
-                            values.push_back(solutions[k][j]);
-                        }
-                        double min_val = st::min(values);
-                        double max_val = st::max(values);
-                        double mean_val = st::mean(values);
-                        double std_val = st::stdev(values);
-                        double q1_val = st::quantile(values, 0.25);
-                        double q2_val = st::quantile(values, 0.5);
-                        double q3_val = st::quantile(values, 0.75);
-
-                        // Compare with values from Tellurium
-                        if (j == 0) // CycBt
-                        {
-                            TS_ASSERT_DELTA(min_val, 0.0010, 1e-4);
-                            TS_ASSERT_DELTA(max_val, 0.6493, 1e-2);
-                            TS_ASSERT_DELTA(mean_val, 0.1962, 1e-2);
-                            TS_ASSERT_DELTA(std_val, 0.2210, 1e-2);
-                            TS_ASSERT_DELTA(q1_val, 0.0386, 1e-3);
-                            TS_ASSERT_DELTA(q2_val, 0.0393, 1e-3);
-                            TS_ASSERT_DELTA(q3_val, 0.3806, 1e-2);
-                        }
-                        else if (j == 1) // Cdc20a
-                        {
-                            TS_ASSERT_DELTA(min_val, 0.00000107, 1e-5);
-                            TS_ASSERT_DELTA(max_val, 0.3022, 1e-2);
-                            TS_ASSERT_DELTA(mean_val, 0.0153, 1e-3);
-                            TS_ASSERT_DELTA(std_val, 0.0527, 1e-3);
-                            TS_ASSERT_DELTA(q1_val, 0.00000137, 1e-7);
-                            TS_ASSERT_DELTA(q2_val, 0.00000174, 1e-7);
-                            TS_ASSERT_DELTA(q3_val, 0.000571, 1e-5);
-                        }
-                        else if (j == 2) // Cdh1
-                        {
-                            TS_ASSERT_DELTA(min_val, 0.001, 1e-3);
-                            TS_ASSERT_DELTA(max_val, 0.9981, 1e-2);
-                            TS_ASSERT_DELTA(mean_val, 0.5790, 1e-2);
-                            TS_ASSERT_DELTA(std_val, 0.4666, 1e-2);
-                            TS_ASSERT_DELTA(q1_val, 0.00685, 1e-4);
-                            TS_ASSERT_DELTA(q2_val, 0.9710, 1e-2);
-                            TS_ASSERT_DELTA(q3_val, 0.9953, 1e-2);
-                        }
-                        else if (j == 3) // m
-                        {
-                            TS_ASSERT_DELTA(min_val, 0.50, 1e-2);
-                            TS_ASSERT_DELTA(max_val, 0.8122, 1e-2);
-                            TS_ASSERT_DELTA(mean_val, 0.6444, 1e-2);
-                            TS_ASSERT_DELTA(std_val, 0.0900, 1e-3);
-                            TS_ASSERT_DELTA(q1_val, 0.5653, 1e-2);
-                            TS_ASSERT_DELTA(q2_val, 0.6385, 1e-2);
-                            TS_ASSERT_DELTA(q3_val, 0.7205, 1e-2);
-                        }
-                        else if (j == 4) // Cdc20t
-                        {
-                            TS_ASSERT_DELTA(min_val, 0.001, 1e-3);
-                            TS_ASSERT_DELTA(max_val, 1.5116, 1e-2);
-                            TS_ASSERT_DELTA(mean_val, 0.3198, 1e-2);
-                            TS_ASSERT_DELTA(std_val, 0.4912, 1e-2);
-                            TS_ASSERT_DELTA(q1_val, 0.0463, 1e-3);
-                            TS_ASSERT_DELTA(q2_val, 0.0497, 1e-3);
-                            TS_ASSERT_DELTA(q3_val, 0.3572, 1e-2);
-                        }
-                        else if (j == 5) // IEP
-                        {
-                            TS_ASSERT_DELTA(min_val, 0.000635, 1e-5);
-                            TS_ASSERT_DELTA(max_val, 0.5554, 1e-2);
-                            TS_ASSERT_DELTA(mean_val, 0.1149, 1e-2);
-                            TS_ASSERT_DELTA(std_val, 0.1879, 1e-2);
-                            TS_ASSERT_DELTA(q1_val, 0.00070, 1e-5);
-                            TS_ASSERT_DELTA(q2_val, 0.000930, 1e-5);
-                            TS_ASSERT_DELTA(q3_val, 0.18219, 1e-2);
-                        }
-                        else if (j == 6) // CKIt
-                        {
-                            TS_ASSERT_DELTA(min_val, 0.001, 1e-3);
-                            TS_ASSERT_DELTA(max_val, 0.7162, 1e-2);
-                            TS_ASSERT_DELTA(mean_val, 0.2038, 1e-2);
-                            TS_ASSERT_DELTA(std_val, 0.1938, 1e-2);
-                            TS_ASSERT_DELTA(q1_val, 0.0382, 1e-3);
-                            TS_ASSERT_DELTA(q2_val, 0.1033, 1e-2);
-                            TS_ASSERT_DELTA(q3_val, 0.3586, 1e-2);
-                        }
-                        else if (j == 7) // SK
-                        {
-                            TS_ASSERT_DELTA(min_val, 0.001, 1e-3);
-                            TS_ASSERT_DELTA(max_val, 0.4464, 1e-2);
-                            TS_ASSERT_DELTA(mean_val, 0.0809, 1e-3);
-                            TS_ASSERT_DELTA(std_val, 0.1006, 1e-2);
-                            TS_ASSERT_DELTA(q1_val, 0.0160, 1e-3);
-                            TS_ASSERT_DELTA(q2_val, 0.0417, 1e-3);
-                            TS_ASSERT_DELTA(q3_val, 0.0910, 1e-3);
-                        }
-                    }
-
-                    // Compare derived quantities for first run with Tellurium values
-                    ode_solution.CalculateDerivedQuantitiesAndParameters(&ode_system);
-                    for (const std::string name : {"CycB", "Trimer", "Mad"})
-                    {
-                        std::vector<double> values = ode_solution.GetAnyVariable(name);
-                        double min_val = st::min(values);
-                        double max_val = st::max(values);
-                        double mean_val = st::mean(values);
-                        double std_val = st::stdev(values);
-                        double q1_val = st::quantile(values, 0.25);
-                        double q2_val = st::quantile(values, 0.5);
-                        double q3_val = st::quantile(values, 0.75);
-
-                        if (name == "CycB")
-                        {
-                            TS_ASSERT_DELTA(min_val, 0.000047, 1e-5);
-                            TS_ASSERT_DELTA(max_val, 0.6290, 1e-2);
-                            TS_ASSERT_DELTA(mean_val, 0.1572, 1e-2);
-                            TS_ASSERT_DELTA(std_val, 0.2270, 1e-2);
-                            TS_ASSERT_DELTA(q1_val, 0.000119, 1e-5);
-                            TS_ASSERT_DELTA(q2_val, 0.000589, 1e-5);
-                            TS_ASSERT_DELTA(q3_val, 0.3423, 1e-2);
-                        }
-                        else if (name == "Trimer")
-                        {
-                            TS_ASSERT_DELTA(min_val, 0.000382, 1e-5);
-                            TS_ASSERT_DELTA(max_val, 0.09026, 1e-3);
-                            TS_ASSERT_DELTA(mean_val, 0.0390, 1e-3);
-                            TS_ASSERT_DELTA(std_val, 0.0138, 1e-3);
-                            TS_ASSERT_DELTA(q1_val, 0.03488, 1e-3);
-                            TS_ASSERT_DELTA(q2_val, 0.03850, 1e-3);
-                            TS_ASSERT_DELTA(q3_val, 0.03862, 1e-3);
-                        }
-                        else if (name == "Mad")
-                        {
-                            TS_ASSERT_DELTA(min_val, 1.0, 1e-3);
-                            TS_ASSERT_DELTA(max_val, 1.0, 1e-3);
-                            TS_ASSERT_DELTA(mean_val, 1.0, 1e-3);
-                            TS_ASSERT_DELTA(std_val, 0.0, 1e-3);
-                            TS_ASSERT_DELTA(q1_val, 1.0, 1e-3);
-                            TS_ASSERT_DELTA(q2_val, 1.0, 1e-3);
-                            TS_ASSERT_DELTA(q3_val, 1.0, 1e-3);
-                        }
-                    }
-                }
-
-                // Update time for next run
-                start_time = ode_solution.rGetTimes().back();
-                end_time = start_time + run_length;
-            }
-            // Check that the last run stopped at the right time
-            TS_ASSERT_DELTA(start_time, 250.35, 0.05);
-
-            // The following code provides nice output for gnuplot
-            // use the command
-            // plot "tysonnovak_cvode.dat" u 1:2 etc. for the various species...
-            // or
-            // plot "tysonnovak_cvode.dat" u 1:2, "" u 1:3, "" u 1:4 etc. for all species
-
-            ode_solution.CalculateDerivedQuantitiesAndParameters(&ode_system);
-            std::vector<double> CycB = ode_solution.GetAnyVariable("CycB");
-            std::vector<double> Trimer = ode_solution.GetAnyVariable("Trimer");
-            std::vector<double> Mad = ode_solution.GetAnyVariable("Mad");
-
-            OutputFileHandler handler("");
-            out_stream file = handler.OpenOutputFile("tysonnovak_cvode.dat");
-            for (unsigned i = 0; i < solutions.size(); i++)
-            {
-                (*file) << times[i];
-                for (unsigned j = 0; j < solutions[i].size(); j++)
-                {
-                    (*file) << "\t" << solutions[i][j];
-                }
-                (*file) << "\t" << CycB[i]
-                        << "\t" << Trimer[i]
-                        << "\t" << Mad[i]
-                        << "\n"
-                        << std::flush;
-            }
-            file->close();
-        }
-        catch (Exception &e)
-        {
-            throw e;
-        }
-        catch (...)
-        {
-            exit(EXIT_FAILURE);
-        }
+        // Solve system using CVODE solver
+        CvodeAdaptor cvode_solver;
+        cvode_solver.CheckForStoppingEvents();
+        RunOdeWithSolver(cvode_solver, "cvode");
     }
 };
 
