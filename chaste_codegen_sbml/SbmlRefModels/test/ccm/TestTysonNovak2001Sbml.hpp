@@ -160,7 +160,7 @@ public:
         TS_ASSERT_EQUALS(proteins_1.size(), ODE_SIZE);
         TS_ASSERT_DELTA(proteins_1[0], 0.1788, 1e-2); // CycBt
         TS_ASSERT_DELTA(proteins_1[1], 0.3039, 1e-2); // Cdc20a
-        TS_ASSERT_DELTA(proteins_1[2], 0.4464, 1e-1); // Cdh1 *
+        TS_ASSERT_DELTA(proteins_1[2], 0.4464, 1e-1); // Cdh1 ***
         TS_ASSERT_DELTA(proteins_1[3], 0.8125, 1e-2); // m
         TS_ASSERT_DELTA(proteins_1[4], 1.1625, 1e-2); // Cdc20t
         TS_ASSERT_DELTA(proteins_1[5], 0.5465, 1e-2); // IEP
@@ -323,7 +323,7 @@ public:
         std::vector<double> derivs(initial_conditions.size());
         ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
-        // Test derivatives are correct - values from Tellurium
+        // Compare derivatives with values from Tellurium
         TS_ASSERT_DELTA(derivs[0], 3.99580000e-02, 1e-3);  // CycBt
         TS_ASSERT_DELTA(derivs[1], -2.50100000e-01, 1e-2); // Cdc20a
         TS_ASSERT_DELTA(derivs[2], 9.70803883e-01, 1e-2);  // Cdh1
@@ -332,6 +332,18 @@ public:
         TS_ASSERT_DELTA(derivs[5], 1.08707977e-05, 1e-6);  // IEP
         TS_ASSERT_DELTA(derivs[6], 9.99719098e-01, 1e-2);  // CKIt
         TS_ASSERT_DELTA(derivs[7], 2.77174939e-02, 1e-3);  // SK
+
+        // Check derived quantities
+        TS_ASSERT_EQUALS(ode_system.GetNumberOfDerivedQuantities(), 3u);
+        TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("CycB"), 0u);
+        TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("Trimer"), 1u);
+        TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("Mad"), 2u);
+
+        std::vector<double> derived_quantities = ode_system.ComputeDerivedQuantities(0.0, initial_conditions);
+        TS_ASSERT_EQUALS(derived_quantities.size(), 3u);
+        TS_ASSERT_DELTA(derived_quantities[0], 0.001, 1e-3); // CycB
+        TS_ASSERT_DELTA(derived_quantities[1], 0.001, 1e-3); // Trimer
+        TS_ASSERT_DELTA(derived_quantities[2], 1.0, 1e-3);   // Mad
     }
 
     void TestOdeWithChasteSolver()
@@ -376,7 +388,7 @@ public:
                 // Check that the ODE stopped at the right time
                 TS_ASSERT_DELTA(ode_solution.rGetTimes().back(), 103.80, 0.05);
 
-                // Check solutions for first run
+                // Compare solutions for first run with Tellurium values
                 for (unsigned j = 0; j < ODE_SIZE; j++)
                 {
                     std::vector<double> values;
@@ -472,6 +484,51 @@ public:
                         TS_ASSERT_DELTA(q1_val, 0.0160, 1e-3);
                         TS_ASSERT_DELTA(q2_val, 0.0417, 1e-3);
                         TS_ASSERT_DELTA(q3_val, 0.0910, 1e-3);
+                    }
+                }
+
+                // Compare derived quantities for first run with Tellurium values
+                ode_solution.CalculateDerivedQuantitiesAndParameters(&ode_system);
+                for (const std::string name : {"CycB", "Trimer", "Mad"})
+                {
+                    std::vector<double> values = ode_solution.GetAnyVariable(name);
+                    double min_val = st::min(values);
+                    double max_val = st::max(values);
+                    double mean_val = st::mean(values);
+                    double std_val = st::stdev(values);
+                    double q1_val = st::quantile(values, 0.25);
+                    double q2_val = st::quantile(values, 0.5);
+                    double q3_val = st::quantile(values, 0.75);
+
+                    if (name == "CycB")
+                    {
+                        TS_ASSERT_DELTA(min_val, 0.000047, 1e-5);
+                        TS_ASSERT_DELTA(max_val, 0.6290, 1e-2);
+                        TS_ASSERT_DELTA(mean_val, 0.1572, 1e-2);
+                        TS_ASSERT_DELTA(std_val, 0.2270, 1e-2);
+                        TS_ASSERT_DELTA(q1_val, 0.000119, 1e-5);
+                        TS_ASSERT_DELTA(q2_val, 0.000589, 1e-5);
+                        TS_ASSERT_DELTA(q3_val, 0.3423, 1e-2);
+                    }
+                    else if (name == "Trimer")
+                    {
+                        TS_ASSERT_DELTA(min_val, 0.000382, 1e-5);
+                        TS_ASSERT_DELTA(max_val, 0.09026, 1e-3);
+                        TS_ASSERT_DELTA(mean_val, 0.0390, 1e-3);
+                        TS_ASSERT_DELTA(std_val, 0.0138, 1e-3);
+                        TS_ASSERT_DELTA(q1_val, 0.03488, 1e-3);
+                        TS_ASSERT_DELTA(q2_val, 0.03850, 1e-3);
+                        TS_ASSERT_DELTA(q3_val, 0.03862, 1e-3);
+                    }
+                    else if (name == "Mad")
+                    {
+                        TS_ASSERT_DELTA(min_val, 1.0, 1e-3);
+                        TS_ASSERT_DELTA(max_val, 1.0, 1e-3);
+                        TS_ASSERT_DELTA(mean_val, 1.0, 1e-3);
+                        TS_ASSERT_DELTA(std_val, 0.0, 1e-3);
+                        TS_ASSERT_DELTA(q1_val, 1.0, 1e-3);
+                        TS_ASSERT_DELTA(q2_val, 1.0, 1e-3);
+                        TS_ASSERT_DELTA(q3_val, 1.0, 1e-3);
                     }
                 }
             }
@@ -648,6 +705,51 @@ public:
                             TS_ASSERT_DELTA(q3_val, 0.0910, 1e-3);
                         }
                     }
+
+                    // Compare derived quantities for first run with Tellurium values
+                    ode_solution.CalculateDerivedQuantitiesAndParameters(&ode_system);
+                    for (const std::string name : {"CycB", "Trimer", "Mad"})
+                    {
+                        std::vector<double> values = ode_solution.GetAnyVariable(name);
+                        double min_val = st::min(values);
+                        double max_val = st::max(values);
+                        double mean_val = st::mean(values);
+                        double std_val = st::stdev(values);
+                        double q1_val = st::quantile(values, 0.25);
+                        double q2_val = st::quantile(values, 0.5);
+                        double q3_val = st::quantile(values, 0.75);
+
+                        if (name == "CycB")
+                        {
+                            TS_ASSERT_DELTA(min_val, 0.000047, 1e-5);
+                            TS_ASSERT_DELTA(max_val, 0.6290, 1e-2);
+                            TS_ASSERT_DELTA(mean_val, 0.1572, 1e-2);
+                            TS_ASSERT_DELTA(std_val, 0.2270, 1e-2);
+                            TS_ASSERT_DELTA(q1_val, 0.000119, 1e-5);
+                            TS_ASSERT_DELTA(q2_val, 0.000589, 1e-5);
+                            TS_ASSERT_DELTA(q3_val, 0.3423, 1e-2);
+                        }
+                        else if (name == "Trimer")
+                        {
+                            TS_ASSERT_DELTA(min_val, 0.000382, 1e-5);
+                            TS_ASSERT_DELTA(max_val, 0.09026, 1e-3);
+                            TS_ASSERT_DELTA(mean_val, 0.0390, 1e-3);
+                            TS_ASSERT_DELTA(std_val, 0.0138, 1e-3);
+                            TS_ASSERT_DELTA(q1_val, 0.03488, 1e-3);
+                            TS_ASSERT_DELTA(q2_val, 0.03850, 1e-3);
+                            TS_ASSERT_DELTA(q3_val, 0.03862, 1e-3);
+                        }
+                        else if (name == "Mad")
+                        {
+                            TS_ASSERT_DELTA(min_val, 1.0, 1e-3);
+                            TS_ASSERT_DELTA(max_val, 1.0, 1e-3);
+                            TS_ASSERT_DELTA(mean_val, 1.0, 1e-3);
+                            TS_ASSERT_DELTA(std_val, 0.0, 1e-3);
+                            TS_ASSERT_DELTA(q1_val, 1.0, 1e-3);
+                            TS_ASSERT_DELTA(q2_val, 1.0, 1e-3);
+                            TS_ASSERT_DELTA(q3_val, 1.0, 1e-3);
+                        }
+                    }
                 }
 
                 // Update time for next run
@@ -663,6 +765,11 @@ public:
             // or
             // plot "tysonnovak_cvode.dat" u 1:2, "" u 1:3, "" u 1:4 etc. for all species
 
+            ode_solution.CalculateDerivedQuantitiesAndParameters(&ode_system);
+            std::vector<double> CycB = ode_solution.GetAnyVariable("CycB");
+            std::vector<double> Trimer = ode_solution.GetAnyVariable("Trimer");
+            std::vector<double> Mad = ode_solution.GetAnyVariable("Mad");
+
             OutputFileHandler handler("");
             out_stream file = handler.OpenOutputFile("tysonnovak_cvode.dat");
             for (unsigned i = 0; i < solutions.size(); i++)
@@ -672,7 +779,10 @@ public:
                 {
                     (*file) << "\t" << solutions[i][j];
                 }
-                (*file) << "\n"
+                (*file) << "\t" << CycB[i]
+                        << "\t" << Trimer[i]
+                        << "\t" << Mad[i]
+                        << "\n"
                         << std::flush;
             }
             file->close();

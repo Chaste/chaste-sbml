@@ -61,7 +61,9 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem(std::vector<double> sta
     mStateVariables.push_back(CKIt);
     mStateVariables.push_back(SK);
 
-    // STATE PARAMETERS:
+    ProcessRules(0.0, mStateVariables);
+
+    // PARAMETERS:
     mParameters.push_back(TF);
 
     // EVENTS:
@@ -95,8 +97,8 @@ std::vector<double> TysonNovak2001SbmlOdeSystem::ComputeDerivedQuantities(double
     ProcessRules(time, rY);
 
     std::vector<double> dqs;
-    dqs.push_back(Trimer);
     dqs.push_back(CycB);
+    dqs.push_back(Trimer);
     dqs.push_back(Mad);
     return dqs;
 }
