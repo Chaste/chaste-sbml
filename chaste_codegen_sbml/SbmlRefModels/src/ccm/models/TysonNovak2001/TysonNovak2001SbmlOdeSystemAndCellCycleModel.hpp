@@ -17,7 +17,7 @@ private:
     template <class Archive>
     void serialize(Archive &ar, const unsigned int version)
     {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractOdeSystem);
+        ar &BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractOdeSystem);
     }
 
     // COMPARTMENTS:
@@ -62,21 +62,44 @@ private:
     const double J4 = 0.04;
 
     // STATE VARIABLES:
-    double CycBt; // CycBt
-    double CycB; // CycB
+    double CycBt;  // CycBt
     double Cdc20a; // Cdc20a
-    double Trimer; // Trimer
-    double Cdh1; // Cdh1
-    double m; // m
+    double Cdh1;   // Cdh1
+    double m;      // m
     double Cdc20t; // Cdc20t
-    double IEP; // IEP
-    double Mad; // Mad
-    double CKIt; // CKIt
-    double SK; // SK
+    double IEP;    // IEP
+    double CKIt;   // CKIt
+    double SK;     // SK
 
-    // STATE PARAMETERS:
+    // DERIVED QUANTITIES:
+    double CycB;   // CycB
+    double Trimer; // Trimer
+    double Mad;    // Mad
 
+    // PARAMETERS:
     double TF;
+
+    // REACTIONS:
+    double CycBt_synthesis;           // CycBt synthesis
+    double CycBdegradation;           // CycBt degradation
+    double CycBdegradationviaCdh1;    // CycBt degradation via Cdh1
+    double CycBtdegradationviaCdc20a; // CycBt degradation via Cdc20a
+    double Cdh1synthesis;             // Cdh1 synthesis
+    double Cdh1degradation;           // Cdh1 degradation
+    double Cdc20tsynthesis;           // Cdc20t synthesis
+    double Cdc20t_deg;                // Cdc20t degradation
+    double Cdc20activation;           // Cdc20 activation
+    double Cdc20ainhibition;          // Cdc20a inhibition
+    double Cdc20adegradation;         // Cdc20a degradation
+    double IEPsynthesis;              // IEP synthesis
+    double IEPdegradation;            // IEP degradation
+    double growth;                    // growth
+    double CKItsynthesis;             // CKIt synthesis
+    double CKIdegradation;            // CKIt degradation
+    double CKItphosphorilationviaSK;  // CKIt phosphorilation via SK
+    double eq_7;                      // CKIt Trimer sequestred
+    double SKsynthesis;               // SK synthesis
+    double SKdegradation;             // SK degradation
 
     // EVENTS:
     std::vector<bool> eventsSatisfied;
@@ -88,15 +111,17 @@ public:
     ~TysonNovak2001SbmlOdeSystem();
 
     void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
-    void RefreshState(const std::vector<double> &rY);
+    std::vector<double> ComputeDerivedQuantities(double time, const std::vector<double> &rY);
 
-    double ProcessEvents(double time, const std::vector<double>& rY);
-    double CalculateRootFunction(double time, const std::vector<double>& rY);
-    bool CalculateStoppingEvent(double time, const std::vector<double>& rY);
+    double CalculateRootFunction(double time, const std::vector<double> &rY);
+    bool CalculateStoppingEvent(double time, const std::vector<double> &rY);
+
+    void ProcessRules(double time, const std::vector<double> &rY);
+    double ProcessEvents(double time, const std::vector<double> &rY);
     void UpdateDefaultInitialConditions(const std::vector<double> &rY);
 
     // FUNCTION DEFINITIONS:
-    double GK(double A1, double A2, double A3, double A4);
+    inline double GK(double A1, double A2, double A3, double A4);
 };
 
 namespace
@@ -105,7 +130,7 @@ namespace
     {
         // Provide constructor for serializing TysonNovak2001SbmlOdeSystem
         template <class Archive>
-        inline void save_construct_data(Archive &ar, const TysonNovak2001SbmlOdeSystem * t, const unsigned int version)
+        inline void save_construct_data(Archive &ar, const TysonNovak2001SbmlOdeSystem *t, const unsigned int version)
         {
             // Save data required to construct instance
             const std::vector<double> state_variables = t->rGetConstStateVariables();
@@ -114,14 +139,14 @@ namespace
 
         // Provide constructor for de-serializing TysonNovak2001SbmlOdeSystem
         template <class Archive>
-        inline void load_construct_data(Archive &ar, TysonNovak2001SbmlOdeSystem * t, const unsigned int version)
+        inline void load_construct_data(Archive &ar, TysonNovak2001SbmlOdeSystem *t, const unsigned int version)
         {
             // Retrieve data from archive required to construct new instance
             std::vector<double> state_variables;
             ar >> state_variables;
 
             // Invoke inplace constructor to initialise instance
-            ::new (t)TysonNovak2001SbmlOdeSystem(state_variables);
+            ::new (t) TysonNovak2001SbmlOdeSystem(state_variables);
         }
     } // namespace serialization
 } // namespace ...
@@ -130,12 +155,12 @@ namespace
 #include "SbmlCellCycleWrapperModel.hpp"
 #include "SbmlCellCycleWrapperModel.cpp"
 
-typedef SbmlCellCycleWrapperModel<TysonNovak2001SbmlOdeSystem, 11> TysonNovak2001SbmlCellCycleModel;
+typedef SbmlCellCycleWrapperModel<TysonNovak2001SbmlOdeSystem, 8> TysonNovak2001SbmlCellCycleModel;
 
 // Declare identifiers for the serializer
 #include "SerializationExportWrapper.hpp"
 CHASTE_CLASS_EXPORT(TysonNovak2001SbmlOdeSystem)
-EXPORT_TEMPLATE_CLASS2(SbmlCellCycleWrapperModel, TysonNovak2001SbmlOdeSystem, 11)
+EXPORT_TEMPLATE_CLASS2(SbmlCellCycleWrapperModel, TysonNovak2001SbmlOdeSystem, 8)
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
 EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(TysonNovak2001SbmlCellCycleModel)
