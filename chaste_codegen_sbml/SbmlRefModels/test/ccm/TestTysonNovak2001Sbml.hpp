@@ -95,8 +95,9 @@ private:
             std::vector<double> initial_conditions;
             OdeSolution ode_solution;
 
-            std::vector<std::vector<double>> solutions;
             std::vector<double> times;
+            std::vector<std::vector<double>> solutions;
+            std::vector<std::vector<double>> derived_quantities(3);
 
             // Run ODE until it stops, then start again with updated initial conditions
             for (unsigned i = 0; i < 2; i++)
@@ -113,6 +114,16 @@ private:
                 // Collate solutions and times from all runs
                 solutions.insert(solutions.end(), ode_solution.rGetSolutions().begin(), ode_solution.rGetSolutions().end());
                 times.insert(times.end(), ode_solution.rGetTimes().begin(), ode_solution.rGetTimes().end());
+
+                ode_solution.CalculateDerivedQuantitiesAndParameters(&ode_system);
+                std::vector<double> dq_cycb = ode_solution.GetAnyVariable("CycB");
+                derived_quantities[0].insert(derived_quantities[0].end(), dq_cycb.begin(), dq_cycb.end());
+
+                std::vector<double> dq_trimer = ode_solution.GetAnyVariable("Trimer");
+                derived_quantities[1].insert(derived_quantities[1].end(), dq_trimer.begin(), dq_trimer.end());
+
+                std::vector<double> dq_mad = ode_solution.GetAnyVariable("Mad");
+                derived_quantities[2].insert(derived_quantities[2].end(), dq_mad.begin(), dq_mad.end());
 
                 // Check first run
                 if (i == 0)
@@ -220,10 +231,9 @@ private:
                     }
 
                     // Compare derived quantities for first run with Tellurium values
-                    ode_solution.CalculateDerivedQuantitiesAndParameters(&ode_system);
-                    for (const std::string name : {"CycB", "Trimer", "Mad"})
+                    for (unsigned j = 0; j < derived_quantities.size(); j++)
                     {
-                        std::vector<double> values = ode_solution.GetAnyVariable(name);
+                        std::vector<double> values = derived_quantities[j];
                         double min_val = st::min(values);
                         double max_val = st::max(values);
                         double mean_val = st::mean(values);
@@ -232,7 +242,7 @@ private:
                         double q2_val = st::quantile(values, 0.5);
                         double q3_val = st::quantile(values, 0.75);
 
-                        if (name == "CycB")
+                        if (j == 0) // CycB
                         {
                             TS_ASSERT_DELTA(min_val, 0.000047, 1e-5);
                             TS_ASSERT_DELTA(max_val, 0.6290, 1e-2);
@@ -242,7 +252,7 @@ private:
                             TS_ASSERT_DELTA(q2_val, 0.000589, 1e-5);
                             TS_ASSERT_DELTA(q3_val, 0.3423, 1e-2);
                         }
-                        else if (name == "Trimer")
+                        else if (j == 1) // Trimer
                         {
                             TS_ASSERT_DELTA(min_val, 0.000382, 1e-5);
                             TS_ASSERT_DELTA(max_val, 0.09026, 1e-3);
@@ -252,7 +262,7 @@ private:
                             TS_ASSERT_DELTA(q2_val, 0.03850, 1e-3);
                             TS_ASSERT_DELTA(q3_val, 0.03862, 1e-3);
                         }
-                        else if (name == "Mad")
+                        else if (j == 2) // Mad
                         {
                             TS_ASSERT_DELTA(min_val, 1.0, 1e-3);
                             TS_ASSERT_DELTA(max_val, 1.0, 1e-3);
@@ -277,6 +287,7 @@ private:
             // plot "tysonnovak_cvode.dat" u 1:2 etc. for the various species...
             // or
             // plot "tysonnovak_cvode.dat" u 1:2, "" u 1:3, "" u 1:4 etc. for all species
+            ode_solution.CalculateDerivedQuantitiesAndParameters(&ode_system);
 
             OutputFileHandler handler("");
             out_stream file = handler.OpenOutputFile("tysonnovak_" + solverName + ".dat");
@@ -286,6 +297,10 @@ private:
                 for (unsigned j = 0; j < solutions[i].size(); j++)
                 {
                     (*file) << "\t" << solutions[i][j];
+                }
+                for (unsigned j = 0; j < derived_quantities.size(); j++)
+                {
+                    (*file) << "\t" << derived_quantities[j][i];
                 }
                 (*file) << "\n"
                         << std::flush;
