@@ -109,15 +109,15 @@ void {{ ode_class_name }}::ProcessRules(const std::vector<double> &rY)
     // {{ reaction["name"] }}
   {% endif %}
   {% if reaction["parameters"] %}
-    double {{ reaction["varname"] }} = 0.0;
+    double {{ reaction["id"] }} = 0.0;
     {
   {% for param in reaction["parameters"] %}
-        double {{ param["varname"] }} = {{ param["value"] }};
+        double {{ param["id"] }} = {{ param["value"] }};
   {% endfor %}
-        {{ reaction["varname"] }} = {{ reaction["rhs"] }};
+        {{ reaction["id"] }} = {{ reaction["rhs"] }};
     }
   {% else %}
-    double {{ reaction["varname"] }} = {{ reaction["rhs"] }};
+    double {{ reaction["id"] }} = {{ reaction["rhs"] }};
   {% endif %}
 
 {% endfor %}
