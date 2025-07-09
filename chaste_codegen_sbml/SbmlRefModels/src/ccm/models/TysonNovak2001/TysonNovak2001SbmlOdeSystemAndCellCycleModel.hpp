@@ -20,10 +20,7 @@ private:
         ar &BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractOdeSystem);
     }
 
-    // COMPARTMENTS:
-    double cell;
-
-    // CONST PARAMETERS:
+    // CONSTANT PARAMETERS
     const double k1 = 0.04;
     const double k2p = 0.04;
     const double k2pp = 1.0;
@@ -61,7 +58,7 @@ private:
     const double k4p = 2.0;
     const double J4 = 0.04;
 
-    // STATE VARIABLES:
+    // STATE VARIABLES
     double CycBt;  // CycBt
     double Cdc20a; // Cdc20a
     double Cdh1;   // Cdh1
@@ -71,15 +68,16 @@ private:
     double CKIt;   // CKIt
     double SK;     // SK
 
-    // DERIVED QUANTITIES:
+    // DERIVED QUANTITIES
     double CycB;   // CycB
     double Trimer; // Trimer
     double Mad;    // Mad
 
-    // PARAMETERS:
+    // PARAMETERS
+    double cell;
     double TF;
 
-    // REACTIONS:
+    // REACTIONS
     double CycBt_synthesis;           // CycBt synthesis
     double CycBdegradation;           // CycBt degradation
     double CycBdegradationviaCdh1;    // CycBt degradation via Cdh1
@@ -101,9 +99,9 @@ private:
     double SKsynthesis;               // SK synthesis
     double SKdegradation;             // SK degradation
 
-    // EVENTS:
-    std::vector<bool> eventsSatisfied;
-    bool eventsInitialised;
+    // EVENTS
+    std::vector<bool> mEventsSatisfied;
+    bool mEventsInitialised;
 
 public:
     TysonNovak2001SbmlOdeSystem(std::vector<double> stateVariables = std::vector<double>());

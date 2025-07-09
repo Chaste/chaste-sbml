@@ -20,38 +20,30 @@ private:
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractOdeSystem);
     }
 
-{% if compartments %}
-    // COMPARTMENTS:
-{% for compartment in compartments %}
-    double {{ compartment["id"] }};
+    // CONSTANT PARAMETERS
+{% for param in const_parameters %}
+    const double {{ param["id"] }} = {{ param["value"] }}; // {{ param["name"] }}
 {% endfor %}
-{% endif %}
-
-    // CONST PARAMETERS:
-{% for parameter in parameters %}
-{% if parameter["is_state_parameter"] is false() %}
-    const double {{ parameter["id"] }} = {{ parameter["value"] }};
-{% endif %}
 {% endfor %}
 
-    // STATE VARIABLES:
-{% for sp in species %}
-{% if sp["is_state_variable"] is true() %}
-    double {{ sp["id"] }}; // {{ sp["name"] }}
-{% endif %}
+    // STATE VARIABLES
+{% for var in state_variables %}
+    double {{ var["id"] }}; // {{ var["name"] }}
 {% endfor %}
 
-    // STATE PARAMETERS:
-{% for sp in species %}
-{% if sp["is_state_parameter"] is true() %}
-    double {{ sp["id"] }};
-{% endif %}
+    // DERIVED QUANTITIES
+{% for dq in derived_quantities %}
+    double {{ dq["id"] }}; // {{ dq["name"] }}
 {% endfor %}
 
-{% for parameter in parameters %}
-{% if parameter["is_state_parameter"] is true() %}
-    double {{ parameter["id"] }};
-{% endif %}
+    // PARAMETERS
+{% for param in variable_parameters %}
+    double {{ param["id"] }}; // {{ param["name"] }}
+{% endfor %}
+
+    // REACTIONS
+{% for reaction in reactions %}
+    double {{ reaction["id"] }}; // {{ reaction["name"] }}
 {% endfor %}
 
 {% if events %}
@@ -66,12 +58,14 @@ public:
     ~{{ ode_class_name }}();
 
     void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
-    void RefreshState(const std::vector<double> &rY);
+    std::vector<double> ComputeDerivedQuantities(double time, const std::vector<double> &rY);
 
 {% if events %}
-    double ProcessEvents(double time, const std::vector<double>& rY);
     double CalculateRootFunction(double time, const std::vector<double>& rY);
     bool CalculateStoppingEvent(double time, const std::vector<double>& rY);
+    
+    void ProcessRules(double time, const std::vector<double>& rY);
+    double ProcessEvents(double time, const std::vector<double>& rY);
     void UpdateDefaultInitialConditions(const std::vector<double> &rY);
 {% endif %}
 

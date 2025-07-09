@@ -14,44 +14,19 @@ namespace sm = sbmlmath;
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<{{ ode_class_name }}>);
 
-{% if compartments %}
-    // COMPARTMENTS:
-{% for comp in compartments %}
-    {{ comp["id"] }} = {{ comp["size"] }};
-{% endfor %}
-{% endif %}
-
-    // STATE VARIABLES:
-{% for sp in species %}
-{% if sp["has_ode"] is true() %}
-    {{ sp["id"] }} = {{ sp["concentration"] }};
-{% endif %}
+    // STATE VARIABLES
+{% for var in state_variables %}
+    {{ var["id"] }} = {{ var["initial_value"] }};
 {% endfor %}
 
-{% for rule in rules %}
-{% if rule["is_state_variable"] is true() %}
-    {{ rule["lhs"] }} = {{ rule["rhs"] }};
-{% endif %}
-{% endfor %}
-
-{% for sp in species %}
-{% if sp["is_state_variable"] is true() %}
-    SetDefaultInitialCondition({{ sp["state_variable_index"] }}, {{ sp["id"] }});
-{% endif %}
+{% for var in state_variables %}
+    SetDefaultInitialCondition({{ var["index"] }}, {{ var["id"] }});
 {% endfor %}
 
     if (stateVariables.size() == {{ num_state_vars }})
     {
-{% for sp in species %}
-{% if sp["has_ode"] is true() %}
-        {{ sp["id"] }} = stateVariables[{{ sp["state_variable_index"] }}];
-{% endif %}
-{% endfor %}
-
-{% for rule in rules %}
-{% if rule["is_state_variable"] is true() %}
-    {{ rule["lhs"] }} = {{ rule["rhs"] }};
-{% endif %}
+{% for var in state_variables %}
+        {{ var["id"] }} = stateVariables[{{ var["index"] }}];
 {% endfor %}
     }
     else if (stateVariables.size() != 0)
@@ -59,47 +34,25 @@ namespace sm = sbmlmath;
         EXCEPTION("{{ ode_class_name }}: Expected {{ num_state_vars }} state variables, got " + std::to_string(stateVariables.size()));
     }
 
-{% for sp in species %}
-{% if sp["is_state_variable"] is true() %}
-    mStateVariables.push_back({{ sp["id"] }});
-{% endif %}
+{% for var in state_variables %}
+    mStateVariables.push_back({{ var["id"] }});
 {% endfor %}
 
-    // STATE PARAMETERS:
-{% for sp in species %}
-{% if sp["is_state_parameter"] is true() and sp["has_rule"] is false() %}
-    {{ sp["id"] }} = {{ sp["concentration"] }};
-{% endif %}
+    // PARAMETERS
+{% for param in variable_parameters %}
+    {{ param["id"] }} = {{ param["initial_value"] }};
 {% endfor %}
 
-{% for parameter in parameters %}
-{% if parameter["is_state_parameter"] is true() and parameter["has_rule"] is false() %}
-    {{ parameter["id"] }} = {{ parameter["value"] }};
-{% endif %}
-{% endfor %}
+    ProcessRules(0.0, mStateVariables);
 
-{% for rule in rules %}
-{% if rule["is_state_parameter"] is true() %}
-    {{ rule["lhs"] }} = {{ rule["rhs"] }};
-{% endif %}
-{% endfor %}
-
-{% for sp in species %}
-{% if sp["is_state_parameter"] is true() %}
-    mParameters.push_back({{ sp["id"] }});
-{% endif %}
-{% endfor %}
-
-{% for param in parameters %}
-{% if param["is_state_parameter"] is true() %}
+{% for param in variable_parameters %}
     mParameters.push_back({{ param["id"] }});
-{% endif %}
 {% endfor %}
 
 {% if events %}
-    // EVENTS:
-    eventsSatisfied.resize({{ events|length }}, false);
-    eventsInitialised = false;
+    // EVENTS
+    mEventsSatisfied.resize({{ events|length }}, false);
+    mEventsInitialised = false;
 {% endif %}
 }
 
@@ -107,48 +60,50 @@ namespace sm = sbmlmath;
 {
 }
 
-void {{ ode_class_name }}::RefreshState(const std::vector<double> &rY)
-{
-    // STATE VARIABLES:
-{% for sp in species %}
-{% if sp["has_ode"] is true() %}
-    {{ sp["id"] }} = rY[{{ sp["state_variable_index"] }}];
-{% endif %}
-{% endfor %}
-
-{% for rule in rules %}
-{% if rule["is_state_variable"] is true() %}
-    {{ rule["lhs"] }} = {{ rule["rhs"] }};
-{% endif %}
-{% endfor %}
-
-    // STATE PARAMETERS:
-{% for rule in rules %}
-{% if rule["is_state_variable"] is false() %}
-    {{ rule["lhs"] }} = {{ rule["rhs"] }};
-{% endif %}
-{% endfor %}
-
-{% for sp in species %}
-{% if sp["is_state_parameter"] is true() %}
-    SetParameter("{{ sp['id'] }}", {{ sp['id'] }});
-{% endif %}
-{% endfor %}
-
-{% for param in parameters %}
-{% if param["is_state_parameter"] is true() %}
-    SetParameter("{{ param['id'] }}", {{ param['id'] }});
-{% endif %}
-{% endfor %}
-}
-
 void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-    RefreshState(rY);
+    ProcessRules(time, rY);
 
-{% if reactions %}
-    // REACTIONS:
+{% for var in state_variables %}
+    rDY[{{ var["index"] }}] = {{ var["rhs"] }}; // d[{{ var["name"] }}]/dt
+{% endfor %}
 
+    // Scale time appropriately
+}
+
+{% if derived_quantities %}
+std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, const std::vector<double> &rY)
+{
+    ProcessRules(time, rY);
+
+    std::vector<double> dqs;
+{% for dq in derived_quantities %}
+    dqs.push_back({{ dq["id"] }});
+{% endfor %}
+    return dqs;
+}
+{% endif %}
+
+void {{ ode_class_name }}::ProcessRules(const std::vector<double> &rY)
+{
+    // STATE VARIABLES
+{% for var in state_variables %}
+    {{ var["id"] }} = rY[{{ var["index"] }}];
+{% endfor %}
+
+    // RULES
+{% for rule in rules %}
+    {{ rule["lhs"] }} = {{ rule["rhs"] }};
+{% endfor %}
+
+    // PARAMETERS
+{% for var in variable_parameters %}
+{% if var["rhs"] %}
+    SetParameter("{{ var['id'] }}", {{ var['id'] }});
+{% endif %}
+{% endfor %}
+
+    // REACTIONS
 {% for reaction in reactions %}
   {% if reaction["name"] %}
     // {{ reaction["name"] }}
@@ -166,21 +121,12 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
   {% endif %}
 
 {% endfor %}
-{% endif %}
-    // ODES:
-{% for sp in species %}
-{% if sp["ode"] %}
-    {{ sp["ode"]["lhs"] }} = {{ sp["ode"]["rhs"] }}; // d[{{ sp["name"] }}]/dt
-{% endif %}
-{% endfor %}
-
-    // Scale time appropriately
 }
 
 {% if events %}
 double {{ ode_class_name }}::ProcessEvents(double time, const std::vector<double> &rY)
 {
-    RefreshState(rY);
+    ProcessRules(time, rY);
 
     double min_dist = std::numeric_limits<double>::max();
     double event_dist = min_dist;
@@ -204,27 +150,27 @@ double {{ ode_class_name }}::ProcessEvents(double time, const std::vector<double
     // Process the event
     if ({{ event["trigger"] }})
     {
-        if (!eventsSatisfied[{{ loop.index0 }}] && eventsInitialised)
+        if (!mEventsSatisfied[{{ loop.index0 }}] && mEventsInitialised)
         {
             // The condition is transitioning from false to true,
             // and this is not the first time-step => trigger the event.
             event_dist = 0.0;
             min_dist = 0.0;
 
-            UpdateDefaultInitialConditions(rY);
+            UpdateDefaultInitialConditions(rY); // TODO: Make this work for multiple events
 {% for assignment in event["assignments"] %}
             {{ assignment }};
 {% endfor %}
         }
-        eventsSatisfied[{{ loop.index0 }}] = true; // Flag the condition true
+        mEventsSatisfied[{{ loop.index0 }}] = true; // Flag the condition true
     }
     else
     {
-        eventsSatisfied[{{ loop.index0 }}] = false; // Flag the condition false
+        mEventsSatisfied[{{ loop.index0 }}] = false; // Flag the condition false
     }
 {% endfor %}
 
-    eventsInitialised = true; // Flag that events have been processed at least once
+    mEventsInitialised = true; // Flag that events have been processed at least once
 
     // Distance to closest event
     return min_dist;
@@ -242,13 +188,10 @@ bool {{ ode_class_name }}::CalculateStoppingEvent(double time, const std::vector
 
 void {{ ode_class_name }}::UpdateDefaultInitialConditions(const std::vector<double> &rY)
 {
-{% for sp in species %}
-{% if sp["is_state_variable"] is true() %}
-    SetDefaultInitialCondition({{ sp["state_variable_index"] }}, rY[{{ sp["state_variable_index"] }}]); // {{ sp["id"] }}
-{% endif %}
+{% for var in state_variables %}
+    SetDefaultInitialCondition({{ var["state_variable_index"] }}, rY[{{ var["state_variable_index"] }}]); // {{ var["id"] }}
 {% endfor %}
 }
-{% endif %}
 
 // FUNCTION DEFINITIONS:
 {% for fd in function_definitions %}
@@ -261,30 +204,26 @@ double {{ ode_class_name }}::{{ fd["id"] }}({{ fd["args"] }})
 template <>
 void CellwiseOdeSystemInformation<{{ ode_class_name }}>::Initialise()
 {
-    // STATE VARIABLES:
-{% for sp in species %}
-{% if sp["is_state_variable"] is true() %}
-    this->mVariableNames.push_back("{{ sp['id'] }}");
-    this->mVariableUnits.push_back("{{ sp['units'] }}");
-    this->mInitialConditions.push_back({{ sp['concentration'] }});
+    // STATE VARIABLES
+{% for var in state_variables %}
+    this->mVariableNames.push_back("{{ var['id'] }}");
+    this->mVariableUnits.push_back("{{ var['units'] }}");
+    this->mInitialConditions.push_back({{ var['initial_value'] }});
 
-{% endif %}
 {% endfor %}
 
-    // STATE PARAMETERS:
-{% for sp in species %}
-{% if sp["is_state_parameter"] is true() %}
-    this->mParameterNames.push_back("{{ sp['id'] }}");
-    this->mParameterUnits.push_back("{{ sp['units'] }}");
+    // DERIVED QUANTITIES
+{% for dq in derived_quantities %}
+    this->mDerivedQuantityNames.push_back("{{ dq['id'] }}");
+    this->mDerivedQuantityUnits.push_back("{{ dq['units'] }}");
 
-{% endif %}
 {% endfor %}
-{% for param in parameters %}
-{% if param["is_state_parameter"] is true() %}
-    this->mParameterNames.push_back("{{ param['id'] }}");
-    this->mParameterUnits.push_back("{{ param['units'] }}");
 
-{% endif %}
+    // PARAMETERS
+{% for var in variable_parameters %}
+    this->mParameterNames.push_back("{{ var['id'] }}");
+    this->mParameterUnits.push_back("{{ var['units'] }}");
+
 {% endfor %}
     this->mInitialised = true;
 }

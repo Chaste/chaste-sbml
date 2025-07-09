@@ -14,10 +14,7 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem(std::vector<double> sta
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>);
 
-    // COMPARTMENTS:
-    cell = 1.0;
-
-    // STATE VARIABLES:
+    // STATE VARIABLES
     CycBt = 0.001;
     Cdc20a = 0.001;
     Cdh1 = 0.001;
@@ -61,14 +58,18 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem(std::vector<double> sta
     mStateVariables.push_back(CKIt);
     mStateVariables.push_back(SK);
 
+    // PARAMETERS:
+    cell = 1.0;
+    TF = 0.0;
+
     ProcessRules(0.0, mStateVariables);
 
-    // PARAMETERS:
+    mParameters.push_back(cell);
     mParameters.push_back(TF);
 
     // EVENTS:
-    eventsSatisfied.resize(1, false);
-    eventsInitialised = false;
+    mEventsSatisfied.resize(1, false);
+    mEventsInitialised = false;
 }
 
 TysonNovak2001SbmlOdeSystem::~TysonNovak2001SbmlOdeSystem()
@@ -144,7 +145,7 @@ void TysonNovak2001SbmlOdeSystem::ProcessRules(double time, const std::vector<do
     Cdh1degradation = (k4p * SK * Cdh1 + k4 * m * CycB * Cdh1) / (J4 + Cdh1);
 
     // Cdc20t synthesis
-    Cdc20tsynthesis = k5p + k5pp * std::pow(CycB * m / J5, n) / (1.0 + std::pow(CycB * m / J5, n));
+    Cdc20tsynthesis = k5p + k5pp * std::pow(CycB * m / J5, n) / (1.0 + std::pow(CycB * m / J5, n)); 
 
     // Cdc20t degradation
     Cdc20t_deg = k6 * Cdc20t;
@@ -211,7 +212,7 @@ double TysonNovak2001SbmlOdeSystem::ProcessEvents(double time, const std::vector
     // Process the event
     if (sm::lt(CycB, 0.1))
     {
-        if (!eventsSatisfied[0] && eventsInitialised)
+        if (!mEventsSatisfied[0] && mEventsInitialised)
         {
             // The condition is transitioning from false to true,
             // and this is not the first time-step => trigger the event.
@@ -222,14 +223,14 @@ double TysonNovak2001SbmlOdeSystem::ProcessEvents(double time, const std::vector
             SetStateVariable(3, m / 2.0);
             SetDefaultInitialCondition(3, m / 2.0);
         }
-        eventsSatisfied[0] = true; // Flag the condition true
+        mEventsSatisfied[0] = true; // Flag the condition true
     }
     else
     {
-        eventsSatisfied[0] = false; // Flag the condition false
+        mEventsSatisfied[0] = false; // Flag the condition false
     }
 
-    eventsInitialised = true; // Flag that events have been processed at least once
+    mEventsInitialised = true; // Flag that events have been processed at least once
 
     // Distance to closest event
     return min_dist;
@@ -310,6 +311,9 @@ void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     // PARAMETERS:
+    this->mParameterNames.push_back("cell");
+    this->mParameterUnits.push_back("non-dim");
+
     this->mParameterNames.push_back("TF");
     this->mParameterUnits.push_back("non-dim");
 

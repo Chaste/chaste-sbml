@@ -431,7 +431,6 @@ public:
             {
                 TS_ASSERT_EQUALS(division_ready_0, true);
                 TS_ASSERT_EQUALS(division_ready_2, true);
-                break;
             }
             else if (time < standard_divide_time)
             {
