@@ -14,18 +14,17 @@ from libsbml import (
     AST_RELATIONAL_LEQ,
     AST_RELATIONAL_LT,
     AST_RELATIONAL_NEQ,
-    SBML_ASSIGNMENT_RULE,
     SBML_ALGEBRAIC_RULE,
+    SBML_ASSIGNMENT_RULE,
     SBML_RATE_RULE,
     SBMLReader,
     formulaToString,
 )
 
-from ._config import ODE_SUFFIX, SHORT_NAME_LEN
+from ._config import NON_DIM_UNITS, ODE_SUFFIX, VarType
 from ._utils import (
     get_function_definition_arguments,
     get_species_concentration,
-    varname_sanitize,
     varname_staggercase,
 )
 
@@ -33,7 +32,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from jinja2.environment import Template
-    from libsbml import ASTNode, SBase
+    from libsbml import ASTNode
 
 
 class ChasteSbmlModel:
@@ -48,14 +47,9 @@ class ChasteSbmlModel:
         lstrip_blocks=True,
     )
 
-    STATE_VARIABLE = 0
-    DERIVED_QUANTITY = 1
-    VARIABLE_PARAMETER = 2
-    CONSTANT_PARAMETER = 3
+    # -- PUBLIC --------------------------------------
 
-    # -- PUBLIC ---------------------------------------
-
-    def __init__(self, sbml_file: str, model_name: str = None, model_suffix: str = None) -> None:
+    def __init__(self, sbml_file: str, model_name: str = "", model_suffix: str = "") -> None:
         """Initialise the ChasteSbmlModel.
 
         :param sbml: The SBML file.
@@ -78,22 +72,26 @@ class ChasteSbmlModel:
         self._model_class_name = f"{self._model_name}{self._model_suffix}Model"
         self._wrapper_class_name = f"Sbml{self._model_suffix}WrapperModel"
 
-        self._model = SBMLReader().readSBMLFromFile(self._sbml_file).getModel()
-        self._compartments = self._model.getListOfCompartments()
-        self._events = self._model.getListOfEvents()
-        self._function_definitions = self._model.getListOfFunctionDefinitions()
-        self._parameters = self._model.getListOfParameters()
-        self._reactions = self._model.getListOfReactions()
-        self._rules = self._model.getListOfRules()
-        self._species = self._model.getListOfSpecies()
-        self._unit_definitions = self._model.getListOfUnitDefinitions()
+        self._sbml_model = SBMLReader().readSBMLFromFile(self._sbml_file).getModel()
+        self._sbml_compartments = self._sbml_model.getListOfCompartments()
+        self._sbml_events = self._sbml_model.getListOfEvents()
+        self._sbml_function_definitions = self._sbml_model.getListOfFunctionDefinitions()
+        self._sbml_parameters = self._sbml_model.getListOfParameters()
+        self._sbml_reactions = self._sbml_model.getListOfReactions()
+        self._sbml_rules = self._sbml_model.getListOfRules()
+        self._sbml_species = self._sbml_model.getListOfSpecies()
+        self._sbml_unit_definitions = self._sbml_model.getListOfUnitDefinitions()
 
-        self._rule_eqs = None
+        self._assignment_rules = []  # [ { id: str, descr: str, ... } ]
+        self._state_variables = []  # [ { id: str, descr: str, ... } ]
+        self._derived_quantities = []  # [ { id: str, descr: str, ... } ]
+        self._variable_parameters = []  # [ { id: str, descr: str, ... } ]
+        self._constant_parameters = []  # [ { id: str, descr: str, ... } ]
+        self._reactions = []  # [ { id: str, descr: str, ... } ]
+        self._events = []  # [ { name: str, trigger: str, ... } ]
+        self._functions = []  # [ { name: str, args: [str], body: str } ]
 
-        self._state_variables = None
-        self._derived_quantities = None
-        self._variable_parameters = None
-        self._constant_parameters = None
+        self._variable_types = {}  # { id: VarType }
 
         self._outputs = {}  # { filename: code }
 
@@ -121,45 +119,91 @@ class ChasteSbmlModel:
     def _generate(self) -> None:
         """Generate Chaste code for the model.
         This method should be implemented by subclasses.
-        Generated code should be stored in the outputs using _add_output.
+        Generated code should be stored in the outputs using `_add_output`.
+
+        Example:
+        cpp_code = ...
+        hpp_code = ...
+        self._add_output(cpp_filename, cpp_code)
+        self._add_output(hpp_filename, hpp_code)
         """
         return
 
-    def _add_constant_parameter(self, obj_id: "str") -> None:
-        """Add a constant parameter to the model data.
+    def _add_assignment_rule(self, id_: str, descr: str, lhs: str, rhs: str) -> None:
+        """Add an assignment rule to the template variables."""
+        self._assignment_rules.append(
+            {
+                "id": id_,
+                "descr": descr,
+                "index": len(self._assignment_rules),
+                "lhs": lhs,
+                "rhs": rhs,
+            }
+        )
+        self._variable_types[id_] = VarType.ASSIGNMENT_RULE
 
-        :param obj_id: The id of the Parameter.
+    def _add_constant_parameter(self, id_: str, descr: str, value: float, units: str) -> None:
+        """Add a constant parameter to the template variables."""
+        self._constant_parameters.append(
+            {
+                "id": id_,
+                "descr": descr,
+                "index": len(self._constant_parameters),
+                "value": value,
+                "units": units,
+            }
+        )
+        self._variable_types[id_] = VarType.CONSTANT_PARAMETER
+
+    def _add_derived_quantity(self, id_: str, descr: str, units: str, rhs: str) -> None:
+        """Add a derived quantity to the template variables."""
+        self._derived_quantities.append(
+            {
+                "id": id_,
+                "descr": descr,
+                "index": len(self._derived_quantities),
+                "rhs": rhs,
+                "units": units,
+            }
+        )
+        self._variable_types[id_] = VarType.DERIVED_QUANTITY
+
+    def _add_event(self, descr: str, trigger: str, assignments: list[str], distance: str) -> None:
+        """Add an event to the template variables.
+
+        :param descr: The event description.
+        :param trigger: The event trigger formula.
+        :param assignments: The event assignments.
+        :param distance: The distance for the event trigger.
         """
-        if obj_id not in self._constant_parameters:
-            index = len(self._constant_parameters)
-            self._constant_parameters[obj_id] = index
+        self._events.append(
+            {
+                "descr": descr,
+                "index": len(self._events),
+                "trigger": trigger,
+                "assignments": assignments,
+                "distance": distance,
+            }
+        )
 
-    def _add_derived_quantity(self, obj_id: "str") -> None:
-        """Add a derived quantity to the model data.
+    def _add_function(self, id_: str, descr: str, args: str, body: str) -> None:
+        """Add a function to the template variables.
 
-        :param obj_id: The id of the Species.
+        :param id_: The function ID.
+        :param descr: The function description.
+        :param args: The function arguments.
+        :param body: The function body.
         """
-        if obj_id not in self._derived_quantities:
-            index = len(self._derived_quantities)
-            self._derived_quantities[obj_id] = index
-
-    def _add_variable_parameter(self, obj_id: "str") -> None:
-        """Add a variable parameter to the model data.
-
-        :param obj_id: The id of the Parameter / Species.
-        """
-        if obj_id not in self._variable_parameters:
-            index = len(self._variable_parameters)
-            self._variable_parameters[obj_id] = index
-
-    def _add_state_variable(self, obj_id: "str") -> None:
-        """Add a state variable to the model data.
-
-        :param obj_id: The id of the Species.
-        """
-        if obj_id not in self._state_variables:
-            index = len(self._state_variables)
-            self._state_variables[obj_id] = index
+        self._functions.append(
+            {
+                "id": id_,
+                "descr": descr,
+                "index": len(self._functions),
+                "args": args,
+                "body": body,
+            }
+        )
+        self._variable_types[id_] = VarType.FUNCTION
 
     def _add_output(self, filename: str, code: str) -> None:
         """Add generated code to the outputs dictionary.
@@ -168,6 +212,52 @@ class ChasteSbmlModel:
         :param code: The code.
         """
         self._outputs[filename] = code
+
+    def _add_reaction(
+        self, id_: str, descr: str, rhs: str, parameters: list[dict[str, "Any"]]
+    ) -> None:
+        """Add a reaction to the template variables."""
+        self._reactions.append(
+            {
+                "id": id_,
+                "descr": descr,
+                "index": len(self._reactions),
+                "rhs": rhs,
+                "parameters": parameters,
+            }
+        )
+        self._variable_types[id_] = VarType.REACTION
+
+    def _add_state_variable(
+        self, id_: str, descr: str, initial_value: float, units: str, rhs: str
+    ) -> None:
+        """Add a state variable to the template variables."""
+        self._state_variables.append(
+            {
+                "id": id_,
+                "descr": descr,
+                "index": len(self._state_variables),
+                "initial_value": initial_value,
+                "rhs": rhs,
+                "units": units,
+            }
+        )
+        self._variable_types[id_] = VarType.STATE_VARIABLE
+
+    def _add_variable_parameter(
+        self, id_: str, descr: str, initial_value: float, units: str = NON_DIM_UNITS
+    ) -> None:
+        """Add a variable parameter to the template variables."""
+        self._variable_parameters.append(
+            {
+                "id": id_,
+                "descr": descr,
+                "index": len(self._variable_parameters),
+                "initial_value": initial_value,
+                "units": units,
+            }
+        )
+        self._variable_types[id_] = VarType.VARIABLE_PARAMETER
 
     def _convert_ast_formula(self, ast_formula: "ASTNode") -> str:
         """Convert SBML AST formula to equivalent C++ string.
@@ -303,26 +393,21 @@ class ChasteSbmlModel:
         cpp_formula = "".join(cpp_tokens)
         return cpp_formula
 
-    def _format_compartments(self, variable_parameters: list[dict[str, "Any"]]) -> None:
+    def _format_compartments(self) -> None:
         """Add compartments to template variables."""
-        for compartment in self._compartments:
-            variable_parameters.append(
-                {
-                    "id": compartment.getId(),
-                    "index": len(variable_parameters),
-                    "name": compartment.getName(),
-                    "value": compartment.getSize(),
-                }
-            )
+        for compartment in self._sbml_compartments:
+            id_ = compartment.getId()
+            descr = compartment.getName().strip()
+            value = compartment.getSize()
+            self._add_variable_parameter(id_, descr, value)
 
-    def _format_events(self) -> list[dict[str, "Any"]]:
-        """Get a list of event dictionaries for the model.
+    def _format_events(self) -> None:
+        """Add events to template variables."""
 
-        :return: A list of event dictionaries.
-        """
-        event_dicts = []
-        for event in self._events:
-            name = event.getName()
+        # TODO: Add priority
+
+        for event in self._sbml_events:
+            descr = event.getName().strip()
             trigger_math = event.getTrigger().getMath()
             trigger_formula = self._convert_ast_formula(trigger_math)
 
@@ -393,49 +478,37 @@ class ChasteSbmlModel:
             assignment_formulas = []
             for assignment in event.getListOfEventAssignments():
                 rhs = self._convert_ast_formula(assignment.getMath())
-
                 lhs = assignment.getVariable()
-                if self._is_state_variable(lhs):
-                    state_variable_index = self._get_state_variable_index(lhs)
-                    assignment_formulas.append(f"SetStateVariable({state_variable_index}, {rhs})")
-                    assignment_formulas.append(
-                        f"SetDefaultInitialCondition({state_variable_index}, {rhs})"
-                    )
-                elif self._is_variable_parameter(lhs):
+                assignment_formulas.append(f"{lhs} = {rhs}")
+
+                var_type = self._get_variable_type(lhs)
+                if var_type == VarType.STATE_VARIABLE:
+                    index = self._get_variable_index(lhs)
+                    assignment_formulas.append(f"SetStateVariable({index}, {lhs})")
+
+                elif var_type == VarType.VARIABLE_PARAMETER:
                     assignment_formulas.append(f'SetParameter("{lhs}", {rhs})')
+
                 else:
                     assignment_formulas.append(f"{lhs} = {rhs}")
 
-            event_dicts.append(
-                {
-                    "assignments": assignment_formulas,
-                    "distance": trigger_distance,
-                    "name": name,
-                    "trigger": trigger_formula,
-                }
-            )
-        return event_dicts
+            self._add_event(descr, trigger_formula, assignment_formulas, trigger_distance)
 
-    def _format_function_definitions(self) -> list[dict[str, "Any"]]:
-        """Get a list of function definition dictionaries for the model.
-
-        :return: A list of function definition dictionaries.
-        """
-        function_definition_dicts = []
-        for fd in self._function_definitions:
+    def _format_function_definitions(self) -> None:
+        """Add function definitions to template variables."""
+        for fd in self._sbml_function_definitions:
             fd_id = fd.getId()
+            descr = fd.getName().strip()
             arg_list = get_function_definition_arguments(fd)
             args = ", ".join(map(lambda x: f"double {x}", arg_list))
             body = self._convert_ast_formula(fd.getBody())
 
-            function_definition_dicts.append(
-                {
-                    "id": fd_id,
-                    "args": args,
-                    "body": body,
-                }
+            self._add_function(
+                fd_id,
+                descr,
+                args,
+                body,
             )
-        return function_definition_dicts
 
     def _format_header_guard(self, filename: str) -> str:
         """Get the header guard for a file.
@@ -445,119 +518,91 @@ class ChasteSbmlModel:
         """
         return filename.upper().replace(".", "_") + "_"
 
-    def _format_parameters(self, constant_parameters, variable_parameters) -> None:
+    def _format_parameters(self) -> None:
         """Add parameters to template variables."""
 
-        for param in self._parameters:
+        for param in self._sbml_parameters:
             param_id = param.getId()
-            name = param.getName()
+            descr = param.getName().strip()
 
             value = param.getValue() if param.isSetValue() else 0.0
-            units = param.getUnits() if param.isSetUnits() else "non-dim"
+            units = param.getUnits() if param.isSetUnits() else NON_DIM_UNITS
 
-            is_variable = param.isSetConstant() and not param.getConstant()
-            index = len(variable_parameters) if is_variable else len(constant_parameters)
-
-            param_dict = {
-                "id": param_id,
-                "index": index,
-                "name": name,
-                "units": units,
-                "value": value,
-            }
-
-            if is_variable:
-                variable_parameters.append(param_dict)
+            if param.isSetConstant() and not param.getConstant():
+                self._add_variable_parameter(param_id, descr, value, units)
             else:
-                constant_parameters.append(param_dict)
+                self._add_constant_parameter(param_id, descr, value, units)
 
-    def _format_reactions(self) -> list[dict[str, "Any"]]:
-        """Get a list of reaction dictionaries for the model.
+    def _format_reactions(self) -> None:
+        """Add reactions to template variables."""
 
-        :return: A list of reaction dictionaries.
-        """
-        reaction_dicts = []
-        for reaction in self._reactions:
+        for reaction in self._sbml_reactions:
             reaction_id = reaction.getId()
-            name = reaction.getName()
+            descr = reaction.getName().strip()
 
             kinetic_law = reaction.getKineticLaw()
             rhs = self._convert_str_formula(kinetic_law.getFormula())
 
-            reaction_dict = {
-                "id": reaction_id,
-                "name": name,
-                "parameters": [],
-                "rhs": rhs,
-            }
-
-            parameters = kinetic_law.getListOfParameters()
-            for param in parameters:
+            reaction_parameters = []
+            sbml_parameters = kinetic_law.getListOfParameters()
+            for param in sbml_parameters:
                 param_id = param.getId()
-                param_name = self._get_name(param)
+                param_descr = param.getName().strip()
                 param_value = param.getValue()  # TODO: What if not set?
-
-                reaction_dict["parameters"].append(
+                reaction_parameters.append(
                     {
                         "id": param_id,
-                        "name": param_name,
+                        "descr": param_descr,
                         "value": param_value,
                     }
                 )
 
-            reaction_dicts.append(reaction_dict)
-        return reaction_dicts
+            self._add_reaction(reaction_id, descr, rhs, reaction_parameters)
 
-    def _format_rules(self) -> list[dict[str, "Any"]]:
-        """Get a list of rule dictionaries for the model.
+    def _format_rules(self) -> None:
+        """Add rules to template variables."""
 
-        :return: A list of rule dictionaries.
-        """
-        rule_dicts = []
-
-        for rule in self._rules:
+        for rule in self._sbml_rules:
             rule_id = rule.getId()
-            name = rule.getName()
-            lhs = rule.getVariable()
-            rhs = self._convert_str_formula(rule.getFormula())
-            is_state_variable = self._is_state_variable(lhs)
-            is_variable_parameter = self._is_variable_parameter(lhs)
+            descr = rule.getName().strip()
 
-            rule_dict = {
-                "id": rule_id,
-                "name": name,
-                "rhs": rhs,
-                "lhs": lhs,
-                "is_variable_parameter": is_variable_parameter,
-                "is_state_variable": is_state_variable,
-            }
-            rule_dicts.append(rule_dict)
-        return rule_dicts
+            type_code = rule.getTypeCode()
+            if type_code == SBML_ASSIGNMENT_RULE:
+                lhs = rule.getVariable()
+                rhs = self._convert_str_formula(rule.getFormula())
+                self._add_assignment_rule(rule_id, descr, lhs, rhs)
 
-    def _format_species(self, state_variables, derived_quantities, variable_parameters) -> None:
+            elif type_code == SBML_ALGEBRAIC_RULE:
+                # Not implemented
+                raise NotImplementedError("Algebraic rules are not yet supported.")
+
+            elif type_code == SBML_RATE_RULE:
+                # Not implemented
+                raise NotImplementedError("Rate rules are not yet supported.")
+
+    def _format_species(self) -> None:
         """Add species to template variables."""
-        """Get a list of species dictionaries for the model.
+        odes = self._get_odes()
 
-        :return: A list of species dictionaries.
-        """
-        odes = self._process_odes()
+        # Note: rules must be processed before species
+        if not self._assignment_rules:
+            raise RuntimeError("No assignment rules found. Please process rules before species.")
+        assignment_rules = {r["lhs"]: r["rhs"] for r in self._assignment_rules}
 
-        for species in self._species:
+        for species in self._sbml_species:
             species_id = species.getId()
-            name = species.getName()
+            descr = species.getName().strip()
             initial_value = get_species_concentration(species)
 
-            comp_id = species.getCompartment()
-            compartment = self._compartments.get(comp_id)
-            # If there's a compartment we'll normalise the ODE, so declare it as non-dimensional
-            units = "non-dim" if compartment else species.getSubstanceUnits()
+            # If there's a compartment we'll normalise the ODEs, so declare it as non-dimensional
+            compartment_id = species.getCompartment()
+            compartment = self._sbml_compartments.get(compartment_id)
+            units = NON_DIM_UNITS if compartment else species.getSubstanceUnits()
 
-            index = None
-            rhs = None
             if species_id in odes:
                 # State variable
-                index = len(state_variables)
-                rhs = f"({odes[species_id]}) / {comp_id}"
+                rhs = f"({odes[species_id]}) / {compartment_id}"  # Normalised ODE
+                self._add_state_variable(species_id, descr, initial_value, units, rhs)
 
                 # TODO: Handle time scaling
                 # time_multiplier = self._get_timescale_multiplier()
@@ -568,234 +613,23 @@ class ChasteSbmlModel:
                 # TODO: Do something different for boundary conditions?
                 # if species.getBoundaryCondition():
 
-            elif species_id in self._rules_dict:
+            elif species_id in assignment_rules:
                 # Derived quantity
-                index = len(derived_quantities)
-                rhs = self._rules_dict[species_id]
+                rhs = assignment_rules[species_id]
+                self._add_derived_quantity(species_id, descr, units, rhs)
 
             else:
                 # Variable parameter
-                index = len(variable_parameters)
+                self._add_variable_parameter(species_id, descr, initial_value, units)
 
-            species_dict = {
-                "id": species_id,
-                "index": index,
-                "initial_value": initial_value,
-                "name": name,
-                "rhs": rhs,
-                "units": units,
-            }
-
-    def _get_name(self, obj: "SBase") -> str:
-        """Get the name of a libSBML object, or the ID if it doesn't have one.
-
-        :param obj: The object.
-        :return: The object name, or ID.
-        """
-        obj_name = obj.getName().strip()
-        if obj_name:
-            return obj_name
-        return obj.getId()
-
-    def _get_constant_parameter_index(self, obj_id: "str") -> int:
-        """Get the index of a constant parameter.
-
-        :param obj_id: The id of the Parameter.
-        :return: The constant parameter index.
-        """
-        return self._constant_parameters.get(obj_id)
-
-    def _get_derived_quantity_index(self, obj_id: "str") -> int:
-        """Get the index of a derived quantity.
-
-        :param obj_id: The id of the Species.
-        :return: The derived quantity index.
-        """
-        return self._derived_quantities.get(obj_id)
-
-    def _get_variable_parameter_index(self, obj_id: "str") -> int:
-        """Get the index of a variable parameter.
-
-        :param obj_id: The id of the Parameter / Species.
-        :return: The variable parameter index.
-        """
-        return self._variable_parameters.get(obj_id)
-
-    def _get_state_variable_index(self, obj_id: "str") -> int:
-        """Get the index of a state variable.
-
-        :param obj_id: The id of the Species.
-        :return: The state variable index.
-        """
-        return self._state_variables.get(obj_id)
-
-    def _get_template(self, name: str) -> "Template":
-        """Get a Jinja2 template.
-
-        :param name: The template name.
-        :return: The template object.
-        """
-        return self._jinja_env.get_template(name)
-
-    def _get_template_vars(self, hpp_filename: str) -> dict[str, "Any"]:
-        """Generate the template variables for the model C++ files.
-
-        :param hpp_filename: The hpp filename for the model.
-        :return: The template variables for the model C++ files.
-        """
-        return dict(
-            compartments=self._formatted_compartments,
-            events=self._formatted_events,
-            function_definitions=self._formatted_function_definitions,
-            header_guard=self._format_header_guard(hpp_filename),
-            model_hpp_file=hpp_filename,
-            model_class_name=self._model_class_name,
-            ode_class_name=self._ode_class_name,
-            parameters=self._formatted_parameters,
-            reactions=self._formatted_reactions,
-            rules=self._formatted_rules,
-            num_state_vars=self._num_state_vars,
-            species=self._formatted_species,
-            wrapper_class_name=self._wrapper_class_name,
-        )
-
-    def _get_timescale_multiplier(self) -> float:
-        """Get the timescale multiplier.
-
-        SBML uses seconds by default and Chaste uses hours.
-
-        :return: The timescale multiplier.
-        """
-        for unit_def in self._unit_definitions:
-            u_id = unit_def.getId()
-            if u_id.lower() == "time":  # Do people ever call this something different?
-                timescale = unit_def.getName().lower()
-                if "minute" in timescale:
-                    return 60.0
-                elif "hour" in timescale:
-                    return 1.0
-        return 3600.0
-
-    def _get_varname(self, obj: "SBase") -> str:
-        """Get a suitable C++ variable name for a libSBML object.
-
-        :param obj: The object.
-        :return: The variable name.
-        """
-        # TODO: id is not unique for all objects e.g. reaction parameters
-        obj_id = obj.getId()
-        if obj_id in self._varnames:
-            return self._varnames[obj_id]
-
-        # Prefer the name if it is reasonably short, or shorter than the ID
-        obj_name = varname_sanitize(self._get_name(obj))
-        if 0 < len(obj_name) <= max(SHORT_NAME_LEN, len(obj_id)):
-            var = obj_name
-        else:
-            var = obj_id
-
-        # Check that all generated variable names are unique
-        if var in self._varnames.values():
-            i = 0
-            while f"{var}_{i}" in self._varnames.values():
-                i += 1
-            var = f"{var}_{i}"
-
-        self._varnames[obj_id] = var
-        return var
-
-    def _is_parameter(self, obj_id: str) -> bool:
-        """Check if ID belongs to a parameter.
-
-        :param obj_id: The ID to check.
-        :return: True if the ID belongs to a parameter.
-        """
-        return any(obj_id == p.getId() for p in self._parameters)
-
-    def _is_species(self, obj_id: str) -> bool:
-        """Check if ID belongs to a species.
-
-        :param obj_id: The ID to check.
-        :return: True if the ID belongs to a species.
-        """
-        return any(obj_id == p.getId() for p in self._species)
-
-    def _is_constant_parameter(self, obj_id: str) -> bool:
-        """Check if ID belongs to a constant parameter.
-
-        :param obj_id: The ID to check.
-        :return: True if the ID belongs to a constant parameter.
-        """
-        return obj_id in self._constant_parameters
-
-    def _is_derived_quantity(self, obj_id: str) -> bool:
-        """Check if a Species is defined as a derived quantity for Chaste.
-
-        :param obj_id: The Species ID to check.
-        :return: True if defined as a derived quantity, False otherwise.
-        """
-        return obj_id in self._derived_quantities
-
-    def _is_variable_parameter(self, obj_id: str) -> bool:
-        """Check if a Species or Parameter is defined as a variable parameter for Chaste.
-
-        :param obj_id: The Species or Parameter ID to check.
-        :return: True if defined as a variable parameter, False otherwise.
-        """
-        return obj_id in self._variable_parameters
-
-    def _is_state_variable(self, species_id: str) -> bool:
-        """Check if a Species is defined as a state variable for Chaste.
-
-        :param species_id: The Species ID to check.
-        :return: True if defined as a state variable, False otherwise.
-        """
-        return species_id in self._state_variables
-
-    def _process_model(self) -> None:
-        """Process the SBML model to set up the ODEs and rules dictionaries."""
-
-        state_variables = []
-        derived_quantities = []
-        variable_parameters = []
-        constant_parameters = []
-
-        self._format_compartments(variable_parameters)
-        self._format_species(state_variables, derived_quantities, variable_parameters)
-        self._format_parameters(constant_parameters, variable_parameters)
-
-        # Process the rules dictionary
-        self._process_rules()
-
-        # Process variable types
-        parameter_types = {}
-        for parameter in variable_parameters:
-            _id = parameter["id"]
-            parameter_types[_id] = VARIABLE_PARAMETER
-
-        for state_variable in state_variables:
-            _id = state_variable["id"]
-            parameter_types[_id] = STATE_VARIABLE
-
-        for derived_quantity in derived_quantities:
-            _id = derived_quantity["id"]
-            parameter_types[_id] = DERIVED_QUANTITY
-
-        for constant_parameter in constant_parameters:
-            _id = constant_parameter["id"]
-            parameter_types[_id] = CONSTANT_PARAMETER
-
-        # Set the number of state variables
-        self._num_state_vars = len(self._state_variables)
-
-    def _process_odes(self) -> dict[str, str]:
+    def _get_odes(self) -> dict[str, str]:
         """Get the ODEs equations for each species.
 
         Each ODE will essentially be the sum of the products minus the sum of
         the reactants divided by the compartment volume
         """
         odes = {}
-        for reaction in self._reactions:
+        for reaction in self._sbml_reactions:
             reaction_id = reaction.getId()
 
             # Decompose reaction into sum of products minus sum of reactants
@@ -826,46 +660,122 @@ class ChasteSbmlModel:
                 else:
                     odes[species_id] = "-" + reaction_id
 
-            return odes
+        return odes
 
-    def _process_rules(self) -> None:
-        """Get the rules for each species."""
-        self._rules = {}
-        for rule in self._rules:
-            type_code = rule.getTypeCode()
-            if type_code == SBML_ASSIGNMENT_RULE:
-                lhs = rule.getVariable()
-                rhs = self._convert_str_formula(rule.getFormula())
-                self._rules[lhs] = rhs
-            elif type_code == SBML_ALGEBRAIC_RULE:
-                # Not implemented
-                raise NotImplementedError("Algebraic rules are not yet supported.")
-            elif type_code == SBML_RATE_RULE:
-                # Not implemented
-                raise NotImplementedError("Rate rules are not yet supported.")
+    def _get_template(self, name: str) -> "Template":
+        """Get a Jinja2 template.
 
-    def _process_variable_types(self) -> None:
-        """Set the variable types for the model."""
-        self._state_variables = {}
-        self._derived_quantities = {}
-        self._variable_parameters = {}
-        self._constant_parameters = {}
+        :param name: The template name.
+        :return: The template object.
+        """
+        return self._jinja_env.get_template(name)
 
-        # Species defined by rate rules (ODEs) are state variables.
-        # Species defined by assignment rules are derived quantities.
-        # All other species are variable parameters.
-        for species in self._species:
-            species_id = species.getId()
-            if species_id in self._odes_dict:
-                self._add_state_variable(species_id)
-            elif species_id in self._rules_dict:
-                self._add_derived_quantity(species_id)
-            else:
-                self._add_variable_parameter(species_id)
+    def _get_template_vars(self, hpp_filename: str) -> dict[str, "Any"]:
+        """Generate the template variables for the model C++ files.
 
-        # Non-constant parameters are variable parameters.
-        for param in self._parameters:
-            if param.isSetConstant() and not param.getConstant():
-                self._add_variable_parameter(param.getId())
-            else:
-                self._add_constant_parameter(param.getId())
+        :param hpp_filename: The hpp filename for the model.
+        :return: The template variables for the model C++ files.
+        """
+        return dict(
+            assignment_rules=self._assignment_rules,
+            constant_parameters=self._constant_parameters,
+            derived_quantities=self._derived_quantities,
+            events=self._events,
+            functions=self._functions,
+            header_guard=self._format_header_guard(hpp_filename),
+            model_class_name=self._model_class_name,
+            model_hpp_file=hpp_filename,
+            num_state_vars=len(self._state_variables),
+            ode_class_name=self._ode_class_name,
+            reactions=self._reactions,
+            state_variables=self._state_variables,
+            variable_parameters=self._variable_parameters,
+            wrapper_class_name=self._wrapper_class_name,
+        )
+
+    def _get_timescale_multiplier(self) -> float:
+        """Get the timescale multiplier.
+
+        SBML uses seconds by default and Chaste uses hours.
+
+        :return: The timescale multiplier.
+        """
+        for unit_def in self._sbml_unit_definitions:
+            u_id = unit_def.getId()
+            if u_id.lower() == "time":  # Do people ever call this something different?
+                timescale = unit_def.getName().strip().lower()
+                if "minute" in timescale:
+                    return 60.0
+                elif "hour" in timescale:
+                    return 1.0
+        return 3600.0
+
+    def _get_variable_index(self, id_: str) -> int:
+        """Get the index of a variable"""
+        var_type = self._get_variable_type(id_)
+
+        if var_type == VarType.STATE_VARIABLE:
+            for state_variable in self._state_variables:
+                if state_variable["id"] == id_:
+                    return state_variable["index"]
+
+        elif var_type == VarType.DERIVED_QUANTITY:
+            for dq in self._derived_quantities:
+                if dq["id"] == id_:
+                    return dq["index"]
+
+        elif var_type == VarType.CONSTANT_PARAMETER:
+            for param in self._constant_parameters:
+                if param["id"] == id_:
+                    return param["index"]
+
+        elif var_type == VarType.VARIABLE_PARAMETER:
+            for param in self._variable_parameters:
+                if param["id"] == id_:
+                    return param["index"]
+
+        elif var_type == VarType.ASSIGNMENT_RULE:
+            for rule in self._assignment_rules:
+                if rule["id"] == id_:
+                    return rule["index"]
+
+        elif var_type == VarType.FUNCTION:
+            for func in self._functions:
+                if func["id"] == id_:
+                    return func["index"]
+
+        elif var_type == VarType.REACTION:
+            for reaction in self._reactions:
+                if reaction["id"] == id_:
+                    return reaction["index"]
+
+        raise ValueError(f"ID '{id_}' is not a recognized variable.")
+
+    def _get_variable_type(self, var_id: str) -> bool:
+        """Get the type of a variable based on its ID."""
+        return self._variable_types.get(var_id, VarType.UNKNOWN)
+
+    def _process_model(self) -> None:
+        """Process the SBML model to set up the formatted variables for templates."""
+
+        self._assignment_rules = []
+
+        self._state_variables = []
+        self._derived_quantities = []
+        self._variable_parameters = []
+        self._constant_parameters = []
+
+        self._reactions = []
+        self._events = []
+        self._functions = []
+
+        self._variable_types = {}
+
+        self._format_rules()
+        self._format_compartments()
+        self._format_species()
+        self._format_parameters()
+
+        self._format_reactions()
+        self._format_events()
+        self._format_function_definitions()

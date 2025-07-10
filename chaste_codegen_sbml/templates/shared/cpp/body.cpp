@@ -43,10 +43,15 @@ namespace sm = sbmlmath;
     {{ param["id"] }} = {{ param["initial_value"] }};
 {% endfor %}
 
-    ProcessRules(0.0, mStateVariables);
-
 {% for param in variable_parameters %}
     mParameters.push_back({{ param["id"] }});
+{% endfor %}
+
+    ProcessRules(0.0, mStateVariables);
+
+    // REACTIONS
+{% for reaction in reactions %}
+    {{ reaction["id"] }} = 0.0;
 {% endfor %}
 
 {% if events %}
@@ -65,7 +70,7 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
     ProcessRules(time, rY);
 
 {% for var in state_variables %}
-    rDY[{{ var["index"] }}] = {{ var["rhs"] }}; // d[{{ var["name"] }}]/dt
+    rDY[{{ var["index"] }}] = {{ var["rhs"] }}; // d[{{ var["descr"] }}]/dt
 {% endfor %}
 
     // Scale time appropriately
@@ -84,7 +89,7 @@ std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, 
 }
 {% endif %}
 
-void {{ ode_class_name }}::ProcessRules(const std::vector<double> &rY)
+void {{ ode_class_name }}::ProcessRules(double time, const std::vector<double>& rY)
 {
     // STATE VARIABLES
 {% for var in state_variables %}
@@ -92,24 +97,22 @@ void {{ ode_class_name }}::ProcessRules(const std::vector<double> &rY)
 {% endfor %}
 
     // RULES
-{% for rule in rules %}
+{% for rule in assignment_rules %}
     {{ rule["lhs"] }} = {{ rule["rhs"] }};
 {% endfor %}
 
     // PARAMETERS
 {% for var in variable_parameters %}
-{% if var["rhs"] %}
-    SetParameter("{{ var['id'] }}", {{ var['id'] }});
-{% endif %}
+    SetParameter({{ var['index'] }}, {{ var['id'] }});
 {% endfor %}
 
     // REACTIONS
 {% for reaction in reactions %}
-  {% if reaction["name"] %}
-    // {{ reaction["name"] }}
+  {% if reaction["descr"] %}
+    // {{ reaction["descr"] }}
   {% endif %}
   {% if reaction["parameters"] %}
-    double {{ reaction["id"] }} = 0.0;
+    {{ reaction["id"] }} = 0.0;
     {
   {% for param in reaction["parameters"] %}
         double {{ param["id"] }} = {{ param["value"] }};
@@ -117,7 +120,7 @@ void {{ ode_class_name }}::ProcessRules(const std::vector<double> &rY)
         {{ reaction["id"] }} = {{ reaction["rhs"] }};
     }
   {% else %}
-    double {{ reaction["id"] }} = {{ reaction["rhs"] }};
+    {{ reaction["id"] }} = {{ reaction["rhs"] }};
   {% endif %}
 
 {% endfor %}
@@ -132,7 +135,7 @@ double {{ ode_class_name }}::ProcessEvents(double time, const std::vector<double
     double event_dist = min_dist;
 
 {% for event in events %}
-    // EVENT: {{ event["name"] }}
+    // EVENT: {{ event["descr"] }}
     event_dist = {{ event["distance"] }};
 
     // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
@@ -157,7 +160,6 @@ double {{ ode_class_name }}::ProcessEvents(double time, const std::vector<double
             event_dist = 0.0;
             min_dist = 0.0;
 
-            UpdateDefaultInitialConditions(rY); // TODO: Make this work for multiple events
 {% for assignment in event["assignments"] %}
             {{ assignment }};
 {% endfor %}
@@ -170,34 +172,39 @@ double {{ ode_class_name }}::ProcessEvents(double time, const std::vector<double
     }
 {% endfor %}
 
+    if (min_dist == 0.0)
+    {
+{% for var in state_variables %}
+    SetDefaultInitialCondition({{ var["index"] }}, {{ var["id"] }});
+{% endfor %}
+    }
+
     mEventsInitialised = true; // Flag that events have been processed at least once
 
     // Distance to closest event
     return min_dist;
 }
+{% endif %}
 
+{% if events %}
 double {{ ode_class_name }}::CalculateRootFunction(double time, const std::vector<double> &rY)
 {
     return ProcessEvents(time, rY);
 }
+{% endif %}
 
+{% if events %}
 bool {{ ode_class_name }}::CalculateStoppingEvent(double time, const std::vector<double> &rY)
 {
     return ProcessEvents(time, rY) == 0.0;
 }
+{% endif %}
 
-void {{ ode_class_name }}::UpdateDefaultInitialConditions(const std::vector<double> &rY)
+// FUNCTIONS
+{% for func in functions %}
+double {{ ode_class_name }}::{{ func["id"] }}({{ func["args"] }})
 {
-{% for var in state_variables %}
-    SetDefaultInitialCondition({{ var["state_variable_index"] }}, rY[{{ var["state_variable_index"] }}]); // {{ var["id"] }}
-{% endfor %}
-}
-
-// FUNCTION DEFINITIONS:
-{% for fd in function_definitions %}
-double {{ ode_class_name }}::{{ fd["id"] }}({{ fd["args"] }})
-{
-    return {{ fd["body"]}};
+    return {{ func["body"] }};
 }
 {% endfor %}
 

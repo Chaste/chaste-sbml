@@ -21,35 +21,34 @@ private:
     }
 
     // CONSTANT PARAMETERS
-{% for param in const_parameters %}
-    const double {{ param["id"] }} = {{ param["value"] }}; // {{ param["name"] }}
-{% endfor %}
+{% for param in constant_parameters %}
+    const double {{ param["id"] }} = {{ param["value"] }}; // {{ param["descr"] }}
 {% endfor %}
 
     // STATE VARIABLES
 {% for var in state_variables %}
-    double {{ var["id"] }}; // {{ var["name"] }}
+    double {{ var["id"] }}; // {{ var["descr"] }}
 {% endfor %}
 
     // DERIVED QUANTITIES
 {% for dq in derived_quantities %}
-    double {{ dq["id"] }}; // {{ dq["name"] }}
+    double {{ dq["id"] }}; // {{ dq["descr"] }}
 {% endfor %}
 
     // PARAMETERS
 {% for param in variable_parameters %}
-    double {{ param["id"] }}; // {{ param["name"] }}
+    double {{ param["id"] }}; // {{ param["descr"] }}
 {% endfor %}
 
     // REACTIONS
 {% for reaction in reactions %}
-    double {{ reaction["id"] }}; // {{ reaction["name"] }}
+    double {{ reaction["id"] }}; // {{ reaction["descr"] }}
 {% endfor %}
 
 {% if events %}
-    // EVENTS:
-    std::vector<bool> eventsSatisfied;
-    bool eventsInitialised;
+    // EVENTS
+    std::vector<bool> mEventsSatisfied;
+    bool mEventsInitialised;
 {% endif %}
 
 public:
@@ -58,20 +57,21 @@ public:
     ~{{ ode_class_name }}();
 
     void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
+    void ProcessRules(double time, const std::vector<double>& rY);
+
+{% if derived_quantities %}
     std::vector<double> ComputeDerivedQuantities(double time, const std::vector<double> &rY);
+{% endif %}
 
 {% if events %}
     double CalculateRootFunction(double time, const std::vector<double>& rY);
     bool CalculateStoppingEvent(double time, const std::vector<double>& rY);
-    
-    void ProcessRules(double time, const std::vector<double>& rY);
     double ProcessEvents(double time, const std::vector<double>& rY);
-    void UpdateDefaultInitialConditions(const std::vector<double> &rY);
 {% endif %}
 
-    // FUNCTION DEFINITIONS:
-{% for fd in function_definitions %}
-    double {{ fd["id"] }}({{ fd["args"] }});
+    // FUNCTIONS
+{% for func in functions %}
+    double {{ func["id"] }}({{ func["args"] }});
 {% endfor %}
 };
 
