@@ -59,6 +59,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class TestTan2014Sbml : public AbstractCellBasedTestSuite
 {
+private:
+    const unsigned ODE_SIZE = 6u;
+
 public:
     void TestOdeArchiving()
     {
@@ -67,43 +70,39 @@ public:
 
         {
             std::vector<double> state_variables;
+            state_variables.push_back(0.0);
+            state_variables.push_back(1.0);
+            state_variables.push_back(2.0);
             state_variables.push_back(3.0);
             state_variables.push_back(4.0);
             state_variables.push_back(5.0);
-            state_variables.push_back(6.0);
-            state_variables.push_back(7.0);
-            state_variables.push_back(8.0);
-            state_variables.push_back(9.0);
 
             Tan2014SbmlOdeSystem ode_system(state_variables);
 
             ode_system.SetDefaultInitialCondition(2, 3.25);
 
             std::vector<double> initial_conditions = ode_system.GetInitialConditions();
-            TS_ASSERT_EQUALS(initial_conditions.size(), 7u);
+            TS_ASSERT_EQUALS(initial_conditions.size(), ODE_SIZE);
             TS_ASSERT_DELTA(initial_conditions[0], 46.60, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[1], 581.10, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[2], 3.25, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[3], 32.60, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[4], 516.80, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[5], 483.20, 1e-3);
-            TS_ASSERT_DELTA(initial_conditions[6], 1.00, 1e-3);
 
-            double var1 = ode_system.GetStateVariable(0);
-            double var2 = ode_system.GetStateVariable(1);
-            double var3 = ode_system.GetStateVariable(2);
-            double var4 = ode_system.GetStateVariable(3);
-            double var5 = ode_system.GetStateVariable(4);
-            double var6 = ode_system.GetStateVariable(5);
-            double var7 = ode_system.GetStateVariable(6);
+            double var0 = ode_system.GetStateVariable(0);
+            double var1 = ode_system.GetStateVariable(1);
+            double var2 = ode_system.GetStateVariable(2);
+            double var3 = ode_system.GetStateVariable(3);
+            double var4 = ode_system.GetStateVariable(4);
+            double var5 = ode_system.GetStateVariable(5);
 
-            TS_ASSERT_DELTA(var1, 3.0, 1e-3);
-            TS_ASSERT_DELTA(var2, 4.0, 1e-3);
-            TS_ASSERT_DELTA(var3, 5.0, 1e-3);
-            TS_ASSERT_DELTA(var4, 6.0, 1e-3);
-            TS_ASSERT_DELTA(var5, 7.0, 1e-3);
-            TS_ASSERT_DELTA(var6, 8.0, 1e-3);
-            TS_ASSERT_DELTA(var7, 9.0, 1e-3);
+            TS_ASSERT_DELTA(var0, 0.0, 1e-3);
+            TS_ASSERT_DELTA(var1, 1.0, 1e-3);
+            TS_ASSERT_DELTA(var2, 2.0, 1e-3);
+            TS_ASSERT_DELTA(var3, 3.0, 1e-3);
+            TS_ASSERT_DELTA(var4, 4.0, 1e-3);
+            TS_ASSERT_DELTA(var5, 5.0, 1e-3);
 
             // Create an output archive
             std::ofstream ofs(archive_filename.c_str());
@@ -126,30 +125,27 @@ public:
 
             // Check that archiving worked correctly
             std::vector<double> initial_conditions = p_ode_system->GetInitialConditions();
-            TS_ASSERT_EQUALS(initial_conditions.size(), 7u);
+            TS_ASSERT_EQUALS(initial_conditions.size(), ODE_SIZE);
             TS_ASSERT_DELTA(initial_conditions[0], 46.60, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[1], 581.10, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[2], 418.90, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[3], 32.60, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[4], 516.80, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[5], 483.20, 1e-3);
-            TS_ASSERT_DELTA(initial_conditions[6], 1.00, 1e-3);
 
-            double var1 = p_ode_system->GetStateVariable(0);
-            double var2 = p_ode_system->GetStateVariable(1);
-            double var3 = p_ode_system->GetStateVariable(2);
-            double var4 = p_ode_system->GetStateVariable(3);
-            double var5 = p_ode_system->GetStateVariable(4);
-            double var6 = p_ode_system->GetStateVariable(5);
-            double var7 = p_ode_system->GetStateVariable(6);
+            double var0 = p_ode_system->GetStateVariable(0);
+            double var1 = p_ode_system->GetStateVariable(1);
+            double var2 = p_ode_system->GetStateVariable(2);
+            double var3 = p_ode_system->GetStateVariable(3);
+            double var4 = p_ode_system->GetStateVariable(4);
+            double var5 = p_ode_system->GetStateVariable(5);
 
-            TS_ASSERT_DELTA(var1, 3.0, 1e-3);
-            TS_ASSERT_DELTA(var2, 4.0, 1e-3);
-            TS_ASSERT_DELTA(var3, 5.0, 1e-3);
-            TS_ASSERT_DELTA(var4, 6.0, 1e-3);
-            TS_ASSERT_DELTA(var5, 7.0, 1e-3);
-            TS_ASSERT_DELTA(var6, 8.0, 1e-3);
-            TS_ASSERT_DELTA(var7, 9.0, 1e-3);
+            TS_ASSERT_DELTA(var0, 0.0, 1e-3);
+            TS_ASSERT_DELTA(var1, 1.0, 1e-3);
+            TS_ASSERT_DELTA(var2, 2.0, 1e-3);
+            TS_ASSERT_DELTA(var3, 3.0, 1e-3);
+            TS_ASSERT_DELTA(var4, 4.0, 1e-3);
+            TS_ASSERT_DELTA(var5, 5.0, 1e-3);
 
             // Tidy up
             delete p_ode_system;
@@ -162,40 +158,36 @@ public:
 
         double time = 0.0;
         std::vector<double> initial_conditions;
-        initial_conditions.push_back(46.6);
-        initial_conditions.push_back(581.1);
-        initial_conditions.push_back(418.9);
-        initial_conditions.push_back(32.6);
-        initial_conditions.push_back(516.8);
-        initial_conditions.push_back(483.2);
-        // initial_conditions.push_back(1.0);
+        initial_conditions.push_back(46.6);  // bcat_cm
+        initial_conditions.push_back(581.1); // ligand_cm
+        initial_conditions.push_back(418.9); // complex_cm
+        initial_conditions.push_back(32.6);  // bcat_nu
+        initial_conditions.push_back(516.8); // ligand_nu
+        initial_conditions.push_back(483.2); // complex_nu
 
         std::vector<double> derivs(initial_conditions.size());
         ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
-        // Test derivatives are correct (default wnt_level=0)
+        // Compare derivatives with values from Tellurium (wnt_level=0)
         TS_ASSERT_EQUALS(ode_system.GetParameter("wnt_level"), 0);
-        TS_ASSERT_DELTA(derivs[0], -170.2326, 1e-3);
-        TS_ASSERT_DELTA(derivs[1], 0.0002357000000, 1e-6);
-        TS_ASSERT_DELTA(derivs[2], -0.0002357000000, 1e-6);
-        TS_ASSERT_DELTA(derivs[3], 304.7769846153847, 1e-3);
-        TS_ASSERT_DELTA(derivs[4], 0.0016000000000, 1e-6);
-        TS_ASSERT_DELTA(derivs[5], -0.0016000000000, 1e-6);
-        // TS_ASSERT_DELTA(derivs[6], 0.0, 1e-6);
+        TS_ASSERT_DELTA(derivs[0], -1.97469879e+02, 1e-3); // d(bcat_cm)/dt
+        TS_ASSERT_DELTA(derivs[1], 2.73412000e-04, 1e-6);  // d(ligand_cm)/dt
+        TS_ASSERT_DELTA(derivs[2], -2.73412000e-04, 1e-6); // d(complex_cm)/dt
+        TS_ASSERT_DELTA(derivs[3], 1.98105040e+02, 1e-3);  // d(bcat_nu)/dt
+        TS_ASSERT_DELTA(derivs[4], 1.04000000e-03, 1e-5);  // d(ligand_nu)/dt
+        TS_ASSERT_DELTA(derivs[5], -1.04000000e-03, 1e-5); // d(complex_nu)/dt
 
-        // Change Wnt level and check still OK
+        // Compare derivatives with values from Tellurium (wnt_level=1)
         ode_system.SetParameter("wnt_level", 1);
         TS_ASSERT_EQUALS(ode_system.GetParameter("wnt_level"), 1);
-
         ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
-        TS_ASSERT_DELTA(derivs[0], -169.8528, 1e-3);
-        TS_ASSERT_DELTA(derivs[1], 0.0002357000000, 1e-6);
-        TS_ASSERT_DELTA(derivs[2], -0.0002357000000, 1e-6);
-        TS_ASSERT_DELTA(derivs[3], 304.7769846153847, 1e-3);
-        TS_ASSERT_DELTA(derivs[4], 0.0016000000000, 1e-6);
-        TS_ASSERT_DELTA(derivs[5], -0.0016000000000, 1e-6);
-        // TS_ASSERT_DELTA(derivs[6], 0.0, 1e-6);
+        TS_ASSERT_DELTA(derivs[0], -1.97469879e+02, 1e-3); // d(bcat_cm)/dt
+        TS_ASSERT_DELTA(derivs[1], 2.73412000e-04, 1e-6);  // d(ligand_cm)/dt
+        TS_ASSERT_DELTA(derivs[2], -2.73412000e-04, 1e-6); // d(complex_cm)/dt
+        TS_ASSERT_DELTA(derivs[3], 1.98105040e+02, 1e-3);  // d(bcat_nu)/dt
+        TS_ASSERT_DELTA(derivs[4], 1.04000000e-03, 1e-5);  // d(ligand_nu)/dt
+        TS_ASSERT_DELTA(derivs[5], -1.04000000e-03, 1e-5); // d(complex_nu)/dt
     }
 
     void TestOdeWithChasteSolver()
@@ -247,7 +239,6 @@ public:
             TS_ASSERT_DELTA(solutions.rGetSolutions()[end][3], 62.0477, 1e-3);
             TS_ASSERT_DELTA(solutions.rGetSolutions()[end][4], 360.0130, 1e-3);
             TS_ASSERT_DELTA(solutions.rGetSolutions()[end][5], 639.9869, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][6], 1.0, 1e-6);
         }
         catch (Exception &e)
         {
@@ -265,7 +256,7 @@ public:
         {
             Tan2014SbmlOdeSystem ode_system;
 
-            double end_time = 5000.0; // 1000.0 * 60.0;
+            double end_time = 5000.0;
             double h_value = 0.01;
 
             CvodeAdaptor solver;
@@ -284,7 +275,6 @@ public:
             TS_ASSERT_DELTA(solutions.rGetSolutions()[end][3], 62.0477, 1e-3);
             TS_ASSERT_DELTA(solutions.rGetSolutions()[end][4], 360.0130, 1e-3);
             TS_ASSERT_DELTA(solutions.rGetSolutions()[end][5], 639.9869, 1e-3);
-            // TS_ASSERT_DELTA(solutions.rGetSolutions()[end][6], 1.0, 1e-6);
         }
         catch (Exception &e)
         {

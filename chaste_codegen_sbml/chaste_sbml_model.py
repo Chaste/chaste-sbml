@@ -586,7 +586,8 @@ class ChasteSbmlModel:
 
         # Note: rules must be processed before species
         if not self._assignment_rules:
-            raise RuntimeError("No assignment rules found. Please process rules before species.")
+            if any(r.getTypeCode() == SBML_ASSIGNMENT_RULE for r in self._sbml_rules):
+                raise RuntimeError("Please process rules before species.")
         assignment_rules = {r["lhs"]: r["rhs"] for r in self._assignment_rules}
 
         for species in self._sbml_species:
