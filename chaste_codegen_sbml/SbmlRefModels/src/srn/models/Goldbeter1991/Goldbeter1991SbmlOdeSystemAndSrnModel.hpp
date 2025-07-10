@@ -20,23 +20,31 @@ private:
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractOdeSystem);
     }
 
-    // COMPARTMENTS:
-    double cell;
+    // CONSTANT PARAMETERS
+    const double VM1 = 3.0; // VM1
+    const double VM3 = 1.0; // VM3
+    const double Kc = 0.5; // Kc
 
-    // CONST PARAMETERS:
-    const double VM1 = 3.0;
-    const double VM3 = 1.0;
-    const double Kc = 0.5;
-
-    // STATE VARIABLES:
+    // STATE VARIABLES
     double C; // Cyclin
     double M; // cdc_2_kinase
     double X; // Cyclin Protease
 
-    // STATE PARAMETERS:
+    // DERIVED QUANTITIES
 
-    double V1;
-    double V3;
+    // PARAMETERS
+    double cell; // cell
+    double V1; // V1
+    double V3; // V3
+
+    // REACTIONS
+    double reaction1; // creation of cyclin
+    double reaction2; // default degradation of cyclin
+    double reaction3; // cdc2 kinase triggered degration of cyclin
+    double reaction4; // activation of cdc2 kinase
+    double reaction5; // deactivation of cdc2 kinase
+    double reaction6; // activation of cyclin protease
+    double reaction7; // deactivation of cyclin protease
 
 
 public:
@@ -45,10 +53,11 @@ public:
     ~Goldbeter1991SbmlOdeSystem();
 
     void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
-    void RefreshState(const std::vector<double> &rY);
+    void ProcessRules(double time, const std::vector<double>& rY);
 
 
-    // FUNCTION DEFINITIONS:
+
+    // FUNCTIONS
 };
 
 namespace

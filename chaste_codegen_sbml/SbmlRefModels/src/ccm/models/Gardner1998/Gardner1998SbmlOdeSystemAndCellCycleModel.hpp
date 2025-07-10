@@ -20,25 +20,39 @@ private:
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractOdeSystem);
     }
 
-    // COMPARTMENTS:
-    double Cell;
+    // CONSTANT PARAMETERS
+    const double K6 = 0.3; // K6
+    const double V1p = 0.75; // V1p
+    const double V3p = 0.3; // V3p
 
-    // CONST PARAMETERS:
-    const double K6 = 0.3;
-    const double V1p = 0.75;
-    const double V3p = 0.3;
-
-    // STATE VARIABLES:
+    // STATE VARIABLES
     double C; // cyclin
     double X; // protease
     double M; // cdc2k
     double Y; // cyclin inhibitor
     double Z; // complex inhibitor-cyclin
 
-    // STATE PARAMETERS:
+    // DERIVED QUANTITIES
 
-    double V1;
-    double V3;
+    // PARAMETERS
+    double Cell; // Cell
+    double V1; // V1
+    double V3; // V3
+
+    // REACTIONS
+    double reaction1; // creation of cyclin
+    double reaction2; // cdc2 kinase triggered degration of cyclin
+    double reaction3; // default degradation of cyclin
+    double reaction4; // activation of cdc2 kinase
+    double reaction5; // deactivation of cdc2 kinase
+    double reaction6; // activation of cyclin protease
+    double reaction7; // deactivation of cyclin protease
+    double reaction8; // reaction8
+    double reaction9; // reaction9
+    double reaction10; // desinhibition of cyclin
+    double reaction11; // degradation of inhibited cyclin
+    double reaction12; // creation of cyclin inhibitor
+    double reaction13; // degradation of cyclin inhibitor
 
 
 public:
@@ -47,10 +61,11 @@ public:
     ~Gardner1998SbmlOdeSystem();
 
     void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
-    void RefreshState(const std::vector<double> &rY);
+    void ProcessRules(double time, const std::vector<double>& rY);
 
 
-    // FUNCTION DEFINITIONS:
+
+    // FUNCTIONS
 };
 
 namespace

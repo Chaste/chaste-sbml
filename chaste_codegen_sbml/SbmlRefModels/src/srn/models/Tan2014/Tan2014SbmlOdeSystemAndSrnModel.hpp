@@ -20,36 +20,44 @@ private:
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractOdeSystem);
     }
 
-    // COMPARTMENTS:
-    double compartment;
-    double CytosolMembrane;
-    double nucleus;
+    // CONSTANT PARAMETERS
+    const double kdegradation = 0.0163; // 
+    const double Bsyn = 1.306; // 
+    const double K_n_active_k = 17.16; // 
+    const double kC_k1 = 1e-05; // 
+    const double kC_k2 = 0.000647; // 
+    const double kN_k1 = 0.0001; // 
+    const double kN_k2 = 0.00349; // 
+    const double kdiffusion_k = 39.13; // 
+    const double K_c_active_k = 4.5; // 
+    const double ComplexTransitThreshold = 1.0; // ComplexTransitThreshold
 
-    // CONST PARAMETERS:
-    const double kdegradation = 0.0163;
-    const double Bsyn = 1.306;
-    const double K_n_active_k = 17.16;
-    const double kC_k1 = 1e-05;
-    const double kC_k2 = 0.000647;
-    const double kN_k1 = 0.0001;
-    const double kN_k2 = 0.00349;
-    const double kdiffusion_k = 39.13;
-    const double K_c_active_k = 4.5;
-    const double ComplexTransitThreshold = 1.0;
+    // STATE VARIABLES
+    double bcat_cm; // 
+    double ligand_cm; // 
+    double complex_cm; // 
+    double bcat_nu; // 
+    double ligand_nu; // 
+    double complex_nu; // 
 
-    // STATE VARIABLES:
-    double bcat_cm; // bcat_cm
-    double ligand_cm; // ligand_cm
-    double complex_cm; // complex_cm
-    double bcat_nu; // bcat_nu
-    double ligand_nu; // ligand_nu
-    double complex_nu; // complex_nu
+    // DERIVED QUANTITIES
     double drag; // drag
 
-    // STATE PARAMETERS:
+    // PARAMETERS
+    double compartment; // 
+    double CytosolMembrane; // 
+    double nucleus; // 
+    double wnt_level; // wnt_level
+    double gamma; // gamma
 
-    double wnt_level;
-    double gamma;
+    // REACTIONS
+    double Bsynthesis; // 
+    double kDegradation; // 
+    double kC; // 
+    double kN; // 
+    double kdiffusion; // 
+    double K_c_active; // 
+    double K_n_active; // 
 
 
 public:
@@ -58,10 +66,12 @@ public:
     ~Tan2014SbmlOdeSystem();
 
     void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
-    void RefreshState(const std::vector<double> &rY);
+    void ProcessRules(double time, const std::vector<double>& rY);
+
+    std::vector<double> ComputeDerivedQuantities(double time, const std::vector<double> &rY);
 
 
-    // FUNCTION DEFINITIONS:
+    // FUNCTIONS
 };
 
 namespace
@@ -95,12 +105,12 @@ namespace
 #include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
 
-typedef SbmlSrnWrapperModel<Tan2014SbmlOdeSystem, 7> Tan2014SbmlSrnModel;
+typedef SbmlSrnWrapperModel<Tan2014SbmlOdeSystem, 6> Tan2014SbmlSrnModel;
 
 // Declare identifiers for the serializer
 #include "SerializationExportWrapper.hpp"
 CHASTE_CLASS_EXPORT(Tan2014SbmlOdeSystem)
-EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, Tan2014SbmlOdeSystem, 7)
+EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, Tan2014SbmlOdeSystem, 6)
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
 EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Tan2014SbmlSrnModel)

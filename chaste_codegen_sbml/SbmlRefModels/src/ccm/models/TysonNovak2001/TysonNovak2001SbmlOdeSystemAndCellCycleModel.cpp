@@ -58,16 +58,38 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem(std::vector<double> sta
     mStateVariables.push_back(CKIt);
     mStateVariables.push_back(SK);
 
-    // PARAMETERS:
+    // PARAMETERS
     cell = 1.0;
     TF = 0.0;
-
-    ProcessRules(0.0, mStateVariables);
 
     mParameters.push_back(cell);
     mParameters.push_back(TF);
 
-    // EVENTS:
+    ProcessRules(0.0, mStateVariables);
+
+    // REACTIONS
+    CycBt_synthesis = 0.0;
+    CycBdegradation = 0.0;
+    CycBdegradationviaCdh1 = 0.0;
+    CycBtdegradationviaCdc20a = 0.0;
+    Cdh1synthesis = 0.0;
+    Cdh1degradation = 0.0;
+    Cdc20tsynthesis = 0.0;
+    Cdc20t_deg = 0.0;
+    Cdc20activation = 0.0;
+    Cdc20ainhibition = 0.0;
+    Cdc20adegradation = 0.0;
+    IEPsynthesis = 0.0;
+    IEPdegradation = 0.0;
+    growth = 0.0;
+    CKItsynthesis = 0.0;
+    CKIdegradation = 0.0;
+    CKItphosphorilationviaSK = 0.0;
+    eq_7 = 0.0;
+    SKsynthesis = 0.0;
+    SKdegradation = 0.0;
+
+    // EVENTS
     mEventsSatisfied.resize(1, false);
     mEventsInitialised = false;
 }
@@ -80,15 +102,14 @@ void TysonNovak2001SbmlOdeSystem::EvaluateYDerivatives(double time, const std::v
 {
     ProcessRules(time, rY);
 
-    // ODES:
     rDY[0] = (CycBt_synthesis - CycBdegradation - CycBdegradationviaCdh1 - CycBtdegradationviaCdc20a) / cell; // d[CycBt]/dt
-    rDY[1] = (Cdc20activation - Cdc20ainhibition - Cdc20adegradation) / cell;                                 // d[Cdc20a]/dt
-    rDY[2] = (Cdh1synthesis - Cdh1degradation) / cell;                                                        // d[Cdh1]/dt
-    rDY[3] = (growth) / cell;                                                                                 // d[m]/dt
-    rDY[4] = (Cdc20tsynthesis - Cdc20t_deg) / cell;                                                           // d[Cdc20t]/dt
-    rDY[5] = (IEPsynthesis - IEPdegradation) / cell;                                                          // d[IEP]/dt
-    rDY[6] = (CKItsynthesis - CKIdegradation - CKItphosphorilationviaSK - eq_7) / cell;                       // d[CKIt]/dt
-    rDY[7] = (SKsynthesis - SKdegradation) / cell;                                                            // d[SK]/dt
+    rDY[1] = (Cdc20activation - Cdc20ainhibition - Cdc20adegradation) / cell; // d[Cdc20a]/dt
+    rDY[2] = (Cdh1synthesis - Cdh1degradation) / cell; // d[Cdh1]/dt
+    rDY[3] = (growth) / cell; // d[m]/dt
+    rDY[4] = (Cdc20tsynthesis - Cdc20t_deg) / cell; // d[Cdc20t]/dt
+    rDY[5] = (IEPsynthesis - IEPdegradation) / cell; // d[IEP]/dt
+    rDY[6] = (CKItsynthesis - CKIdegradation - CKItphosphorilationviaSK - eq_7) / cell; // d[CKIt]/dt
+    rDY[7] = (SKsynthesis - SKdegradation) / cell; // d[SK]/dt
 
     // Scale time appropriately
 }
@@ -104,9 +125,9 @@ std::vector<double> TysonNovak2001SbmlOdeSystem::ComputeDerivedQuantities(double
     return dqs;
 }
 
-void TysonNovak2001SbmlOdeSystem::ProcessRules(double time, const std::vector<double> &rY)
+void TysonNovak2001SbmlOdeSystem::ProcessRules(double time, const std::vector<double>& rY)
 {
-    // STATE VARIABLES:
+    // STATE VARIABLES
     CycBt = rY[0];
     Cdc20a = rY[1];
     Cdh1 = rY[2];
@@ -116,16 +137,17 @@ void TysonNovak2001SbmlOdeSystem::ProcessRules(double time, const std::vector<do
     CKIt = rY[6];
     SK = rY[7];
 
-    // DERIVED QUANTITIES:
+    // RULES
+    CycB = CycBt - 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow(std::pow(CycBt + CKIt + 1.0 / Keq, 2.0) - 4.0 * CycBt * CKIt, 1.0 / 2.0));
     Trimer = 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow(std::pow(CycBt + CKIt + 1.0 / Keq, 2.0) - 4.0 * CycBt * CKIt, 1.0 / 2.0));
-    CycB = CycBt - Trimer;
+    TF = GK(k15p * m + k15pp * SK, k16p + k16pp * m * CycB, J15, J16);
     Mad = 1.0;
 
-    // PARAMETERS:
-    TF = GK(k15p * m + k15pp * SK, k16p + k16pp * m * CycB, J15, J16);
+    // PARAMETERS
+    SetParameter(0, cell);
+    SetParameter(1, TF);
 
-    // REACTIONS:
-
+    // REACTIONS
     // CycBt synthesis
     CycBt_synthesis = k1;
 
@@ -145,7 +167,7 @@ void TysonNovak2001SbmlOdeSystem::ProcessRules(double time, const std::vector<do
     Cdh1degradation = (k4p * SK * Cdh1 + k4 * m * CycB * Cdh1) / (J4 + Cdh1);
 
     // Cdc20t synthesis
-    Cdc20tsynthesis = k5p + k5pp * std::pow(CycB * m / J5, n) / (1.0 + std::pow(CycB * m / J5, n)); 
+    Cdc20tsynthesis = k5p + k5pp * std::pow(CycB * m / J5, n) / (1.0 + std::pow(CycB * m / J5, n));
 
     // Cdc20t degradation
     Cdc20t_deg = k6 * Cdc20t;
@@ -185,6 +207,7 @@ void TysonNovak2001SbmlOdeSystem::ProcessRules(double time, const std::vector<do
 
     // SK degradation
     SKdegradation = k14 * SK;
+
 }
 
 double TysonNovak2001SbmlOdeSystem::ProcessEvents(double time, const std::vector<double> &rY)
@@ -195,7 +218,7 @@ double TysonNovak2001SbmlOdeSystem::ProcessEvents(double time, const std::vector
     double event_dist = min_dist;
 
     // EVENT: Cell division
-    event_dist = (0.1) - (CycB)-std::numeric_limits<double>::epsilon();
+    event_dist = (0.1) - (CycB) - std::numeric_limits<double>::epsilon();
 
     // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
     if (std::abs(event_dist) < 1.0)
@@ -219,15 +242,26 @@ double TysonNovak2001SbmlOdeSystem::ProcessEvents(double time, const std::vector
             event_dist = 0.0;
             min_dist = 0.0;
 
-            UpdateDefaultInitialConditions(rY);
-            SetStateVariable(3, m / 2.0);
-            SetDefaultInitialCondition(3, m / 2.0);
+            m = m / 2.0;
+            SetStateVariable(3, m);
         }
         mEventsSatisfied[0] = true; // Flag the condition true
     }
     else
     {
         mEventsSatisfied[0] = false; // Flag the condition false
+    }
+
+    if (min_dist == 0.0)
+    {
+    SetDefaultInitialCondition(0, CycBt);
+    SetDefaultInitialCondition(1, Cdc20a);
+    SetDefaultInitialCondition(2, Cdh1);
+    SetDefaultInitialCondition(3, m);
+    SetDefaultInitialCondition(4, Cdc20t);
+    SetDefaultInitialCondition(5, IEP);
+    SetDefaultInitialCondition(6, CKIt);
+    SetDefaultInitialCondition(7, SK);
     }
 
     mEventsInitialised = true; // Flag that events have been processed at least once
@@ -246,20 +280,8 @@ bool TysonNovak2001SbmlOdeSystem::CalculateStoppingEvent(double time, const std:
     return ProcessEvents(time, rY) == 0.0;
 }
 
-void TysonNovak2001SbmlOdeSystem::UpdateDefaultInitialConditions(const std::vector<double> &rY)
-{
-    SetDefaultInitialCondition(0, rY[0]); // CycBt
-    SetDefaultInitialCondition(1, rY[1]); // Cdc20a
-    SetDefaultInitialCondition(2, rY[2]); // Cdh1
-    SetDefaultInitialCondition(3, rY[3]); // m
-    SetDefaultInitialCondition(4, rY[4]); // Cdc20t
-    SetDefaultInitialCondition(5, rY[5]); // IEP
-    SetDefaultInitialCondition(6, rY[6]); // CKIt
-    SetDefaultInitialCondition(7, rY[7]); // SK
-}
-
-// FUNCTION DEFINITIONS:
-inline double TysonNovak2001SbmlOdeSystem::GK(double A1, double A2, double A3, double A4)
+// FUNCTIONS
+double TysonNovak2001SbmlOdeSystem::GK(double A1, double A2, double A3, double A4)
 {
     return 2.0 * A4 * A1 / (A2 - A1 + A3 * A2 + A4 * A1 + sm::root(2.0, std::pow(A2 - A1 + A3 * A2 + A4 * A1, 2.0) - 4.0 * (A2 - A1) * A4 * A1));
 }
@@ -267,7 +289,7 @@ inline double TysonNovak2001SbmlOdeSystem::GK(double A1, double A2, double A3, d
 template <>
 void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
 {
-    // STATE VARIABLES:
+    // STATE VARIABLES
     this->mVariableNames.push_back("CycBt");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.001);
@@ -300,7 +322,8 @@ void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.001);
 
-    // DERIVED QUANTITIES:
+
+    // DERIVED QUANTITIES
     this->mDerivedQuantityNames.push_back("CycB");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
@@ -310,7 +333,8 @@ void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityNames.push_back("Mad");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
-    // PARAMETERS:
+
+    // PARAMETERS
     this->mParameterNames.push_back("cell");
     this->mParameterUnits.push_back("non-dim");
 

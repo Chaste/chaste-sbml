@@ -14,16 +14,12 @@ Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem(std::vector<double> stateVari
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Gardner1998SbmlOdeSystem>);
 
-    // COMPARTMENTS:
-    Cell = 1.0;
-
-    // STATE VARIABLES:
+    // STATE VARIABLES
     C = 0.0;
     X = 0.0;
     M = 0.0;
     Y = 1.0;
     Z = 1.0;
-
 
     SetDefaultInitialCondition(0, C);
     SetDefaultInitialCondition(1, X);
@@ -38,7 +34,6 @@ Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem(std::vector<double> stateVari
         M = stateVariables[2];
         Y = stateVariables[3];
         Z = stateVariables[4];
-
     }
     else if (stateVariables.size() != 0)
     {
@@ -51,15 +46,31 @@ Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem(std::vector<double> stateVari
     mStateVariables.push_back(Y);
     mStateVariables.push_back(Z);
 
-    // STATE PARAMETERS:
+    // PARAMETERS
+    Cell = 1.0;
+    V1 = 0.0;
+    V3 = 0.0;
 
-
-    V1 = C * V1p * std::pow(C + K6, -1.0);
-    V3 = M * V3p;
-
-
+    mParameters.push_back(Cell);
     mParameters.push_back(V1);
     mParameters.push_back(V3);
+
+    ProcessRules(0.0, mStateVariables);
+
+    // REACTIONS
+    reaction1 = 0.0;
+    reaction2 = 0.0;
+    reaction3 = 0.0;
+    reaction4 = 0.0;
+    reaction5 = 0.0;
+    reaction6 = 0.0;
+    reaction7 = 0.0;
+    reaction8 = 0.0;
+    reaction9 = 0.0;
+    reaction10 = 0.0;
+    reaction11 = 0.0;
+    reaction12 = 0.0;
+    reaction13 = 0.0;
 
 }
 
@@ -67,128 +78,10 @@ Gardner1998SbmlOdeSystem::~Gardner1998SbmlOdeSystem()
 {
 }
 
-void Gardner1998SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
-{
-    // STATE VARIABLES:
-    C = rY[0];
-    X = rY[1];
-    M = rY[2];
-    Y = rY[3];
-    Z = rY[4];
-
-
-    // STATE PARAMETERS:
-    V1 = C * V1p * std::pow(C + K6, -1.0);
-    V3 = M * V3p;
-
-
-    SetParameter("V1", V1);
-    SetParameter("V3", V3);
-}
-
 void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-    RefreshState(rY);
+    ProcessRules(time, rY);
 
-    // REACTIONS:
-
-    // creation of cyclin
-    double reaction1 = 0.0;
-    {
-        double vi = 0.1;
-        reaction1 = vi;
-    }
-
-    // cdc2 kinase triggered degration of cyclin
-    double reaction2 = 0.0;
-    {
-        double k1 = 0.5;
-        double K5 = 0.02;
-        reaction2 = C * k1 * X * std::pow(C + K5, -1.0);
-    }
-
-    // default degradation of cyclin
-    double reaction3 = 0.0;
-    {
-        double kd = 0.02;
-        reaction3 = C * kd;
-    }
-
-    // activation of cdc2 kinase
-    double reaction4 = 0.0;
-    {
-        double K1 = 0.1;
-        reaction4 = (1.0 + -1.0 * M) * V1 * std::pow(K1 + -1.0 * M + 1.0, -1.0);
-    }
-
-    // deactivation of cdc2 kinase
-    double reaction5 = 0.0;
-    {
-        double V2 = 0.25;
-        double K2 = 0.1;
-        reaction5 = M * V2 * std::pow(K2 + M, -1.0);
-    }
-
-    // activation of cyclin protease
-    double reaction6 = 0.0;
-    {
-        double K3 = 0.2;
-        reaction6 = V3 * (1.0 + -1.0 * X) * std::pow(K3 + -1.0 * X + 1.0, -1.0);
-    }
-
-    // deactivation of cyclin protease
-    double reaction7 = 0.0;
-    {
-        double K4 = 0.1;
-        double V4 = 0.1;
-        reaction7 = V4 * X * std::pow(K4 + X, -1.0);
-    }
-
-    // reaction8
-    double reaction8 = 0.0;
-    {
-        double a1 = 0.05;
-        reaction8 = a1 * C * Y;
-    }
-
-    // reaction9
-    double reaction9 = 0.0;
-    {
-        double a2 = 0.05;
-        reaction9 = a2 * Z;
-    }
-
-    // desinhibition of cyclin
-    double reaction10 = 0.0;
-    {
-        double alpha = 0.1;
-        double d1 = 0.05;
-        reaction10 = alpha * d1 * Z;
-    }
-
-    // degradation of inhibited cyclin
-    double reaction11 = 0.0;
-    {
-        double kd = 0.02;
-        double alpha = 0.1;
-        reaction11 = alpha * kd * Z;
-    }
-
-    // creation of cyclin inhibitor
-    double reaction12 = 0.0;
-    {
-        double vs = 0.2;
-        reaction12 = vs;
-    }
-
-    // degradation of cyclin inhibitor
-    double reaction13 = 0.0;
-    {
-        double d1 = 0.05;
-        reaction13 = d1 * Y;
-    }
-
-    // ODES:
     rDY[0] = (reaction1 - reaction2 - reaction3 - reaction8 + reaction9 + reaction10) / Cell; // d[cyclin]/dt
     rDY[1] = (reaction6 - reaction7) / Cell; // d[protease]/dt
     rDY[2] = (reaction4 - reaction5) / Cell; // d[cdc2k]/dt
@@ -199,12 +92,132 @@ void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vect
 }
 
 
-// FUNCTION DEFINITIONS:
+void Gardner1998SbmlOdeSystem::ProcessRules(double time, const std::vector<double>& rY)
+{
+    // STATE VARIABLES
+    C = rY[0];
+    X = rY[1];
+    M = rY[2];
+    Y = rY[3];
+    Z = rY[4];
+
+    // RULES
+    V1 = C * V1p * std::pow(C + K6, -1.0);
+    V3 = M * V3p;
+
+    // PARAMETERS
+    SetParameter(0, Cell);
+    SetParameter(1, V1);
+    SetParameter(2, V3);
+
+    // REACTIONS
+    // creation of cyclin
+    reaction1 = 0.0;
+    {
+        double vi = 0.1;
+        reaction1 = vi;
+    }
+
+    // cdc2 kinase triggered degration of cyclin
+    reaction2 = 0.0;
+    {
+        double k1 = 0.5;
+        double K5 = 0.02;
+        reaction2 = C * k1 * X * std::pow(C + K5, -1.0);
+    }
+
+    // default degradation of cyclin
+    reaction3 = 0.0;
+    {
+        double kd = 0.02;
+        reaction3 = C * kd;
+    }
+
+    // activation of cdc2 kinase
+    reaction4 = 0.0;
+    {
+        double K1 = 0.1;
+        reaction4 = (1.0 + -1.0 * M) * V1 * std::pow(K1 + -1.0 * M + 1.0, -1.0);
+    }
+
+    // deactivation of cdc2 kinase
+    reaction5 = 0.0;
+    {
+        double V2 = 0.25;
+        double K2 = 0.1;
+        reaction5 = M * V2 * std::pow(K2 + M, -1.0);
+    }
+
+    // activation of cyclin protease
+    reaction6 = 0.0;
+    {
+        double K3 = 0.2;
+        reaction6 = V3 * (1.0 + -1.0 * X) * std::pow(K3 + -1.0 * X + 1.0, -1.0);
+    }
+
+    // deactivation of cyclin protease
+    reaction7 = 0.0;
+    {
+        double K4 = 0.1;
+        double V4 = 0.1;
+        reaction7 = V4 * X * std::pow(K4 + X, -1.0);
+    }
+
+    // reaction8
+    reaction8 = 0.0;
+    {
+        double a1 = 0.05;
+        reaction8 = a1 * C * Y;
+    }
+
+    // reaction9
+    reaction9 = 0.0;
+    {
+        double a2 = 0.05;
+        reaction9 = a2 * Z;
+    }
+
+    // desinhibition of cyclin
+    reaction10 = 0.0;
+    {
+        double alpha = 0.1;
+        double d1 = 0.05;
+        reaction10 = alpha * d1 * Z;
+    }
+
+    // degradation of inhibited cyclin
+    reaction11 = 0.0;
+    {
+        double kd = 0.02;
+        double alpha = 0.1;
+        reaction11 = alpha * kd * Z;
+    }
+
+    // creation of cyclin inhibitor
+    reaction12 = 0.0;
+    {
+        double vs = 0.2;
+        reaction12 = vs;
+    }
+
+    // degradation of cyclin inhibitor
+    reaction13 = 0.0;
+    {
+        double d1 = 0.05;
+        reaction13 = d1 * Y;
+    }
+
+}
+
+
+
+
+// FUNCTIONS
 
 template <>
 void CellwiseOdeSystemInformation<Gardner1998SbmlOdeSystem>::Initialise()
 {
-    // STATE VARIABLES:
+    // STATE VARIABLES
     this->mVariableNames.push_back("C");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.0);
@@ -226,7 +239,12 @@ void CellwiseOdeSystemInformation<Gardner1998SbmlOdeSystem>::Initialise()
     this->mInitialConditions.push_back(1.0);
 
 
-    // STATE PARAMETERS:
+    // DERIVED QUANTITIES
+
+    // PARAMETERS
+    this->mParameterNames.push_back("Cell");
+    this->mParameterUnits.push_back("non-dim");
+
     this->mParameterNames.push_back("V1");
     this->mParameterUnits.push_back("non-dim");
 

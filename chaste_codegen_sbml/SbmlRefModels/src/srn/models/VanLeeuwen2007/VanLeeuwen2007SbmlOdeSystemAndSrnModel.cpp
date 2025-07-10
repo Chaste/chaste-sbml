@@ -10,14 +10,11 @@
 namespace sm = sbmlmath;
 
 VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem(std::vector<double> stateVariables)
-    : AbstractOdeSystem(14)
+    : AbstractOdeSystem(11)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<VanLeeuwen2007SbmlOdeSystem>);
 
-    // COMPARTMENTS:
-    cytosolmembraneandnucleus = 1.0;
-
-    // STATE VARIABLES:
+    // STATE VARIABLES
     X = 0.067;
     D = 0.67;
     C_o = 2.54;
@@ -30,10 +27,6 @@ VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem(std::vector<double> sta
     C_cT = 0.0;
     Y = 0.48;
 
-    C_F = C_o + C_c;
-    C_T = C_oT + C_cT;
-    drag = sm::max((C_A - 100.0) / 3.0, 1.0);
-
     SetDefaultInitialCondition(0, X);
     SetDefaultInitialCondition(1, D);
     SetDefaultInitialCondition(2, C_o);
@@ -45,11 +38,8 @@ VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem(std::vector<double> sta
     SetDefaultInitialCondition(8, C_oT);
     SetDefaultInitialCondition(9, C_cT);
     SetDefaultInitialCondition(10, Y);
-    SetDefaultInitialCondition(11, C_F);
-    SetDefaultInitialCondition(12, C_T);
-    SetDefaultInitialCondition(13, drag);
 
-    if (stateVariables.size() == 14)
+    if (stateVariables.size() == 11)
     {
         X = stateVariables[0];
         D = stateVariables[1];
@@ -62,14 +52,10 @@ VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem(std::vector<double> sta
         C_oT = stateVariables[8];
         C_cT = stateVariables[9];
         Y = stateVariables[10];
-
-    C_F = C_o + C_c;
-    C_T = C_oT + C_cT;
-    drag = sm::max((C_A - 100.0) / 3.0, 1.0);
     }
     else if (stateVariables.size() != 0)
     {
-        EXCEPTION("VanLeeuwen2007SbmlOdeSystem: Expected 14 state variables, got " + std::to_string(stateVariables.size()));
+        EXCEPTION("VanLeeuwen2007SbmlOdeSystem: Expected 11 state variables, got " + std::to_string(stateVariables.size()));
     }
 
     mStateVariables.push_back(X);
@@ -83,23 +69,47 @@ VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem(std::vector<double> sta
     mStateVariables.push_back(C_oT);
     mStateVariables.push_back(C_cT);
     mStateVariables.push_back(Y);
-    mStateVariables.push_back(C_F);
-    mStateVariables.push_back(C_T);
-    mStateVariables.push_back(drag);
 
-    // STATE PARAMETERS:
-
+    // PARAMETERS
+    cytosolmembraneandnucleus = 1.0;
     wnt_level = 0.0;
     gamma1 = 1.0;
     gamma2 = 1.0;
     ComplexTransitThreshold = 1.0;
 
-
-
+    mParameters.push_back(cytosolmembraneandnucleus);
     mParameters.push_back(wnt_level);
     mParameters.push_back(gamma1);
     mParameters.push_back(gamma2);
     mParameters.push_back(ComplexTransitThreshold);
+
+    ProcessRules(0.0, mStateVariables);
+
+    // REACTIONS
+    mwd6b35759_f098_484c_9c65_e84e7e4b61e4 = 0.0;
+    mweddac6d0_231e_4c92_ba2a_c91edc682ff5 = 0.0;
+    mwdf62dfed_ec88_4d81_bc9d_da0e10f41e4b = 0.0;
+    mwee9cc998_28e9_4173_a694_f3e278a639b7 = 0.0;
+    mw661e341d_97d1_4e6f_8812_3be7ffc86d42 = 0.0;
+    mw179aa33c_9a7e_43c0_9285_3d8f97719c60 = 0.0;
+    mwff8d34f9_e036_49f1_b3b8_3706ecb98660 = 0.0;
+    mwd4fa317a_a484_4f38_b9b0_6ed404d9adcb = 0.0;
+    mwcb88a249_a200_4e95_9185_5654bf1ebfc0 = 0.0;
+    mw0aeac2fc_dd2f_4fe7_b60c_97f0b008ed89 = 0.0;
+    mw4b47c66d_37e6_4c33_b043_1f6b3b814449 = 0.0;
+    mw69974db4_8ead_416c_a220_f6dc3be1f3b6 = 0.0;
+    mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc = 0.0;
+    mw581d69f1_60b3_4d21_9323_31b05ee89570 = 0.0;
+    mwb17c2c57_279d_4e88_b9cf_896029135cc1 = 0.0;
+    mwe3236fc5_2118_40cb_8db3_ef9da29137cf = 0.0;
+    mw0be4a28b_e9c6_43da_8f95_d9c564a7caae = 0.0;
+    mwc360befb_07da_4d19_bbec_523fbef47dc9 = 0.0;
+    mw985b39ad_50ff_4d55_95f7_42e7f1bf6a3d = 0.0;
+    mwf27b65bb_38d6_44cf_aa66_9b38ae5885eb = 0.0;
+    mwd7a7bdbb_8f2e_42ed_bf97_48e33e45dafb = 0.0;
+    mw988a8caf_bd68_462b_86d7_51844c1dcfd3 = 0.0;
+    mw9ab26a4c_bd70_45e0_bacc_f830ab28abca = 0.0;
+    mw931baf8f_6572_46f6_96eb_cae40ee267b7 = 0.0;
 
 }
 
@@ -107,9 +117,39 @@ VanLeeuwen2007SbmlOdeSystem::~VanLeeuwen2007SbmlOdeSystem()
 {
 }
 
-void VanLeeuwen2007SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
+void VanLeeuwen2007SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-    // STATE VARIABLES:
+    ProcessRules(time, rY);
+
+    rDY[0] = (-mwd6b35759_f098_484c_9c65_e84e7e4b61e4 + mweddac6d0_231e_4c92_ba2a_c91edc682ff5 + mwdf62dfed_ec88_4d81_bc9d_da0e10f41e4b - mwee9cc998_28e9_4173_a694_f3e278a639b7) / cytosolmembraneandnucleus; // d[X]/dt
+    rDY[1] = (mwd6b35759_f098_484c_9c65_e84e7e4b61e4 - mweddac6d0_231e_4c92_ba2a_c91edc682ff5 + mw661e341d_97d1_4e6f_8812_3be7ffc86d42 - mw661e341d_97d1_4e6f_8812_3be7ffc86d42 + mw179aa33c_9a7e_43c0_9285_3d8f97719c60 - mw179aa33c_9a7e_43c0_9285_3d8f97719c60 - mw931baf8f_6572_46f6_96eb_cae40ee267b7) / cytosolmembraneandnucleus; // d[D]/dt
+    rDY[2] = (-mw661e341d_97d1_4e6f_8812_3be7ffc86d42 + mwd4fa317a_a484_4f38_b9b0_6ed404d9adcb - mwcb88a249_a200_4e95_9185_5654bf1ebfc0 - mw4b47c66d_37e6_4c33_b043_1f6b3b814449 + mw69974db4_8ead_416c_a220_f6dc3be1f3b6 - mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc + mwb17c2c57_279d_4e88_b9cf_896029135cc1 - mw0be4a28b_e9c6_43da_8f95_d9c564a7caae) / cytosolmembraneandnucleus; // d[C_o]/dt
+    rDY[3] = (mw661e341d_97d1_4e6f_8812_3be7ffc86d42 + mw179aa33c_9a7e_43c0_9285_3d8f97719c60 - mwff8d34f9_e036_49f1_b3b8_3706ecb98660) / cytosolmembraneandnucleus; // d[C_u]/dt
+    rDY[4] = (-mw179aa33c_9a7e_43c0_9285_3d8f97719c60 - mw0aeac2fc_dd2f_4fe7_b60c_97f0b008ed89 - mw581d69f1_60b3_4d21_9323_31b05ee89570 + mwe3236fc5_2118_40cb_8db3_ef9da29137cf + mw0be4a28b_e9c6_43da_8f95_d9c564a7caae) / cytosolmembraneandnucleus; // d[C_c]/dt
+    rDY[5] = (-mw4b47c66d_37e6_4c33_b043_1f6b3b814449 + mw69974db4_8ead_416c_a220_f6dc3be1f3b6 + mwc360befb_07da_4d19_bbec_523fbef47dc9 - mw985b39ad_50ff_4d55_95f7_42e7f1bf6a3d) / cytosolmembraneandnucleus; // d[A]/dt
+    rDY[6] = (mw4b47c66d_37e6_4c33_b043_1f6b3b814449 - mw69974db4_8ead_416c_a220_f6dc3be1f3b6) / cytosolmembraneandnucleus; // d[C_A]/dt
+    rDY[7] = (-mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc - mw581d69f1_60b3_4d21_9323_31b05ee89570 + mwb17c2c57_279d_4e88_b9cf_896029135cc1 + mwe3236fc5_2118_40cb_8db3_ef9da29137cf + mwf27b65bb_38d6_44cf_aa66_9b38ae5885eb - mwd7a7bdbb_8f2e_42ed_bf97_48e33e45dafb) / cytosolmembraneandnucleus; // d[T]/dt
+    rDY[8] = (mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc - mwb17c2c57_279d_4e88_b9cf_896029135cc1 + mw988a8caf_bd68_462b_86d7_51844c1dcfd3 - mw988a8caf_bd68_462b_86d7_51844c1dcfd3) / cytosolmembraneandnucleus; // d[C_oT]/dt
+    rDY[9] = (mw581d69f1_60b3_4d21_9323_31b05ee89570 - mwe3236fc5_2118_40cb_8db3_ef9da29137cf) / cytosolmembraneandnucleus; // d[C_cT]/dt
+    rDY[10] = (mw988a8caf_bd68_462b_86d7_51844c1dcfd3 - mw9ab26a4c_bd70_45e0_bacc_f830ab28abca) / cytosolmembraneandnucleus; // d[Y]/dt
+
+    // Scale time appropriately
+}
+
+std::vector<double> VanLeeuwen2007SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double> &rY)
+{
+    ProcessRules(time, rY);
+
+    std::vector<double> dqs;
+    dqs.push_back(C_F);
+    dqs.push_back(C_T);
+    dqs.push_back(drag);
+    return dqs;
+}
+
+void VanLeeuwen2007SbmlOdeSystem::ProcessRules(double time, const std::vector<double>& rY)
+{
+    // STATE VARIABLES
     X = rY[0];
     D = rY[1];
     C_o = rY[2];
@@ -122,123 +162,102 @@ void VanLeeuwen2007SbmlOdeSystem::RefreshState(const std::vector<double> &rY)
     C_cT = rY[9];
     Y = rY[10];
 
+    // RULES
     C_F = C_o + C_c;
     C_T = C_oT + C_cT;
     drag = sm::max((C_A - 100.0) / 3.0, 1.0);
 
-    // STATE PARAMETERS:
+    // PARAMETERS
+    SetParameter(0, cytosolmembraneandnucleus);
+    SetParameter(1, wnt_level);
+    SetParameter(2, gamma1);
+    SetParameter(3, gamma2);
+    SetParameter(4, ComplexTransitThreshold);
 
-
-    SetParameter("wnt_level", wnt_level);
-    SetParameter("gamma1", gamma1);
-    SetParameter("gamma2", gamma2);
-    SetParameter("ComplexTransitThreshold", ComplexTransitThreshold);
-}
-
-void VanLeeuwen2007SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
-{
-    RefreshState(rY);
-
-    // REACTIONS:
-
+    // REACTIONS
     // r1
-    double r1 = s_D * gamma1 * X;
+    mwd6b35759_f098_484c_9c65_e84e7e4b61e4 = s_D * gamma1 * X;
 
     // r2
-    double r2 = (d_Dx + wnt_level * xi_Dx) * D;
+    mweddac6d0_231e_4c92_ba2a_c91edc682ff5 = (d_Dx + wnt_level * xi_Dx) * D;
 
     // r22
-    double r22 = s_X * cytosolmembraneandnucleus;
+    mwdf62dfed_ec88_4d81_bc9d_da0e10f41e4b = s_X * cytosolmembraneandnucleus;
 
     // r23
-    double r23 = (d_X + wnt_level * xi_X) * X;
+    mwee9cc998_28e9_4173_a694_f3e278a639b7 = (d_X + wnt_level * xi_X) * X;
 
     // r7
-    double r7 = p_u * gamma2 * C_o * D / (C_o + C_c + K_D);
+    mw661e341d_97d1_4e6f_8812_3be7ffc86d42 = p_u * gamma2 * C_o * D / (C_o + C_c + K_D);
 
     // r16
-    double r16 = p_u * gamma2 * C_c * D / (C_c + C_o + K_D);
+    mw179aa33c_9a7e_43c0_9285_3d8f97719c60 = p_u * gamma2 * C_c * D / (C_c + C_o + K_D);
 
     // r8
-    double r8 = d_u * C_u * cytosolmembraneandnucleus;
+    mwff8d34f9_e036_49f1_b3b8_3706ecb98660 = d_u * C_u * cytosolmembraneandnucleus;
 
     // r3
-    double r3 = s_c * cytosolmembraneandnucleus;
+    mwd4fa317a_a484_4f38_b9b0_6ed404d9adcb = s_c * cytosolmembraneandnucleus;
 
     // r4
-    double r4 = d_c * C_o * cytosolmembraneandnucleus;
+    mwcb88a249_a200_4e95_9185_5654bf1ebfc0 = d_c * C_o * cytosolmembraneandnucleus;
 
     // r17
-    double r17 = d_c * C_c * cytosolmembraneandnucleus;
+    mw0aeac2fc_dd2f_4fe7_b60c_97f0b008ed89 = d_c * C_c * cytosolmembraneandnucleus;
 
     // r9
-    double r9 = s_CA * C_o * A * cytosolmembraneandnucleus;
+    mw4b47c66d_37e6_4c33_b043_1f6b3b814449 = s_CA * C_o * A * cytosolmembraneandnucleus;
 
     // r10
-    double r10 = d_CA * C_A * cytosolmembraneandnucleus;
+    mw69974db4_8ead_416c_a220_f6dc3be1f3b6 = d_CA * C_A * cytosolmembraneandnucleus;
 
     // r11
-    double r11 = s_CT * C_o * T * cytosolmembraneandnucleus;
+    mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc = s_CT * C_o * T * cytosolmembraneandnucleus;
 
     // r18
-    double r18 = s_CT * C_c * T * cytosolmembraneandnucleus;
+    mw581d69f1_60b3_4d21_9323_31b05ee89570 = s_CT * C_c * T * cytosolmembraneandnucleus;
 
     // r12
-    double r12 = d_CT * C_oT * cytosolmembraneandnucleus;
+    mwb17c2c57_279d_4e88_b9cf_896029135cc1 = d_CT * C_oT * cytosolmembraneandnucleus;
 
     // r19
-    double r19 = d_CT * C_cT * cytosolmembraneandnucleus;
+    mwe3236fc5_2118_40cb_8db3_ef9da29137cf = d_CT * C_cT * cytosolmembraneandnucleus;
 
     // r15
-    double r15 = (p_c + wnt_level * xi_C) * C_o / (C_o + K_C);
+    mw0be4a28b_e9c6_43da_8f95_d9c564a7caae = (p_c + wnt_level * xi_C) * C_o / (C_o + K_C);
 
     // r5
-    double r5 = s_A * cytosolmembraneandnucleus;
+    mwc360befb_07da_4d19_bbec_523fbef47dc9 = s_A * cytosolmembraneandnucleus;
 
     // r6
-    double r6 = d_A * A * cytosolmembraneandnucleus;
+    mw985b39ad_50ff_4d55_95f7_42e7f1bf6a3d = d_A * A * cytosolmembraneandnucleus;
 
     // r20
-    double r20 = s_T * cytosolmembraneandnucleus;
+    mwf27b65bb_38d6_44cf_aa66_9b38ae5885eb = s_T * cytosolmembraneandnucleus;
 
     // r21
-    double r21 = d_T * T * cytosolmembraneandnucleus;
+    mwd7a7bdbb_8f2e_42ed_bf97_48e33e45dafb = d_T * T * cytosolmembraneandnucleus;
 
     // r13
-    double r13 = s_Y * (C_oT + C_cT) / (C_oT + C_cT + K_T);
+    mw988a8caf_bd68_462b_86d7_51844c1dcfd3 = s_Y * (C_oT + C_cT) / (C_oT + C_cT + K_T);
 
     // r14
-    double r14 = d_Y * Y * cytosolmembraneandnucleus;
+    mw9ab26a4c_bd70_45e0_bacc_f830ab28abca = d_Y * Y * cytosolmembraneandnucleus;
 
     // r24
-    double r24 = (d_D + wnt_level * xi_D) * D;
+    mw931baf8f_6572_46f6_96eb_cae40ee267b7 = (d_D + wnt_level * xi_D) * D;
 
-    // ODES:
-    rDY[0] = (-r1 + r2 + r22 - r23) / cytosolmembraneandnucleus; // d[X]/dt
-    rDY[1] = (r1 - r2 + r7 - r7 + r16 - r16 - r24) / cytosolmembraneandnucleus; // d[D]/dt
-    rDY[2] = (-r7 + r3 - r4 - r9 + r10 - r11 + r12 - r15) / cytosolmembraneandnucleus; // d[C_o]/dt
-    rDY[3] = (r7 + r16 - r8) / cytosolmembraneandnucleus; // d[C_u]/dt
-    rDY[4] = (-r16 - r17 - r18 + r19 + r15) / cytosolmembraneandnucleus; // d[C_c]/dt
-    rDY[5] = (-r9 + r10 + r5 - r6) / cytosolmembraneandnucleus; // d[A]/dt
-    rDY[6] = (r9 - r10) / cytosolmembraneandnucleus; // d[C_A]/dt
-    rDY[7] = (-r11 - r18 + r12 + r19 + r20 - r21) / cytosolmembraneandnucleus; // d[T]/dt
-    rDY[8] = (r11 - r12 + r13 - r13) / cytosolmembraneandnucleus; // d[C_oT]/dt
-    rDY[9] = (r18 - r19) / cytosolmembraneandnucleus; // d[C_cT]/dt
-    rDY[10] = (r13 - r14) / cytosolmembraneandnucleus; // d[Y]/dt
-    rDY[11] = (C_F - rY[11]) * 10.0 / cytosolmembraneandnucleus; // d[C_F]/dt
-    rDY[12] = (C_T - rY[12]) * 10.0 / cytosolmembraneandnucleus; // d[C_T]/dt
-    rDY[13] = (drag - rY[13]) * 10.0 / cytosolmembraneandnucleus; // d[drag]/dt
-
-    // Scale time appropriately
 }
 
 
-// FUNCTION DEFINITIONS:
+
+
+// FUNCTIONS
 
 template <>
 void CellwiseOdeSystemInformation<VanLeeuwen2007SbmlOdeSystem>::Initialise()
 {
-    // STATE VARIABLES:
+    // STATE VARIABLES
     this->mVariableNames.push_back("X");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.067);
@@ -283,20 +302,22 @@ void CellwiseOdeSystemInformation<VanLeeuwen2007SbmlOdeSystem>::Initialise()
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.48);
 
-    this->mVariableNames.push_back("C_F");
-    this->mVariableUnits.push_back("non-dim");
-    this->mInitialConditions.push_back(2.54);
 
-    this->mVariableNames.push_back("C_T");
-    this->mVariableUnits.push_back("non-dim");
-    this->mInitialConditions.push_back(2.54);
+    // DERIVED QUANTITIES
+    this->mDerivedQuantityNames.push_back("C_F");
+    this->mDerivedQuantityUnits.push_back("non-dim");
 
-    this->mVariableNames.push_back("drag");
-    this->mVariableUnits.push_back("non-dim");
-    this->mInitialConditions.push_back(1.0);
+    this->mDerivedQuantityNames.push_back("C_T");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("drag");
+    this->mDerivedQuantityUnits.push_back("non-dim");
 
 
-    // STATE PARAMETERS:
+    // PARAMETERS
+    this->mParameterNames.push_back("cytosolmembraneandnucleus");
+    this->mParameterUnits.push_back("non-dim");
+
     this->mParameterNames.push_back("wnt_level");
     this->mParameterUnits.push_back("non-dim");
 
@@ -316,12 +337,12 @@ void CellwiseOdeSystemInformation<VanLeeuwen2007SbmlOdeSystem>::Initialise()
 #include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
 
-typedef SbmlSrnWrapperModel<VanLeeuwen2007SbmlOdeSystem, 14> VanLeeuwen2007SbmlSrnModel;
+typedef SbmlSrnWrapperModel<VanLeeuwen2007SbmlOdeSystem, 11> VanLeeuwen2007SbmlSrnModel;
 
 // Declare identifiers for the serializer
 #include "SerializationExportWrapperForCpp.hpp"
 CHASTE_CLASS_EXPORT(VanLeeuwen2007SbmlOdeSystem)
-EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, VanLeeuwen2007SbmlOdeSystem, 14)
+EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, VanLeeuwen2007SbmlOdeSystem, 11)
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
 EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(VanLeeuwen2007SbmlSrnModel)
