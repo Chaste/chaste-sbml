@@ -50,6 +50,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Debug.hpp"
 #include "EulerIvpOdeSolver.hpp"
 #include "RungeKutta4IvpOdeSolver.hpp"
+#include "SbmlTestHelperFunctions.hpp"
 #include "Timer.hpp"
 
 #include "Tan2014SbmlOdeSystemAndSrnModel.hpp"
@@ -57,10 +58,171 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
+namespace st = sbmltest;
+
 class TestTan2014Sbml : public AbstractCellBasedTestSuite
 {
 private:
     const unsigned ODE_SIZE = 6u;
+
+    void RunOdeWithSolver(AbstractIvpOdeSolver &rSolver, const std::string solverName)
+    {
+        try
+        {
+            Tan2014SbmlOdeSystem ode_system;
+
+            double dt = 0.01;
+            double end_time = 5000.0;
+
+            std::vector<double> state_variables = ode_system.GetInitialConditions();
+
+            Timer::Reset();
+            OdeSolution ode_solution = rSolver.Solve(&ode_system, state_variables, 0.0, end_time, dt, dt);
+            Timer::Print("Tan 2014 (" + solverName + ")");
+
+            // Compare end solutions with Tellurium values
+            std::vector<double> end_solution = ode_solution.rGetSolutions().back();
+            TS_ASSERT_DELTA(end_solution[0], 80.051972, 1e-3);  // bcat_cm
+            TS_ASSERT_DELTA(end_solution[1], 447.597749, 1e-3); // ligand_cm
+            TS_ASSERT_DELTA(end_solution[2], 552.402251, 1e-3); // complex_cm
+            TS_ASSERT_DELTA(end_solution[3], 62.047741, 1e-3);  // bcat_nu
+            TS_ASSERT_DELTA(end_solution[4], 360.013140, 1e-3); // ligand_nu
+            TS_ASSERT_DELTA(end_solution[5], 639.986860, 1e-3); // complex_nu
+
+            ode_solution.CalculateDerivedQuantitiesAndParameters(&ode_system);
+            std::vector<double> drag = ode_solution.GetAnyVariable("drag");
+            TS_ASSERT_DELTA(drag.back(), 1.0, 1e-3);
+
+            // Compare solution stats with Tellurium values
+            for (unsigned i = 0; i < ODE_SIZE; i++)
+            {
+                std::vector<double> values;
+                for (unsigned j = 0; j < ode_solution.rGetSolutions().size(); j++)
+                {
+                    values.push_back(ode_solution.rGetSolutions()[j][i]);
+                }
+                double min_val = st::min(values);
+                double max_val = st::max(values);
+                double mean_val = st::mean(values);
+                double std_val = st::stdev(values);
+                double q1_val = st::quantile(values, 0.25);
+                double q2_val = st::quantile(values, 0.5);
+                double q3_val = st::quantile(values, 0.75);
+
+                if (i == 0) // bcat_cm
+                {
+                    TS_ASSERT_DELTA(min_val, 45.24753509322006, 1e-2);
+                    TS_ASSERT_DELTA(max_val, 80.05197189552682, 1e-2);
+                    TS_ASSERT_DELTA(mean_val, 76.79374377296425, 1e-2);
+                    TS_ASSERT_DELTA(std_val, 5.332948929206765, 1e-2);
+                    TS_ASSERT_DELTA(q1_val, 76.30072625724083, 1e-2);
+                    TS_ASSERT_DELTA(q2_val, 79.10049811306001, 1e-2);
+                    TS_ASSERT_DELTA(q3_val, 79.8527692249068, 1e-2);
+                }
+                else if (i == 1) // ligand_cm
+                {
+                    TS_ASSERT_DELTA(min_val, 447.5977489158307, 1e-2);
+                    TS_ASSERT_DELTA(max_val, 581.1170004363729, 1e-2);
+                    TS_ASSERT_DELTA(mean_val, 477.46482882069574, 1e-2);
+                    TS_ASSERT_DELTA(std_val, 37.585157908239694, 1e-2);
+                    TS_ASSERT_DELTA(q1_val, 449.98139359136957, 1e-2);
+                    TS_ASSERT_DELTA(q2_val, 459.0489354564536, 1e-2);
+                    TS_ASSERT_DELTA(q3_val, 492.86092359129896, 1e-2);
+                }
+                else if (i == 2) // complex_cm
+                {
+                    TS_ASSERT_DELTA(min_val, 418.8829995636274, 1e-2);
+                    TS_ASSERT_DELTA(max_val, 552.4022510841701, 1e-2);
+                    TS_ASSERT_DELTA(mean_val, 522.5351711793052, 1e-2);
+                    TS_ASSERT_DELTA(std_val, 37.5851579082397, 1e-2);
+                    TS_ASSERT_DELTA(q1_val, 507.13907640870184, 1e-2);
+                    TS_ASSERT_DELTA(q2_val, 540.9510645435473, 1e-2);
+                    TS_ASSERT_DELTA(q3_val, 550.0186064086312, 1e-2);
+                }
+                else if (i == 3) // bcat_nu
+                {
+                    TS_ASSERT_DELTA(min_val, 32.6, 1e-2);
+                    TS_ASSERT_DELTA(max_val, 62.04774090925595, 1e-2);
+                    TS_ASSERT_DELTA(mean_val, 59.52187943417476, 1e-2);
+                    TS_ASSERT_DELTA(std_val, 4.134577756185565, 1e-2);
+                    TS_ASSERT_DELTA(q1_val, 59.13996823289651, 1e-2);
+                    TS_ASSERT_DELTA(q2_val, 61.310212705453466, 1e-2);
+                    TS_ASSERT_DELTA(q3_val, 61.89333036475111, 1e-2);
+                }
+                else if (i == 4) // ligand_nu
+                {
+                    TS_ASSERT_DELTA(min_val, 360.0131396545373, 1e-2);
+                    TS_ASSERT_DELTA(max_val, 516.8, 1e-2);
+                    TS_ASSERT_DELTA(mean_val, 374.1294962358405, 1e-2);
+                    TS_ASSERT_DELTA(std_val, 27.472630884273887, 1e-2);
+                    TS_ASSERT_DELTA(q1_val, 360.65896071465426, 1e-2);
+                    TS_ASSERT_DELTA(q2_val, 363.11746747180143, 1e-2);
+                    TS_ASSERT_DELTA(q3_val, 372.7214970204209, 1e-2);
+                }
+                else if (i == 5) // complex_nu
+                {
+                    TS_ASSERT_DELTA(min_val, 483.19999999999993, 1e-2);
+                    TS_ASSERT_DELTA(max_val, 639.9868603454628, 1e-2);
+                    TS_ASSERT_DELTA(mean_val, 625.8705037641597, 1e-2);
+                    TS_ASSERT_DELTA(std_val, 27.472630884273933, 1e-2);
+                    TS_ASSERT_DELTA(q1_val, 627.2785029795791, 1e-2);
+                    TS_ASSERT_DELTA(q2_val, 636.8825325281987, 1e-2);
+                    TS_ASSERT_DELTA(q3_val, 639.3410392853458, 1e-2);
+                }
+            }
+
+            // Compare derived quantity stats with Tellurium values
+            {
+                double min_val = st::min(drag);
+                double max_val = st::max(drag);
+                double mean_val = st::mean(drag);
+                double std_val = st::stdev(drag);
+                double q1_val = st::quantile(drag, 0.25);
+                double q2_val = st::quantile(drag, 0.5);
+                double q3_val = st::quantile(drag, 0.75);
+
+                TS_ASSERT_DELTA(min_val, 1.0, 1e-3);
+                TS_ASSERT_DELTA(max_val, 1.0, 1e-3);
+                TS_ASSERT_DELTA(mean_val, 1.0, 1e-3);
+                TS_ASSERT_DELTA(std_val, 0.0, 1e-3);
+                TS_ASSERT_DELTA(q1_val, 1.0, 1e-3);
+                TS_ASSERT_DELTA(q2_val, 1.0, 1e-3);
+                TS_ASSERT_DELTA(q3_val, 1.0, 1e-3);
+            }
+
+            // The following code provides nice output for gnuplot
+            // use the command
+            // plot "tan_2014_cvode.dat" u 1:2
+            // or
+            // plot "tan_2014_cvode.dat" u 1:3 etc. for the various species...
+            // or
+            // plot "tan_2014_cvode.dat" u 1:2, "" u 1:3, "" u 1:4 ... for all species
+
+            OutputFileHandler handler("");
+            out_stream file = handler.OpenOutputFile("tan_2014_" + solverName + ".dat");
+            std::vector<double> times = ode_solution.rGetTimes();
+            std::vector<std::vector<double>> solutions = ode_solution.rGetSolutions();
+            for (unsigned i = 0; i < solutions.size(); i++)
+            {
+                (*file) << times[i];
+                for (unsigned j = 0; j < solutions[i].size(); j++)
+                {
+                    (*file) << "\t" << solutions[i][j];
+                }
+                (*file) << "\t" << drag[i] << "\n"
+                        << std::flush;
+            }
+            file->close();
+        }
+        catch (Exception &e)
+        {
+            throw e;
+        }
+        catch (...)
+        {
+            exit(EXIT_FAILURE);
+        }
+    }
 
 public:
     void TestOdeArchiving()
@@ -165,125 +327,46 @@ public:
         initial_conditions.push_back(516.8); // ligand_nu
         initial_conditions.push_back(483.2); // complex_nu
 
-        std::vector<double> derivs(initial_conditions.size());
+        std::vector<double> derivs(initial_conditions.size(), 0.0);
         ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
-        // Compare derivatives with values from Tellurium (wnt_level=0)
-        TS_ASSERT_EQUALS(ode_system.GetParameter("wnt_level"), 0);
-        TS_ASSERT_DELTA(derivs[0], -1.97469879e+02, 1e-3); // d(bcat_cm)/dt
-        TS_ASSERT_DELTA(derivs[1], 2.73412000e-04, 1e-6);  // d(ligand_cm)/dt
-        TS_ASSERT_DELTA(derivs[2], -2.73412000e-04, 1e-6); // d(complex_cm)/dt
-        TS_ASSERT_DELTA(derivs[3], 1.98105040e+02, 1e-3);  // d(bcat_nu)/dt
-        TS_ASSERT_DELTA(derivs[4], 1.04000000e-03, 1e-5);  // d(ligand_nu)/dt
-        TS_ASSERT_DELTA(derivs[5], -1.04000000e-03, 1e-5); // d(complex_nu)/dt
+        // Compare derivatives with values from Tellurium
+        // (Tellurium's `getRatesOfChange()` is not scaled by compartment)
+        const double CytosolMembrane = 1.16;
+        const double nucleus = 0.65;
+        TS_ASSERT_EQUALS(ode_system.GetParameter("wnt_level"), 0.0);
+        TS_ASSERT_DELTA(derivs[0], -1.97469879e+02 / CytosolMembrane, 1e-3); // bcat_cm
+        TS_ASSERT_DELTA(derivs[1], 2.73412000e-04 / CytosolMembrane, 1e-6);  // ligand_cm
+        TS_ASSERT_DELTA(derivs[2], -2.73412000e-04 / CytosolMembrane, 1e-6); // complex_cm
+        TS_ASSERT_DELTA(derivs[3], 1.98105040e+02 / nucleus, 1e-3);          // bcat_nu
+        TS_ASSERT_DELTA(derivs[4], 1.04000000e-03 / nucleus, 1e-5);          // ligand_nu
+        TS_ASSERT_DELTA(derivs[5], -1.04000000e-03 / nucleus, 1e-5);         // complex_nu
 
-        // Compare derivatives with values from Tellurium (wnt_level=1)
-        ode_system.SetParameter("wnt_level", 1);
-        TS_ASSERT_EQUALS(ode_system.GetParameter("wnt_level"), 1);
+        // Set wnt_level=1 and check derivatives again
+        ode_system.SetParameter("wnt_level", 1.0);
+        TS_ASSERT_EQUALS(ode_system.GetParameter("wnt_level"), 1.0);
         ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
-        TS_ASSERT_DELTA(derivs[0], -1.97469879e+02, 1e-3); // d(bcat_cm)/dt
-        TS_ASSERT_DELTA(derivs[1], 2.73412000e-04, 1e-6);  // d(ligand_cm)/dt
-        TS_ASSERT_DELTA(derivs[2], -2.73412000e-04, 1e-6); // d(complex_cm)/dt
-        TS_ASSERT_DELTA(derivs[3], 1.98105040e+02, 1e-3);  // d(bcat_nu)/dt
-        TS_ASSERT_DELTA(derivs[4], 1.04000000e-03, 1e-5);  // d(ligand_nu)/dt
-        TS_ASSERT_DELTA(derivs[5], -1.04000000e-03, 1e-5); // d(complex_nu)/dt
+        TS_ASSERT_DELTA(derivs[0], -1.97469879e+02 / CytosolMembrane, 1e-3); // bcat_cm
+        TS_ASSERT_DELTA(derivs[1], 2.73412000e-04 / CytosolMembrane, 1e-6);  // ligand_cm
+        TS_ASSERT_DELTA(derivs[2], -2.73412000e-04 / CytosolMembrane, 1e-6); // complex_cm
+        TS_ASSERT_DELTA(derivs[3], 1.98105040e+02 / nucleus, 1e-3);          // bcat_nu
+        TS_ASSERT_DELTA(derivs[4], 1.04000000e-03 / nucleus, 1e-5);          // ligand_nu
+        TS_ASSERT_DELTA(derivs[5], -1.04000000e-03 / nucleus, 1e-5);         // complex_nu
     }
 
     void TestOdeWithChasteSolver()
     {
-        try
-        {
-            Tan2014SbmlOdeSystem ode_system;
-
-            // Solve system using RK4 solver
-
-            double dt = 0.01;
-            double end_time = 5000.0;
-
-            // RK4 solver solution worked out
-            RungeKutta4IvpOdeSolver rk4_solver;
-
-            std::vector<double> state_variables = ode_system.GetInitialConditions();
-
-            Timer::Reset();
-            OdeSolution solutions = rk4_solver.Solve(&ode_system, state_variables, 0.0, end_time, dt, dt);
-            Timer::Print("1. Tan RK4");
-
-            // The following code provides nice output for gnuplot
-            // use the command
-            // plot "tan_2014.dat" u 1:2
-            // or
-            // plot "tan_2014.dat" u 1:3 etc. for the various species...
-            // or
-            // plot "tan_2014.dat" u 1:2, "" u 1:3, "" u 1:4 ... for all species
-
-            // OutputFileHandler handler("");
-            // out_stream file = handler.OpenOutputFile("tan_2014.dat");
-            // for (unsigned i = 0; i < solutions.rGetSolutions().size(); i++)
-            // {
-            //     (*file) << solutions.rGetTimes()[i];
-            //     for (unsigned j = 0; j < solutions.rGetSolutions()[i].size(); j++)
-            //     {
-            //         (*file) << "\t" << solutions.rGetSolutions()[i][j];
-            //     }
-            //     (*file) << "\n"
-            //             << std::flush;
-            // }
-            // file->close();
-
-            unsigned end = solutions.rGetSolutions().size() - 1;
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 80.0519, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 447.5976, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 552.4023, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][3], 62.0477, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][4], 360.0130, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][5], 639.9869, 1e-3);
-        }
-        catch (Exception &e)
-        {
-            throw e;
-        }
-        catch (...)
-        {
-            exit(EXIT_FAILURE);
-        }
+        // Solve system using RK4 solver
+        RungeKutta4IvpOdeSolver rk4_solver;
+        RunOdeWithSolver(rk4_solver, "rk4");
     }
 
     void TestOdeWithCvodeSolver()
     {
-        try
-        {
-            Tan2014SbmlOdeSystem ode_system;
-
-            double end_time = 5000.0;
-            double h_value = 0.01;
-
-            CvodeAdaptor solver;
-            OdeSolution solutions;
-
-            std::vector<double> state_variables = ode_system.GetInitialConditions();
-
-            Timer::Reset();
-            solutions = solver.Solve(&ode_system, state_variables, 0.0, end_time, h_value, 0.1);
-            Timer::Print("1. Tan CVODE");
-
-            unsigned end = solutions.rGetSolutions().size() - 1;
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 80.0519, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 447.5976, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 552.4023, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][3], 62.0477, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][4], 360.0130, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][5], 639.9869, 1e-3);
-        }
-        catch (Exception &e)
-        {
-            throw e;
-        }
-        catch (...)
-        {
-            exit(EXIT_FAILURE);
-        }
+        // Solve system using CVODE solver
+        CvodeAdaptor solver;
+        RunOdeWithSolver(solver, "cvode");
     }
 };
 

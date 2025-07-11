@@ -106,7 +106,7 @@ private:
 
                 Timer::Reset();
                 ode_solution = rSolver.Solve(&ode_system, initial_conditions, start_time, end_time, max_step, sampling_interval);
-                Timer::Print(std::to_string(i) + ". Tyson Novak (" + solverName + ")");
+                Timer::Print(std::to_string(i) + ". Tyson Novak 2001 (" + solverName + ")");
 
                 // ODE should have stopped
                 TS_ASSERT_EQUALS(rSolver.StoppingEventOccurred(), true);
@@ -284,13 +284,12 @@ private:
 
             // The following code provides nice output for gnuplot
             // use the command
-            // plot "tysonnovak_cvode.dat" u 1:2 etc. for the various species...
+            // plot "tyson_novak_2001_cvode.dat" u 1:2 etc. for the various species...
             // or
-            // plot "tysonnovak_cvode.dat" u 1:2, "" u 1:3, "" u 1:4 etc. for all species
-            ode_solution.CalculateDerivedQuantitiesAndParameters(&ode_system);
+            // plot "tyson_novak_2001_cvode.dat" u 1:2, "" u 1:3, "" u 1:4 etc. for all species
 
             OutputFileHandler handler("");
-            out_stream file = handler.OpenOutputFile("tysonnovak_" + solverName + ".dat");
+            out_stream file = handler.OpenOutputFile("tyson_novak_2001_" + solverName + ".dat");
             for (unsigned i = 0; i < solutions.size(); i++)
             {
                 (*file) << times[i];
