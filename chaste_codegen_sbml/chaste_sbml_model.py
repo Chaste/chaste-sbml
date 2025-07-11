@@ -82,12 +82,13 @@ class ChasteSbmlModel:
         self._sbml_species = self._sbml_model.getListOfSpecies()
         self._sbml_unit_definitions = self._sbml_model.getListOfUnitDefinitions()
 
-        self._assignment_rules = []  # [ { id: str, descr: str, ... } ]
-        self._state_variables = []  # [ { id: str, descr: str, ... } ]
-        self._derived_quantities = []  # [ { id: str, descr: str, ... } ]
-        self._variable_parameters = []  # [ { id: str, descr: str, ... } ]
-        self._constant_parameters = []  # [ { id: str, descr: str, ... } ]
-        self._reactions = []  # [ { id: str, descr: str, ... } ]
+        self._assignment_rules = []  # [ { id: str, label: str, ... } ]
+        self._state_variables = []  # [ { id: str, label: str, ... } ]
+        self._derived_quantities = []  # [ { id: str, label: str, ... } ]
+        self._variable_parameters = []  # [ { id: str, label: str, ... } ]
+        self._constant_parameters = []  # [ { id: str, label: str, ... } ]
+        self._rule_based_parameters = []  # [ { id: str, label: str, ... } ]
+        self._reactions = []  # [ { id: str, label: str, ... } ]
         self._events = []  # [ { name: str, trigger: str, ... } ]
         self._functions = []  # [ { name: str, args: [str], body: str } ]
 
@@ -129,12 +130,12 @@ class ChasteSbmlModel:
         """
         return
 
-    def _add_assignment_rule(self, id_: str, descr: str, lhs: str, rhs: str) -> None:
+    def _add_assignment_rule(self, id_: str, label: str, lhs: str, rhs: str) -> None:
         """Add an assignment rule to the template variables."""
         self._assignment_rules.append(
             {
                 "id": id_,
-                "descr": descr,
+                "label": label,
                 "index": len(self._assignment_rules),
                 "lhs": lhs,
                 "rhs": rhs,
@@ -142,12 +143,12 @@ class ChasteSbmlModel:
         )
         self._variable_types[id_] = VarType.ASSIGNMENT_RULE
 
-    def _add_constant_parameter(self, id_: str, descr: str, value: float, units: str) -> None:
+    def _add_constant_parameter(self, id_: str, label: str, value: float, units: str) -> None:
         """Add a constant parameter to the template variables."""
         self._constant_parameters.append(
             {
                 "id": id_,
-                "descr": descr,
+                "label": label,
                 "index": len(self._constant_parameters),
                 "value": value,
                 "units": units,
@@ -155,12 +156,12 @@ class ChasteSbmlModel:
         )
         self._variable_types[id_] = VarType.CONSTANT_PARAMETER
 
-    def _add_derived_quantity(self, id_: str, descr: str, units: str, rhs: str) -> None:
+    def _add_derived_quantity(self, id_: str, label: str, units: str, rhs: str) -> None:
         """Add a derived quantity to the template variables."""
         self._derived_quantities.append(
             {
                 "id": id_,
-                "descr": descr,
+                "label": label,
                 "index": len(self._derived_quantities),
                 "rhs": rhs,
                 "units": units,
@@ -168,17 +169,17 @@ class ChasteSbmlModel:
         )
         self._variable_types[id_] = VarType.DERIVED_QUANTITY
 
-    def _add_event(self, descr: str, trigger: str, assignments: list[str], distance: str) -> None:
+    def _add_event(self, label: str, trigger: str, assignments: list[str], distance: str) -> None:
         """Add an event to the template variables.
 
-        :param descr: The event description.
+        :param label: The event description.
         :param trigger: The event trigger formula.
         :param assignments: The event assignments.
         :param distance: The distance for the event trigger.
         """
         self._events.append(
             {
-                "descr": descr,
+                "label": label,
                 "index": len(self._events),
                 "trigger": trigger,
                 "assignments": assignments,
@@ -186,18 +187,18 @@ class ChasteSbmlModel:
             }
         )
 
-    def _add_function(self, id_: str, descr: str, args: str, body: str) -> None:
+    def _add_function(self, id_: str, label: str, args: str, body: str) -> None:
         """Add a function to the template variables.
 
         :param id_: The function ID.
-        :param descr: The function description.
+        :param label: The function description.
         :param args: The function arguments.
         :param body: The function body.
         """
         self._functions.append(
             {
                 "id": id_,
-                "descr": descr,
+                "label": label,
                 "index": len(self._functions),
                 "args": args,
                 "body": body,
@@ -214,13 +215,13 @@ class ChasteSbmlModel:
         self._outputs[filename] = code
 
     def _add_reaction(
-        self, id_: str, descr: str, rhs: str, parameters: list[dict[str, "Any"]]
+        self, id_: str, label: str, rhs: str, parameters: list[dict[str, "Any"]]
     ) -> None:
         """Add a reaction to the template variables."""
         self._reactions.append(
             {
                 "id": id_,
-                "descr": descr,
+                "label": label,
                 "index": len(self._reactions),
                 "rhs": rhs,
                 "parameters": parameters,
@@ -228,14 +229,29 @@ class ChasteSbmlModel:
         )
         self._variable_types[id_] = VarType.REACTION
 
+    def _add_rule_based_parameter(
+        self, id_: str, label: str, initial_value: float, units: str = NON_DIM_UNITS
+    ) -> None:
+        """Add a rule parameter to the template variables."""
+        self._rule_based_parameters.append(
+            {
+                "id": id_,
+                "label": label,
+                "index": len(self._rule_based_parameters),
+                "initial_value": initial_value,
+                "units": units,
+            }
+        )
+        self._variable_types[id_] = VarType.RULE_BASED_PARAMETER
+
     def _add_state_variable(
-        self, id_: str, descr: str, initial_value: float, units: str, rhs: str
+        self, id_: str, label: str, initial_value: float, units: str, rhs: str
     ) -> None:
         """Add a state variable to the template variables."""
         self._state_variables.append(
             {
                 "id": id_,
-                "descr": descr,
+                "label": label,
                 "index": len(self._state_variables),
                 "initial_value": initial_value,
                 "rhs": rhs,
@@ -245,13 +261,13 @@ class ChasteSbmlModel:
         self._variable_types[id_] = VarType.STATE_VARIABLE
 
     def _add_variable_parameter(
-        self, id_: str, descr: str, initial_value: float, units: str = NON_DIM_UNITS
+        self, id_: str, label: str, initial_value: float, units: str = NON_DIM_UNITS
     ) -> None:
         """Add a variable parameter to the template variables."""
         self._variable_parameters.append(
             {
                 "id": id_,
-                "descr": descr,
+                "label": label,
                 "index": len(self._variable_parameters),
                 "initial_value": initial_value,
                 "units": units,
@@ -397,9 +413,9 @@ class ChasteSbmlModel:
         """Add compartments to template variables."""
         for compartment in self._sbml_compartments:
             id_ = compartment.getId()
-            descr = compartment.getName().strip()
+            label = compartment.getName().strip()
             value = compartment.getSize()
-            self._add_variable_parameter(id_, descr, value)
+            self._add_variable_parameter(id_, label, value)
 
     def _format_events(self) -> None:
         """Add events to template variables."""
@@ -407,7 +423,7 @@ class ChasteSbmlModel:
         # TODO: Add priority
 
         for event in self._sbml_events:
-            descr = event.getName().strip()
+            label = event.getName().strip()
             trigger_math = event.getTrigger().getMath()
             trigger_formula = self._convert_ast_formula(trigger_math)
 
@@ -492,20 +508,20 @@ class ChasteSbmlModel:
                 else:
                     assignment_formulas.append(f"{lhs} = {rhs}")
 
-            self._add_event(descr, trigger_formula, assignment_formulas, trigger_distance)
+            self._add_event(label, trigger_formula, assignment_formulas, trigger_distance)
 
     def _format_function_definitions(self) -> None:
         """Add function definitions to template variables."""
         for fd in self._sbml_function_definitions:
             fd_id = fd.getId()
-            descr = fd.getName().strip()
+            label = fd.getName().strip()
             arg_list = get_function_definition_arguments(fd)
             args = ", ".join(map(lambda x: f"double {x}", arg_list))
             body = self._convert_ast_formula(fd.getBody())
 
             self._add_function(
                 fd_id,
-                descr,
+                label,
                 args,
                 body,
             )
@@ -521,24 +537,35 @@ class ChasteSbmlModel:
     def _format_parameters(self) -> None:
         """Add parameters to template variables."""
 
+        # Note: rules must be processed before parameters
+        if not self._assignment_rules:
+            if any(r.getTypeCode() == SBML_ASSIGNMENT_RULE for r in self._sbml_rules):
+                raise RuntimeError("Please process rules before parameters.")
+        assignment_rules = {r["lhs"]: r["rhs"] for r in self._assignment_rules}
+
         for param in self._sbml_parameters:
             param_id = param.getId()
-            descr = param.getName().strip()
+            label = param.getName().strip()
 
             value = param.getValue() if param.isSetValue() else 0.0
             units = param.getUnits() if param.isSetUnits() else NON_DIM_UNITS
 
-            if param.isSetConstant() and not param.getConstant():
-                self._add_variable_parameter(param_id, descr, value, units)
+            if param_id in assignment_rules:
+                # Rule-based parameter
+                self._add_rule_based_parameter(param_id, label, value, units)
+            elif param.isSetConstant() and not param.getConstant():
+                # Variable parameter
+                self._add_variable_parameter(param_id, label, value, units)
             else:
-                self._add_constant_parameter(param_id, descr, value, units)
+                # Constant parameter
+                self._add_constant_parameter(param_id, label, value, units)
 
     def _format_reactions(self) -> None:
         """Add reactions to template variables."""
 
         for reaction in self._sbml_reactions:
             reaction_id = reaction.getId()
-            descr = reaction.getName().strip()
+            label = reaction.getName().strip()
 
             kinetic_law = reaction.getKineticLaw()
             rhs = self._convert_str_formula(kinetic_law.getFormula())
@@ -552,25 +579,24 @@ class ChasteSbmlModel:
                 reaction_parameters.append(
                     {
                         "id": param_id,
-                        "descr": param_descr,
+                        "label": param_descr,
                         "value": param_value,
                     }
                 )
 
-            self._add_reaction(reaction_id, descr, rhs, reaction_parameters)
+            self._add_reaction(reaction_id, label, rhs, reaction_parameters)
 
     def _format_rules(self) -> None:
         """Add rules to template variables."""
-
         for rule in self._sbml_rules:
             rule_id = rule.getId()
-            descr = rule.getName().strip()
+            label = rule.getName().strip()
 
             type_code = rule.getTypeCode()
             if type_code == SBML_ASSIGNMENT_RULE:
                 lhs = rule.getVariable()
                 rhs = self._convert_str_formula(rule.getFormula())
-                self._add_assignment_rule(rule_id, descr, lhs, rhs)
+                self._add_assignment_rule(rule_id, label, lhs, rhs)
 
             elif type_code == SBML_ALGEBRAIC_RULE:
                 # Not implemented
@@ -592,7 +618,7 @@ class ChasteSbmlModel:
 
         for species in self._sbml_species:
             species_id = species.getId()
-            descr = species.getName().strip()
+            label = species.getName().strip()
             initial_value = get_species_concentration(species)
 
             # If there's a compartment we'll normalise the ODEs, so declare it as non-dimensional
@@ -603,7 +629,7 @@ class ChasteSbmlModel:
             if species_id in odes:
                 # State variable
                 rhs = f"({odes[species_id]}) / {compartment_id}"  # Normalised ODE
-                self._add_state_variable(species_id, descr, initial_value, units, rhs)
+                self._add_state_variable(species_id, label, initial_value, units, rhs)
 
                 # TODO: Handle time scaling
                 # time_multiplier = self._get_timescale_multiplier()
@@ -617,11 +643,11 @@ class ChasteSbmlModel:
             elif species_id in assignment_rules:
                 # Derived quantity
                 rhs = assignment_rules[species_id]
-                self._add_derived_quantity(species_id, descr, units, rhs)
+                self._add_derived_quantity(species_id, label, units, rhs)
 
             else:
                 # Variable parameter
-                self._add_variable_parameter(species_id, descr, initial_value, units)
+                self._add_variable_parameter(species_id, label, initial_value, units)
 
     def _get_odes(self) -> dict[str, str]:
         """Get the ODEs equations for each species.
@@ -689,6 +715,7 @@ class ChasteSbmlModel:
             num_state_vars=len(self._state_variables),
             ode_class_name=self._ode_class_name,
             reactions=self._reactions,
+            rule_based_parameters=self._rule_based_parameters,
             state_variables=self._state_variables,
             variable_parameters=self._variable_parameters,
             wrapper_class_name=self._wrapper_class_name,
@@ -735,6 +762,11 @@ class ChasteSbmlModel:
                 if param["id"] == id_:
                     return param["index"]
 
+        elif var_type == VarType.RULE_BASED_PARAMETER:
+            for param in self._rule_based_parameters:
+                if param["id"] == id_:
+                    return param["index"]
+
         elif var_type == VarType.ASSIGNMENT_RULE:
             for rule in self._assignment_rules:
                 if rule["id"] == id_:
@@ -765,6 +797,7 @@ class ChasteSbmlModel:
         self._derived_quantities = []
         self._variable_parameters = []
         self._constant_parameters = []
+        self._rule_based_parameters = []
 
         self._reactions = []
         self._events = []

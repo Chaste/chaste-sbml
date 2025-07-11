@@ -22,27 +22,32 @@ private:
 
     // CONSTANT PARAMETERS
 {% for param in constant_parameters %}
-    const double {{ param["id"] }} = {{ param["value"] }}; // {{ param["descr"] }}
+    const double {{ param["id"] }} = {{ param["value"] }}; // {{ param["label"] }}
 {% endfor %}
 
     // STATE VARIABLES
 {% for var in state_variables %}
-    double {{ var["id"] }}; // {{ var["descr"] }}
+    double {{ var["id"] }}; // {{ var["label"] }}
 {% endfor %}
 
     // DERIVED QUANTITIES
 {% for dq in derived_quantities %}
-    double {{ dq["id"] }}; // {{ dq["descr"] }}
+    double {{ dq["id"] }}; // {{ dq["label"] }}
 {% endfor %}
 
-    // PARAMETERS
+    // VARIABLE PARAMETERS
 {% for param in variable_parameters %}
-    double {{ param["id"] }}; // {{ param["descr"] }}
+    double {{ param["id"] }}; // {{ param["label"] }}
+{% endfor %}
+
+    // RULE-BASED PARAMETERS
+{% for param in rule_based_parameters %}
+    double {{ param["id"] }}; // {{ param["label"] }}
 {% endfor %}
 
     // REACTIONS
 {% for reaction in reactions %}
-    double {{ reaction["id"] }}; // {{ reaction["descr"] }}
+    double {{ reaction["id"] }}; // {{ reaction["label"] }}
 {% endfor %}
 
 {% if events %}

@@ -38,7 +38,12 @@ namespace sm = sbmlmath;
     mStateVariables.push_back({{ var["id"] }});
 {% endfor %}
 
-    // PARAMETERS
+    // DERIVED QUANTITIES
+{% for dq in derived_quantities %}
+    {{ dq["id"] }} = 0.0;
+{% endfor %}
+
+    // VARIABLE PARAMETERS
 {% for param in variable_parameters %}
     {{ param["id"] }} = {{ param["initial_value"] }};
 {% endfor %}
@@ -47,7 +52,10 @@ namespace sm = sbmlmath;
     mParameters.push_back({{ param["id"] }});
 {% endfor %}
 
-    ProcessRules(0.0, mStateVariables);
+    // RULE-BASED PARAMETERS
+{% for var in rule_based_parameters %}
+    {{ var['id'] }} = 0.0;
+{% endfor %}
 
     // REACTIONS
 {% for reaction in reactions %}
@@ -59,6 +67,8 @@ namespace sm = sbmlmath;
     mEventsSatisfied.resize({{ events|length }}, false);
     mEventsInitialised = false;
 {% endif %}
+
+    ProcessRules(0.0, mStateVariables);
 }
 
 {{ ode_class_name }}::~{{ ode_class_name }}()
@@ -70,7 +80,7 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
     ProcessRules(time, rY);
 
 {% for var in state_variables %}
-    rDY[{{ var["index"] }}] = {{ var["rhs"] }}; // d[{{ var["descr"] }}]/dt
+    rDY[{{ var["index"] }}] = {{ var["rhs"] }}; // d[{{ var["id"] }}]/dt
 {% endfor %}
 
     // Scale time appropriately
@@ -96,20 +106,20 @@ void {{ ode_class_name }}::ProcessRules(double time, const std::vector<double>& 
     {{ var["id"] }} = rY[{{ var["index"] }}];
 {% endfor %}
 
+    // VARIABLE PARAMETERS
+{% for var in variable_parameters %}
+    {{ var["id"] }} = GetParameter({{ var['index'] }});
+{% endfor %}
+
     // RULES
 {% for rule in assignment_rules %}
     {{ rule["lhs"] }} = {{ rule["rhs"] }};
 {% endfor %}
 
-    // PARAMETERS
-{% for var in variable_parameters %}
-    SetParameter({{ var['index'] }}, {{ var['id'] }});
-{% endfor %}
-
     // REACTIONS
 {% for reaction in reactions %}
-  {% if reaction["descr"] %}
-    // {{ reaction["descr"] }}
+  {% if reaction["label"] %}
+    // {{ reaction["label"] }}
   {% endif %}
   {% if reaction["parameters"] %}
     {{ reaction["id"] }} = 0.0;
@@ -135,7 +145,7 @@ double {{ ode_class_name }}::ProcessEvents(double time, const std::vector<double
     double event_dist = min_dist;
 
 {% for event in events %}
-    // EVENT: {{ event["descr"] }}
+    // EVENT: {{ event["label"] }}
     event_dist = {{ event["distance"] }};
 
     // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
