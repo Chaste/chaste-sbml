@@ -70,7 +70,12 @@ VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem(std::vector<double> sta
     mStateVariables.push_back(C_cT);
     mStateVariables.push_back(Y);
 
-    // PARAMETERS
+    // DERIVED QUANTITIES
+    C_F = 0.0;
+    C_T = 0.0;
+    drag = 0.0;
+
+    // VARIABLE PARAMETERS
     cytosolmembraneandnucleus = 1.0;
     wnt_level = 0.0;
     gamma1 = 1.0;
@@ -83,7 +88,7 @@ VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem(std::vector<double> sta
     mParameters.push_back(gamma2);
     mParameters.push_back(ComplexTransitThreshold);
 
-    ProcessRules(0.0, mStateVariables);
+    // RULE-BASED PARAMETERS
 
     // REACTIONS
     mwd6b35759_f098_484c_9c65_e84e7e4b61e4 = 0.0;
@@ -111,6 +116,8 @@ VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem(std::vector<double> sta
     mw9ab26a4c_bd70_45e0_bacc_f830ab28abca = 0.0;
     mw931baf8f_6572_46f6_96eb_cae40ee267b7 = 0.0;
 
+
+    ProcessRules(0.0, mStateVariables);
 }
 
 VanLeeuwen2007SbmlOdeSystem::~VanLeeuwen2007SbmlOdeSystem()
@@ -162,17 +169,17 @@ void VanLeeuwen2007SbmlOdeSystem::ProcessRules(double time, const std::vector<do
     C_cT = rY[9];
     Y = rY[10];
 
+    // VARIABLE PARAMETERS
+    cytosolmembraneandnucleus = GetParameter(0);
+    wnt_level = GetParameter(1);
+    gamma1 = GetParameter(2);
+    gamma2 = GetParameter(3);
+    ComplexTransitThreshold = GetParameter(4);
+
     // RULES
     C_F = C_o + C_c;
     C_T = C_oT + C_cT;
     drag = sm::max((C_A - 100.0) / 3.0, 1.0);
-
-    // PARAMETERS
-    SetParameter(0, cytosolmembraneandnucleus);
-    SetParameter(1, wnt_level);
-    SetParameter(2, gamma1);
-    SetParameter(3, gamma2);
-    SetParameter(4, ComplexTransitThreshold);
 
     // REACTIONS
     // r1

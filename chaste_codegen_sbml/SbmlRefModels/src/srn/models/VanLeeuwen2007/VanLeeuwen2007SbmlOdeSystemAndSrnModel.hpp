@@ -67,12 +67,14 @@ private:
     double C_T; // C_T
     double drag; // drag
 
-    // PARAMETERS
+    // VARIABLE PARAMETERS
     double cytosolmembraneandnucleus; // cytosolmembraneandnucleus
     double wnt_level; // wnt_level
     double gamma1; // gamma1
     double gamma2; // gamma2
     double ComplexTransitThreshold; // ComplexTransitThreshold
+
+    // RULE-BASED PARAMETERS
 
     // REACTIONS
     double mwd6b35759_f098_484c_9c65_e84e7e4b61e4; // r1
