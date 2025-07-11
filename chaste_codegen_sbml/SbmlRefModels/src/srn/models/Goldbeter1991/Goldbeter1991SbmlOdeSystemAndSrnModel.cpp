@@ -38,16 +38,16 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem(std::vector<double> state
     mStateVariables.push_back(M);
     mStateVariables.push_back(X);
 
-    // PARAMETERS
+    // DERIVED QUANTITIES
+
+    // VARIABLE PARAMETERS
     cell = 1.0;
-    V1 = 0.0;
-    V3 = 0.0;
 
     mParameters.push_back(cell);
-    mParameters.push_back(V1);
-    mParameters.push_back(V3);
 
-    ProcessRules(0.0, mStateVariables);
+    // RULE-BASED PARAMETERS
+    V1 = 0.0;
+    V3 = 0.0;
 
     // REACTIONS
     reaction1 = 0.0;
@@ -58,6 +58,8 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem(std::vector<double> state
     reaction6 = 0.0;
     reaction7 = 0.0;
 
+
+    ProcessRules(0.0, mStateVariables);
 }
 
 Goldbeter1991SbmlOdeSystem::~Goldbeter1991SbmlOdeSystem()
@@ -68,9 +70,9 @@ void Goldbeter1991SbmlOdeSystem::EvaluateYDerivatives(double time, const std::ve
 {
     ProcessRules(time, rY);
 
-    rDY[0] = (reaction1 - reaction2 - reaction3) / cell; // d[Cyclin]/dt
-    rDY[1] = (reaction4 - reaction5) / cell; // d[cdc_2_kinase]/dt
-    rDY[2] = (reaction6 - reaction7) / cell; // d[Cyclin Protease]/dt
+    rDY[0] = (reaction1 - reaction2 - reaction3) / cell; // d[C]/dt
+    rDY[1] = (reaction4 - reaction5) / cell; // d[M]/dt
+    rDY[2] = (reaction6 - reaction7) / cell; // d[X]/dt
 
     // Scale time appropriately
 }
@@ -83,14 +85,12 @@ void Goldbeter1991SbmlOdeSystem::ProcessRules(double time, const std::vector<dou
     M = rY[1];
     X = rY[2];
 
+    // VARIABLE PARAMETERS
+    cell = GetParameter(0);
+
     // RULES
     V1 = C * VM1 * std::pow(C + Kc, -1.0);
     V3 = M * VM3;
-
-    // PARAMETERS
-    SetParameter(0, cell);
-    SetParameter(1, V1);
-    SetParameter(2, V3);
 
     // REACTIONS
     // creation of cyclin
@@ -173,12 +173,6 @@ void CellwiseOdeSystemInformation<Goldbeter1991SbmlOdeSystem>::Initialise()
 
     // PARAMETERS
     this->mParameterNames.push_back("cell");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("V1");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("V3");
     this->mParameterUnits.push_back("non-dim");
 
     this->mInitialised = true;

@@ -50,7 +50,10 @@ Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem(std::vector<double> stateVariables)
     mStateVariables.push_back(ligand_nu);
     mStateVariables.push_back(complex_nu);
 
-    // PARAMETERS
+    // DERIVED QUANTITIES
+    drag = 0.0;
+
+    // VARIABLE PARAMETERS
     compartment = 1.0;
     CytosolMembrane = 1.16;
     nucleus = 0.65;
@@ -63,7 +66,7 @@ Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem(std::vector<double> stateVariables)
     mParameters.push_back(wnt_level);
     mParameters.push_back(gamma);
 
-    ProcessRules(0.0, mStateVariables);
+    // RULE-BASED PARAMETERS
 
     // REACTIONS
     Bsynthesis = 0.0;
@@ -74,6 +77,8 @@ Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem(std::vector<double> stateVariables)
     K_c_active = 0.0;
     K_n_active = 0.0;
 
+
+    ProcessRules(0.0, mStateVariables);
 }
 
 Tan2014SbmlOdeSystem::~Tan2014SbmlOdeSystem()
@@ -84,12 +89,12 @@ void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<d
 {
     ProcessRules(time, rY);
 
-    rDY[0] = (Bsynthesis - kDegradation - kC - kdiffusion - K_c_active + K_n_active) / CytosolMembrane; // d[]/dt
-    rDY[1] = (-kC) / CytosolMembrane; // d[]/dt
-    rDY[2] = (kC) / CytosolMembrane; // d[]/dt
-    rDY[3] = (-kN + kdiffusion + K_c_active - K_n_active) / nucleus; // d[]/dt
-    rDY[4] = (-kN) / nucleus; // d[]/dt
-    rDY[5] = (kN) / nucleus; // d[]/dt
+    rDY[0] = (Bsynthesis - kDegradation - kC - kdiffusion - K_c_active + K_n_active) / CytosolMembrane; // d[bcat_cm]/dt
+    rDY[1] = (-kC) / CytosolMembrane; // d[ligand_cm]/dt
+    rDY[2] = (kC) / CytosolMembrane; // d[complex_cm]/dt
+    rDY[3] = (-kN + kdiffusion + K_c_active - K_n_active) / nucleus; // d[bcat_nu]/dt
+    rDY[4] = (-kN) / nucleus; // d[ligand_nu]/dt
+    rDY[5] = (kN) / nucleus; // d[complex_nu]/dt
 
     // Scale time appropriately
 }
@@ -113,15 +118,15 @@ void Tan2014SbmlOdeSystem::ProcessRules(double time, const std::vector<double>& 
     ligand_nu = rY[4];
     complex_nu = rY[5];
 
+    // VARIABLE PARAMETERS
+    compartment = GetParameter(0);
+    CytosolMembrane = GetParameter(1);
+    nucleus = GetParameter(2);
+    wnt_level = GetParameter(3);
+    gamma = GetParameter(4);
+
     // RULES
     drag = sm::piecewise((complex_cm - 700.0) / 10.0, sm::gt((complex_cm - 700.0) / 10.0, 1.0), 1.0);
-
-    // PARAMETERS
-    SetParameter(0, compartment);
-    SetParameter(1, CytosolMembrane);
-    SetParameter(2, nucleus);
-    SetParameter(3, wnt_level);
-    SetParameter(4, gamma);
 
     // REACTIONS
     Bsynthesis = Bsyn * CytosolMembrane;

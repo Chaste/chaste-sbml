@@ -58,14 +58,18 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem(std::vector<double> sta
     mStateVariables.push_back(CKIt);
     mStateVariables.push_back(SK);
 
-    // PARAMETERS
+    // DERIVED QUANTITIES
+    CycB = 0.0;
+    Trimer = 0.0;
+    Mad = 0.0;
+
+    // VARIABLE PARAMETERS
     cell = 1.0;
-    TF = 0.0;
 
     mParameters.push_back(cell);
-    mParameters.push_back(TF);
 
-    ProcessRules(0.0, mStateVariables);
+    // RULE-BASED PARAMETERS
+    TF = 0.0;
 
     // REACTIONS
     CycBt_synthesis = 0.0;
@@ -92,6 +96,8 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem(std::vector<double> sta
     // EVENTS
     mEventsSatisfied.resize(1, false);
     mEventsInitialised = false;
+
+    ProcessRules(0.0, mStateVariables);
 }
 
 TysonNovak2001SbmlOdeSystem::~TysonNovak2001SbmlOdeSystem()
@@ -137,15 +143,14 @@ void TysonNovak2001SbmlOdeSystem::ProcessRules(double time, const std::vector<do
     CKIt = rY[6];
     SK = rY[7];
 
+    // VARIABLE PARAMETERS
+    cell = GetParameter(0);
+
     // RULES
     CycB = CycBt - 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow(std::pow(CycBt + CKIt + 1.0 / Keq, 2.0) - 4.0 * CycBt * CKIt, 1.0 / 2.0));
     Trimer = 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow(std::pow(CycBt + CKIt + 1.0 / Keq, 2.0) - 4.0 * CycBt * CKIt, 1.0 / 2.0));
     TF = GK(k15p * m + k15pp * SK, k16p + k16pp * m * CycB, J15, J16);
     Mad = 1.0;
-
-    // PARAMETERS
-    SetParameter(0, cell);
-    SetParameter(1, TF);
 
     // REACTIONS
     // CycBt synthesis
@@ -336,9 +341,6 @@ void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
 
     // PARAMETERS
     this->mParameterNames.push_back("cell");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("TF");
     this->mParameterUnits.push_back("non-dim");
 
     this->mInitialised = true;

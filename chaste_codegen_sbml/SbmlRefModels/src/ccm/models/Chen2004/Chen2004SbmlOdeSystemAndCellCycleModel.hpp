@@ -210,7 +210,7 @@ private:
     double SBF; // SBF
     double SIC1T; // SIC1T
 
-    // PARAMETERS
+    // VARIABLE PARAMETERS
     double cell; // cell
     double BUB2; // BUB2
     double LTE1; // LTE1
@@ -225,6 +225,8 @@ private:
     double lte1l; // lte1l
     double mad2l; // mad2l
     double TEM1T; // TEM1T
+
+    // RULE-BASED PARAMETERS
     double D; // D
     double mu; // mu
     double Vdb5; // Vdb5

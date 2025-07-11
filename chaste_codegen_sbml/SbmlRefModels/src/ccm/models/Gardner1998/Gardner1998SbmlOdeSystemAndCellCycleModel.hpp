@@ -34,8 +34,10 @@ private:
 
     // DERIVED QUANTITIES
 
-    // PARAMETERS
+    // VARIABLE PARAMETERS
     double Cell; // Cell
+
+    // RULE-BASED PARAMETERS
     double V1; // V1
     double V3; // V3
 

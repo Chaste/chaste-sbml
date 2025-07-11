@@ -46,16 +46,16 @@ Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem(std::vector<double> stateVari
     mStateVariables.push_back(Y);
     mStateVariables.push_back(Z);
 
-    // PARAMETERS
+    // DERIVED QUANTITIES
+
+    // VARIABLE PARAMETERS
     Cell = 1.0;
-    V1 = 0.0;
-    V3 = 0.0;
 
     mParameters.push_back(Cell);
-    mParameters.push_back(V1);
-    mParameters.push_back(V3);
 
-    ProcessRules(0.0, mStateVariables);
+    // RULE-BASED PARAMETERS
+    V1 = 0.0;
+    V3 = 0.0;
 
     // REACTIONS
     reaction1 = 0.0;
@@ -72,6 +72,8 @@ Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem(std::vector<double> stateVari
     reaction12 = 0.0;
     reaction13 = 0.0;
 
+
+    ProcessRules(0.0, mStateVariables);
 }
 
 Gardner1998SbmlOdeSystem::~Gardner1998SbmlOdeSystem()
@@ -82,11 +84,11 @@ void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vect
 {
     ProcessRules(time, rY);
 
-    rDY[0] = (reaction1 - reaction2 - reaction3 - reaction8 + reaction9 + reaction10) / Cell; // d[cyclin]/dt
-    rDY[1] = (reaction6 - reaction7) / Cell; // d[protease]/dt
-    rDY[2] = (reaction4 - reaction5) / Cell; // d[cdc2k]/dt
-    rDY[3] = (-reaction8 + reaction9 + reaction11 + reaction12 - reaction13) / Cell; // d[cyclin inhibitor]/dt
-    rDY[4] = (reaction8 - reaction9 - reaction10 - reaction11) / Cell; // d[complex inhibitor-cyclin]/dt
+    rDY[0] = (reaction1 - reaction2 - reaction3 - reaction8 + reaction9 + reaction10) / Cell; // d[C]/dt
+    rDY[1] = (reaction6 - reaction7) / Cell; // d[X]/dt
+    rDY[2] = (reaction4 - reaction5) / Cell; // d[M]/dt
+    rDY[3] = (-reaction8 + reaction9 + reaction11 + reaction12 - reaction13) / Cell; // d[Y]/dt
+    rDY[4] = (reaction8 - reaction9 - reaction10 - reaction11) / Cell; // d[Z]/dt
 
     // Scale time appropriately
 }
@@ -101,14 +103,12 @@ void Gardner1998SbmlOdeSystem::ProcessRules(double time, const std::vector<doubl
     Y = rY[3];
     Z = rY[4];
 
+    // VARIABLE PARAMETERS
+    Cell = GetParameter(0);
+
     // RULES
     V1 = C * V1p * std::pow(C + K6, -1.0);
     V3 = M * V3p;
-
-    // PARAMETERS
-    SetParameter(0, Cell);
-    SetParameter(1, V1);
-    SetParameter(2, V3);
 
     // REACTIONS
     // creation of cyclin
@@ -243,12 +243,6 @@ void CellwiseOdeSystemInformation<Gardner1998SbmlOdeSystem>::Initialise()
 
     // PARAMETERS
     this->mParameterNames.push_back("Cell");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("V1");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("V3");
     this->mParameterUnits.push_back("non-dim");
 
     this->mInitialised = true;

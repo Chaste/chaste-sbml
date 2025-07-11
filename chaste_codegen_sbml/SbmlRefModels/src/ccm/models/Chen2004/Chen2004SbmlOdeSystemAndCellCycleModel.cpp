@@ -186,7 +186,20 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
     mStateVariables.push_back(TEM1GDP);
     mStateVariables.push_back(TEM1GTP);
 
-    // PARAMETERS
+    // DERIVED QUANTITIES
+    BCK2 = 0.0;
+    CDC14T = 0.0;
+    CDC6T = 0.0;
+    CKIT = 0.0;
+    CLB2T = 0.0;
+    CLB5T = 0.0;
+    CLN3 = 0.0;
+    MCM1 = 0.0;
+    NET1T = 0.0;
+    SBF = 0.0;
+    SIC1T = 0.0;
+
+    // VARIABLE PARAMETERS
     cell = 1.0;
     BUB2 = 0.2;
     LTE1 = 0.1;
@@ -201,6 +214,23 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
     lte1l = 0.1;
     mad2l = 0.01;
     TEM1T = 1.0;
+
+    mParameters.push_back(cell);
+    mParameters.push_back(BUB2);
+    mParameters.push_back(LTE1);
+    mParameters.push_back(MAD2);
+    mParameters.push_back(bub2l);
+    mParameters.push_back(CDC15T);
+    mParameters.push_back(ESP1T);
+    mParameters.push_back(IET);
+    mParameters.push_back(KEZ);
+    mParameters.push_back(KEZ2);
+    mParameters.push_back(lte1h);
+    mParameters.push_back(lte1l);
+    mParameters.push_back(mad2l);
+    mParameters.push_back(TEM1T);
+
+    // RULE-BASED PARAMETERS
     D = 0.0;
     mu = 0.0;
     Vdb5 = 0.0;
@@ -221,43 +251,6 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
     Vppc1 = 0.0;
     Vppf6 = 0.0;
     F = 0.0;
-
-    mParameters.push_back(cell);
-    mParameters.push_back(BUB2);
-    mParameters.push_back(LTE1);
-    mParameters.push_back(MAD2);
-    mParameters.push_back(bub2l);
-    mParameters.push_back(CDC15T);
-    mParameters.push_back(ESP1T);
-    mParameters.push_back(IET);
-    mParameters.push_back(KEZ);
-    mParameters.push_back(KEZ2);
-    mParameters.push_back(lte1h);
-    mParameters.push_back(lte1l);
-    mParameters.push_back(mad2l);
-    mParameters.push_back(TEM1T);
-    mParameters.push_back(D);
-    mParameters.push_back(mu);
-    mParameters.push_back(Vdb5);
-    mParameters.push_back(Vdb2);
-    mParameters.push_back(Vasbf);
-    mParameters.push_back(Visbf);
-    mParameters.push_back(Vkpc1);
-    mParameters.push_back(Vkpf6);
-    mParameters.push_back(Vacdh);
-    mParameters.push_back(Vicdh);
-    mParameters.push_back(Vppnet);
-    mParameters.push_back(Vkpnet);
-    mParameters.push_back(Vdppx);
-    mParameters.push_back(Vdpds);
-    mParameters.push_back(Vaiep);
-    mParameters.push_back(Vd2c1);
-    mParameters.push_back(Vd2f6);
-    mParameters.push_back(Vppc1);
-    mParameters.push_back(Vppf6);
-    mParameters.push_back(F);
-
-    ProcessRules(0.0, mStateVariables);
 
     // REACTIONS
     Growth = 0.0;
@@ -358,6 +351,8 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
     // EVENTS
     mEventsSatisfied.resize(4, false);
     mEventsInitialised = false;
+
+    ProcessRules(0.0, mStateVariables);
 }
 
 Chen2004SbmlOdeSystem::~Chen2004SbmlOdeSystem()
@@ -475,6 +470,22 @@ void Chen2004SbmlOdeSystem::ProcessRules(double time, const std::vector<double>&
     TEM1GDP = rY[38];
     TEM1GTP = rY[39];
 
+    // VARIABLE PARAMETERS
+    cell = GetParameter(0);
+    BUB2 = GetParameter(1);
+    LTE1 = GetParameter(2);
+    MAD2 = GetParameter(3);
+    bub2l = GetParameter(4);
+    CDC15T = GetParameter(5);
+    ESP1T = GetParameter(6);
+    IET = GetParameter(7);
+    KEZ = GetParameter(8);
+    KEZ2 = GetParameter(9);
+    lte1h = GetParameter(10);
+    lte1l = GetParameter(11);
+    mad2l = GetParameter(12);
+    TEM1T = GetParameter(13);
+
     // RULES
     BCK2 = b0 * MASS;
     Visbf = kisbf_p + kisbf_p_p * CLB2;
@@ -511,42 +522,6 @@ void Chen2004SbmlOdeSystem::ProcessRules(double time, const std::vector<double>&
     IE = IET - IEP;
     PE = ESP1T - ESP1;
     TEM1GDP = TEM1T - TEM1GTP;
-
-    // PARAMETERS
-    SetParameter(0, cell);
-    SetParameter(1, BUB2);
-    SetParameter(2, LTE1);
-    SetParameter(3, MAD2);
-    SetParameter(4, bub2l);
-    SetParameter(5, CDC15T);
-    SetParameter(6, ESP1T);
-    SetParameter(7, IET);
-    SetParameter(8, KEZ);
-    SetParameter(9, KEZ2);
-    SetParameter(10, lte1h);
-    SetParameter(11, lte1l);
-    SetParameter(12, mad2l);
-    SetParameter(13, TEM1T);
-    SetParameter(14, D);
-    SetParameter(15, mu);
-    SetParameter(16, Vdb5);
-    SetParameter(17, Vdb2);
-    SetParameter(18, Vasbf);
-    SetParameter(19, Visbf);
-    SetParameter(20, Vkpc1);
-    SetParameter(21, Vkpf6);
-    SetParameter(22, Vacdh);
-    SetParameter(23, Vicdh);
-    SetParameter(24, Vppnet);
-    SetParameter(25, Vkpnet);
-    SetParameter(26, Vdppx);
-    SetParameter(27, Vdpds);
-    SetParameter(28, Vaiep);
-    SetParameter(29, Vd2c1);
-    SetParameter(30, Vd2f6);
-    SetParameter(31, Vppc1);
-    SetParameter(32, Vppf6);
-    SetParameter(33, F);
 
     // REACTIONS
     // Growth
@@ -1316,66 +1291,6 @@ void CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>::Initialise()
     this->mParameterUnits.push_back("non-dim");
 
     this->mParameterNames.push_back("TEM1T");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("D");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("mu");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("Vdb5");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("Vdb2");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("Vasbf");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("Visbf");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("Vkpc1");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("Vkpf6");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("Vacdh");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("Vicdh");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("Vppnet");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("Vkpnet");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("Vdppx");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("Vdpds");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("Vaiep");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("Vd2c1");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("Vd2f6");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("Vppc1");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("Vppf6");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("F");
     this->mParameterUnits.push_back("non-dim");
 
     this->mInitialised = true;

@@ -73,8 +73,10 @@ private:
     double Trimer; // Trimer
     double Mad; // Mad
 
-    // PARAMETERS
+    // VARIABLE PARAMETERS
     double cell; // cell
+
+    // RULE-BASED PARAMETERS
     double TF; // TF
 
     // REACTIONS

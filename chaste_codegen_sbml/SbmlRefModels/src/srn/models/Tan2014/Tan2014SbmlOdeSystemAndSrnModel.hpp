@@ -43,12 +43,14 @@ private:
     // DERIVED QUANTITIES
     double drag; // drag
 
-    // PARAMETERS
+    // VARIABLE PARAMETERS
     double compartment; // 
     double CytosolMembrane; // 
     double nucleus; // 
     double wnt_level; // wnt_level
     double gamma; // gamma
+
+    // RULE-BASED PARAMETERS
 
     // REACTIONS
     double Bsynthesis; // 
