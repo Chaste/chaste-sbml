@@ -87,7 +87,7 @@
       <assignmentRule variable="drag">
         <math xmlns="http://www.w3.org/1998/Math/MathML">
           <apply>
-            <ci> max </ci>
+            <max />
             <apply>
               <divide/>
               <apply>
