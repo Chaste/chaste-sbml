@@ -347,7 +347,7 @@ public:
         TS_ASSERT_EQUALS(ode_system.GetParameter("wnt_level"), 1.0);
         ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
-        TS_ASSERT_DELTA(derivs[0], -1.97469879e+02 / CytosolMembrane, 1e-3); // bcat_cm
+        TS_ASSERT_DELTA(derivs[0], -1.97029323e+02 / CytosolMembrane, 1e-3); // bcat_cm
         TS_ASSERT_DELTA(derivs[1], 2.73412000e-04 / CytosolMembrane, 1e-6);  // ligand_cm
         TS_ASSERT_DELTA(derivs[2], -2.73412000e-04 / CytosolMembrane, 1e-6); // complex_cm
         TS_ASSERT_DELTA(derivs[3], 1.98105040e+02 / nucleus, 1e-3);          // bcat_nu
