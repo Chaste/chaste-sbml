@@ -106,7 +106,7 @@ void Gardner1998SbmlOdeSystem::ProcessRules(double time, const std::vector<doubl
     // VARIABLE PARAMETERS
     Cell = GetParameter(0);
 
-    // RULES
+    // ASSIGNMENT RULES
     V1 = C * V1p * std::pow(C + K6, -1.0);
     V3 = M * V3p;
 

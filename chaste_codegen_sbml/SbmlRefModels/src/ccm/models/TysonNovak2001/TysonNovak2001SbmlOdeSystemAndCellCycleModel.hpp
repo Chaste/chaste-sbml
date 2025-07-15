@@ -120,7 +120,7 @@ public:
     double ProcessEvents(double time, const std::vector<double>& rY);
 
     // FUNCTIONS
-    double GK(double A1, double A2, double A3, double A4);
+    inline double GK(double A1, double A2, double A3, double A4);
 };
 
 namespace

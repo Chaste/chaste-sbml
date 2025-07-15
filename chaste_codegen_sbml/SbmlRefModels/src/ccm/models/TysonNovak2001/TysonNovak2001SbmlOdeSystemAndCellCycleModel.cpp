@@ -146,7 +146,7 @@ void TysonNovak2001SbmlOdeSystem::ProcessRules(double time, const std::vector<do
     // VARIABLE PARAMETERS
     cell = GetParameter(0);
 
-    // RULES
+    // ASSIGNMENT RULES
     CycB = CycBt - 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow(std::pow(CycBt + CKIt + 1.0 / Keq, 2.0) - 4.0 * CycBt * CKIt, 1.0 / 2.0));
     Trimer = 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow(std::pow(CycBt + CKIt + 1.0 / Keq, 2.0) - 4.0 * CycBt * CKIt, 1.0 / 2.0));
     TF = GK(k15p * m + k15pp * SK, k16p + k16pp * m * CycB, J15, J16);
@@ -222,6 +222,8 @@ double TysonNovak2001SbmlOdeSystem::ProcessEvents(double time, const std::vector
     double min_dist = std::numeric_limits<double>::max();
     double event_dist = min_dist;
 
+    std::vector<bool> state_vars_updated(8, false);
+
     // EVENT: Cell division
     event_dist = (0.1) - (CycB) - std::numeric_limits<double>::epsilon();
 
@@ -247,8 +249,8 @@ double TysonNovak2001SbmlOdeSystem::ProcessEvents(double time, const std::vector
             event_dist = 0.0;
             min_dist = 0.0;
 
-            m = m / 2.0;
-            SetStateVariable(3, m);
+            SetStateVariable(3, m / 2.0);
+            state_vars_updated[3] = true;
         }
         mEventsSatisfied[0] = true; // Flag the condition true
     }
@@ -257,16 +259,16 @@ double TysonNovak2001SbmlOdeSystem::ProcessEvents(double time, const std::vector
         mEventsSatisfied[0] = false; // Flag the condition false
     }
 
+    // Event triggered, update state variables if necessary
     if (min_dist == 0.0)
     {
-    SetDefaultInitialCondition(0, CycBt);
-    SetDefaultInitialCondition(1, Cdc20a);
-    SetDefaultInitialCondition(2, Cdh1);
-    SetDefaultInitialCondition(3, m);
-    SetDefaultInitialCondition(4, Cdc20t);
-    SetDefaultInitialCondition(5, IEP);
-    SetDefaultInitialCondition(6, CKIt);
-    SetDefaultInitialCondition(7, SK);
+        for (unsigned i = 0; i < 8; ++i)
+        {
+            if (!state_vars_updated[i])
+            {
+                SetStateVariable(i, rY[i]);
+            }
+        }
     }
 
     mEventsInitialised = true; // Flag that events have been processed at least once
@@ -286,7 +288,7 @@ bool TysonNovak2001SbmlOdeSystem::CalculateStoppingEvent(double time, const std:
 }
 
 // FUNCTIONS
-double TysonNovak2001SbmlOdeSystem::GK(double A1, double A2, double A3, double A4)
+inline double TysonNovak2001SbmlOdeSystem::GK(double A1, double A2, double A3, double A4)
 {
     return 2.0 * A4 * A1 / (A2 - A1 + A3 * A2 + A4 * A1 + sm::root(2.0, std::pow(A2 - A1 + A3 * A2 + A4 * A1, 2.0) - 4.0 * (A2 - A1) * A4 * A1));
 }

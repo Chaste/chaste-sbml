@@ -125,7 +125,7 @@ void Tan2014SbmlOdeSystem::ProcessRules(double time, const std::vector<double>& 
     wnt_level = GetParameter(3);
     gamma = GetParameter(4);
 
-    // RULES
+    // ASSIGNMENT RULES
     drag = sm::piecewise((complex_cm - 700.0) / 10.0, sm::gt((complex_cm - 700.0) / 10.0, 1.0), 1.0);
 
     // REACTIONS

@@ -486,7 +486,7 @@ void Chen2004SbmlOdeSystem::ProcessRules(double time, const std::vector<double>&
     mad2l = GetParameter(12);
     TEM1T = GetParameter(13);
 
-    // RULES
+    // ASSIGNMENT RULES
     BCK2 = b0 * MASS;
     Visbf = kisbf_p + kisbf_p_p * CLB2;
     CLN3 = C0 * Dn3 * MASS / (Jn3 + Dn3 * MASS);
@@ -819,6 +819,8 @@ double Chen2004SbmlOdeSystem::ProcessEvents(double time, const std::vector<doubl
     double min_dist = std::numeric_limits<double>::max();
     double event_dist = min_dist;
 
+    std::vector<bool> state_vars_updated(40, false);
+
     // EVENT: reset ORI
     event_dist = (0.0) - (CLB2 + CLB5 - KEZ2) - std::numeric_limits<double>::epsilon();
 
@@ -844,8 +846,8 @@ double Chen2004SbmlOdeSystem::ProcessEvents(double time, const std::vector<doubl
             event_dist = 0.0;
             min_dist = 0.0;
 
-            ORI = 0.0;
-            SetStateVariable(27, ORI);
+            SetStateVariable(27, 0.0);
+            state_vars_updated[27] = true;
         }
         mEventsSatisfied[0] = true; // Flag the condition true
     }
@@ -878,10 +880,8 @@ double Chen2004SbmlOdeSystem::ProcessEvents(double time, const std::vector<doubl
             event_dist = 0.0;
             min_dist = 0.0;
 
-            MAD2 = mad2h;
-            SetParameter("MAD2", mad2h);
-            BUB2 = bub2h;
-            SetParameter("BUB2", bub2h);
+            SetParameter(3, mad2h);
+            SetParameter(1, bub2h);
         }
         mEventsSatisfied[1] = true; // Flag the condition true
     }
@@ -914,12 +914,9 @@ double Chen2004SbmlOdeSystem::ProcessEvents(double time, const std::vector<doubl
             event_dist = 0.0;
             min_dist = 0.0;
 
-            MAD2 = mad2l;
-            SetParameter("MAD2", mad2l);
-            LTE1 = lte1h;
-            SetParameter("LTE1", lte1h);
-            BUB2 = bub2l;
-            SetParameter("BUB2", bub2l);
+            SetParameter(3, mad2l);
+            SetParameter(2, lte1h);
+            SetParameter(1, bub2l);
         }
         mEventsSatisfied[2] = true; // Flag the condition true
     }
@@ -952,14 +949,13 @@ double Chen2004SbmlOdeSystem::ProcessEvents(double time, const std::vector<doubl
             event_dist = 0.0;
             min_dist = 0.0;
 
-            MASS = F * MASS;
-            SetStateVariable(24, MASS);
-            LTE1 = lte1l;
-            SetParameter("LTE1", lte1l);
-            BUD = 0.0;
-            SetStateVariable(0, BUD);
-            SPN = 0.0;
-            SetStateVariable(35, SPN);
+            SetStateVariable(24, F * MASS);
+            state_vars_updated[24] = true;
+            SetParameter(2, lte1l);
+            SetStateVariable(0, 0.0);
+            state_vars_updated[0] = true;
+            SetStateVariable(35, 0.0);
+            state_vars_updated[35] = true;
         }
         mEventsSatisfied[3] = true; // Flag the condition true
     }
@@ -968,48 +964,16 @@ double Chen2004SbmlOdeSystem::ProcessEvents(double time, const std::vector<doubl
         mEventsSatisfied[3] = false; // Flag the condition false
     }
 
+    // Event triggered, update state variables if necessary
     if (min_dist == 0.0)
     {
-    SetDefaultInitialCondition(0, BUD);
-    SetDefaultInitialCondition(1, C2);
-    SetDefaultInitialCondition(2, C2P);
-    SetDefaultInitialCondition(3, C5);
-    SetDefaultInitialCondition(4, C5P);
-    SetDefaultInitialCondition(5, CDC14);
-    SetDefaultInitialCondition(6, CDC15);
-    SetDefaultInitialCondition(7, CDC15i);
-    SetDefaultInitialCondition(8, CDC20);
-    SetDefaultInitialCondition(9, CDC20i);
-    SetDefaultInitialCondition(10, CDC6);
-    SetDefaultInitialCondition(11, CDC6P);
-    SetDefaultInitialCondition(12, CDH1);
-    SetDefaultInitialCondition(13, CDH1i);
-    SetDefaultInitialCondition(14, CLB2);
-    SetDefaultInitialCondition(15, CLB5);
-    SetDefaultInitialCondition(16, CLN2);
-    SetDefaultInitialCondition(17, ESP1);
-    SetDefaultInitialCondition(18, F2);
-    SetDefaultInitialCondition(19, F2P);
-    SetDefaultInitialCondition(20, F5);
-    SetDefaultInitialCondition(21, F5P);
-    SetDefaultInitialCondition(22, IE);
-    SetDefaultInitialCondition(23, IEP);
-    SetDefaultInitialCondition(24, MASS);
-    SetDefaultInitialCondition(25, NET1);
-    SetDefaultInitialCondition(26, NET1P);
-    SetDefaultInitialCondition(27, ORI);
-    SetDefaultInitialCondition(28, PDS1);
-    SetDefaultInitialCondition(29, PE);
-    SetDefaultInitialCondition(30, PPX);
-    SetDefaultInitialCondition(31, RENT);
-    SetDefaultInitialCondition(32, RENTP);
-    SetDefaultInitialCondition(33, SIC1);
-    SetDefaultInitialCondition(34, SIC1P);
-    SetDefaultInitialCondition(35, SPN);
-    SetDefaultInitialCondition(36, SWI5);
-    SetDefaultInitialCondition(37, SWI5P);
-    SetDefaultInitialCondition(38, TEM1GDP);
-    SetDefaultInitialCondition(39, TEM1GTP);
+        for (unsigned i = 0; i < 40; ++i)
+        {
+            if (!state_vars_updated[i])
+            {
+                SetStateVariable(i, rY[i]);
+            }
+        }
     }
 
     mEventsInitialised = true; // Flag that events have been processed at least once
@@ -1029,23 +993,23 @@ bool Chen2004SbmlOdeSystem::CalculateStoppingEvent(double time, const std::vecto
 }
 
 // FUNCTIONS
-double Chen2004SbmlOdeSystem::BB_218(double A1, double A2, double A3, double A4)
+inline double Chen2004SbmlOdeSystem::BB_218(double A1, double A2, double A3, double A4)
 {
     return A2 - A1 + A3 * A2 + A4 * A1;
 }
-double Chen2004SbmlOdeSystem::GK_219(double A1, double A2, double A3, double A4)
+inline double Chen2004SbmlOdeSystem::GK_219(double A1, double A2, double A3, double A4)
 {
     return 2.0 * A4 * A1 / (A2 - A1 + A3 * A2 + A4 * A1 + sm::root(2.0, std::pow(A2 - A1 + A3 * A2 + A4 * A1, 2.0) - 4.0 * (A2 - A1) * A4 * A1));
 }
-double Chen2004SbmlOdeSystem::MichaelisMenten_220(double M1, double J1, double k1, double S1)
+inline double Chen2004SbmlOdeSystem::MichaelisMenten_220(double M1, double J1, double k1, double S1)
 {
     return k1 * S1 * M1 / (J1 + S1);
 }
-double Chen2004SbmlOdeSystem::Mass_Action_2_221(double k1, double S1, double S2)
+inline double Chen2004SbmlOdeSystem::Mass_Action_2_221(double k1, double S1, double S2)
 {
     return k1 * S1 * S2;
 }
-double Chen2004SbmlOdeSystem::Mass_Action_1_222(double k1, double S1)
+inline double Chen2004SbmlOdeSystem::Mass_Action_1_222(double k1, double S1)
 {
     return k1 * S1;
 }

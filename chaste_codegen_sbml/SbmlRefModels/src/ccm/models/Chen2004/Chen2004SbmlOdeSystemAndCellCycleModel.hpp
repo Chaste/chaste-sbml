@@ -363,11 +363,11 @@ public:
     double ProcessEvents(double time, const std::vector<double>& rY);
 
     // FUNCTIONS
-    double BB_218(double A1, double A2, double A3, double A4);
-    double GK_219(double A1, double A2, double A3, double A4);
-    double MichaelisMenten_220(double M1, double J1, double k1, double S1);
-    double Mass_Action_2_221(double k1, double S1, double S2);
-    double Mass_Action_1_222(double k1, double S1);
+    inline double BB_218(double A1, double A2, double A3, double A4);
+    inline double GK_219(double A1, double A2, double A3, double A4);
+    inline double MichaelisMenten_220(double M1, double J1, double k1, double S1);
+    inline double Mass_Action_2_221(double k1, double S1, double S2);
+    inline double Mass_Action_1_222(double k1, double S1);
 };
 
 namespace

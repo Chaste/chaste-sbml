@@ -176,7 +176,7 @@ void VanLeeuwen2007SbmlOdeSystem::ProcessRules(double time, const std::vector<do
     gamma2 = GetParameter(3);
     ComplexTransitThreshold = GetParameter(4);
 
-    // RULES
+    // ASSIGNMENT RULES
     C_F = C_o + C_c;
     C_T = C_oT + C_cT;
     drag = sm::max((C_A - 100.0) / 3.0, 1.0);
