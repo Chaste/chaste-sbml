@@ -76,7 +76,7 @@ public:
 
     // FUNCTIONS
 {% for func in functions %}
-    double {{ func["id"] }}({{ func["args"] }});
+    inline double {{ func["id"] }}({{ func["args"] }});
 {% endfor %}
 };
 

@@ -212,7 +212,7 @@ bool {{ ode_class_name }}::CalculateStoppingEvent(double time, const std::vector
 
 // FUNCTIONS
 {% for func in functions %}
-double {{ ode_class_name }}::{{ func["id"] }}({{ func["args"] }})
+inline double {{ ode_class_name }}::{{ func["id"] }}({{ func["args"] }})
 {
     return {{ func["body"] }};
 }
