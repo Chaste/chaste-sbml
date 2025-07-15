@@ -87,10 +87,10 @@ private:
             double dt = 0.01;
             double end_time = 200.0;
 
-            std::vector<double> state_variables = ode_system.GetInitialConditions();
+            std::vector<double> initial_conditions = ode_system.GetInitialConditions();
 
             Timer::Reset();
-            OdeSolution ode_solution = rSolver.Solve(&ode_system, state_variables, 0.0, end_time, dt, dt);
+            OdeSolution ode_solution = rSolver.Solve(&ode_system, initial_conditions, 0.0, end_time, dt, dt);
             Timer::Print("Gardner 1998 (" + solverName + ")");
 
             // Compare end solutions with Tellurium values
@@ -226,9 +226,9 @@ public:
 
     void TestOdeWithChasteSolver()
     {
-        // Solve system using backward Euler solver
-        BackwardEulerIvpOdeSolver backward_euler_solver(ODE_SIZE);
-        RunOdeWithSolver(backward_euler_solver, "backward_euler");
+        // Solve system using RK4 solver
+        RungeKutta4IvpOdeSolver rk4_solver;
+        RunOdeWithSolver(rk4_solver, "rk4");
     }
 
     void TestOdeWithCvodeSolver()
