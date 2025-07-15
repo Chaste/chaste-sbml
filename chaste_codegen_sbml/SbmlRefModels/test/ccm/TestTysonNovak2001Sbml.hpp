@@ -99,10 +99,11 @@ private:
             std::vector<std::vector<double>> solutions;
             std::vector<std::vector<double>> derived_quantities(3);
 
+            initial_conditions = ode_system.GetInitialConditions();
+
             // Run ODE until it stops, then start again with updated initial conditions
             for (unsigned i = 0; i < 2; i++)
             {
-                initial_conditions = ode_system.GetInitialConditions();
 
                 Timer::Reset();
                 ode_solution = rSolver.Solve(&ode_system, initial_conditions, start_time, end_time, max_step, sampling_interval);
@@ -275,7 +276,8 @@ private:
                     }
                 }
 
-                // Update time for next run
+                // Update initial conditions and time for next run
+                initial_conditions = ode_system.GetStateVariables();
                 start_time = ode_solution.rGetTimes().back();
                 end_time = start_time + run_length;
             }
