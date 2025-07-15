@@ -111,12 +111,12 @@ namespace
 #include "{{ wrapper_class_name }}.hpp"
 #include "{{ wrapper_class_name }}.cpp"
 
-typedef {{ wrapper_class_name }}<{{ ode_class_name }}, {{ num_state_vars }}> {{ model_class_name }};
+typedef {{ wrapper_class_name }}<{{ ode_class_name }}, {{ state_variables|length }}> {{ model_class_name }};
 
 // Declare identifiers for the serializer
 #include "SerializationExportWrapper.hpp"
 CHASTE_CLASS_EXPORT({{ ode_class_name }})
-EXPORT_TEMPLATE_CLASS2({{ wrapper_class_name }}, {{ ode_class_name }}, {{ num_state_vars }})
+EXPORT_TEMPLATE_CLASS2({{ wrapper_class_name }}, {{ ode_class_name }}, {{ state_variables|length }})
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
 EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER({{ model_class_name }})

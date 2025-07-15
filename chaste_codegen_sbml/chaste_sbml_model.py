@@ -46,6 +46,7 @@ class ChasteSbmlModel:
         trim_blocks=True,
         lstrip_blocks=True,
     )
+    _jinja_env.globals["VarType"] = VarType
 
     # -- PUBLIC --------------------------------------
 
@@ -169,7 +170,9 @@ class ChasteSbmlModel:
         )
         self._variable_types[id_] = VarType.DERIVED_QUANTITY
 
-    def _add_event(self, label: str, trigger: str, assignments: list[str], distance: str) -> None:
+    def _add_event(
+        self, label: str, trigger: str, assignments: list[dict[str, "Any"]], distance: str
+    ) -> None:
         """Add an event to the template variables.
 
         :param label: The event description.
@@ -491,24 +494,23 @@ class ChasteSbmlModel:
                 # TODO: Distance calculation assumes two operands. Extend to more operands?
                 # e.g. trigger: geq(3.0, 6.0, 7.0, 9.0) -> condition=false, dist=min(3.0, 1.0, 2.0)=1.0
 
-            assignment_formulas = []
+            assignments = []
             for assignment in event.getListOfEventAssignments():
-                rhs = self._convert_ast_formula(assignment.getMath())
                 lhs = assignment.getVariable()
-                assignment_formulas.append(f"{lhs} = {rhs}")
+                type_ = self._get_variable_type(lhs)
+                index = self._get_variable_index(lhs)
+                rhs = self._convert_ast_formula(assignment.getMath())
 
-                var_type = self._get_variable_type(lhs)
-                if var_type == VarType.STATE_VARIABLE:
-                    index = self._get_variable_index(lhs)
-                    assignment_formulas.append(f"SetStateVariable({index}, {lhs})")
+                assignments.append(
+                    {
+                        "index": index,
+                        "lhs": lhs,
+                        "rhs": rhs,
+                        "type": type_,
+                    }
+                )
 
-                elif var_type == VarType.VARIABLE_PARAMETER:
-                    assignment_formulas.append(f'SetParameter("{lhs}", {rhs})')
-
-                else:
-                    assignment_formulas.append(f"{lhs} = {rhs}")
-
-            self._add_event(label, trigger_formula, assignment_formulas, trigger_distance)
+            self._add_event(label, trigger_formula, assignments, trigger_distance)
 
     def _format_function_definitions(self) -> None:
         """Add function definitions to template variables."""
@@ -712,7 +714,6 @@ class ChasteSbmlModel:
             header_guard=self._format_header_guard(hpp_filename),
             model_class_name=self._model_class_name,
             model_hpp_file=hpp_filename,
-            num_state_vars=len(self._state_variables),
             ode_class_name=self._ode_class_name,
             reactions=self._reactions,
             rule_based_parameters=self._rule_based_parameters,

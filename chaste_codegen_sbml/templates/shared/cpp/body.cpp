@@ -10,7 +10,7 @@
 namespace sm = sbmlmath;
 
 {{ ode_class_name }}::{{ ode_class_name }}(std::vector<double> stateVariables)
-    : AbstractOdeSystem({{ num_state_vars }})
+    : AbstractOdeSystem({{ state_variables|length }})
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<{{ ode_class_name }}>);
 
@@ -23,7 +23,7 @@ namespace sm = sbmlmath;
     SetDefaultInitialCondition({{ var["index"] }}, {{ var["id"] }});
 {% endfor %}
 
-    if (stateVariables.size() == {{ num_state_vars }})
+    if (stateVariables.size() == {{ state_variables|length }})
     {
 {% for var in state_variables %}
         {{ var["id"] }} = stateVariables[{{ var["index"] }}];
@@ -31,7 +31,7 @@ namespace sm = sbmlmath;
     }
     else if (stateVariables.size() != 0)
     {
-        EXCEPTION("{{ ode_class_name }}: Expected {{ num_state_vars }} state variables, got " + std::to_string(stateVariables.size()));
+        EXCEPTION("{{ ode_class_name }}: Expected {{ state_variables|length }} state variables, got " + std::to_string(stateVariables.size()));
     }
 
 {% for var in state_variables %}
@@ -111,7 +111,7 @@ void {{ ode_class_name }}::ProcessRules(double time, const std::vector<double>& 
     {{ var["id"] }} = GetParameter({{ var['index'] }});
 {% endfor %}
 
-    // RULES
+    // ASSIGNMENT RULES
 {% for rule in assignment_rules %}
     {{ rule["lhs"] }} = {{ rule["rhs"] }};
 {% endfor %}
@@ -144,6 +144,8 @@ double {{ ode_class_name }}::ProcessEvents(double time, const std::vector<double
     double min_dist = std::numeric_limits<double>::max();
     double event_dist = min_dist;
 
+    std::vector<bool> state_vars_updated({{ state_variables|length }}, false);
+
 {% for event in events %}
     // EVENT: {{ event["label"] }}
     event_dist = {{ event["distance"] }};
@@ -171,7 +173,14 @@ double {{ ode_class_name }}::ProcessEvents(double time, const std::vector<double
             min_dist = 0.0;
 
 {% for assignment in event["assignments"] %}
-            {{ assignment }};
+{% if ( assignment["type"] == VarType.STATE_VARIABLE ) %}
+            SetStateVariable({{ assignment["index"] }}, {{ assignment["rhs"] }});
+            state_vars_updated[{{ assignment["index"] }}] = true;
+{% elif ( assignment["type"] == VarType.VARIABLE_PARAMETER ) %}
+            SetParameter({{ assignment["index"] }}, {{ assignment["rhs"] }});
+{% else %}
+            {{ assignment["lhs"] }} = {{ assignment["rhs"] }}; 
+{% endif %}
 {% endfor %}
         }
         mEventsSatisfied[{{ loop.index0 }}] = true; // Flag the condition true
@@ -182,11 +191,16 @@ double {{ ode_class_name }}::ProcessEvents(double time, const std::vector<double
     }
 {% endfor %}
 
+    // Event triggered, update state variables if necessary
     if (min_dist == 0.0)
     {
-{% for var in state_variables %}
-    SetDefaultInitialCondition({{ var["index"] }}, {{ var["id"] }});
-{% endfor %}
+        for (unsigned i = 0; i < {{ state_variables|length }}; ++i)
+        {
+            if (!state_vars_updated[i])
+            {
+                SetStateVariable(i, rY[i]);
+            }
+        }
     }
 
     mEventsInitialised = true; // Flag that events have been processed at least once
@@ -249,12 +263,12 @@ void CellwiseOdeSystemInformation<{{ ode_class_name }}>::Initialise()
 #include "{{ wrapper_class_name }}.hpp"
 #include "{{ wrapper_class_name }}.cpp"
 
-typedef {{ wrapper_class_name }}<{{ ode_class_name }}, {{ num_state_vars }}> {{ model_class_name }};
+typedef {{ wrapper_class_name }}<{{ ode_class_name }}, {{ state_variables|length }}> {{ model_class_name }};
 
 // Declare identifiers for the serializer
 #include "SerializationExportWrapperForCpp.hpp"
 CHASTE_CLASS_EXPORT({{ ode_class_name }})
-EXPORT_TEMPLATE_CLASS2({{ wrapper_class_name }}, {{ ode_class_name }}, {{ num_state_vars }})
+EXPORT_TEMPLATE_CLASS2({{ wrapper_class_name }}, {{ ode_class_name }}, {{ state_variables|length }})
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
 EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER({{ model_class_name }})
