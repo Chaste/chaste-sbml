@@ -230,6 +230,7 @@ inline double {{ ode_class_name }}::{{ func["id"] }}({{ func["args"] }})
 {
     return {{ func["body"] }};
 }
+
 {% endfor %}
 
 template <>

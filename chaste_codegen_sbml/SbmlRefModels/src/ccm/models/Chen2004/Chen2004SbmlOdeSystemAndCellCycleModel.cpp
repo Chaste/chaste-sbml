@@ -10,7 +10,7 @@
 namespace sm = sbmlmath;
 
 Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
-    : AbstractOdeSystem(40)
+    : AbstractOdeSystem(36)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>);
 
@@ -22,7 +22,6 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
     C5P = 0.006878;
     CDC14 = 0.468344;
     CDC15 = 0.656533;
-    CDC15i = 0.0;
     CDC20 = 0.444296;
     CDC20i = 1.472044;
     CDC6 = 0.10758;
@@ -37,14 +36,12 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
     F2P = 0.0273938;
     F5 = 7.24e-05;
     F5P = 7.91e-05;
-    IE = 0.0;
     IEP = 0.1015;
     MASS = 1.206019;
     NET1 = 0.018645;
     NET1P = 0.970271;
     ORI = 0.000909;
     PDS1 = 0.025612;
-    PE = 0.0;
     PPX = 0.123179;
     RENT = 1.04954;
     RENTP = 0.6;
@@ -53,7 +50,6 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
     SPN = 0.03;
     SWI5 = 0.95;
     SWI5P = 0.02;
-    TEM1GDP = 0.0;
     TEM1GTP = 0.9;
 
     SetDefaultInitialCondition(0, BUD);
@@ -63,41 +59,37 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
     SetDefaultInitialCondition(4, C5P);
     SetDefaultInitialCondition(5, CDC14);
     SetDefaultInitialCondition(6, CDC15);
-    SetDefaultInitialCondition(7, CDC15i);
-    SetDefaultInitialCondition(8, CDC20);
-    SetDefaultInitialCondition(9, CDC20i);
-    SetDefaultInitialCondition(10, CDC6);
-    SetDefaultInitialCondition(11, CDC6P);
-    SetDefaultInitialCondition(12, CDH1);
-    SetDefaultInitialCondition(13, CDH1i);
-    SetDefaultInitialCondition(14, CLB2);
-    SetDefaultInitialCondition(15, CLB5);
-    SetDefaultInitialCondition(16, CLN2);
-    SetDefaultInitialCondition(17, ESP1);
-    SetDefaultInitialCondition(18, F2);
-    SetDefaultInitialCondition(19, F2P);
-    SetDefaultInitialCondition(20, F5);
-    SetDefaultInitialCondition(21, F5P);
-    SetDefaultInitialCondition(22, IE);
-    SetDefaultInitialCondition(23, IEP);
-    SetDefaultInitialCondition(24, MASS);
-    SetDefaultInitialCondition(25, NET1);
-    SetDefaultInitialCondition(26, NET1P);
-    SetDefaultInitialCondition(27, ORI);
-    SetDefaultInitialCondition(28, PDS1);
-    SetDefaultInitialCondition(29, PE);
-    SetDefaultInitialCondition(30, PPX);
-    SetDefaultInitialCondition(31, RENT);
-    SetDefaultInitialCondition(32, RENTP);
-    SetDefaultInitialCondition(33, SIC1);
-    SetDefaultInitialCondition(34, SIC1P);
-    SetDefaultInitialCondition(35, SPN);
-    SetDefaultInitialCondition(36, SWI5);
-    SetDefaultInitialCondition(37, SWI5P);
-    SetDefaultInitialCondition(38, TEM1GDP);
-    SetDefaultInitialCondition(39, TEM1GTP);
+    SetDefaultInitialCondition(7, CDC20);
+    SetDefaultInitialCondition(8, CDC20i);
+    SetDefaultInitialCondition(9, CDC6);
+    SetDefaultInitialCondition(10, CDC6P);
+    SetDefaultInitialCondition(11, CDH1);
+    SetDefaultInitialCondition(12, CDH1i);
+    SetDefaultInitialCondition(13, CLB2);
+    SetDefaultInitialCondition(14, CLB5);
+    SetDefaultInitialCondition(15, CLN2);
+    SetDefaultInitialCondition(16, ESP1);
+    SetDefaultInitialCondition(17, F2);
+    SetDefaultInitialCondition(18, F2P);
+    SetDefaultInitialCondition(19, F5);
+    SetDefaultInitialCondition(20, F5P);
+    SetDefaultInitialCondition(21, IEP);
+    SetDefaultInitialCondition(22, MASS);
+    SetDefaultInitialCondition(23, NET1);
+    SetDefaultInitialCondition(24, NET1P);
+    SetDefaultInitialCondition(25, ORI);
+    SetDefaultInitialCondition(26, PDS1);
+    SetDefaultInitialCondition(27, PPX);
+    SetDefaultInitialCondition(28, RENT);
+    SetDefaultInitialCondition(29, RENTP);
+    SetDefaultInitialCondition(30, SIC1);
+    SetDefaultInitialCondition(31, SIC1P);
+    SetDefaultInitialCondition(32, SPN);
+    SetDefaultInitialCondition(33, SWI5);
+    SetDefaultInitialCondition(34, SWI5P);
+    SetDefaultInitialCondition(35, TEM1GTP);
 
-    if (stateVariables.size() == 40)
+    if (stateVariables.size() == 36)
     {
         BUD = stateVariables[0];
         C2 = stateVariables[1];
@@ -106,43 +98,39 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
         C5P = stateVariables[4];
         CDC14 = stateVariables[5];
         CDC15 = stateVariables[6];
-        CDC15i = stateVariables[7];
-        CDC20 = stateVariables[8];
-        CDC20i = stateVariables[9];
-        CDC6 = stateVariables[10];
-        CDC6P = stateVariables[11];
-        CDH1 = stateVariables[12];
-        CDH1i = stateVariables[13];
-        CLB2 = stateVariables[14];
-        CLB5 = stateVariables[15];
-        CLN2 = stateVariables[16];
-        ESP1 = stateVariables[17];
-        F2 = stateVariables[18];
-        F2P = stateVariables[19];
-        F5 = stateVariables[20];
-        F5P = stateVariables[21];
-        IE = stateVariables[22];
-        IEP = stateVariables[23];
-        MASS = stateVariables[24];
-        NET1 = stateVariables[25];
-        NET1P = stateVariables[26];
-        ORI = stateVariables[27];
-        PDS1 = stateVariables[28];
-        PE = stateVariables[29];
-        PPX = stateVariables[30];
-        RENT = stateVariables[31];
-        RENTP = stateVariables[32];
-        SIC1 = stateVariables[33];
-        SIC1P = stateVariables[34];
-        SPN = stateVariables[35];
-        SWI5 = stateVariables[36];
-        SWI5P = stateVariables[37];
-        TEM1GDP = stateVariables[38];
-        TEM1GTP = stateVariables[39];
+        CDC20 = stateVariables[7];
+        CDC20i = stateVariables[8];
+        CDC6 = stateVariables[9];
+        CDC6P = stateVariables[10];
+        CDH1 = stateVariables[11];
+        CDH1i = stateVariables[12];
+        CLB2 = stateVariables[13];
+        CLB5 = stateVariables[14];
+        CLN2 = stateVariables[15];
+        ESP1 = stateVariables[16];
+        F2 = stateVariables[17];
+        F2P = stateVariables[18];
+        F5 = stateVariables[19];
+        F5P = stateVariables[20];
+        IEP = stateVariables[21];
+        MASS = stateVariables[22];
+        NET1 = stateVariables[23];
+        NET1P = stateVariables[24];
+        ORI = stateVariables[25];
+        PDS1 = stateVariables[26];
+        PPX = stateVariables[27];
+        RENT = stateVariables[28];
+        RENTP = stateVariables[29];
+        SIC1 = stateVariables[30];
+        SIC1P = stateVariables[31];
+        SPN = stateVariables[32];
+        SWI5 = stateVariables[33];
+        SWI5P = stateVariables[34];
+        TEM1GTP = stateVariables[35];
     }
     else if (stateVariables.size() != 0)
     {
-        EXCEPTION("Chen2004SbmlOdeSystem: Expected 40 state variables, got " + std::to_string(stateVariables.size()));
+        EXCEPTION("Chen2004SbmlOdeSystem: Expected 36 state variables, got " + std::to_string(stateVariables.size()));
     }
 
     mStateVariables.push_back(BUD);
@@ -152,7 +140,6 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
     mStateVariables.push_back(C5P);
     mStateVariables.push_back(CDC14);
     mStateVariables.push_back(CDC15);
-    mStateVariables.push_back(CDC15i);
     mStateVariables.push_back(CDC20);
     mStateVariables.push_back(CDC20i);
     mStateVariables.push_back(CDC6);
@@ -167,14 +154,12 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
     mStateVariables.push_back(F2P);
     mStateVariables.push_back(F5);
     mStateVariables.push_back(F5P);
-    mStateVariables.push_back(IE);
     mStateVariables.push_back(IEP);
     mStateVariables.push_back(MASS);
     mStateVariables.push_back(NET1);
     mStateVariables.push_back(NET1P);
     mStateVariables.push_back(ORI);
     mStateVariables.push_back(PDS1);
-    mStateVariables.push_back(PE);
     mStateVariables.push_back(PPX);
     mStateVariables.push_back(RENT);
     mStateVariables.push_back(RENTP);
@@ -183,21 +168,24 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
     mStateVariables.push_back(SPN);
     mStateVariables.push_back(SWI5);
     mStateVariables.push_back(SWI5P);
-    mStateVariables.push_back(TEM1GDP);
     mStateVariables.push_back(TEM1GTP);
 
     // DERIVED QUANTITIES
     BCK2 = 0.0;
     CDC14T = 0.0;
+    CDC15i = 0.0;
     CDC6T = 0.0;
     CKIT = 0.0;
     CLB2T = 0.0;
     CLB5T = 0.0;
     CLN3 = 0.0;
+    IE = 0.0;
     MCM1 = 0.0;
     NET1T = 0.0;
+    PE = 0.0;
     SBF = 0.0;
     SIC1T = 0.0;
+    TEM1GDP = 0.0;
 
     // VARIABLE PARAMETERS
     cell = 1.0;
@@ -370,39 +358,35 @@ void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     rDY[4] = (Phosphorylation_of_C5 - Dephosphorylation_of_C5P - Degradation_of_SIC1P_in_C5P_ - Degradation_of_CLB5_in_C5P) / cell; // d[C5P]/dt
     rDY[5] = (CDC14_synthesis - CDC14_degradation - Assoc_with_NET1_to_form_RENT + Dissoc_from_RENT - Assoc_with_NET1P_to_form_RENTP + Dissoc_from_RENP + Degradation_of_NET1_in_RENT + Degradation_of_NET1P_in_RENTP) / cell; // d[CDC14]/dt
     rDY[6] = (CDC15_activation - inactivation_2) / cell; // d[CDC15]/dt
-    rDY[7] = (-CDC15_activation + inactivation_2) / cell; // d[CDC15i]/dt
-    rDY[8] = (-Degradation_of_active_CDC20 + Activation_of_CDC20 - Inactivation_2) / cell; // d[CDC20]/dt
-    rDY[9] = (Synthesis_of_inactive_CDC20 - Degradation_of_inactiveCDC20 - Activation_of_CDC20 + Inactivation_2) / cell; // d[CDC20i]/dt
-    rDY[10] = (CDC6_synthesis - Phosphorylation_of_CDC6 + Dephosphorylation_of_CDC6 - CLB2CDC6_complex_formation + CLB2CDC6_dissociation - CLB5CDC6_complex_formation + CLB5CDC6_dissociation + CLB2_degradation_in_F2 + CLB5_degradation_in_F5) / cell; // d[CDC6]/dt
-    rDY[11] = (Phosphorylation_of_CDC6 - Dephosphorylation_of_CDC6 - Degradation_of_CDC6P + CLB2_degradation_in_F2P + CLB5_degradation_in_F5P) / cell; // d[CDC6P]/dt
-    rDY[12] = (CDH1_synthesis - CDH1_degradation + CDH1i_activation - Inactivation_3) / cell; // d[CDH1]/dt
-    rDY[13] = (-CDH1i_degradation - CDH1i_activation + Inactivation_3) / cell; // d[CDH1i]/dt
-    rDY[14] = (Synthesis_of_CLB2 - Degradation_of_CLB2 - Assoc_of_CLB2_and_SIC1 + Dissoc_of_CLB2SIC1_complex + Degradation_of_SIC1_in_C2P - CLB2CDC6_complex_formation + CLB2CDC6_dissociation + CDC6_degradation_in_F2P) / cell; // d[CLB2]/dt
-    rDY[15] = (Synthesis_of_CLB5 - Degradation_of_CLB5 - Assoc_of_CLB5_and_SIC1 + Dissoc_of_CLB5SIC1 + Degradation_of_SIC1P_in_C5P_ - CLB5CDC6_complex_formation + CLB5CDC6_dissociation + CDC6_degradation_in_F5P) / cell; // d[CLB5]/dt
-    rDY[16] = (Synthesis_of_CLN2 - Degradation_of_CLN2) / cell; // d[CLN2]/dt
-    rDY[17] = (Degradation_of_PDS1_in_PE - Assoc_with_ESP1_to_form_PE + Disso_from_PE) / cell; // d[ESP1]/dt
-    rDY[18] = (CLB2CDC6_complex_formation - CLB2CDC6_dissociation - F2_phosphorylation + F2P_dephosphorylation - CLB2_degradation_in_F2) / cell; // d[F2]/dt
-    rDY[19] = (F2_phosphorylation - F2P_dephosphorylation - CDC6_degradation_in_F2P - CLB2_degradation_in_F2P) / cell; // d[F2P]/dt
-    rDY[20] = (CLB5CDC6_complex_formation - CLB5CDC6_dissociation - F5_phosphorylation + F5P_dephosphorylation - CLB5_degradation_in_F5) / cell; // d[F5]/dt
-    rDY[21] = (F5_phosphorylation - F5P_dephosphorylation - CDC6_degradation_in_F5P - CLB5_degradation_in_F5P) / cell; // d[F5P]/dt
-    rDY[22] = (-Activation_of_IEP + Inactivation_1) / cell; // d[IE]/dt
-    rDY[23] = (Activation_of_IEP - Inactivation_1) / cell; // d[IEP]/dt
-    rDY[24] = (Growth) / cell; // d[MASS]/dt
-    rDY[25] = (-Assoc_with_NET1_to_form_RENT + Dissoc_from_RENT + Net1_synthesis - Net1_degradation - NET1_phosphorylation + dephosphorylation_1 + Degradation_of_CDC14_in_RENT) / cell; // d[NET1]/dt
-    rDY[26] = (-Assoc_with_NET1P_to_form_RENTP + Dissoc_from_RENP - Net1P_degradation + NET1_phosphorylation - dephosphorylation_1 + Degradation_of_CDC14_in_RENTP) / cell; // d[NET1P]/dt
-    rDY[27] = (DNA_synthesis - Negative_regulation_of_DNA_synthesis) / cell; // d[ORI]/dt
-    rDY[28] = (PDS1_synthesis - degradation_2 - Assoc_with_ESP1_to_form_PE + Disso_from_PE) / cell; // d[PDS1]/dt
-    rDY[29] = (-Degradation_of_PDS1_in_PE + Assoc_with_ESP1_to_form_PE - Disso_from_PE) / cell; // d[PE]/dt
-    rDY[30] = (PPX_synthesis - degradation_1) / cell; // d[PPX]/dt
-    rDY[31] = (Assoc_with_NET1_to_form_RENT - Dissoc_from_RENT - RENT_phosphorylation + dephosphorylation_2 - Degradation_of_NET1_in_RENT - Degradation_of_CDC14_in_RENT) / cell; // d[RENT]/dt
-    rDY[32] = (Assoc_with_NET1P_to_form_RENTP - Dissoc_from_RENP + RENT_phosphorylation - dephosphorylation_2 - Degradation_of_NET1P_in_RENTP - Degradation_of_CDC14_in_RENTP) / cell; // d[RENTP]/dt
-    rDY[33] = (Synthesis_of_SIC1 - Phosphorylation_of_SIC1 + Dephosphorylation_of_SIC1 - Assoc_of_CLB2_and_SIC1 + Dissoc_of_CLB2SIC1_complex - Assoc_of_CLB5_and_SIC1 + Dissoc_of_CLB5SIC1 + Degradation_of_CLB2_in_C2 + Degradation_of_CLB5_in_C5) / cell; // d[SIC1]/dt
-    rDY[34] = (Phosphorylation_of_SIC1 - Dephosphorylation_of_SIC1 - Fast_Degradation_of_SIC1P + Degradation_of_CLB2_in_C2P + Degradation_of_CLB5_in_C5P) / cell; // d[SIC1P]/dt
-    rDY[35] = (Spindle_formation - Spindle_disassembly) / cell; // d[SPN]/dt
-    rDY[36] = (Synthesis_of_SWI5 - Degradation_of_SWI5 + Activation_of_SWI5 - Inactivation_of_SWI5) / cell; // d[SWI5]/dt
-    rDY[37] = (-Degradation_of_SWI5P - Activation_of_SWI5 + Inactivation_of_SWI5) / cell; // d[SWI5P]/dt
-    rDY[38] = (-TEM1_activation + inactivation_1) / cell; // d[TEM1GDP]/dt
-    rDY[39] = (TEM1_activation - inactivation_1) / cell; // d[TEM1GTP]/dt
+    rDY[7] = (-Degradation_of_active_CDC20 + Activation_of_CDC20 - Inactivation_2) / cell; // d[CDC20]/dt
+    rDY[8] = (Synthesis_of_inactive_CDC20 - Degradation_of_inactiveCDC20 - Activation_of_CDC20 + Inactivation_2) / cell; // d[CDC20i]/dt
+    rDY[9] = (CDC6_synthesis - Phosphorylation_of_CDC6 + Dephosphorylation_of_CDC6 - CLB2CDC6_complex_formation + CLB2CDC6_dissociation - CLB5CDC6_complex_formation + CLB5CDC6_dissociation + CLB2_degradation_in_F2 + CLB5_degradation_in_F5) / cell; // d[CDC6]/dt
+    rDY[10] = (Phosphorylation_of_CDC6 - Dephosphorylation_of_CDC6 - Degradation_of_CDC6P + CLB2_degradation_in_F2P + CLB5_degradation_in_F5P) / cell; // d[CDC6P]/dt
+    rDY[11] = (CDH1_synthesis - CDH1_degradation + CDH1i_activation - Inactivation_3) / cell; // d[CDH1]/dt
+    rDY[12] = (-CDH1i_degradation - CDH1i_activation + Inactivation_3) / cell; // d[CDH1i]/dt
+    rDY[13] = (Synthesis_of_CLB2 - Degradation_of_CLB2 - Assoc_of_CLB2_and_SIC1 + Dissoc_of_CLB2SIC1_complex + Degradation_of_SIC1_in_C2P - CLB2CDC6_complex_formation + CLB2CDC6_dissociation + CDC6_degradation_in_F2P) / cell; // d[CLB2]/dt
+    rDY[14] = (Synthesis_of_CLB5 - Degradation_of_CLB5 - Assoc_of_CLB5_and_SIC1 + Dissoc_of_CLB5SIC1 + Degradation_of_SIC1P_in_C5P_ - CLB5CDC6_complex_formation + CLB5CDC6_dissociation + CDC6_degradation_in_F5P) / cell; // d[CLB5]/dt
+    rDY[15] = (Synthesis_of_CLN2 - Degradation_of_CLN2) / cell; // d[CLN2]/dt
+    rDY[16] = (Degradation_of_PDS1_in_PE - Assoc_with_ESP1_to_form_PE + Disso_from_PE) / cell; // d[ESP1]/dt
+    rDY[17] = (CLB2CDC6_complex_formation - CLB2CDC6_dissociation - F2_phosphorylation + F2P_dephosphorylation - CLB2_degradation_in_F2) / cell; // d[F2]/dt
+    rDY[18] = (F2_phosphorylation - F2P_dephosphorylation - CDC6_degradation_in_F2P - CLB2_degradation_in_F2P) / cell; // d[F2P]/dt
+    rDY[19] = (CLB5CDC6_complex_formation - CLB5CDC6_dissociation - F5_phosphorylation + F5P_dephosphorylation - CLB5_degradation_in_F5) / cell; // d[F5]/dt
+    rDY[20] = (F5_phosphorylation - F5P_dephosphorylation - CDC6_degradation_in_F5P - CLB5_degradation_in_F5P) / cell; // d[F5P]/dt
+    rDY[21] = (Activation_of_IEP - Inactivation_1) / cell; // d[IEP]/dt
+    rDY[22] = (Growth) / cell; // d[MASS]/dt
+    rDY[23] = (-Assoc_with_NET1_to_form_RENT + Dissoc_from_RENT + Net1_synthesis - Net1_degradation - NET1_phosphorylation + dephosphorylation_1 + Degradation_of_CDC14_in_RENT) / cell; // d[NET1]/dt
+    rDY[24] = (-Assoc_with_NET1P_to_form_RENTP + Dissoc_from_RENP - Net1P_degradation + NET1_phosphorylation - dephosphorylation_1 + Degradation_of_CDC14_in_RENTP) / cell; // d[NET1P]/dt
+    rDY[25] = (DNA_synthesis - Negative_regulation_of_DNA_synthesis) / cell; // d[ORI]/dt
+    rDY[26] = (PDS1_synthesis - degradation_2 - Assoc_with_ESP1_to_form_PE + Disso_from_PE) / cell; // d[PDS1]/dt
+    rDY[27] = (PPX_synthesis - degradation_1) / cell; // d[PPX]/dt
+    rDY[28] = (Assoc_with_NET1_to_form_RENT - Dissoc_from_RENT - RENT_phosphorylation + dephosphorylation_2 - Degradation_of_NET1_in_RENT - Degradation_of_CDC14_in_RENT) / cell; // d[RENT]/dt
+    rDY[29] = (Assoc_with_NET1P_to_form_RENTP - Dissoc_from_RENP + RENT_phosphorylation - dephosphorylation_2 - Degradation_of_NET1P_in_RENTP - Degradation_of_CDC14_in_RENTP) / cell; // d[RENTP]/dt
+    rDY[30] = (Synthesis_of_SIC1 - Phosphorylation_of_SIC1 + Dephosphorylation_of_SIC1 - Assoc_of_CLB2_and_SIC1 + Dissoc_of_CLB2SIC1_complex - Assoc_of_CLB5_and_SIC1 + Dissoc_of_CLB5SIC1 + Degradation_of_CLB2_in_C2 + Degradation_of_CLB5_in_C5) / cell; // d[SIC1]/dt
+    rDY[31] = (Phosphorylation_of_SIC1 - Dephosphorylation_of_SIC1 - Fast_Degradation_of_SIC1P + Degradation_of_CLB2_in_C2P + Degradation_of_CLB5_in_C5P) / cell; // d[SIC1P]/dt
+    rDY[32] = (Spindle_formation - Spindle_disassembly) / cell; // d[SPN]/dt
+    rDY[33] = (Synthesis_of_SWI5 - Degradation_of_SWI5 + Activation_of_SWI5 - Inactivation_of_SWI5) / cell; // d[SWI5]/dt
+    rDY[34] = (-Degradation_of_SWI5P - Activation_of_SWI5 + Inactivation_of_SWI5) / cell; // d[SWI5P]/dt
+    rDY[35] = (TEM1_activation - inactivation_1) / cell; // d[TEM1GTP]/dt
 
     // Scale time appropriately
 }
@@ -414,15 +398,19 @@ std::vector<double> Chen2004SbmlOdeSystem::ComputeDerivedQuantities(double time,
     std::vector<double> dqs;
     dqs.push_back(BCK2);
     dqs.push_back(CDC14T);
+    dqs.push_back(CDC15i);
     dqs.push_back(CDC6T);
     dqs.push_back(CKIT);
     dqs.push_back(CLB2T);
     dqs.push_back(CLB5T);
     dqs.push_back(CLN3);
+    dqs.push_back(IE);
     dqs.push_back(MCM1);
     dqs.push_back(NET1T);
+    dqs.push_back(PE);
     dqs.push_back(SBF);
     dqs.push_back(SIC1T);
+    dqs.push_back(TEM1GDP);
     return dqs;
 }
 
@@ -436,39 +424,35 @@ void Chen2004SbmlOdeSystem::ProcessRules(double time, const std::vector<double>&
     C5P = rY[4];
     CDC14 = rY[5];
     CDC15 = rY[6];
-    CDC15i = rY[7];
-    CDC20 = rY[8];
-    CDC20i = rY[9];
-    CDC6 = rY[10];
-    CDC6P = rY[11];
-    CDH1 = rY[12];
-    CDH1i = rY[13];
-    CLB2 = rY[14];
-    CLB5 = rY[15];
-    CLN2 = rY[16];
-    ESP1 = rY[17];
-    F2 = rY[18];
-    F2P = rY[19];
-    F5 = rY[20];
-    F5P = rY[21];
-    IE = rY[22];
-    IEP = rY[23];
-    MASS = rY[24];
-    NET1 = rY[25];
-    NET1P = rY[26];
-    ORI = rY[27];
-    PDS1 = rY[28];
-    PE = rY[29];
-    PPX = rY[30];
-    RENT = rY[31];
-    RENTP = rY[32];
-    SIC1 = rY[33];
-    SIC1P = rY[34];
-    SPN = rY[35];
-    SWI5 = rY[36];
-    SWI5P = rY[37];
-    TEM1GDP = rY[38];
-    TEM1GTP = rY[39];
+    CDC20 = rY[7];
+    CDC20i = rY[8];
+    CDC6 = rY[9];
+    CDC6P = rY[10];
+    CDH1 = rY[11];
+    CDH1i = rY[12];
+    CLB2 = rY[13];
+    CLB5 = rY[14];
+    CLN2 = rY[15];
+    ESP1 = rY[16];
+    F2 = rY[17];
+    F2P = rY[18];
+    F5 = rY[19];
+    F5P = rY[20];
+    IEP = rY[21];
+    MASS = rY[22];
+    NET1 = rY[23];
+    NET1P = rY[24];
+    ORI = rY[25];
+    PDS1 = rY[26];
+    PPX = rY[27];
+    RENT = rY[28];
+    RENTP = rY[29];
+    SIC1 = rY[30];
+    SIC1P = rY[31];
+    SPN = rY[32];
+    SWI5 = rY[33];
+    SWI5P = rY[34];
+    TEM1GTP = rY[35];
 
     // VARIABLE PARAMETERS
     cell = GetParameter(0);
@@ -819,7 +803,7 @@ double Chen2004SbmlOdeSystem::ProcessEvents(double time, const std::vector<doubl
     double min_dist = std::numeric_limits<double>::max();
     double event_dist = min_dist;
 
-    std::vector<bool> state_vars_updated(40, false);
+    std::vector<bool> state_vars_updated(36, false);
 
     // EVENT: reset ORI
     event_dist = (0.0) - (CLB2 + CLB5 - KEZ2) - std::numeric_limits<double>::epsilon();
@@ -846,8 +830,8 @@ double Chen2004SbmlOdeSystem::ProcessEvents(double time, const std::vector<doubl
             event_dist = 0.0;
             min_dist = 0.0;
 
-            SetStateVariable(27, 0.0);
-            state_vars_updated[27] = true;
+            SetStateVariable(25, 0.0);
+            state_vars_updated[25] = true;
         }
         mEventsSatisfied[0] = true; // Flag the condition true
     }
@@ -949,13 +933,13 @@ double Chen2004SbmlOdeSystem::ProcessEvents(double time, const std::vector<doubl
             event_dist = 0.0;
             min_dist = 0.0;
 
-            SetStateVariable(24, F * MASS);
-            state_vars_updated[24] = true;
+            SetStateVariable(22, F * MASS);
+            state_vars_updated[22] = true;
             SetParameter(2, lte1l);
             SetStateVariable(0, 0.0);
             state_vars_updated[0] = true;
-            SetStateVariable(35, 0.0);
-            state_vars_updated[35] = true;
+            SetStateVariable(32, 0.0);
+            state_vars_updated[32] = true;
         }
         mEventsSatisfied[3] = true; // Flag the condition true
     }
@@ -967,7 +951,7 @@ double Chen2004SbmlOdeSystem::ProcessEvents(double time, const std::vector<doubl
     // Event triggered, update state variables if necessary
     if (min_dist == 0.0)
     {
-        for (unsigned i = 0; i < 40; ++i)
+        for (unsigned i = 0; i < 36; ++i)
         {
             if (!state_vars_updated[i])
             {
@@ -997,22 +981,27 @@ inline double Chen2004SbmlOdeSystem::BB_218(double A1, double A2, double A3, dou
 {
     return A2 - A1 + A3 * A2 + A4 * A1;
 }
+
 inline double Chen2004SbmlOdeSystem::GK_219(double A1, double A2, double A3, double A4)
 {
     return 2.0 * A4 * A1 / (A2 - A1 + A3 * A2 + A4 * A1 + sm::root(2.0, std::pow(A2 - A1 + A3 * A2 + A4 * A1, 2.0) - 4.0 * (A2 - A1) * A4 * A1));
 }
+
 inline double Chen2004SbmlOdeSystem::MichaelisMenten_220(double M1, double J1, double k1, double S1)
 {
     return k1 * S1 * M1 / (J1 + S1);
 }
+
 inline double Chen2004SbmlOdeSystem::Mass_Action_2_221(double k1, double S1, double S2)
 {
     return k1 * S1 * S2;
 }
+
 inline double Chen2004SbmlOdeSystem::Mass_Action_1_222(double k1, double S1)
 {
     return k1 * S1;
 }
+
 
 template <>
 void CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>::Initialise()
@@ -1045,10 +1034,6 @@ void CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>::Initialise()
     this->mVariableNames.push_back("CDC15");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.656533);
-
-    this->mVariableNames.push_back("CDC15i");
-    this->mVariableUnits.push_back("non-dim");
-    this->mInitialConditions.push_back(0.0);
 
     this->mVariableNames.push_back("CDC20");
     this->mVariableUnits.push_back("non-dim");
@@ -1106,10 +1091,6 @@ void CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>::Initialise()
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(7.91e-05);
 
-    this->mVariableNames.push_back("IE");
-    this->mVariableUnits.push_back("non-dim");
-    this->mInitialConditions.push_back(0.0);
-
     this->mVariableNames.push_back("IEP");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.1015);
@@ -1133,10 +1114,6 @@ void CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>::Initialise()
     this->mVariableNames.push_back("PDS1");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.025612);
-
-    this->mVariableNames.push_back("PE");
-    this->mVariableUnits.push_back("non-dim");
-    this->mInitialConditions.push_back(0.0);
 
     this->mVariableNames.push_back("PPX");
     this->mVariableUnits.push_back("non-dim");
@@ -1170,10 +1147,6 @@ void CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>::Initialise()
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.02);
 
-    this->mVariableNames.push_back("TEM1GDP");
-    this->mVariableUnits.push_back("non-dim");
-    this->mInitialConditions.push_back(0.0);
-
     this->mVariableNames.push_back("TEM1GTP");
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.9);
@@ -1184,6 +1157,9 @@ void CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("CDC14T");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CDC15i");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("CDC6T");
@@ -1201,16 +1177,25 @@ void CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityNames.push_back("CLN3");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
+    this->mDerivedQuantityNames.push_back("IE");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     this->mDerivedQuantityNames.push_back("MCM1");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("NET1T");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
+    this->mDerivedQuantityNames.push_back("PE");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     this->mDerivedQuantityNames.push_back("SBF");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("SIC1T");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("TEM1GDP");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
 
@@ -1264,12 +1249,12 @@ void CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>::Initialise()
 #include "SbmlCellCycleWrapperModel.hpp"
 #include "SbmlCellCycleWrapperModel.cpp"
 
-typedef SbmlCellCycleWrapperModel<Chen2004SbmlOdeSystem, 40> Chen2004SbmlCellCycleModel;
+typedef SbmlCellCycleWrapperModel<Chen2004SbmlOdeSystem, 36> Chen2004SbmlCellCycleModel;
 
 // Declare identifiers for the serializer
 #include "SerializationExportWrapperForCpp.hpp"
 CHASTE_CLASS_EXPORT(Chen2004SbmlOdeSystem)
-EXPORT_TEMPLATE_CLASS2(SbmlCellCycleWrapperModel, Chen2004SbmlOdeSystem, 40)
+EXPORT_TEMPLATE_CLASS2(SbmlCellCycleWrapperModel, Chen2004SbmlOdeSystem, 36)
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
 EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Chen2004SbmlCellCycleModel)

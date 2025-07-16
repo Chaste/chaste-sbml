@@ -293,6 +293,7 @@ inline double TysonNovak2001SbmlOdeSystem::GK(double A1, double A2, double A3, d
     return 2.0 * A4 * A1 / (A2 - A1 + A3 * A2 + A4 * A1 + sm::root(2.0, std::pow(A2 - A1 + A3 * A2 + A4 * A1, 2.0) - 4.0 * (A2 - A1) * A4 * A1));
 }
 
+
 template <>
 void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
 {

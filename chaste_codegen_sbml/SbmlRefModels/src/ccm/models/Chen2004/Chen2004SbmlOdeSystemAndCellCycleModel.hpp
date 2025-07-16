@@ -163,7 +163,6 @@ private:
     double C5P; // C5P
     double CDC14; // CDC14
     double CDC15; // CDC15
-    double CDC15i; // CDC15i
     double CDC20; // CDC20
     double CDC20i; // CDC20i
     double CDC6; // CDC6
@@ -178,14 +177,12 @@ private:
     double F2P; // F2P
     double F5; // F5
     double F5P; // F5P
-    double IE; // IE
     double IEP; // IEP
     double MASS; // MASS
     double NET1; // NET1
     double NET1P; // NET1P
     double ORI; // ORI
     double PDS1; // PDS1
-    double PE; // PE
     double PPX; // PPX
     double RENT; // RENT
     double RENTP; // RENTP
@@ -194,21 +191,24 @@ private:
     double SPN; // SPN
     double SWI5; // SWI5
     double SWI5P; // SWI5P
-    double TEM1GDP; // TEM1GDP
     double TEM1GTP; // TEM1GTP
 
     // DERIVED QUANTITIES
     double BCK2; // BCK2
     double CDC14T; // CDC14T
+    double CDC15i; // CDC15i
     double CDC6T; // CDC6T
     double CKIT; // CKIT
     double CLB2T; // CLB2T
     double CLB5T; // CLB5T
     double CLN3; // CLN3
+    double IE; // IE
     double MCM1; // MCM1
     double NET1T; // NET1T
+    double PE; // PE
     double SBF; // SBF
     double SIC1T; // SIC1T
+    double TEM1GDP; // TEM1GDP
 
     // VARIABLE PARAMETERS
     double cell; // cell
@@ -401,12 +401,12 @@ namespace
 #include "SbmlCellCycleWrapperModel.hpp"
 #include "SbmlCellCycleWrapperModel.cpp"
 
-typedef SbmlCellCycleWrapperModel<Chen2004SbmlOdeSystem, 40> Chen2004SbmlCellCycleModel;
+typedef SbmlCellCycleWrapperModel<Chen2004SbmlOdeSystem, 36> Chen2004SbmlCellCycleModel;
 
 // Declare identifiers for the serializer
 #include "SerializationExportWrapper.hpp"
 CHASTE_CLASS_EXPORT(Chen2004SbmlOdeSystem)
-EXPORT_TEMPLATE_CLASS2(SbmlCellCycleWrapperModel, Chen2004SbmlOdeSystem, 40)
+EXPORT_TEMPLATE_CLASS2(SbmlCellCycleWrapperModel, Chen2004SbmlOdeSystem, 36)
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
 EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Chen2004SbmlCellCycleModel)
