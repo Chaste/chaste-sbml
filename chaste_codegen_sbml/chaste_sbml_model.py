@@ -628,7 +628,12 @@ class ChasteSbmlModel:
             compartment = self._sbml_compartments.get(compartment_id)
             units = NON_DIM_UNITS if compartment else species.getSubstanceUnits()
 
-            if species_id in odes:
+            if species_id in assignment_rules:
+                # Derived quantity (includes boundary conditions)
+                rhs = assignment_rules[species_id]
+                self._add_derived_quantity(species_id, label, units, rhs)
+
+            elif species_id in odes:
                 # State variable
                 rhs = f"({odes[species_id]}) / {compartment_id}"  # Normalised ODE
                 self._add_state_variable(species_id, label, initial_value, units, rhs)
@@ -638,14 +643,6 @@ class ChasteSbmlModel:
                 # if time_multiplier != 1.0:
                 #     # This does not include species defined in algebraic rules
                 #     f"rDY[{state_variable_index}] *= {time_multiplier};"
-
-                # TODO: Do something different for boundary conditions?
-                # if species.getBoundaryCondition():
-
-            elif species_id in assignment_rules:
-                # Derived quantity
-                rhs = assignment_rules[species_id]
-                self._add_derived_quantity(species_id, label, units, rhs)
 
             else:
                 # Variable parameter
