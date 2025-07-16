@@ -77,7 +77,46 @@ namespace st = sbmltest;
 class TestChen2004Sbml : public AbstractCellBasedTestSuite
 {
 private:
-    const unsigned ODE_SIZE = 40u;
+    const unsigned ODE_SIZE = 36u;
+
+    std::vector<double> default_initial_conditions = {
+        0.008473,  // BUD
+        0.238404,  // C2
+        0.024034,  // C2P
+        0.070081,  // C5
+        0.006878,  // C5P
+        0.468344,  // CDC14
+        0.656533,  // CDC15
+        0.444296,  // CDC20
+        1.472044,  // CDC20i
+        0.10758,   // CDC6
+        0.015486,  // CDC6P
+        0.930499,  // CDH1
+        0.0695,    // CDH1i
+        0.1469227, // CLB2
+        0.0518014, // CLB5
+        0.0652511, // CLN2
+        0.301313,  // ESP1
+        0.236058,  // F2
+        0.0273938, // F2P
+        7.24e-05,  // F5
+        7.91e-05,  // F5P
+        0.1015,    // IEP
+        1.206019,  // MASS
+        0.018645,  // NET1
+        0.970271,  // NET1P
+        0.000909,  // ORI
+        0.025612,  // PDS1
+        0.123179,  // PPX
+        1.04954,   // RENT
+        0.6,       // RENTP
+        0.0228776, // SIC1
+        0.00641,   // SIC1P
+        0.03,      // SPN
+        0.95,      // SWI5
+        0.02,      // SWI5P
+        0.9,       // TEM1GTP
+    };
 
     void RunOdeWithSolver(AbstractIvpOdeSolver &rSolver, const std::string solverName)
     {
@@ -468,51 +507,7 @@ public:
         OutputFileHandler handler("archive", false);
         std::string archive_filename = handler.GetOutputDirectoryFullPath() + "chen_2004_ode.arch";
 
-        // Default initial conditions
-        std::vector<double> initial_expected = {
-            0.008473,  // BUD
-            0.238404,  // C2
-            0.024034,  // C2P
-            0.070081,  // C5
-            0.006878,  // C5P
-            0.468344,  // CDC14
-            0.656533,  // CDC15
-            0.0,       // CDC15i
-            0.444296,  // CDC20
-            1.472044,  // CDC20i
-            0.10758,   // CDC6
-            0.015486,  // CDC6P
-            0.930499,  // CDH1
-            0.0695,    // CDH1i
-            0.1469227, // CLB2
-            0.0518014, // CLB5
-            0.0652511, // CLN2
-            0.301313,  // ESP1
-            0.236058,  // F2
-            0.0273938, // F2P
-            7.24e-05,  // F5
-            7.91e-05,  // F5P
-            0.0,       // IE
-            0.1015,    // IEP
-            1.206019,  // MASS
-            0.018645,  // NET1
-            0.970271,  // NET1P
-            0.000909,  // ORI
-            0.025612,  // PDS1
-            0.0,       // PE
-            0.123179,  // PPX
-            1.04954,   // RENT
-            0.6,       // RENTP
-            0.0228776, // SIC1
-            0.00641,   // SIC1P
-            0.03,      // SPN
-            0.95,      // SWI5
-            0.02,      // SWI5P
-            0.0,       // TEM1GDP
-            0.9,       // TEM1GTP
-        };
-
-        // Save
+        // Save archive
         {
             // Set state variables to 0...ODE_SIZE-1
             std::vector<double> state_variables;
@@ -531,7 +526,7 @@ public:
             TS_ASSERT_DELTA(initial_conditions[0], 3.25, 1e-6);
             for (unsigned i = 1; i < ODE_SIZE; i++)
             {
-                TS_ASSERT_DELTA(initial_conditions[i], initial_expected[i], 1e-6);
+                TS_ASSERT_DELTA(initial_conditions[i], default_initial_conditions[i], 1e-6);
             }
 
             // Create an output archive
@@ -543,7 +538,7 @@ public:
             output_arch << p_const_ode_system;
         }
 
-        // Load
+        // Load archive
         {
             AbstractOdeSystem *p_ode_system = nullptr;
 
@@ -561,7 +556,7 @@ public:
             for (unsigned i = 0; i < ODE_SIZE; i++)
             {
                 // Check initial conditions
-                TS_ASSERT_DELTA(initial_conditions[i], initial_expected[i], 1e-6);
+                TS_ASSERT_DELTA(initial_conditions[i], default_initial_conditions[i], 1e-6);
 
                 // Check state variables
                 double var = p_ode_system->GetStateVariable(i);
@@ -573,46 +568,70 @@ public:
         }
     }
 
-    void
-    DontTestOdeEquation()
+    void TestOdeEquation()
     {
         Chen2004SbmlOdeSystem ode_system;
 
         double time = 0.0;
-        std::vector<double> initial_conditions;
-        initial_conditions.push_back(0.001); // BUD
-        initial_conditions.push_back(0.001); // C2
-        initial_conditions.push_back(0.001); // C2P
-        initial_conditions.push_back(0.5);   // C5
-        initial_conditions.push_back(0.001); // C5P
-        initial_conditions.push_back(0.001); // CDC14
-        initial_conditions.push_back(0.001); // CDC15
-        initial_conditions.push_back(0.001); // CDC15i
-
-        std::vector<double> derivs(initial_conditions.size());
-        ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
+        std::vector<double> derivatives(ODE_SIZE);
+        ode_system.EvaluateYDerivatives(time, default_initial_conditions, derivatives);
 
         // Compare derivatives with values from Tellurium
-        TS_ASSERT_DELTA(derivs[0], 3.99580000e-02, 1e-3);  // BUD
-        TS_ASSERT_DELTA(derivs[1], -2.50100000e-01, 1e-2); // C2
-        TS_ASSERT_DELTA(derivs[2], 9.70803883e-01, 1e-2);  // C2P
-        TS_ASSERT_DELTA(derivs[3], 2.37500000e-03, 1e-4);  // C5
-        TS_ASSERT_DELTA(derivs[4], 4.90000000e-03, 1e-4);  // C5P
-        TS_ASSERT_DELTA(derivs[5], 1.08707977e-05, 1e-6);  // CDC14
-        TS_ASSERT_DELTA(derivs[6], 9.99719098e-01, 1e-2);  // CDC15
-        TS_ASSERT_DELTA(derivs[7], 2.77174939e-02, 1e-3);  // CDC15i
+        std::vector<double> derivatives_expected = {
+            0.014292285913187989,    // BUD *
+            0.03807104123616535,     // C2
+            -0.02191995883216533,    // C2P
+            0.0452736273488603,      // C5
+            -0.003342304055100295,   // C5P
+            0.251316422776,          // CDC14
+            -0.018916645891352057,   // CDC15
+            -0.034247066800000024,   // CDC20
+            -0.2532503622733521,     // CDC20i
+            0.12356839015323366,     // CDC6
+            -0.0037330182800774767,  // CDC6P
+            0.2193176241948343,      // CDH1
+            -0.2193176141948343,     // CDH1i
+            -0.2648597095765076,     // CLB2
+            -0.051353622636901804,   // CLB5
+            -0.006941222654334056,   // CLN2
+            0.058558812262920035,    // ESP1
+            0.0032043005026250737,   // F2
+            -0.02794253663182511,    // F2P
+            0.0001780335569909064,   // F5
+            -0.00021441434591090637, // F5P
+            -0.062337476806313685,   // IEP
+            0.009288318550574718,   // MASS *
+            -0.11053817267683463,   // NET1
+            0.37848931545283476,    // NET1P
+            0.22541840999999999,    // ORI
+            -0.014060356081539327,  // PDS1
+            -0.010198232821435102,  // PPX
+            0.300929157138497,      // RENT
+            -0.5640339799144971,    // RENTP
+            0.032294390197855995,   // SIC1
+            -0.0016987958956159834, // SIC1P
+            0.04940637021748367,    // SPN
+            -0.021724458793113615,  // SWI5
+            -0.01335493175,         // SWI5P
+            -0.13000000000000003    // TEM1GTP
+        };
+
+        for (unsigned i = 0; i < ODE_SIZE; i++)
+        {
+            TS_ASSERT_DELTA(derivatives[i], derivatives_expected[i], 1e-6);
+        }
 
         // Check derived quantities
-        TS_ASSERT_EQUALS(ode_system.GetNumberOfDerivedQuantities(), 3u);
-        TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("CycB"), 0u);
-        TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("Trimer"), 1u);
-        TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("Mad"), 2u);
+        // TS_ASSERT_EQUALS(ode_system.GetNumberOfDerivedQuantities(), 3u);
+        // TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("CycB"), 0u);
+        // TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("Trimer"), 1u);
+        // TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("Mad"), 2u);
 
-        std::vector<double> derived_quantities = ode_system.ComputeDerivedQuantities(0.0, initial_conditions);
-        TS_ASSERT_EQUALS(derived_quantities.size(), 3u);
-        TS_ASSERT_DELTA(derived_quantities[0], 0.001, 1e-3); // CycB
-        TS_ASSERT_DELTA(derived_quantities[1], 0.001, 1e-3); // Trimer
-        TS_ASSERT_DELTA(derived_quantities[2], 1.0, 1e-3);   // Mad
+        // std::vector<double> derived_quantities = ode_system.ComputeDerivedQuantities(0.0, initial_conditions);
+        // TS_ASSERT_EQUALS(derived_quantities.size(), 3u);
+        // TS_ASSERT_DELTA(derived_quantities[0], 0.001, 1e-3); // CycB
+        // TS_ASSERT_DELTA(derived_quantities[1], 0.001, 1e-3); // Trimer
+        // TS_ASSERT_DELTA(derived_quantities[2], 1.0, 1e-3);   // Mad
     }
 
     void DontTestOdeWithChasteSolver()
