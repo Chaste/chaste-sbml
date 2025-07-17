@@ -389,6 +389,9 @@ class ChasteSbmlModel:
             "xor": "xor_",
         }
 
+        # TODO: From SBML Level 3, log defaults to base 10, lower versions default to base e.
+        # See https://sbml.org/software/libsbml/5.18.0/docs/formatted/python-api/namespacelibsbml.html#a8e96a5a70569ae32655c6302638f6dc3
+
         tokens = re.findall(r"\w+|\W+", formula)
 
         cpp_tokens = []

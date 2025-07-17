@@ -59,7 +59,7 @@ double sbmlmath::minus(double x, double y)
 // log
 double sbmlmath::log(double x)
 {
-  return std::log10(x);
+  return std::log(x);
 }
 
 double sbmlmath::log(double b, double x)
