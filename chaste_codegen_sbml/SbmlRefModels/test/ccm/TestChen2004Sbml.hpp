@@ -521,17 +521,44 @@ public:
             TSM_ASSERT_DELTA(var_names[i].c_str(), derivatives[i], derivatives_expected[i], 1e-6);
         }
 
-        // Check derived quantities
-        // TS_ASSERT_EQUALS(ode_system.GetNumberOfDerivedQuantities(), 3u);
-        // TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("CycB"), 0u);
-        // TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("Trimer"), 1u);
-        // TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("Mad"), 2u);
+        // Check derived quantity indices
+        TS_ASSERT_EQUALS(ode_system.GetNumberOfDerivedQuantities(), 15u);
 
-        // std::vector<double> derived_quantities = ode_system.ComputeDerivedQuantities(0.0, initial_conditions);
-        // TS_ASSERT_EQUALS(derived_quantities.size(), 3u);
-        // TS_ASSERT_DELTA(derived_quantities[0], 0.001, 1e-3); // CycB
-        // TS_ASSERT_DELTA(derived_quantities[1], 0.001, 1e-3); // Trimer
-        // TS_ASSERT_DELTA(derived_quantities[2], 1.0, 1e-3);   // Mad
+        std::vector<std::string> dq_names = {
+            "BCK2", "CDC14T", "CDC15i", "CDC6T", "CKIT", "CLB2T", "CLB5T",
+            "CLN3", "IE", "MCM1", "NET1T", "PE", "SBF", "SIC1T", "TEM1GDP"};
+
+        for (unsigned i = 0; i < ode_system.GetNumberOfDerivedQuantities(); i++)
+        {
+            TSM_ASSERT_EQUALS(dq_names[i].c_str(), ode_system.GetDerivedQuantityIndex(dq_names[i]), i);
+        }
+
+        // Compare derived quantities with Tellurium values
+        std::vector<double> dqs = ode_system.ComputeDerivedQuantities(0.0, default_initial_conditions);
+        TS_ASSERT_EQUALS(dqs.size(), ode_system.GetNumberOfDerivedQuantities());
+
+        std::vector<double> dqs_expected = {
+            0.06512503101569224,  // BCK2
+            2.1178838821160673,   // CDC14T
+            0.34346699999999997,  // CDC15i
+            0.3866702506092299,   // CDC6T
+            0.7553557373906259,   // CKIT
+            0.6728097655277132,   // CLB2T
+            0.12891180541328642,  // CLB5T
+            0.06694509561176591,  // CLN3
+            0.8985,               // IE
+            0.4689808390666083,   // MCM1
+            2.6384560484631914,   // NET1T
+            0.6986870000000001,   // PE
+            0.004913821158365375, // SBF
+            0.36868548678139595,  // SIC1T
+            0.6986870000000001    // TEM1GDP ***
+        };
+
+        for (unsigned i = 0; i < dqs.size(); i++)
+        {
+            TSM_ASSERT_DELTA(dq_names[i].c_str(), dqs[i], dqs_expected[i], 1e-3);
+        }
     }
 
     void TestOdeWithChasteSolver()
