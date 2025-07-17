@@ -53,13 +53,12 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "AbstractCellBasedTestSuite.hpp"
 #include "ApcOneHitCellMutationState.hpp"
-#include "BackwardEulerIvpOdeSolver.hpp"
 #include "CellCycleModelOdeSolver.hpp"
 #include "ColumnDataWriter.hpp"
 #include "CvodeAdaptor.hpp"
-#include "EulerIvpOdeSolver.hpp"
 #include "OdeSolution.hpp"
 #include "OutputFileHandler.hpp"
+#include "RungeKutta4IvpOdeSolver.hpp"
 #include "SbmlTestHelperFunctions.hpp"
 #include "SimulationTime.hpp"
 #include "SmartPointers.hpp"
@@ -190,7 +189,7 @@ private:
                 {0.106310, 1e-2},  // CDC6
                 {0.015478, 1e-3},  // CDC6P
                 {0.931438, 1e-2},  // CDH1
-                {0.068561, 1e-3},  // CDH1i
+                {0.068561, 1e-3},  // CDH1i ***
                 {0.149486, 1e-2},  // CLB2
                 {0.052216, 1e-3},  // CLB5
                 {0.060328, 1e-3},  // CLN2
@@ -215,12 +214,13 @@ private:
                 {0.020352, 1e-3},  // SWI5P
                 {0.905342, 1e-2}   // TEM1GTP
             };
+            std::vector<std::string> var_names = ode_system.rGetStateVariableNames();
 
             for (unsigned i = 0; i < end_solution.size(); i++)
             {
                 double expected_value = expected_end_solutions[i][0];
                 double tolerance = expected_end_solutions[i][1];
-                TS_ASSERT_DELTA(end_solution[i], expected_value, tolerance);
+                TSM_ASSERT_DELTA(var_names[i].c_str(), end_solution[i], expected_value, tolerance);
             }
 
             // The following code provides nice output for gnuplot
@@ -403,6 +403,7 @@ public:
     {
         OutputFileHandler handler("archive", false);
         std::string archive_filename = handler.GetOutputDirectoryFullPath() + "chen_2004_ode.arch";
+        std::vector<std::string> var_names;
 
         // Save archive
         {
@@ -420,10 +421,11 @@ public:
             std::vector<double> initial_conditions = ode_system.GetInitialConditions();
             TS_ASSERT_EQUALS(initial_conditions.size(), ODE_SIZE);
 
-            TS_ASSERT_DELTA(initial_conditions[0], 3.25, 1e-6);
+            var_names = ode_system.rGetStateVariableNames();
+            TSM_ASSERT_DELTA(var_names[0].c_str(), initial_conditions[0], 3.25, 1e-6);
             for (unsigned i = 1; i < ODE_SIZE; i++)
             {
-                TS_ASSERT_DELTA(initial_conditions[i], default_initial_conditions[i], 1e-6);
+                TSM_ASSERT_DELTA(var_names[i].c_str(), initial_conditions[i], default_initial_conditions[i], 1e-6);
             }
 
             // Create an output archive
@@ -453,11 +455,11 @@ public:
             for (unsigned i = 0; i < ODE_SIZE; i++)
             {
                 // Check initial conditions
-                TS_ASSERT_DELTA(initial_conditions[i], default_initial_conditions[i], 1e-6);
+                TSM_ASSERT_DELTA(var_names[i].c_str(), initial_conditions[i], default_initial_conditions[i], 1e-6);
 
                 // Check state variables
                 double var = p_ode_system->GetStateVariable(i);
-                TS_ASSERT_DELTA(var, static_cast<double>(i), 1e-6);
+                TSM_ASSERT_DELTA(var_names[i].c_str(), var, static_cast<double>(i), 1e-6);
             }
 
             // Tidy up
@@ -475,7 +477,7 @@ public:
 
         // Compare derivatives with values from Tellurium
         std::vector<double> derivatives_expected = {
-            0.014292285913187989,    // BUD *
+            0.014292285913187989,    // BUD ***
             0.03807104123616535,     // C2
             -0.02191995883216533,    // C2P
             0.0452736273488603,      // C5
@@ -513,9 +515,10 @@ public:
             -0.13000000000000003     // TEM1GTP
         };
 
+        std::vector<std::string> var_names = ode_system.rGetStateVariableNames();
         for (unsigned i = 0; i < ODE_SIZE; i++)
         {
-            TS_ASSERT_DELTA(derivatives[i], derivatives_expected[i], 1e-6);
+            TSM_ASSERT_DELTA(var_names[i].c_str(), derivatives[i], derivatives_expected[i], 1e-6);
         }
 
         // Check derived quantities
@@ -531,11 +534,11 @@ public:
         // TS_ASSERT_DELTA(derived_quantities[2], 1.0, 1e-3);   // Mad
     }
 
-    void DontTestOdeWithChasteSolver()
+    void TestOdeWithChasteSolver()
     {
-        // Solve system using backward Euler solver
-        BackwardEulerIvpOdeSolver backward_euler_solver(ODE_SIZE);
-        RunOdeWithSolver(backward_euler_solver, "backward_euler");
+        // Solve system using RK4 solver
+        RungeKutta4IvpOdeSolver rk4_solver;
+        RunOdeWithSolver(rk4_solver, "rk4");
     }
 
     void TestOdeWithCvodeSolver()
