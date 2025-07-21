@@ -1,4 +1,5 @@
 TestSbmlMath.hpp
+ccm/TestChen2000Sbml.hpp
 ccm/TestChen2004Sbml.hpp
 ccm/TestGardner1998Sbml.hpp
 ccm/TestTysonNovak2001Sbml.hpp
