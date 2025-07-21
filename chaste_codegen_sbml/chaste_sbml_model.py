@@ -601,7 +601,7 @@ class ChasteSbmlModel:
                 # State variable
                 rhs = self._odes[param_id]
                 self._add_state_variable(param_id, label, value, units, rhs)
-            if param_id in assignment_rules:
+            elif param_id in assignment_rules:
                 # Rule-based parameter
                 self._add_rule_based_parameter(param_id, label, value, units)
             elif param.isSetConstant() and not param.getConstant():
@@ -654,7 +654,7 @@ class ChasteSbmlModel:
                 raise NotImplementedError("Algebraic rules are not yet supported.")
 
             elif type_code == SBML_RATE_RULE:
-                # Handled later in ODE extraction
+                # Rate rules are handled in ODE extraction
                 pass
 
     def _format_species(self) -> None:
