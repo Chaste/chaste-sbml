@@ -97,8 +97,8 @@ public:
   void TestLog()
   {
     TS_ASSERT_DELTA(sm::log(1.0), 0.0, 1e-6);
-    TS_ASSERT_DELTA(sm::log(10.0), 1.0, 1e-6);
-    TS_ASSERT_DELTA(sm::log(M_E), 0.434294, 1e-6);
+    TS_ASSERT_DELTA(sm::log(10.0), M_LN10, 1e-6);
+    TS_ASSERT_DELTA(sm::log(M_E), 1.0, 1e-6);
 
     TS_ASSERT_DELTA(sm::log(2.0, 2.0), 1.0, 1e-6);
     TS_ASSERT_DELTA(sm::log(10.0, 2.0), std::log10(2.0), 1e-6);
