@@ -83,6 +83,9 @@ class ChasteSbmlModel:
         self._sbml_species = self._sbml_model.getListOfSpecies()
         self._sbml_unit_definitions = self._sbml_model.getListOfUnitDefinitions()
 
+        self._variable_types = {}  # { id: VarType }
+        self._odes = {}  # { id: str }
+
         self._assignment_rules = []  # [ { id: str, label: str, ... } ]
         self._state_variables = []  # [ { id: str, label: str, ... } ]
         self._derived_quantities = []  # [ { id: str, label: str, ... } ]
@@ -92,8 +95,6 @@ class ChasteSbmlModel:
         self._reactions = []  # [ { id: str, label: str, ... } ]
         self._events = []  # [ { name: str, trigger: str, ... } ]
         self._functions = []  # [ { name: str, args: [str], body: str } ]
-
-        self._variable_types = {}  # { id: VarType }
 
         self._outputs = {}  # { filename: code }
 
@@ -389,8 +390,9 @@ class ChasteSbmlModel:
             "xor": "xor_",
         }
 
-        # TODO: From SBML Level 3, log defaults to base 10, lower versions default to base e.
-        # See https://sbml.org/software/libsbml/5.18.0/docs/formatted/python-api/namespacelibsbml.html#a8e96a5a70569ae32655c6302638f6dc3
+        # TODO: From SBML Level 3 upwards, log defaults to base 10.
+        # SBML versions lower than 3 default to base e.
+        # See https://sbml.org/software/libsbml/5.18.0/docs/formatted/python-api/namespacelibsbml.html#a8e96a5a70569ae32655c6302638f6dc3  # noqa: B950
 
         tokens = re.findall(r"\w+|\W+", formula)
 
@@ -414,6 +416,46 @@ class ChasteSbmlModel:
             cpp_tokens.append(cpp_token)
         cpp_formula = "".join(cpp_tokens)
         return cpp_formula
+
+    def _extract_odes(self) -> None:
+        """Extract the ODEs equations for each species."""
+        self._odes = {}
+
+        # Extract ODEs from reactions:
+        # each ODE will essentially be the sum of the products minus the
+        # sum of the reactants divided by the compartment volume
+        for reaction in self._sbml_reactions:
+            reaction_id = reaction.getId()
+
+            # Decompose reaction into sum of products minus sum of reactants
+            products = reaction.getListOfProducts()
+            for product in products:
+                species_id = product.getSpecies()
+
+                if species_id in self._odes:
+                    self._odes[species_id] += " + " + reaction_id
+                else:
+                    self._odes[species_id] = reaction_id
+
+            reactants = reaction.getListOfReactants()
+            for reactant in reactants:
+                species_id = reactant.getSpecies()
+
+                if species_id in self._odes:
+                    self._odes[species_id] += " - " + reaction_id
+                else:
+                    self._odes[species_id] = "-" + reaction_id
+
+        # Extract ODEs from rate rules
+        for rule in self._sbml_rules:
+            if rule.getTypeCode() == SBML_RATE_RULE:
+                lhs = rule.getVariable()
+
+                if lhs in self._odes:
+                    raise ValueError(f"{lhs} has both a rate rule and a reaction.")
+
+                rhs = self._convert_str_formula(rule.getFormula())
+                self._odes[lhs] = rhs
 
     def _format_compartments(self) -> None:
         """Add compartments to template variables."""
@@ -555,6 +597,10 @@ class ChasteSbmlModel:
             value = param.getValue() if param.isSetValue() else 0.0
             units = param.getUnits() if param.isSetUnits() else NON_DIM_UNITS
 
+            if param_id in self._odes:
+                # State variable
+                rhs = self._odes[param_id]
+                self._add_state_variable(param_id, label, value, units, rhs)
             if param_id in assignment_rules:
                 # Rule-based parameter
                 self._add_rule_based_parameter(param_id, label, value, units)
@@ -608,12 +654,11 @@ class ChasteSbmlModel:
                 raise NotImplementedError("Algebraic rules are not yet supported.")
 
             elif type_code == SBML_RATE_RULE:
-                # Not implemented
-                raise NotImplementedError("Rate rules are not yet supported.")
+                # Handled later in ODE extraction
+                pass
 
     def _format_species(self) -> None:
         """Add species to template variables."""
-        odes = self._get_odes()
 
         # Note: rules must be processed before species
         if not self._assignment_rules:
@@ -636,9 +681,9 @@ class ChasteSbmlModel:
                 rhs = assignment_rules[species_id]
                 self._add_derived_quantity(species_id, label, units, rhs)
 
-            elif species_id in odes:
+            elif species_id in self._odes:
                 # State variable
-                rhs = f"({odes[species_id]}) / {compartment_id}"  # Normalised ODE
+                rhs = f"({self._odes[species_id]}) / {compartment_id}"  # Normalised ODE
                 self._add_state_variable(species_id, label, initial_value, units, rhs)
 
                 # TODO: Handle time scaling
@@ -650,46 +695,6 @@ class ChasteSbmlModel:
             else:
                 # Variable parameter
                 self._add_variable_parameter(species_id, label, initial_value, units)
-
-    def _get_odes(self) -> dict[str, str]:
-        """Get the ODEs equations for each species.
-
-        Each ODE will essentially be the sum of the products minus the sum of
-        the reactants divided by the compartment volume
-        """
-        odes = {}
-        for reaction in self._sbml_reactions:
-            reaction_id = reaction.getId()
-
-            # Decompose reaction into sum of products minus sum of reactants
-            products = reaction.getListOfProducts()
-            for product in products:
-                # Get the species concerning the product
-                species_id = product.getSpecies()
-
-                # TODO: Do we need to do something special with boundary conditions?
-                # species = self._model.getSpecies(species_id)
-                # if species.isSetBoundaryCondition() and not species.getBoundaryCondition():
-
-                if species_id in odes:
-                    odes[species_id] += " + " + reaction_id
-                else:
-                    odes[species_id] = reaction_id
-
-            reactants = reaction.getListOfReactants()
-            for reactant in reactants:
-                species_id = reactant.getSpecies()
-
-                # TODO: Do we need to do something special with boundary conditions?
-                # species = self._model.getSpecies(species_id)
-                # if species.isSetBoundaryCondition() and not species.getBoundaryCondition():
-
-                if species_id in odes:
-                    odes[species_id] += " - " + reaction_id
-                else:
-                    odes[species_id] = "-" + reaction_id
-
-        return odes
 
     def _get_template(self, name: str) -> "Template":
         """Get a Jinja2 template.
@@ -792,8 +797,10 @@ class ChasteSbmlModel:
     def _process_model(self) -> None:
         """Process the SBML model to set up the formatted variables for templates."""
 
-        self._assignment_rules = []
+        self._variable_types = {}
+        self._odes = {}
 
+        self._assignment_rules = []
         self._state_variables = []
         self._derived_quantities = []
         self._variable_parameters = []
@@ -804,7 +811,7 @@ class ChasteSbmlModel:
         self._events = []
         self._functions = []
 
-        self._variable_types = {}
+        self._extract_odes()
 
         self._format_rules()
         self._format_compartments()
