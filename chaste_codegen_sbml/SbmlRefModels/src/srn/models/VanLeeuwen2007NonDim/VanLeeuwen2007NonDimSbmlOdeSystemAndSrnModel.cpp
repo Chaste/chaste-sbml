@@ -177,9 +177,9 @@ void VanLeeuwen2007NonDimSbmlOdeSystem::ProcessRules(double time, const std::vec
     ComplexTransitThreshold = GetParameter(4);
 
     // ASSIGNMENT RULES
+    C_F = C_o + C_c;
     C_T = C_oT + C_cT;
     drag = sm::max((C_A - 2300.0) / 36.0, 1.0);
-    C_F = C_o + C_c;
 
     // REACTIONS
     // r1

@@ -155,21 +155,21 @@ void Chen2000SbmlOdeSystem::ProcessRules(double time, const std::vector<double>&
     COMpartment = GetParameter(0);
 
     // ASSIGNMENT RULES
-    Bck2 = Bck2_0 * mass;
-    Clb5 = Clb5_T - Clb5_Sic1;
-    Cln3 = Cln3_max * Dn3 * mass / (Jn3 + Dn3 * mass);
+    Vd_b2 = kd_b2 * (Hct1_T - Hct1) + kd_b2_ * Hct1 + kd_b2__ * Cdc20;
     Clb2 = Clb2_T - Clb2_Sic1;
+    Clb5 = Clb5_T - Clb5_Sic1;
+    Sic1 = Sic1_T - (Clb2_Sic1 + Clb5_Sic1);
+    Vd_b5 = kd_b5 + kd_b5_ * Cdc20;
+    Bck2 = Bck2_0 * mass;
+    Cln3 = Cln3_max * Dn3 * mass / (Jn3 + Dn3 * mass);
     Vd2_c1 = kd2_c1 * (epsilonc1_n3 * Cln3 + epsilonc1_k2 * Bck2 + Cln2 + epsilonc1_b5 * Clb5 + epsilonc1_b2 * Clb2);
+    Vi_20 = sm::piecewise(ki_20_, sm::geq(ORI, 1.0), ki_20, sm::geq(SPN, 1.0), 0.1);
+    Vi_t1 = ki_t1 + ki_t1_ * (Cln3 + epsiloni_t1_n2 * Cln2 + epsiloni_t1_b5 * Clb5 + epsiloni_t1_b2 * Clb2);
     Va_sbf = ka_sbf * (Cln2 + epsilonsbf_n3 * (Cln3 + Bck2) + epsilonsbf_b5 * Clb5);
     SBF = 2.0 * Va_sbf * Ji_sbf / (ki_sbf + ki_sbf_ * Clb2 + Va_sbf * Ji_sbf + (ki_sbf + ki_sbf_ * Clb2) * Ja_sbf - Va_sbf + std::sqrt(std::pow(ki_sbf + ki_sbf_ * Clb2 + Va_sbf * Ji_sbf + (ki_sbf + ki_sbf_ * Clb2) * Ja_sbf - Va_sbf, 2.0) - 4.0 * Va_sbf * Ji_sbf * (ki_sbf + ki_sbf_ * Clb2 - Va_sbf)));
-    Vi_t1 = ki_t1 + ki_t1_ * (Cln3 + epsiloni_t1_n2 * Cln2 + epsiloni_t1_b5 * Clb5 + epsiloni_t1_b2 * Clb2);
-    Vi_20 = sm::piecewise(ki_20_, sm::geq(ORI, 1.0), ki_20, sm::geq(SPN, 1.0), 0.1);
     MBF = SBF;
-    Vd_b5 = kd_b5 + kd_b5_ * Cdc20;
     Mcm1 = 2.0 * ka_mcm * Clb2 * Ji_mcm / (ki_mcm + ka_mcm * Clb2 * Ji_mcm + ki_mcm * Ja_mcm - ka_mcm * Clb2 + std::sqrt(std::pow(ki_mcm + ka_mcm * Clb2 * Ji_mcm + ki_mcm * Ja_mcm - ka_mcm * Clb2, 2.0) - 4.0 * (ki_mcm - ka_mcm * Clb2) * ka_mcm * Clb2 * Ji_mcm));
-    Sic1 = Sic1_T - (Clb2_Sic1 + Clb5_Sic1);
     Swi5 = 2.0 * ka_swi * Cdc20 * Ji_swi / (ki_swi + ki_swi_ * Clb2 + ka_swi * Cdc20 * Ji_swi + (ki_swi + ki_swi_ * Clb2) * Ja_swi - ka_swi * Cdc20 + std::sqrt(std::pow(ki_swi + ki_swi_ * Clb2 + ka_swi * Cdc20 * Ji_swi + (ki_swi + ki_swi_ * Clb2) * Ja_swi - ka_swi * Cdc20, 2.0) - 4.0 * (ki_swi + ki_swi_ * Clb2 - ka_swi * Cdc20) * ka_swi * Cdc20 * Ji_swi));
-    Vd_b2 = kd_b2 * (Hct1_T - Hct1) + kd_b2_ * Hct1 + kd_b2__ * Cdc20;
 
     // REACTIONS
 }
