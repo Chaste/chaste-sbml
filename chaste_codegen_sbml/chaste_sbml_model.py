@@ -825,6 +825,7 @@ class ChasteSbmlModel:
         """Sort rules based on their dependency."""
 
         def _search_formula(node: "ASTNode", name: str) -> bool:
+            """Recursively search for a variable name in the AST formula."""
             if node is None:
                 return False
             if node.getType() == AST_NAME and node.getName() == name:
@@ -839,6 +840,16 @@ class ChasteSbmlModel:
         _compare_cache = dict()
 
         def _compare_rules(rule_a: "Rule", rule_b: "Rule") -> int:
+            """Compare two rules based on their dependencies.
+
+            :param rule_a: The first rule to compare.
+            :param rule_b: The second rule to compare.
+
+            :return: An integer indicating the order of the rules.
+                -1 if rule_a < rule_b (rule_a comes before rule_b)
+                1 if rule_a > rule_b (rule_a comes after rule_b)
+                0 if they are unrelated or depend directly on each other
+            """
             id_a = rule_a.getId()
             id_b = rule_b.getId()
 
@@ -877,28 +888,25 @@ class ChasteSbmlModel:
             _compare_cache[(id_b, id_a)] = 0
             return 0
 
-        def _quicksort(items: list["Rule"]) -> list["Rule"]:
-            n = len(items)
+        def _insertion_sort(rules: list["Rule"]) -> list["Rule"]:
+            """Sort rules using insertion sort based on their dependencies."""
+            # We need to compare every pair of rules because of cases such as:
+            # Initial order: (a, b, c)
+            # a == b (order doesn't matter);
+            # b == c (order doesn't matter);
+            # a > c (a should come after c);
+            # If we only compare (a, b) and (b, c), no changes will be made.
+            sorted_rules = []
 
-            if n < 2:
-                return items
-
-            pivot_index = n // 2
-            pivot_item = items[pivot_index]
-
-            left_items = []
-            right_items = []
-
-            for i, item in enumerate(items):
-                if i == pivot_index:
-                    continue
-
-                order = _compare_rules(item, pivot_item)
-                if order < 0:  # item < pivot_item
-                    left_items.append(item)
+            for rule_a in rules:
+                for i, rule_b in enumerate(sorted_rules):
+                    if _compare_rules(rule_a, rule_b) < 0:  # rule_a < rule_b
+                        sorted_rules.insert(i, rule_a)
+                        break
                 else:
-                    right_items.append(item)
+                    # rule_a comes after everything already in sorted_rules
+                    sorted_rules.append(rule_a)
 
-            return _quicksort(left_items) + [pivot_item] + _quicksort(right_items)
+            return sorted_rules
 
-        return _quicksort(rules)
+        return _insertion_sort(rules)
