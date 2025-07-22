@@ -148,9 +148,9 @@ void TysonNovak2001SbmlOdeSystem::ProcessRules(double time, const std::vector<do
 
     // ASSIGNMENT RULES
     CycB = CycBt - 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow(std::pow(CycBt + CKIt + 1.0 / Keq, 2.0) - 4.0 * CycBt * CKIt, 1.0 / 2.0));
-    Trimer = 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow(std::pow(CycBt + CKIt + 1.0 / Keq, 2.0) - 4.0 * CycBt * CKIt, 1.0 / 2.0));
     TF = GK(k15p * m + k15pp * SK, k16p + k16pp * m * CycB, J15, J16);
     Mad = 1.0;
+    Trimer = 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow(std::pow(CycBt + CKIt + 1.0 / Keq, 2.0) - 4.0 * CycBt * CKIt, 1.0 / 2.0));
 
     // REACTIONS
     // CycBt synthesis
