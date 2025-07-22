@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 from libsbml import (
+    AST_NAME,
     AST_RELATIONAL_EQ,
     AST_RELATIONAL_GEQ,
     AST_RELATIONAL_GT,
@@ -32,7 +33,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from jinja2.environment import Template
-    from libsbml import ASTNode
+    from libsbml import ASTNode, Rule
 
 
 class ChasteSbmlModel:
@@ -447,15 +448,14 @@ class ChasteSbmlModel:
                     self._odes[species_id] = "-" + reaction_id
 
         # Extract ODEs from rate rules
-        for rule in self._sbml_rules:
-            if rule.getTypeCode() == SBML_RATE_RULE:
-                lhs = rule.getVariable()
+        rate_rules = [r for r in self._sbml_rules if r.getTypeCode() == SBML_RATE_RULE]
+        for rule in rate_rules:
+            lhs = rule.getVariable()
+            if lhs in self._odes:
+                raise ValueError(f"{lhs} has both a rate rule and a reaction.")
 
-                if lhs in self._odes:
-                    raise ValueError(f"{lhs} has both a rate rule and a reaction.")
-
-                rhs = self._convert_str_formula(rule.getFormula())
-                self._odes[lhs] = rhs
+            rhs = self._convert_str_formula(rule.getFormula())
+            self._odes[lhs] = rhs
 
     def _format_compartments(self) -> None:
         """Add compartments to template variables."""
@@ -639,23 +639,22 @@ class ChasteSbmlModel:
 
     def _format_rules(self) -> None:
         """Add rules to template variables."""
-        for rule in self._sbml_rules:
+        # Sort assignment rules - variables on rhs must be defined before they are used
+        assignment_rules = [r for r in self._sbml_rules if r.getTypeCode() == SBML_ASSIGNMENT_RULE]
+        assignment_rules = self._sort_rules(assignment_rules)
+
+        for rule in assignment_rules:
             rule_id = rule.getId()
             label = rule.getName().strip()
+            lhs = rule.getVariable()
+            rhs = self._convert_str_formula(rule.getFormula())
+            self._add_assignment_rule(rule_id, label, lhs, rhs)
 
-            type_code = rule.getTypeCode()
-            if type_code == SBML_ASSIGNMENT_RULE:
-                lhs = rule.getVariable()
-                rhs = self._convert_str_formula(rule.getFormula())
-                self._add_assignment_rule(rule_id, label, lhs, rhs)
+        # Algebraic rules are not implemented
+        if any(r.getTypeCode() == SBML_ALGEBRAIC_RULE for r in self._sbml_rules):
+            raise NotImplementedError("Algebraic rules are not yet supported.")
 
-            elif type_code == SBML_ALGEBRAIC_RULE:
-                # Not implemented
-                raise NotImplementedError("Algebraic rules are not yet supported.")
-
-            elif type_code == SBML_RATE_RULE:
-                # Rate rules are handled in ODE extraction
-                pass
+        # Note: Rate rules are handled during ODE extraction
 
     def _format_species(self) -> None:
         """Add species to template variables."""
@@ -821,3 +820,85 @@ class ChasteSbmlModel:
         self._format_reactions()
         self._format_events()
         self._format_function_definitions()
+
+    def _sort_rules(self, rules: list["Rule"]) -> list["Rule"]:
+        """Sort rules based on their dependency."""
+
+        def _search_formula(node: "ASTNode", name: str) -> bool:
+            if node is None:
+                return False
+            if node.getType() == AST_NAME and node.getName() == name:
+                return True
+
+            for i in range(node.getNumChildren()):
+                child = node.getChild(i)
+                if _search_formula(child, name):
+                    return True
+            return False
+
+        _compare_cache = dict()
+
+        def _compare_rules(rule_a: "Rule", rule_b: "Rule") -> int:
+            id_a = rule_a.getId()
+            id_b = rule_b.getId()
+
+            order = _compare_cache.get((id_a, id_b), None)
+            if order is not None:
+                return order
+
+            var_a = rule_a.getVariable()
+            var_b = rule_b.getVariable()
+
+            rhs_a = rule_a.getMath()
+            rhs_b = rule_b.getMath()
+
+            # Check if var_a is in rhs_b
+            var_a_in_rhs_b = _search_formula(rhs_b, var_a)
+
+            # Check if var_b is in rhs_a
+            var_b_in_rhs_a = _search_formula(rhs_a, var_b)
+
+            if var_a_in_rhs_b and not var_b_in_rhs_a:
+                # var_a is used in rhs_b, but not vice versa
+                # rule_a comes before rule_b
+                _compare_cache[(id_a, id_b)] = -1
+                _compare_cache[(id_b, id_a)] = 1
+                return -1
+
+            if var_b_in_rhs_a and not var_a_in_rhs_b:
+                # var_b is used in rhs_a, but not vice versa
+                # rule_b comes before rule_a
+                _compare_cache[(id_a, id_b)] = 1
+                _compare_cache[(id_b, id_a)] = -1
+                return 1
+
+            # Order doesn't matter (rules unrelated) or is uncertain (cyclic dependency)
+            _compare_cache[(id_a, id_b)] = 0
+            _compare_cache[(id_b, id_a)] = 0
+            return 0
+
+        def _quicksort(items: list["Rule"]) -> list["Rule"]:
+            n = len(items)
+
+            if n < 2:
+                return items
+
+            pivot_index = n // 2
+            pivot_item = items[pivot_index]
+
+            left_items = []
+            right_items = []
+
+            for i, item in enumerate(items):
+                if i == pivot_index:
+                    continue
+
+                order = _compare_rules(item, pivot_item)
+                if order < 0:  # item < pivot_item
+                    left_items.append(item)
+                else:
+                    right_items.append(item)
+
+            return _quicksort(left_items) + [pivot_item] + _quicksort(right_items)
+
+        return _quicksort(rules)
