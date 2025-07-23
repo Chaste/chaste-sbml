@@ -822,7 +822,14 @@ class ChasteSbmlModel:
         self._format_function_definitions()
 
     def _sort_rules(self, rules: list["Rule"]) -> list["Rule"]:
-        """Sort rules based on their dependency."""
+        """Sort rules based on their dependency.
+        Rules are sorted such that if rule A depends on B (A -> B), then B comes
+        before A. It is assumed that the input rules are acyclic. This function
+        can't sort cyclic dependencies such as A -> B -> A, or A -> B -> C -> A.
+
+        :param rules: The list of rules to sort.
+        :return: The sorted list of rules.
+        """
 
         def _search_formula(node: "ASTNode", name: str) -> bool:
             """Recursively search for a variable name in the AST formula."""
@@ -840,16 +847,17 @@ class ChasteSbmlModel:
         _compare_cache = dict()
 
         def _compare_rules(rule_a: "Rule", rule_b: "Rule") -> int:
-            """Compare two rules based on their dependencies.
+            """Compare two rules based on their dependency.
 
-            :param rule_a: The first rule to compare.
-            :param rule_b: The second rule to compare.
+            :param rule_a: The first rule (A).
+            :param rule_b: The second rule (B).
 
             :return: An integer indicating the order of the rules.
-                -1 if rule_a < rule_b (rule_a comes before rule_b)
-                1 if rule_a > rule_b (rule_a comes after rule_b)
-                0 if they are unrelated or depend directly on each other
+                -1 if A < B (A comes before B)
+                1 if A > B (A comes after B)
+                0 if the order doesn't matter
             """
+
             id_a = rule_a.getId()
             id_b = rule_b.getId()
 
@@ -864,37 +872,33 @@ class ChasteSbmlModel:
             rhs_b = rule_b.getMath()
 
             # Check if var_a is in rhs_b
-            var_a_in_rhs_b = _search_formula(rhs_b, var_a)
-
-            # Check if var_b is in rhs_a
-            var_b_in_rhs_a = _search_formula(rhs_a, var_b)
-
-            if var_a_in_rhs_b and not var_b_in_rhs_a:
-                # var_a is used in rhs_b, but not vice versa
-                # rule_a comes before rule_b
+            if _search_formula(rhs_b, var_a):
+                # var_a is used in rhs_b: rule_a comes before rule_b
                 _compare_cache[(id_a, id_b)] = -1
                 _compare_cache[(id_b, id_a)] = 1
                 return -1
 
-            if var_b_in_rhs_a and not var_a_in_rhs_b:
-                # var_b is used in rhs_a, but not vice versa
-                # rule_b comes before rule_a
+            # Check if var_b is in rhs_a
+            if _search_formula(rhs_a, var_b):
+                # var_b is used in rhs_a: rule_b comes before rule_a
                 _compare_cache[(id_a, id_b)] = 1
                 _compare_cache[(id_b, id_a)] = -1
                 return 1
 
-            # Order doesn't matter (rules unrelated) or is uncertain (cyclic dependency)
+            # Order doesn't matter
             _compare_cache[(id_a, id_b)] = 0
             _compare_cache[(id_b, id_a)] = 0
             return 0
 
         def _insertion_sort(rules: list["Rule"]) -> list["Rule"]:
-            """Sort rules using insertion sort based on their dependencies."""
-            # We need to compare every pair of rules because of cases such as:
+            """Sort rules using insertion sort based on their dependency."""
+            # We need to compare each rule to all the others until we find a
+            # non-zero comparison i.e. a +1 or -1 match (or until we exhaust
+            # all options) because of cases such as:
             # Initial order: (a, b, c)
-            # a == b (order doesn't matter);
-            # b == c (order doesn't matter);
-            # a > c (a should come after c);
+            # a == b (order doesn't matter, comparison is 0);
+            # b == c (order doesn't matter, comparison is 0);
+            # a > c (a should come after c, comparison is 1);
             # If we only compare (a, b) and (b, c), no changes will be made.
             sorted_rules = []
 
