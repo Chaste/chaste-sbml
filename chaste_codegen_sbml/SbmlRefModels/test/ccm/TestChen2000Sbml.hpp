@@ -118,7 +118,8 @@ private:
 
             // Compare end solutions with Tellurium values
             std::vector<double> end_solution = ode_solution.rGetSolutions().back();
-            std::vector<std::vector<double>> expected_end_solutions = {
+
+            std::vector<std::vector<double>> expected_solution = {
 
                 {0.001184, 1e-4},  // Cln2
                 {3.619189, 1e-2},  // Clb2_T
@@ -134,13 +135,83 @@ private:
                 {0.687618, 1e-2},  // BUD
                 {1.257020, 1e-2},  // SPN
             };
+
             std::vector<std::string> var_names = ode_system.rGetStateVariableNames();
+            double exp_val;
+            double tol;
 
             for (unsigned i = 0; i < ODE_SIZE; i++)
             {
-                double expected_value = expected_end_solutions[i][0];
-                double tolerance = expected_end_solutions[i][1];
-                TSM_ASSERT_DELTA(var_names[i].c_str(), end_solution[i], expected_value, tolerance);
+                exp_val = expected_solution[i][0];
+                tol = expected_solution[i][1];
+                TSM_ASSERT_DELTA(var_names[i].c_str(), end_solution[i], exp_val, tol);
+            }
+
+            // Compare solution stats with Tellurium values
+            std::vector<double> times = ode_solution.rGetTimes();
+            std::vector<std::vector<double>> solutions = ode_solution.rGetSolutions();
+
+            std::vector<std::vector<std::vector<double>>> expected_stats = {
+                // {min, max, mean, stddev, q1, q2, q3}, {min_tol, max_tol, ...}
+                {{0.000742, 0.519493, 0.050706, 0.118540, 0.000939, 0.005803, 0.017823}, {1e-05, 1e-02, 1e-02, 1e-02, 1e-05, 1e-04, 1e-03}},      // Cln2
+                {{0.000677, 3.619189, 1.368818, 1.228197, 0.001046, 1.509475, 2.410650}, {1e-05, 1e-02, 1e-02, 1e-02, 1e-04, 1e-02, 1e-02}},      // Clb2_T
+                {{0.023832, 0.267919, 0.096199, 0.049997, 0.060660, 0.090080, 0.118051}, {1e-03, 1e-02, 1e-02, 1e-03, 1e-03, 1e-03, 1e-02}},      // Clb5_T
+                {{0.004212, 1.316170, 0.321432, 0.490366, 0.010169, 0.014721, 0.797223}, {1e-04, 1e-02, 1e-02, 1e-02, 1e-03, 1e-03, 1e-02}},      // Sic1_T
+                {{0.000076, 0.079031, 0.007810, 0.006538, 0.000921, 0.008694, 0.012629}, {1e-06, 1e-03, 1e-03, 1e-04, 1e-05, 1e-04, 1e-03}},      // Clb2_Sic1
+                {{0.000274, 0.165560, 0.017047, 0.030014, 0.000444, 0.000802, 0.029744}, {1e-05, 1e-02, 1e-02, 1e-03, 1e-05, 1e-05, 1e-03}},      // Clb5_Sic1
+                {{0.063078, 2.604753, 1.009452, 0.844044, 0.108376, 0.946726, 1.743825}, {1e-03, 1e-02, 1e-02, 1e-02, 1e-02, 1e-02, 1e-02}},      // Cdc20_T
+                {{0.005739, 0.689086, 0.132325, 0.102236, 0.058253, 0.121006, 0.177074}, {1e-04, 1e-02, 1e-02, 1e-02, 1e-03, 1e-02, 1e-02}},      // Cdc20
+                {{0.006011, 0.999781, 0.315141, 0.447497, 0.013060, 0.013735, 0.993248}, {1e-04, 1e-02, 1e-02, 1e-02, 1e-03, 1e-03, 1e-02}},      // Hct1
+                {{0.660800, 3.737796, 1.775750, 0.867305, 1.019076, 1.571603, 2.423702}, {1e-06, 1e-02, 1e-02, 1e-02, 1e-02, 1e-02, 1e-02}},      // mass
+                {{0.000000, 48.574775, 18.086541, 16.327771, 0.033456, 17.437463, 32.358107}, {1e-06, 1e-02, 1e-02, 1e-02, 1e-03, 1e-02, 1e-02}}, // ORI
+                {{0.000000, 2.518914, 0.633002, 0.613297, 0.094799, 0.526040, 0.666904}, {1e-06, 1e-02, 1e-02, 1e-02, 1e-03, 1e-02, 1e-02}},      // BUD
+                {{0.000000, 1.257020, 0.700241, 0.557746, 0.003674, 1.037460, 1.219701}, {1e-06, 1e-02, 1e-02, 1e-02, 1e-04, 1e-02, 1e-02}},      // SPN
+            };
+
+            for (unsigned i = 0; i < ODE_SIZE; i++)
+            {
+                const char *var_name = var_names[i].c_str();
+
+                std::vector<double> values;
+                for (unsigned j = 0; j < times.size(); j++)
+                {
+                    values.push_back(solutions[j][i]);
+                }
+
+                double min_val = st::min(values);
+                exp_val = expected_stats[i][0][0];
+                tol = expected_stats[i][1][0];
+                TSM_ASSERT_DELTA(var_name, min_val, exp_val, tol);
+
+                double max_val = st::max(values);
+                exp_val = expected_stats[i][0][1];
+                tol = expected_stats[i][1][1];
+                TSM_ASSERT_DELTA(var_name, max_val, exp_val, tol);
+
+                double mean_val = st::mean(values);
+                exp_val = expected_stats[i][0][2];
+                tol = expected_stats[i][1][2];
+                TSM_ASSERT_DELTA(var_name, mean_val, exp_val, tol);
+
+                double std_val = st::stdev(values);
+                exp_val = expected_stats[i][0][3];
+                tol = expected_stats[i][1][3];
+                TSM_ASSERT_DELTA(var_name, std_val, exp_val, tol);
+
+                double q1_val = st::quantile(values, 0.25);
+                exp_val = expected_stats[i][0][4];
+                tol = expected_stats[i][1][4];
+                TSM_ASSERT_DELTA(var_name, q1_val, exp_val, tol);
+
+                double q2_val = st::quantile(values, 0.5);
+                exp_val = expected_stats[i][0][5];
+                tol = expected_stats[i][1][5];
+                TSM_ASSERT_DELTA(var_name, q2_val, exp_val, tol);
+
+                double q3_val = st::quantile(values, 0.75);
+                exp_val = expected_stats[i][0][6];
+                tol = expected_stats[i][1][6];
+                TSM_ASSERT_DELTA(var_name, q3_val, exp_val, tol);
             }
 
             // The following code provides nice output for gnuplot
@@ -148,9 +219,6 @@ private:
             // plot "chen_2000_cvode.dat" u 1:2 etc. for the various species...
             // or
             // plot "chen_2000_cvode.dat" u 1:2, "" u 1:3, "" u 1:4 etc. for all species
-
-            std::vector<double> times = ode_solution.rGetTimes();
-            std::vector<std::vector<double>> solutions = ode_solution.rGetSolutions();
 
             OutputFileHandler handler("");
             out_stream file = handler.OpenOutputFile("chen_2000_" + solverName + ".dat");
@@ -177,7 +245,8 @@ private:
     }
 
 public:
-    void TestOdeArchiving()
+    void
+    TestOdeArchiving()
     {
         OutputFileHandler handler("archive", false);
         std::string archive_filename = handler.GetOutputDirectoryFullPath() + "chen_2000_ode.arch";
