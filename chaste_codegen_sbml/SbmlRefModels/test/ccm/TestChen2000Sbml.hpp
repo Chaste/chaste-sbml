@@ -245,8 +245,7 @@ private:
     }
 
 public:
-    void
-    TestOdeArchiving()
+    void TestOdeArchiving()
     {
         OutputFileHandler handler("archive", false);
         std::string archive_filename = handler.GetOutputDirectoryFullPath() + "chen_2000_ode.arch";
