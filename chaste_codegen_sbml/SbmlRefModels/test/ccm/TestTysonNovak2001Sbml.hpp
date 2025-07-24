@@ -42,8 +42,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <numeric>
 #include <vector>
 
-#include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/shared_ptr.hpp>
@@ -78,7 +78,7 @@ class TestTysonNovak2001Sbml : public AbstractCellBasedTestSuite
 private:
     const unsigned ODE_SIZE = 8u;
 
-    void RunOdeWithSolver(AbstractIvpOdeSolver &rSolver, const std::string solverName)
+    void RunOdeWithSolver(AbstractIvpOdeSolver& rSolver, const std::string solverName)
     {
         try
         {
@@ -96,8 +96,8 @@ private:
             OdeSolution ode_solution;
 
             std::vector<double> times;
-            std::vector<std::vector<double>> solutions;
-            std::vector<std::vector<double>> derived_quantities(3);
+            std::vector<std::vector<double> > solutions;
+            std::vector<std::vector<double> > derived_quantities(3);
 
             initial_conditions = ode_system.GetInitialConditions();
 
@@ -308,7 +308,7 @@ private:
             }
             file->close();
         }
-        catch (Exception &e)
+        catch (Exception& e)
         {
             throw e;
         }
@@ -322,7 +322,7 @@ public:
     void TestCellCycleModel()
     {
         // Setup time
-        SimulationTime *p_simulation_time = SimulationTime::Instance();
+        SimulationTime* p_simulation_time = SimulationTime::Instance();
         const unsigned num_timesteps = 10000;
         p_simulation_time->SetEndTimeAndNumberOfTimeSteps(300.0, num_timesteps);
 
@@ -334,7 +334,7 @@ public:
         p_cell_0->SetCellProliferativeType(p_stem_type);
 
         // Set up the cell cycle model - this should use CVODE by default
-        auto p_ccm_0 = static_cast<TysonNovak2001SbmlCellCycleModel *>(p_cell_0->GetCellCycleModel());
+        auto p_ccm_0 = static_cast<TysonNovak2001SbmlCellCycleModel*>(p_cell_0->GetCellCycleModel());
         p_ccm_0->SetBirthTime(p_simulation_time->GetTime());
         TS_ASSERT_EQUALS(p_ccm_0->CanCellTerminallyDifferentiate(), false);
 
@@ -343,14 +343,14 @@ public:
 
         // Create another cell with a cell-cycle model that uses a BackwardEulerIvpOdeSolver
         auto solver = CellCycleModelOdeSolver<TysonNovak2001SbmlCellCycleModel, BackwardEulerIvpOdeSolver>::Instance();
-        boost::shared_ptr<CellCycleModelOdeSolver<TysonNovak2001SbmlCellCycleModel, BackwardEulerIvpOdeSolver>> p_solver(solver);
+        boost::shared_ptr<CellCycleModelOdeSolver<TysonNovak2001SbmlCellCycleModel, BackwardEulerIvpOdeSolver> > p_solver(solver);
         p_solver->SetSizeOfOdeSystem(ODE_SIZE);
         p_solver->Initialise();
 
         auto p_cell_1 = boost::make_shared<Cell>(p_wild_state, new TysonNovak2001SbmlCellCycleModel(p_solver));
         p_cell_1->SetCellProliferativeType(p_stem_type);
 
-        auto p_ccm_1 = static_cast<TysonNovak2001SbmlCellCycleModel *>(p_cell_1->GetCellCycleModel());
+        auto p_ccm_1 = static_cast<TysonNovak2001SbmlCellCycleModel*>(p_cell_1->GetCellCycleModel());
         p_ccm_1->SetBirthTime(p_simulation_time->GetTime());
         TS_ASSERT_EQUALS(p_ccm_1->CanCellTerminallyDifferentiate(), false);
         TS_ASSERT_EQUALS(p_ccm_1->GetOdeSolver()->GetSizeOfOdeSystem(), ODE_SIZE);
@@ -411,7 +411,7 @@ public:
         TS_ASSERT_EQUALS(p_ccm_0->ReadyToDivide(), false);
 
         auto p_mutation = boost::make_shared<ApcOneHitCellMutationState>();
-        auto p_ccm_2 = static_cast<TysonNovak2001SbmlCellCycleModel *>(p_ccm_0->CreateCellCycleModel());
+        auto p_ccm_2 = static_cast<TysonNovak2001SbmlCellCycleModel*>(p_ccm_0->CreateCellCycleModel());
         auto p_cell_2 = boost::make_shared<Cell>(p_mutation, p_ccm_2);
         p_cell_2->SetCellProliferativeType(p_stem_type);
 
@@ -470,7 +470,7 @@ public:
         std::string archive_filename = handler.GetOutputDirectoryFullPath() + "tyson_novak_2001_ode.arch";
 
         {
-            std::vector<double> state_variables = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0};
+            std::vector<double> state_variables = { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
 
             TysonNovak2001SbmlOdeSystem ode_system(state_variables);
 
@@ -492,12 +492,12 @@ public:
             boost::archive::text_oarchive output_arch(ofs);
 
             // Archive ODE system
-            AbstractOdeSystem *const p_const_ode_system = &ode_system;
+            AbstractOdeSystem* const p_const_ode_system = &ode_system;
             output_arch << p_const_ode_system;
         }
 
         {
-            AbstractOdeSystem *p_ode_system = nullptr;
+            AbstractOdeSystem* p_ode_system = nullptr;
 
             // Create an input archive
             std::ifstream ifs(archive_filename.c_str(), std::ios::binary);

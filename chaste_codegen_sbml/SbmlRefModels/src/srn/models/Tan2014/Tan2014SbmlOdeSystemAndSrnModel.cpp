@@ -10,7 +10,7 @@
 namespace sm = sbmlmath;
 
 Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem(std::vector<double> stateVariables)
-    : AbstractOdeSystem(6)
+        : AbstractOdeSystem(6)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Tan2014SbmlOdeSystem>);
 
@@ -77,7 +77,6 @@ Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem(std::vector<double> stateVariables)
     K_c_active = 0.0;
     K_n_active = 0.0;
 
-
     ProcessRules(0.0, mStateVariables);
 }
 
@@ -85,21 +84,21 @@ Tan2014SbmlOdeSystem::~Tan2014SbmlOdeSystem()
 {
 }
 
-void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
+void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
     ProcessRules(time, rY);
 
     rDY[0] = (Bsynthesis - kDegradation - kC - kdiffusion - K_c_active + K_n_active) / CytosolMembrane; // d[bcat_cm]/dt
-    rDY[1] = (-kC) / CytosolMembrane; // d[ligand_cm]/dt
-    rDY[2] = (kC) / CytosolMembrane; // d[complex_cm]/dt
-    rDY[3] = (-kN + kdiffusion + K_c_active - K_n_active) / nucleus; // d[bcat_nu]/dt
-    rDY[4] = (-kN) / nucleus; // d[ligand_nu]/dt
-    rDY[5] = (kN) / nucleus; // d[complex_nu]/dt
+    rDY[1] = (-kC) / CytosolMembrane;                                                                   // d[ligand_cm]/dt
+    rDY[2] = (kC) / CytosolMembrane;                                                                    // d[complex_cm]/dt
+    rDY[3] = (-kN + kdiffusion + K_c_active - K_n_active) / nucleus;                                    // d[bcat_nu]/dt
+    rDY[4] = (-kN) / nucleus;                                                                           // d[ligand_nu]/dt
+    rDY[5] = (kN) / nucleus;                                                                            // d[complex_nu]/dt
 
     // Scale time appropriately
 }
 
-std::vector<double> Tan2014SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double> &rY)
+std::vector<double> Tan2014SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
 {
     ProcessRules(time, rY);
 
@@ -142,11 +141,7 @@ void Tan2014SbmlOdeSystem::ProcessRules(double time, const std::vector<double>& 
     K_c_active = K_c_active_k * bcat_cm;
 
     K_n_active = K_n_active_k * bcat_nu;
-
 }
-
-
-
 
 // FUNCTIONS
 
@@ -178,11 +173,9 @@ void CellwiseOdeSystemInformation<Tan2014SbmlOdeSystem>::Initialise()
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(483.2);
 
-
     // DERIVED QUANTITIES
     this->mDerivedQuantityNames.push_back("drag");
     this->mDerivedQuantityUnits.push_back("non-dim");
-
 
     // PARAMETERS
     this->mParameterNames.push_back("compartment");
@@ -204,8 +197,8 @@ void CellwiseOdeSystemInformation<Tan2014SbmlOdeSystem>::Initialise()
 }
 
 // Define SbmlSrnWrapperModel using wrappers
-#include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
+#include "SbmlSrnWrapperModel.hpp"
 
 typedef SbmlSrnWrapperModel<Tan2014SbmlOdeSystem, 6> Tan2014SbmlSrnModel;
 

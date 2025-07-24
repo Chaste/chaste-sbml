@@ -10,7 +10,7 @@
 namespace sm = sbmlmath;
 
 Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem(std::vector<double> stateVariables)
-    : AbstractOdeSystem(5)
+        : AbstractOdeSystem(5)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Gardner1998SbmlOdeSystem>);
 
@@ -72,7 +72,6 @@ Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem(std::vector<double> stateVari
     reaction12 = 0.0;
     reaction13 = 0.0;
 
-
     ProcessRules(0.0, mStateVariables);
 }
 
@@ -80,19 +79,18 @@ Gardner1998SbmlOdeSystem::~Gardner1998SbmlOdeSystem()
 {
 }
 
-void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
+void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
     ProcessRules(time, rY);
 
     rDY[0] = (reaction1 - reaction2 - reaction3 - reaction8 + reaction9 + reaction10) / Cell; // d[C]/dt
-    rDY[1] = (reaction6 - reaction7) / Cell; // d[X]/dt
-    rDY[2] = (reaction4 - reaction5) / Cell; // d[M]/dt
-    rDY[3] = (-reaction8 + reaction9 + reaction11 + reaction12 - reaction13) / Cell; // d[Y]/dt
-    rDY[4] = (reaction8 - reaction9 - reaction10 - reaction11) / Cell; // d[Z]/dt
+    rDY[1] = (reaction6 - reaction7) / Cell;                                                  // d[X]/dt
+    rDY[2] = (reaction4 - reaction5) / Cell;                                                  // d[M]/dt
+    rDY[3] = (-reaction8 + reaction9 + reaction11 + reaction12 - reaction13) / Cell;          // d[Y]/dt
+    rDY[4] = (reaction8 - reaction9 - reaction10 - reaction11) / Cell;                        // d[Z]/dt
 
     // Scale time appropriately
 }
-
 
 void Gardner1998SbmlOdeSystem::ProcessRules(double time, const std::vector<double>& rY)
 {
@@ -206,11 +204,7 @@ void Gardner1998SbmlOdeSystem::ProcessRules(double time, const std::vector<doubl
         double d1 = 0.05;
         reaction13 = d1 * Y;
     }
-
 }
-
-
-
 
 // FUNCTIONS
 
@@ -238,7 +232,6 @@ void CellwiseOdeSystemInformation<Gardner1998SbmlOdeSystem>::Initialise()
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(1.0);
 
-
     // DERIVED QUANTITIES
 
     // PARAMETERS
@@ -249,8 +242,8 @@ void CellwiseOdeSystemInformation<Gardner1998SbmlOdeSystem>::Initialise()
 }
 
 // Define SbmlCellCycleWrapperModel using wrappers
-#include "SbmlCellCycleWrapperModel.hpp"
 #include "SbmlCellCycleWrapperModel.cpp"
+#include "SbmlCellCycleWrapperModel.hpp"
 
 typedef SbmlCellCycleWrapperModel<Gardner1998SbmlOdeSystem, 5> Gardner1998SbmlCellCycleModel;
 

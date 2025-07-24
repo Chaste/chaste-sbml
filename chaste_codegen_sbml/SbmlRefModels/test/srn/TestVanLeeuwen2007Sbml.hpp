@@ -39,8 +39,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <vector>
 
-#include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 
 #include <cxxtest/TestSuite.h>
 
@@ -62,7 +62,7 @@ class TestVanLeeuwen2007Sbml : public AbstractCellBasedTestSuite
 private:
     unsigned ODE_SIZE = 11u;
 
-    void RunOdeWithSolver(AbstractIvpOdeSolver &rSolver, const std::string solverName)
+    void RunOdeWithSolver(AbstractIvpOdeSolver& rSolver, const std::string solverName)
     {
         try
         {
@@ -102,7 +102,7 @@ private:
             OutputFileHandler handler("");
             out_stream file = handler.OpenOutputFile("vanleeuwen_2007_" + solverName + ".dat");
             std::vector<double> times = ode_solution.rGetTimes();
-            std::vector<std::vector<double>> solutions = ode_solution.rGetSolutions();
+            std::vector<std::vector<double> > solutions = ode_solution.rGetSolutions();
             for (unsigned i = 0; i < solutions.size(); i++)
             {
                 (*file) << times[i];
@@ -115,7 +115,7 @@ private:
             }
             file->close();
         }
-        catch (Exception &e)
+        catch (Exception& e)
         {
             throw e;
         }
@@ -192,12 +192,12 @@ public:
             boost::archive::text_oarchive output_arch(ofs);
 
             // Archive ODE system
-            AbstractOdeSystem *const p_const_ode_system = &ode_system;
+            AbstractOdeSystem* const p_const_ode_system = &ode_system;
             output_arch << p_const_ode_system;
         }
 
         {
-            AbstractOdeSystem *p_ode_system;
+            AbstractOdeSystem* p_ode_system;
 
             // Create an input archive
             std::ifstream ifs(archive_filename.c_str(), std::ios::binary);

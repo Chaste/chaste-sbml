@@ -46,7 +46,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 template <typename SBMLODE, unsigned SIZE>
 SbmlSrnWrapperModel<SBMLODE, SIZE>::SbmlSrnWrapperModel(boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver)
-    : AbstractOdeSrnModel(SIZE, pOdeSolver)
+        : AbstractOdeSrnModel(SIZE, pOdeSolver)
 {
 
     // TODO add CVODE solver. See VanLeeuwen CCM in trunk
@@ -72,8 +72,8 @@ SbmlSrnWrapperModel<SBMLODE, SIZE>::SbmlSrnWrapperModel(boost::shared_ptr<Abstra
 
 // New method for copy constructor
 template <typename SBMLODE, unsigned SIZE>
-SbmlSrnWrapperModel<SBMLODE, SIZE>::SbmlSrnWrapperModel(const SbmlSrnWrapperModel &rModel)
-    : AbstractOdeSrnModel(rModel)
+SbmlSrnWrapperModel<SBMLODE, SIZE>::SbmlSrnWrapperModel(const SbmlSrnWrapperModel& rModel)
+        : AbstractOdeSrnModel(rModel)
 {
     /*
      * Set each member variable of the new SRN model that inherits
@@ -95,7 +95,7 @@ SbmlSrnWrapperModel<SBMLODE, SIZE>::SbmlSrnWrapperModel(const SbmlSrnWrapperMode
 }
 
 template <typename SBMLODE, unsigned SIZE>
-AbstractSrnModel *SbmlSrnWrapperModel<SBMLODE, SIZE>::CreateSrnModel()
+AbstractSrnModel* SbmlSrnWrapperModel<SBMLODE, SIZE>::CreateSrnModel()
 {
     return new SbmlSrnWrapperModel(*this);
 }
@@ -160,7 +160,7 @@ void SbmlSrnWrapperModel<SBMLODE, SIZE>::Initialise()
 }
 
 template <typename SBMLODE, unsigned SIZE>
-void SbmlSrnWrapperModel<SBMLODE, SIZE>::OutputSrnModelParameters(out_stream &rParamsFile)
+void SbmlSrnWrapperModel<SBMLODE, SIZE>::OutputSrnModelParameters(out_stream& rParamsFile)
 {
     // No new parameters to output.
 
@@ -169,7 +169,7 @@ void SbmlSrnWrapperModel<SBMLODE, SIZE>::OutputSrnModelParameters(out_stream &rP
 }
 
 template <typename SBMLODE, unsigned SIZE>
-double SbmlSrnWrapperModel<SBMLODE, SIZE>::GetStateVariable(const std::string &rName)
+double SbmlSrnWrapperModel<SBMLODE, SIZE>::GetStateVariable(const std::string& rName)
 {
     assert(mpOdeSystem != nullptr);
     return mpOdeSystem->GetStateVariable(rName);

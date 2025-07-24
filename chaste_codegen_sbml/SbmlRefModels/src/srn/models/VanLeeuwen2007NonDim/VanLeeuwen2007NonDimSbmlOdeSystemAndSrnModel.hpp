@@ -15,64 +15,64 @@ private:
     friend class boost::serialization::access;
 
     template <class Archive>
-    void serialize(Archive &ar, const unsigned int version)
+    void serialize(Archive& ar, const unsigned int version)
     {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractOdeSystem);
+        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractOdeSystem);
     }
 
     // CONSTANT PARAMETERS
-    const double K_T = 1500.0; // K_T
-    const double K_C = 6000.0; // K_C
-    const double K_D = 150.0; // K_D
-    const double p_u = 1.0; // p_u
-    const double xi_D = 0.00666666666666667; // xi_D
+    const double K_T = 1500.0;                // K_T
+    const double K_C = 6000.0;                // K_C
+    const double K_D = 150.0;                 // K_D
+    const double p_u = 1.0;                   // p_u
+    const double xi_D = 0.00666666666666667;  // xi_D
     const double xi_Dx = 0.00666666666666667; // xi_Dx
-    const double xi_X = 0.266666666666667; // xi_X
-    const double xi_C = 0.0; // xi_C
-    const double d_Dx = 0.00666666666666667; // d_Dx
-    const double d_X = 0.133333333333333; // d_X
-    const double d_D = 0.00666666666666667; // d_D
-    const double p_c = 0.0; // p_c
-    const double s_D = 0.133333333333333; // s_D
-    const double s_X = 0.0533333333333333; // s_X
-    const double d_u = 0.0666666666666667; // d_u
-    const double s_c = 1.0; // s_c
-    const double d_c = 0.00133333333333333; // d_c
-    const double s_CA = 0.0111111111111111; // s_CA
-    const double d_CA = 0.466666666666667; // d_CA
-    const double s_CT = 0.00133333333333333; // s_CT
-    const double d_CT = 1.0; // d_CT
-    const double s_A = 0.8; // s_A
-    const double d_A = 0.00266666666666667; // d_A
-    const double s_T = 0.4; // s_T
-    const double d_T = 0.000533333333333333; // d_T
-    const double s_Y = 1.0; // s_Y
-    const double d_Y = 0.00133333333333333; // d_Y
+    const double xi_X = 0.266666666666667;    // xi_X
+    const double xi_C = 0.0;                  // xi_C
+    const double d_Dx = 0.00666666666666667;  // d_Dx
+    const double d_X = 0.133333333333333;     // d_X
+    const double d_D = 0.00666666666666667;   // d_D
+    const double p_c = 0.0;                   // p_c
+    const double s_D = 0.133333333333333;     // s_D
+    const double s_X = 0.0533333333333333;    // s_X
+    const double d_u = 0.0666666666666667;    // d_u
+    const double s_c = 1.0;                   // s_c
+    const double d_c = 0.00133333333333333;   // d_c
+    const double s_CA = 0.0111111111111111;   // s_CA
+    const double d_CA = 0.466666666666667;    // d_CA
+    const double s_CT = 0.00133333333333333;  // s_CT
+    const double d_CT = 1.0;                  // d_CT
+    const double s_A = 0.8;                   // s_A
+    const double d_A = 0.00266666666666667;   // d_A
+    const double s_T = 0.4;                   // s_T
+    const double d_T = 0.000533333333333333;  // d_T
+    const double s_Y = 1.0;                   // s_Y
+    const double d_Y = 0.00133333333333333;   // d_Y
 
     // STATE VARIABLES
-    double X; // X
-    double D; // D
-    double C_o; // C_o
-    double C_u; // C_u
-    double C_c; // C_c
-    double A; // A
-    double C_A; // C_A
-    double T; // T
+    double X;    // X
+    double D;    // D
+    double C_o;  // C_o
+    double C_u;  // C_u
+    double C_c;  // C_c
+    double A;    // A
+    double C_A;  // C_A
+    double T;    // T
     double C_oT; // C_oT
     double C_cT; // C_cT
-    double Y; // Y
+    double Y;    // Y
 
     // DERIVED QUANTITIES
-    double C_F; // C_F
-    double C_T; // C_T
+    double C_F;  // C_F
+    double C_T;  // C_T
     double drag; // drag
 
     // VARIABLE PARAMETERS
     double cytosolmembraneandnucleus; // cytosolmembraneandnucleus
-    double wnt_level; // wnt_level
-    double gamma1; // gamma1
-    double gamma2; // gamma2
-    double ComplexTransitThreshold; // ComplexTransitThreshold
+    double wnt_level;                 // wnt_level
+    double gamma1;                    // gamma1
+    double gamma2;                    // gamma2
+    double ComplexTransitThreshold;   // ComplexTransitThreshold
 
     // RULE-BASED PARAMETERS
 
@@ -102,51 +102,49 @@ private:
     double mw925599eb_19a0_4434_8be3_67c40721b71d; // r14
     double mw321b3e5e_f6ed_4345_9346_55ffb1ff2137; // r24
 
-
 public:
     VanLeeuwen2007NonDimSbmlOdeSystem(std::vector<double> stateVariables = std::vector<double>());
 
     ~VanLeeuwen2007NonDimSbmlOdeSystem();
 
-    void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
+    void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY);
     void ProcessRules(double time, const std::vector<double>& rY);
 
-    std::vector<double> ComputeDerivedQuantities(double time, const std::vector<double> &rY);
-
+    std::vector<double> ComputeDerivedQuantities(double time, const std::vector<double>& rY);
 
     // FUNCTIONS
 };
 
 namespace
 {
-    namespace serialization
+namespace serialization
+{
+    // Provide constructor for serializing VanLeeuwen2007NonDimSbmlOdeSystem
+    template <class Archive>
+    inline void save_construct_data(Archive& ar, const VanLeeuwen2007NonDimSbmlOdeSystem* t, const unsigned int version)
     {
-        // Provide constructor for serializing VanLeeuwen2007NonDimSbmlOdeSystem
-        template <class Archive>
-        inline void save_construct_data(Archive &ar, const VanLeeuwen2007NonDimSbmlOdeSystem * t, const unsigned int version)
-        {
-            // Save data required to construct instance
-            const std::vector<double> state_variables = t->rGetConstStateVariables();
-            ar << state_variables;
-        }
+        // Save data required to construct instance
+        const std::vector<double> state_variables = t->rGetConstStateVariables();
+        ar << state_variables;
+    }
 
-        // Provide constructor for de-serializing VanLeeuwen2007NonDimSbmlOdeSystem
-        template <class Archive>
-        inline void load_construct_data(Archive &ar, VanLeeuwen2007NonDimSbmlOdeSystem * t, const unsigned int version)
-        {
-            // Retrieve data from archive required to construct new instance
-            std::vector<double> state_variables;
-            ar >> state_variables;
+    // Provide constructor for de-serializing VanLeeuwen2007NonDimSbmlOdeSystem
+    template <class Archive>
+    inline void load_construct_data(Archive& ar, VanLeeuwen2007NonDimSbmlOdeSystem* t, const unsigned int version)
+    {
+        // Retrieve data from archive required to construct new instance
+        std::vector<double> state_variables;
+        ar >> state_variables;
 
-            // Invoke inplace constructor to initialise instance
-            ::new (t)VanLeeuwen2007NonDimSbmlOdeSystem(state_variables);
-        }
-    } // namespace serialization
-} // namespace ...
+        // Invoke inplace constructor to initialise instance
+        ::new (t) VanLeeuwen2007NonDimSbmlOdeSystem(state_variables);
+    }
+} // namespace serialization
+} // namespace
 
 // Define SbmlSrnWrapperModel using wrappers
-#include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
+#include "SbmlSrnWrapperModel.hpp"
 
 typedef SbmlSrnWrapperModel<VanLeeuwen2007NonDimSbmlOdeSystem, 11> VanLeeuwen2007NonDimSbmlSrnModel;
 

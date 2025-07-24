@@ -47,7 +47,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 template <typename SBMLODE, unsigned SIZE>
 SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SbmlCellCycleWrapperModel(boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver)
-    : AbstractOdeBasedCellCycleModel(SIZE, pOdeSolver)
+        : AbstractOdeBasedCellCycleModel(SIZE, pOdeSolver)
 {
     if (!mpOdeSolver)
     {
@@ -68,8 +68,8 @@ SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SbmlCellCycleWrapperModel(boost::share
 }
 
 template <typename SBMLODE, unsigned SIZE>
-SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SbmlCellCycleWrapperModel(const SbmlCellCycleWrapperModel &rModel)
-    : AbstractOdeBasedCellCycleModel(rModel)
+SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SbmlCellCycleWrapperModel(const SbmlCellCycleWrapperModel& rModel)
+        : AbstractOdeBasedCellCycleModel(rModel)
 {
     /*
      * Set each member variable of the new Cell Cycle model that inherits
@@ -146,14 +146,13 @@ void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::InitialiseDaughterCell()
          * would be incorrect. We must therefore access the CellProliferativeType via the cell's
          * CellPropertyCollection.
          */
-        boost::shared_ptr<AbstractCellProperty> p_transit_type =
-            mpCell->rGetCellPropertyCollection().GetCellPropertyRegistry()->Get<TransitCellProliferativeType>();
+        boost::shared_ptr<AbstractCellProperty> p_transit_type = mpCell->rGetCellPropertyCollection().GetCellPropertyRegistry()->Get<TransitCellProliferativeType>();
         mpCell->SetCellProliferativeType(p_transit_type);
     }
 }
 
 template <typename SBMLODE, unsigned SIZE>
-AbstractCellCycleModel *SbmlCellCycleWrapperModel<SBMLODE, SIZE>::CreateCellCycleModel()
+AbstractCellCycleModel* SbmlCellCycleWrapperModel<SBMLODE, SIZE>::CreateCellCycleModel()
 {
     return new SbmlCellCycleWrapperModel(*this);
 }
@@ -177,7 +176,7 @@ bool SbmlCellCycleWrapperModel<SBMLODE, SIZE>::CanCellTerminallyDifferentiate()
 }
 
 template <typename SBMLODE, unsigned SIZE>
-void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::OutputCellCycleModelParameters(out_stream &rParamsFile)
+void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::OutputCellCycleModelParameters(out_stream& rParamsFile)
 {
     // No new parameters to output.
 
@@ -186,7 +185,7 @@ void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::OutputCellCycleModelParameters(ou
 }
 
 template <typename SBMLODE, unsigned SIZE>
-double SbmlCellCycleWrapperModel<SBMLODE, SIZE>::GetStateVariable(const std::string &rName)
+double SbmlCellCycleWrapperModel<SBMLODE, SIZE>::GetStateVariable(const std::string& rName)
 {
     assert(mpOdeSystem != nullptr);
     return mpOdeSystem->GetStateVariable(rName);

@@ -8,46 +8,46 @@
 
 namespace sbmltest
 {
-    /** Calculate the maximum of a vector of doubles.
-     * @param vec The vector of doubles.
-     * @return The maximum value.
-     */
-    inline double max(const std::vector<double> &vec);
+/** Calculate the maximum of a vector of doubles.
+ * @param vec The vector of doubles.
+ * @return The maximum value.
+ */
+inline double max(const std::vector<double>& vec);
 
-    /** Calculate the mean of a vector of doubles.
-     * @param vec The vector of doubles.
-     * @return The mean value.
-     */
-    inline double mean(const std::vector<double> &vec);
+/** Calculate the mean of a vector of doubles.
+ * @param vec The vector of doubles.
+ * @return The mean value.
+ */
+inline double mean(const std::vector<double>& vec);
 
-    /** Calculate the minimum of a vector of doubles.
-     * @param vec The vector of doubles.
-     * @return The minimum value.
-     */
-    inline double min(const std::vector<double> &vec);
+/** Calculate the minimum of a vector of doubles.
+ * @param vec The vector of doubles.
+ * @return The minimum value.
+ */
+inline double min(const std::vector<double>& vec);
 
-    /** Calculate the standard deviation of a vector of doubles.
-     * @param vec The vector of doubles.
-     * @return The standard deviation value.
-     */
-    inline double stdev(const std::vector<double> &vec);
+/** Calculate the standard deviation of a vector of doubles.
+ * @param vec The vector of doubles.
+ * @return The standard deviation value.
+ */
+inline double stdev(const std::vector<double>& vec);
 
-    /** Calculate the qth quantile of a vector of doubles.
-     * @param vec The vector of doubles, assumed to be sorted.
-     * @param q The quantile to calculate (between 0 and 1).
-     * @return The qth quantile value.
-     */
-    inline double quantile(const std::vector<double> &vec, double q);
+/** Calculate the qth quantile of a vector of doubles.
+ * @param vec The vector of doubles, assumed to be sorted.
+ * @param q The quantile to calculate (between 0 and 1).
+ * @return The qth quantile value.
+ */
+inline double quantile(const std::vector<double>& vec, double q);
 
-    /** Calculate the variance of a vector of doubles.
-     * @param vec The vector of doubles.
-     * @return The variance value.
-     */
-    inline double variance(const std::vector<double> &vec);
+/** Calculate the variance of a vector of doubles.
+ * @param vec The vector of doubles.
+ * @return The variance value.
+ */
+inline double variance(const std::vector<double>& vec);
 } // namespace sbmltest
 
 // max
-inline double sbmltest::max(const std::vector<double> &vec)
+inline double sbmltest::max(const std::vector<double>& vec)
 {
     if (vec.empty())
     {
@@ -57,7 +57,7 @@ inline double sbmltest::max(const std::vector<double> &vec)
 }
 
 // mean
-inline double sbmltest::mean(const std::vector<double> &vec)
+inline double sbmltest::mean(const std::vector<double>& vec)
 {
     if (vec.empty())
     {
@@ -67,7 +67,7 @@ inline double sbmltest::mean(const std::vector<double> &vec)
 }
 
 // min
-inline double sbmltest::min(const std::vector<double> &vec)
+inline double sbmltest::min(const std::vector<double>& vec)
 {
     if (vec.empty())
     {
@@ -77,13 +77,13 @@ inline double sbmltest::min(const std::vector<double> &vec)
 }
 
 // stdev
-inline double sbmltest::stdev(const std::vector<double> &vec)
+inline double sbmltest::stdev(const std::vector<double>& vec)
 {
     return std::sqrt(sbmltest::variance(vec));
 }
 
 // quantile
-inline double sbmltest::quantile(const std::vector<double> &vec, double q)
+inline double sbmltest::quantile(const std::vector<double>& vec, double q)
 {
     if (vec.empty())
     {
@@ -112,7 +112,7 @@ inline double sbmltest::quantile(const std::vector<double> &vec, double q)
 }
 
 // variance
-inline double sbmltest::variance(const std::vector<double> &vec)
+inline double sbmltest::variance(const std::vector<double>& vec)
 {
     if (vec.size() < 2)
     {

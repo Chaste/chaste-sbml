@@ -10,7 +10,7 @@
 namespace sm = sbmlmath;
 
 Chen2000SbmlOdeSystem::Chen2000SbmlOdeSystem(std::vector<double> stateVariables)
-    : AbstractOdeSystem(13)
+        : AbstractOdeSystem(13)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Chen2000SbmlOdeSystem>);
 
@@ -104,7 +104,6 @@ Chen2000SbmlOdeSystem::Chen2000SbmlOdeSystem(std::vector<double> stateVariables)
 
     // REACTIONS
 
-
     ProcessRules(0.0, mStateVariables);
 }
 
@@ -112,27 +111,26 @@ Chen2000SbmlOdeSystem::~Chen2000SbmlOdeSystem()
 {
 }
 
-void Chen2000SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
+void Chen2000SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
     ProcessRules(time, rY);
 
-    rDY[0] = mass * (ks_n2 + ks_n2_ * SBF) - kd_n2 * Cln2; // d[Cln2]/dt
-    rDY[1] = mass * (ks_b2 + ks_b2_ * Mcm1) - Vd_b2 * Clb2_T; // d[Clb2_T]/dt
-    rDY[2] = mass * (ks_b5 + ks_b5_ * MBF) - Vd_b5 * Clb5_T; // d[Clb5_T]/dt
-    rDY[3] = ks_c1 + ks_c1_ * Swi5 - Sic1_T * (kd1_c1 + Vd2_c1 / (Jd2_c1 + Sic1_T)); // d[Sic1_T]/dt
-    rDY[4] = kas_b2 * Clb2 * Sic1 - Clb2_Sic1 * (kdi_b2 + Vd_b2 + kd1_c1 + Vd2_c1 / (Jd2_c1 + Sic1_T)); // d[Clb2_Sic1]/dt
-    rDY[5] = kas_b5 * Clb5 * Sic1 - Clb5_Sic1 * (kdi_b5 + Vd_b5 + kd1_c1 + Vd2_c1 / (Jd2_c1 + Sic1_T)); // d[Clb5_Sic1]/dt
-    rDY[6] = ks_20 + ks_20_ * Clb2 - kd_20 * Cdc20_T; // d[Cdc20_T]/dt
-    rDY[7] = ka_20 * (Cdc20_T - Cdc20) - Cdc20 * (Vi_20 + kd_20); // d[Cdc20]/dt
+    rDY[0] = mass * (ks_n2 + ks_n2_ * SBF) - kd_n2 * Cln2;                                                         // d[Cln2]/dt
+    rDY[1] = mass * (ks_b2 + ks_b2_ * Mcm1) - Vd_b2 * Clb2_T;                                                      // d[Clb2_T]/dt
+    rDY[2] = mass * (ks_b5 + ks_b5_ * MBF) - Vd_b5 * Clb5_T;                                                       // d[Clb5_T]/dt
+    rDY[3] = ks_c1 + ks_c1_ * Swi5 - Sic1_T * (kd1_c1 + Vd2_c1 / (Jd2_c1 + Sic1_T));                               // d[Sic1_T]/dt
+    rDY[4] = kas_b2 * Clb2 * Sic1 - Clb2_Sic1 * (kdi_b2 + Vd_b2 + kd1_c1 + Vd2_c1 / (Jd2_c1 + Sic1_T));            // d[Clb2_Sic1]/dt
+    rDY[5] = kas_b5 * Clb5 * Sic1 - Clb5_Sic1 * (kdi_b5 + Vd_b5 + kd1_c1 + Vd2_c1 / (Jd2_c1 + Sic1_T));            // d[Clb5_Sic1]/dt
+    rDY[6] = ks_20 + ks_20_ * Clb2 - kd_20 * Cdc20_T;                                                              // d[Cdc20_T]/dt
+    rDY[7] = ka_20 * (Cdc20_T - Cdc20) - Cdc20 * (Vi_20 + kd_20);                                                  // d[Cdc20]/dt
     rDY[8] = (ka_t1 + ka_t1_ * Cdc20) * (Hct1_T - Hct1) / (Ja_t1 + Hct1_T - Hct1) - Vi_t1 * Hct1 / (Ji_t1 + Hct1); // d[Hct1]/dt
-    rDY[9] = mu * mass; // d[mass]/dt
-    rDY[10] = ks_ori * (Clb5 + epsilonori_b2 * Clb2) - kd_ori * ORI; // d[ORI]/dt
-    rDY[11] = ks_bud * (Cln2 + Cln3 + epsilonbud_b5 * Clb5) - kd_bud * BUD; // d[BUD]/dt
-    rDY[12] = ks_spn * Clb2 / (J_spn + Clb2) - kd_spn * SPN; // d[SPN]/dt
+    rDY[9] = mu * mass;                                                                                            // d[mass]/dt
+    rDY[10] = ks_ori * (Clb5 + epsilonori_b2 * Clb2) - kd_ori * ORI;                                               // d[ORI]/dt
+    rDY[11] = ks_bud * (Cln2 + Cln3 + epsilonbud_b5 * Clb5) - kd_bud * BUD;                                        // d[BUD]/dt
+    rDY[12] = ks_spn * Clb2 / (J_spn + Clb2) - kd_spn * SPN;                                                       // d[SPN]/dt
 
     // Scale time appropriately
 }
-
 
 void Chen2000SbmlOdeSystem::ProcessRules(double time, const std::vector<double>& rY)
 {
@@ -173,9 +171,6 @@ void Chen2000SbmlOdeSystem::ProcessRules(double time, const std::vector<double>&
 
     // REACTIONS
 }
-
-
-
 
 // FUNCTIONS
 
@@ -235,7 +230,6 @@ void CellwiseOdeSystemInformation<Chen2000SbmlOdeSystem>::Initialise()
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.0);
 
-
     // DERIVED QUANTITIES
 
     // PARAMETERS
@@ -246,8 +240,8 @@ void CellwiseOdeSystemInformation<Chen2000SbmlOdeSystem>::Initialise()
 }
 
 // Define SbmlCellCycleWrapperModel using wrappers
-#include "SbmlCellCycleWrapperModel.hpp"
 #include "SbmlCellCycleWrapperModel.cpp"
+#include "SbmlCellCycleWrapperModel.hpp"
 
 typedef SbmlCellCycleWrapperModel<Chen2000SbmlOdeSystem, 13> Chen2000SbmlCellCycleModel;
 

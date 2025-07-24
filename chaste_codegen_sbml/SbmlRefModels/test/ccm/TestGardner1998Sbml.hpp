@@ -42,8 +42,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <numeric>
 #include <vector>
 
-#include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/shared_ptr.hpp>
@@ -77,7 +77,7 @@ class TestGardner1998Sbml : public AbstractCellBasedTestSuite
 private:
     const unsigned ODE_SIZE = 5u;
 
-    void RunOdeWithSolver(AbstractIvpOdeSolver &rSolver, const std::string solverName)
+    void RunOdeWithSolver(AbstractIvpOdeSolver& rSolver, const std::string solverName)
     {
         try
         {
@@ -111,7 +111,7 @@ private:
             OutputFileHandler handler("");
             out_stream file = handler.OpenOutputFile("gardner_1998_" + solverName + ".dat");
             std::vector<double> times = ode_solution.rGetTimes();
-            std::vector<std::vector<double>> solutions = ode_solution.rGetSolutions();
+            std::vector<std::vector<double> > solutions = ode_solution.rGetSolutions();
             for (unsigned i = 0; i < solutions.size(); i++)
             {
                 (*file) << times[i];
@@ -124,7 +124,7 @@ private:
             }
             file->close();
         }
-        catch (Exception &e)
+        catch (Exception& e)
         {
             throw e;
         }
@@ -141,7 +141,7 @@ public:
         std::string archive_filename = handler.GetOutputDirectoryFullPath() + "gardner_1998_ode.arch";
 
         {
-            std::vector<double> state_variables = {0.0, 1.0, 2.0, 3.0, 4.0};
+            std::vector<double> state_variables = { 0.0, 1.0, 2.0, 3.0, 4.0 };
 
             Gardner1998SbmlOdeSystem ode_system(state_variables);
 
@@ -160,12 +160,12 @@ public:
             boost::archive::text_oarchive output_arch(ofs);
 
             // Archive ODE system
-            AbstractOdeSystem *const p_const_ode_system = &ode_system;
+            AbstractOdeSystem* const p_const_ode_system = &ode_system;
             output_arch << p_const_ode_system;
         }
 
         {
-            AbstractOdeSystem *p_ode_system = nullptr;
+            AbstractOdeSystem* p_ode_system = nullptr;
 
             // Create an input archive
             std::ifstream ifs(archive_filename.c_str(), std::ios::binary);

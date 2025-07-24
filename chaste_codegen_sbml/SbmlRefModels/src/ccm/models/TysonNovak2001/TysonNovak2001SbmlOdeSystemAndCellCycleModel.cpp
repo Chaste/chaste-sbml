@@ -10,7 +10,7 @@
 namespace sm = sbmlmath;
 
 TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem(std::vector<double> stateVariables)
-    : AbstractOdeSystem(8)
+        : AbstractOdeSystem(8)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>);
 
@@ -104,23 +104,23 @@ TysonNovak2001SbmlOdeSystem::~TysonNovak2001SbmlOdeSystem()
 {
 }
 
-void TysonNovak2001SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
+void TysonNovak2001SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
     ProcessRules(time, rY);
 
     rDY[0] = (CycBt_synthesis - CycBdegradation - CycBdegradationviaCdh1 - CycBtdegradationviaCdc20a) / cell; // d[CycBt]/dt
-    rDY[1] = (Cdc20activation - Cdc20ainhibition - Cdc20adegradation) / cell; // d[Cdc20a]/dt
-    rDY[2] = (Cdh1synthesis - Cdh1degradation) / cell; // d[Cdh1]/dt
-    rDY[3] = (growth) / cell; // d[m]/dt
-    rDY[4] = (Cdc20tsynthesis - Cdc20t_deg) / cell; // d[Cdc20t]/dt
-    rDY[5] = (IEPsynthesis - IEPdegradation) / cell; // d[IEP]/dt
-    rDY[6] = (CKItsynthesis - CKIdegradation - CKItphosphorilationviaSK - eq_7) / cell; // d[CKIt]/dt
-    rDY[7] = (SKsynthesis - SKdegradation) / cell; // d[SK]/dt
+    rDY[1] = (Cdc20activation - Cdc20ainhibition - Cdc20adegradation) / cell;                                 // d[Cdc20a]/dt
+    rDY[2] = (Cdh1synthesis - Cdh1degradation) / cell;                                                        // d[Cdh1]/dt
+    rDY[3] = (growth) / cell;                                                                                 // d[m]/dt
+    rDY[4] = (Cdc20tsynthesis - Cdc20t_deg) / cell;                                                           // d[Cdc20t]/dt
+    rDY[5] = (IEPsynthesis - IEPdegradation) / cell;                                                          // d[IEP]/dt
+    rDY[6] = (CKItsynthesis - CKIdegradation - CKItphosphorilationviaSK - eq_7) / cell;                       // d[CKIt]/dt
+    rDY[7] = (SKsynthesis - SKdegradation) / cell;                                                            // d[SK]/dt
 
     // Scale time appropriately
 }
 
-std::vector<double> TysonNovak2001SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double> &rY)
+std::vector<double> TysonNovak2001SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
 {
     ProcessRules(time, rY);
 
@@ -212,10 +212,9 @@ void TysonNovak2001SbmlOdeSystem::ProcessRules(double time, const std::vector<do
 
     // SK degradation
     SKdegradation = k14 * SK;
-
 }
 
-double TysonNovak2001SbmlOdeSystem::ProcessEvents(double time, const std::vector<double> &rY)
+double TysonNovak2001SbmlOdeSystem::ProcessEvents(double time, const std::vector<double>& rY)
 {
     ProcessRules(time, rY);
 
@@ -225,7 +224,7 @@ double TysonNovak2001SbmlOdeSystem::ProcessEvents(double time, const std::vector
     std::vector<bool> state_vars_updated(8, false);
 
     // EVENT: Cell division
-    event_dist = (0.1) - (CycB) - std::numeric_limits<double>::epsilon();
+    event_dist = (0.1) - (CycB)-std::numeric_limits<double>::epsilon();
 
     // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
     if (std::abs(event_dist) < 1.0)
@@ -277,12 +276,12 @@ double TysonNovak2001SbmlOdeSystem::ProcessEvents(double time, const std::vector
     return min_dist;
 }
 
-double TysonNovak2001SbmlOdeSystem::CalculateRootFunction(double time, const std::vector<double> &rY)
+double TysonNovak2001SbmlOdeSystem::CalculateRootFunction(double time, const std::vector<double>& rY)
 {
     return ProcessEvents(time, rY);
 }
 
-bool TysonNovak2001SbmlOdeSystem::CalculateStoppingEvent(double time, const std::vector<double> &rY)
+bool TysonNovak2001SbmlOdeSystem::CalculateStoppingEvent(double time, const std::vector<double>& rY)
 {
     return ProcessEvents(time, rY) == 0.0;
 }
@@ -292,7 +291,6 @@ inline double TysonNovak2001SbmlOdeSystem::GK(double A1, double A2, double A3, d
 {
     return 2.0 * A4 * A1 / (A2 - A1 + A3 * A2 + A4 * A1 + sm::root(2.0, std::pow(A2 - A1 + A3 * A2 + A4 * A1, 2.0) - 4.0 * (A2 - A1) * A4 * A1));
 }
-
 
 template <>
 void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
@@ -330,7 +328,6 @@ void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.001);
 
-
     // DERIVED QUANTITIES
     this->mDerivedQuantityNames.push_back("CycB");
     this->mDerivedQuantityUnits.push_back("non-dim");
@@ -341,7 +338,6 @@ void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityNames.push_back("Mad");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
-
     // PARAMETERS
     this->mParameterNames.push_back("cell");
     this->mParameterUnits.push_back("non-dim");
@@ -350,8 +346,8 @@ void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
 }
 
 // Define SbmlCellCycleWrapperModel using wrappers
-#include "SbmlCellCycleWrapperModel.hpp"
 #include "SbmlCellCycleWrapperModel.cpp"
+#include "SbmlCellCycleWrapperModel.hpp"
 
 typedef SbmlCellCycleWrapperModel<TysonNovak2001SbmlOdeSystem, 8> TysonNovak2001SbmlCellCycleModel;
 

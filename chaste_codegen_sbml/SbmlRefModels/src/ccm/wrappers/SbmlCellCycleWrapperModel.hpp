@@ -36,8 +36,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef SBMLCELLCYCLEWRAPPERMODEL_HPP_
 #define SBMLCELLCYCLEWRAPPERMODEL_HPP_
 
-#include "ChasteSerialization.hpp"
 #include <boost/serialization/base_object.hpp>
+#include "ChasteSerialization.hpp"
 
 #include "AbstractOdeBasedCellCycleModel.hpp"
 
@@ -49,99 +49,99 @@ template <typename SBMLODE, unsigned SIZE>
 class SbmlCellCycleWrapperModel : public AbstractOdeBasedCellCycleModel
 {
 private:
-  /** Needed for serialization. */
-  friend class boost::serialization::access;
-  /**
-   * Archive the cell-cycle model and member variables.
-   *
-   * @param archive the archive
-   * @param version the current version of this class
-   */
-  template <class Archive>
-  void serialize(Archive &archive, const unsigned int version)
-  {
-    archive &boost::serialization::base_object<AbstractOdeBasedCellCycleModel>(*this);
-  }
+    /** Needed for serialization. */
+    friend class boost::serialization::access;
+    /**
+     * Archive the cell-cycle model and member variables.
+     *
+     * @param archive the archive
+     * @param version the current version of this class
+     */
+    template <class Archive>
+    void serialize(Archive& archive, const unsigned int version)
+    {
+        archive& boost::serialization::base_object<AbstractOdeBasedCellCycleModel>(*this);
+    }
 
 protected:
-  /**
-   * Protected copy-constructor for use by CreateCellCycleModel.  The only way for external code to create a copy of a Cell Cycle model
-   * is by calling that method, to ensure that a model of the correct subclass is created.
-   * This copy-constructor helps subclasses to ensure that all member variables are correctly copied when this happens.
-   *
-   * This method is called by child classes to set member variables for a daughter cell upon cell division.
-   * Note that the parent Cell Cycle model will have had ResetForDivision() called just before CreateCellCycleModel() is called,
-   * so performing an exact copy of the parent is suitable behaviour. Any daughter-cell-specific initialisation
-   * can be done in InitialiseDaughterCell().
-   *
-   * @param rModel the Cell Cycle model to copy.
-   */
-  SbmlCellCycleWrapperModel(const SbmlCellCycleWrapperModel &rModel);
+    /**
+     * Protected copy-constructor for use by CreateCellCycleModel.  The only way for external code to create a copy of a Cell Cycle model
+     * is by calling that method, to ensure that a model of the correct subclass is created.
+     * This copy-constructor helps subclasses to ensure that all member variables are correctly copied when this happens.
+     *
+     * This method is called by child classes to set member variables for a daughter cell upon cell division.
+     * Note that the parent Cell Cycle model will have had ResetForDivision() called just before CreateCellCycleModel() is called,
+     * so performing an exact copy of the parent is suitable behaviour. Any daughter-cell-specific initialisation
+     * can be done in InitialiseDaughterCell().
+     *
+     * @param rModel the Cell Cycle model to copy.
+     */
+    SbmlCellCycleWrapperModel(const SbmlCellCycleWrapperModel& rModel);
 
 public:
-  /**
-   * Default constructor calls base class.
-   *
-   * @param pOdeSolver An optional pointer to a cell-cycle model ODE solver object (allows the use of different ODE solvers)
-   */
-  SbmlCellCycleWrapperModel(boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver = boost::shared_ptr<AbstractCellCycleModelOdeSolver>());
+    /**
+     * Default constructor calls base class.
+     *
+     * @param pOdeSolver An optional pointer to a cell-cycle model ODE solver object (allows the use of different ODE solvers)
+     */
+    SbmlCellCycleWrapperModel(boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver = boost::shared_ptr<AbstractCellCycleModelOdeSolver>());
 
-  /**
-   * Initialise the cell-cycle model at the start of a simulation.
-   *
-   * This overridden method sets up a new Ode system.
-   */
-  void Initialise(); // override
+    /**
+     * Initialise the cell-cycle model at the start of a simulation.
+     *
+     * This overridden method sets up a new Ode system.
+     */
+    void Initialise(); // override
 
-  /**
-   * Reset cell-cycle model by calling AbstractOdeBasedCellCycleModelWithStoppingEvent::ResetForDivision()
-   * and setting initial conditions for protein concentrations.
-   */
-  void ResetForDivision();
+    /**
+     * Reset cell-cycle model by calling AbstractOdeBasedCellCycleModelWithStoppingEvent::ResetForDivision()
+     * and setting initial conditions for protein concentrations.
+     */
+    void ResetForDivision();
 
-  /**
-   * Overridden builder method to create new copies of this Cell Cycle model.
-   *
-   * @return Returns a copy of the current Cell Cycle model.
-   */
-  AbstractCellCycleModel *CreateCellCycleModel();
+    /**
+     * Overridden builder method to create new copies of this Cell Cycle model.
+     *
+     * @return Returns a copy of the current Cell Cycle model.
+     */
+    AbstractCellCycleModel* CreateCellCycleModel();
 
-  /**
-   * If the daughter cell type is stem, change it to transit.
-   */
-  void InitialiseDaughterCell();
+    /**
+     * If the daughter cell type is stem, change it to transit.
+     */
+    void InitialiseDaughterCell();
 
-  /**
-   * Overridden GetAverageTransitCellCycleTime() method.
-   * @return time
-   */
-  double GetAverageTransitCellCycleTime();
+    /**
+     * Overridden GetAverageTransitCellCycleTime() method.
+     * @return time
+     */
+    double GetAverageTransitCellCycleTime();
 
-  /**
-   * Overridden GetAverageStemCellCycleTime() method.
-   * @return time
-   */
-  double GetAverageStemCellCycleTime();
+    /**
+     * Overridden GetAverageStemCellCycleTime() method.
+     * @return time
+     */
+    double GetAverageStemCellCycleTime();
 
-  /**
-   * Overridden CanCellTerminallyDifferentiate() method.
-   * @return whether cell can terminally differentiate
-   */
-  bool CanCellTerminallyDifferentiate();
+    /**
+     * Overridden CanCellTerminallyDifferentiate() method.
+     * @return whether cell can terminally differentiate
+     */
+    bool CanCellTerminallyDifferentiate();
 
-  /**
-   * Outputs cell-cycle model parameters to file.
-   *
-   * @param rParamsFile the file stream to which the parameters are output
-   */
-  void OutputCellCycleModelParameters(out_stream &rParamsFile);
+    /**
+     * Outputs cell-cycle model parameters to file.
+     *
+     * @param rParamsFile the file stream to which the parameters are output
+     */
+    void OutputCellCycleModelParameters(out_stream& rParamsFile);
 
-  /**
-   * @return the value of a given state variable.
-   *
-   * @param rName the name of the state variable
-   */
-  double GetStateVariable(const std::string &rName);
+    /**
+     * @return the value of a given state variable.
+     *
+     * @param rName the name of the state variable
+     */
+    double GetStateVariable(const std::string& rName);
 };
 
 #endif // SBMLCELLCYCLEWRAPPERMODEL_HPP_

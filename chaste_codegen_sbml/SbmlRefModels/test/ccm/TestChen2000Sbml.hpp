@@ -43,8 +43,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <numeric>
 #include <vector>
 
-#include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/shared_ptr.hpp>
@@ -94,7 +94,7 @@ private:
         0.0     // SPN
     };
 
-    void RunOdeWithSolver(AbstractIvpOdeSolver &rSolver, const std::string solverName)
+    void RunOdeWithSolver(AbstractIvpOdeSolver& rSolver, const std::string solverName)
     {
         try
         {
@@ -119,21 +119,21 @@ private:
             // Compare end solutions with Tellurium values
             std::vector<double> end_solution = ode_solution.rGetSolutions().back();
 
-            std::vector<std::vector<double>> expected_solution = {
+            std::vector<std::vector<double> > expected_solution = {
 
-                {0.001184, 1e-4},  // Cln2
-                {3.619189, 1e-2},  // Clb2_T
-                {0.138153, 1e-2},  // Clb5_T
-                {0.007854, 1e-4},  // Sic1_T
-                {0.007456, 1e-4},  // Clb2_Sic1
-                {0.000274, 1e-5},  // Clb5_Sic1
-                {2.604753, 1e-2},  // Cdc20_T
-                {0.234977, 1e-2},  // Cdc20
-                {0.012937, 1e-3},  // Hct1
-                {3.737796, 1e-2},  // mass
-                {48.574775, 1e-2}, // ORI
-                {0.687618, 1e-2},  // BUD
-                {1.257020, 1e-2},  // SPN
+                { 0.001184, 1e-4 },  // Cln2
+                { 3.619189, 1e-2 },  // Clb2_T
+                { 0.138153, 1e-2 },  // Clb5_T
+                { 0.007854, 1e-4 },  // Sic1_T
+                { 0.007456, 1e-4 },  // Clb2_Sic1
+                { 0.000274, 1e-5 },  // Clb5_Sic1
+                { 2.604753, 1e-2 },  // Cdc20_T
+                { 0.234977, 1e-2 },  // Cdc20
+                { 0.012937, 1e-3 },  // Hct1
+                { 3.737796, 1e-2 },  // mass
+                { 48.574775, 1e-2 }, // ORI
+                { 0.687618, 1e-2 },  // BUD
+                { 1.257020, 1e-2 },  // SPN
             };
 
             std::vector<std::string> var_names = ode_system.rGetStateVariableNames();
@@ -149,28 +149,28 @@ private:
 
             // Compare solution stats with Tellurium values
             std::vector<double> times = ode_solution.rGetTimes();
-            std::vector<std::vector<double>> solutions = ode_solution.rGetSolutions();
+            std::vector<std::vector<double> > solutions = ode_solution.rGetSolutions();
 
-            std::vector<std::vector<std::vector<double>>> expected_stats = {
+            std::vector<std::vector<std::vector<double> > > expected_stats = {
                 // {min, max, mean, stddev, q1, q2, q3}, {min_tol, max_tol, ...}
-                {{0.000742, 0.519493, 0.050706, 0.118540, 0.000939, 0.005803, 0.017823}, {1e-05, 1e-02, 1e-02, 1e-02, 1e-05, 1e-04, 1e-03}},      // Cln2
-                {{0.000677, 3.619189, 1.368818, 1.228197, 0.001046, 1.509475, 2.410650}, {1e-05, 1e-02, 1e-02, 1e-02, 1e-04, 1e-02, 1e-02}},      // Clb2_T
-                {{0.023832, 0.267919, 0.096199, 0.049997, 0.060660, 0.090080, 0.118051}, {1e-03, 1e-02, 1e-02, 1e-03, 1e-03, 1e-03, 1e-02}},      // Clb5_T
-                {{0.004212, 1.316170, 0.321432, 0.490366, 0.010169, 0.014721, 0.797223}, {1e-04, 1e-02, 1e-02, 1e-02, 1e-03, 1e-03, 1e-02}},      // Sic1_T
-                {{0.000076, 0.079031, 0.007810, 0.006538, 0.000921, 0.008694, 0.012629}, {1e-06, 1e-03, 1e-03, 1e-04, 1e-05, 1e-04, 1e-03}},      // Clb2_Sic1
-                {{0.000274, 0.165560, 0.017047, 0.030014, 0.000444, 0.000802, 0.029744}, {1e-05, 1e-02, 1e-02, 1e-03, 1e-05, 1e-05, 1e-03}},      // Clb5_Sic1
-                {{0.063078, 2.604753, 1.009452, 0.844044, 0.108376, 0.946726, 1.743825}, {1e-03, 1e-02, 1e-02, 1e-02, 1e-02, 1e-02, 1e-02}},      // Cdc20_T
-                {{0.005739, 0.689086, 0.132325, 0.102236, 0.058253, 0.121006, 0.177074}, {1e-04, 1e-02, 1e-02, 1e-02, 1e-03, 1e-02, 1e-02}},      // Cdc20
-                {{0.006011, 0.999781, 0.315141, 0.447497, 0.013060, 0.013735, 0.993248}, {1e-04, 1e-02, 1e-02, 1e-02, 1e-03, 1e-03, 1e-02}},      // Hct1
-                {{0.660800, 3.737796, 1.775750, 0.867305, 1.019076, 1.571603, 2.423702}, {1e-06, 1e-02, 1e-02, 1e-02, 1e-02, 1e-02, 1e-02}},      // mass
-                {{0.000000, 48.574775, 18.086541, 16.327771, 0.033456, 17.437463, 32.358107}, {1e-06, 1e-02, 1e-02, 1e-02, 1e-03, 1e-02, 1e-02}}, // ORI
-                {{0.000000, 2.518914, 0.633002, 0.613297, 0.094799, 0.526040, 0.666904}, {1e-06, 1e-02, 1e-02, 1e-02, 1e-03, 1e-02, 1e-02}},      // BUD
-                {{0.000000, 1.257020, 0.700241, 0.557746, 0.003674, 1.037460, 1.219701}, {1e-06, 1e-02, 1e-02, 1e-02, 1e-04, 1e-02, 1e-02}},      // SPN
+                { { 0.000742, 0.519493, 0.050706, 0.118540, 0.000939, 0.005803, 0.017823 }, { 1e-05, 1e-02, 1e-02, 1e-02, 1e-05, 1e-04, 1e-03 } },      // Cln2
+                { { 0.000677, 3.619189, 1.368818, 1.228197, 0.001046, 1.509475, 2.410650 }, { 1e-05, 1e-02, 1e-02, 1e-02, 1e-04, 1e-02, 1e-02 } },      // Clb2_T
+                { { 0.023832, 0.267919, 0.096199, 0.049997, 0.060660, 0.090080, 0.118051 }, { 1e-03, 1e-02, 1e-02, 1e-03, 1e-03, 1e-03, 1e-02 } },      // Clb5_T
+                { { 0.004212, 1.316170, 0.321432, 0.490366, 0.010169, 0.014721, 0.797223 }, { 1e-04, 1e-02, 1e-02, 1e-02, 1e-03, 1e-03, 1e-02 } },      // Sic1_T
+                { { 0.000076, 0.079031, 0.007810, 0.006538, 0.000921, 0.008694, 0.012629 }, { 1e-06, 1e-03, 1e-03, 1e-04, 1e-05, 1e-04, 1e-03 } },      // Clb2_Sic1
+                { { 0.000274, 0.165560, 0.017047, 0.030014, 0.000444, 0.000802, 0.029744 }, { 1e-05, 1e-02, 1e-02, 1e-03, 1e-05, 1e-05, 1e-03 } },      // Clb5_Sic1
+                { { 0.063078, 2.604753, 1.009452, 0.844044, 0.108376, 0.946726, 1.743825 }, { 1e-03, 1e-02, 1e-02, 1e-02, 1e-02, 1e-02, 1e-02 } },      // Cdc20_T
+                { { 0.005739, 0.689086, 0.132325, 0.102236, 0.058253, 0.121006, 0.177074 }, { 1e-04, 1e-02, 1e-02, 1e-02, 1e-03, 1e-02, 1e-02 } },      // Cdc20
+                { { 0.006011, 0.999781, 0.315141, 0.447497, 0.013060, 0.013735, 0.993248 }, { 1e-04, 1e-02, 1e-02, 1e-02, 1e-03, 1e-03, 1e-02 } },      // Hct1
+                { { 0.660800, 3.737796, 1.775750, 0.867305, 1.019076, 1.571603, 2.423702 }, { 1e-06, 1e-02, 1e-02, 1e-02, 1e-02, 1e-02, 1e-02 } },      // mass
+                { { 0.000000, 48.574775, 18.086541, 16.327771, 0.033456, 17.437463, 32.358107 }, { 1e-06, 1e-02, 1e-02, 1e-02, 1e-03, 1e-02, 1e-02 } }, // ORI
+                { { 0.000000, 2.518914, 0.633002, 0.613297, 0.094799, 0.526040, 0.666904 }, { 1e-06, 1e-02, 1e-02, 1e-02, 1e-03, 1e-02, 1e-02 } },      // BUD
+                { { 0.000000, 1.257020, 0.700241, 0.557746, 0.003674, 1.037460, 1.219701 }, { 1e-06, 1e-02, 1e-02, 1e-02, 1e-04, 1e-02, 1e-02 } },      // SPN
             };
 
             for (unsigned i = 0; i < ODE_SIZE; i++)
             {
-                const char *var_name = var_names[i].c_str();
+                const char* var_name = var_names[i].c_str();
 
                 std::vector<double> values;
                 for (unsigned j = 0; j < times.size(); j++)
@@ -234,7 +234,7 @@ private:
             }
             file->close();
         }
-        catch (Exception &e)
+        catch (Exception& e)
         {
             throw e;
         }
@@ -279,13 +279,13 @@ public:
             boost::archive::text_oarchive output_arch(ofs);
 
             // Archive ODE system
-            AbstractOdeSystem *const p_const_ode_system = &ode_system;
+            AbstractOdeSystem* const p_const_ode_system = &ode_system;
             output_arch << p_const_ode_system;
         }
 
         // Load archive
         {
-            AbstractOdeSystem *p_ode_system = nullptr;
+            AbstractOdeSystem* p_ode_system = nullptr;
 
             // Create an input archive
             std::ifstream ifs(archive_filename.c_str(), std::ios::binary);

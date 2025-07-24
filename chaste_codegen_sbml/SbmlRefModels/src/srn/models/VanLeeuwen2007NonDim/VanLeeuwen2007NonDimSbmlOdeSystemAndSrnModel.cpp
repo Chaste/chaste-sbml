@@ -10,7 +10,7 @@
 namespace sm = sbmlmath;
 
 VanLeeuwen2007NonDimSbmlOdeSystem::VanLeeuwen2007NonDimSbmlOdeSystem(std::vector<double> stateVariables)
-    : AbstractOdeSystem(11)
+        : AbstractOdeSystem(11)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<VanLeeuwen2007NonDimSbmlOdeSystem>);
 
@@ -116,7 +116,6 @@ VanLeeuwen2007NonDimSbmlOdeSystem::VanLeeuwen2007NonDimSbmlOdeSystem(std::vector
     mw925599eb_19a0_4434_8be3_67c40721b71d = 0.0;
     mw321b3e5e_f6ed_4345_9346_55ffb1ff2137 = 0.0;
 
-
     ProcessRules(0.0, mStateVariables);
 }
 
@@ -124,26 +123,26 @@ VanLeeuwen2007NonDimSbmlOdeSystem::~VanLeeuwen2007NonDimSbmlOdeSystem()
 {
 }
 
-void VanLeeuwen2007NonDimSbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
+void VanLeeuwen2007NonDimSbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
     ProcessRules(time, rY);
 
-    rDY[0] = (-mwcfbf7716_cc13_473c_979a_033c57a28857 + mwab347951_a286_432d_b03b_254dcdba4a25 + mwc497befc_0edd_4b0d_8895_77dbfa05a4be - mwfa0f5940_d4e9_44e1_8a0c_379d6fdf9d0f) / cytosolmembraneandnucleus; // d[X]/dt
-    rDY[1] = (mwcfbf7716_cc13_473c_979a_033c57a28857 - mwab347951_a286_432d_b03b_254dcdba4a25 + mwbe108cd1_a5d9_4d55_97c9_ac584df6a005 - mwbe108cd1_a5d9_4d55_97c9_ac584df6a005 + mwad0ba91a_37fb_48f5_8392_6c043dfdd5dc - mwad0ba91a_37fb_48f5_8392_6c043dfdd5dc - mw321b3e5e_f6ed_4345_9346_55ffb1ff2137) / cytosolmembraneandnucleus; // d[D]/dt
+    rDY[0] = (-mwcfbf7716_cc13_473c_979a_033c57a28857 + mwab347951_a286_432d_b03b_254dcdba4a25 + mwc497befc_0edd_4b0d_8895_77dbfa05a4be - mwfa0f5940_d4e9_44e1_8a0c_379d6fdf9d0f) / cytosolmembraneandnucleus;                                                                                                                                                                     // d[X]/dt
+    rDY[1] = (mwcfbf7716_cc13_473c_979a_033c57a28857 - mwab347951_a286_432d_b03b_254dcdba4a25 + mwbe108cd1_a5d9_4d55_97c9_ac584df6a005 - mwbe108cd1_a5d9_4d55_97c9_ac584df6a005 + mwad0ba91a_37fb_48f5_8392_6c043dfdd5dc - mwad0ba91a_37fb_48f5_8392_6c043dfdd5dc - mw321b3e5e_f6ed_4345_9346_55ffb1ff2137) / cytosolmembraneandnucleus;                                           // d[D]/dt
     rDY[2] = (-mwbe108cd1_a5d9_4d55_97c9_ac584df6a005 + mw552840aa_6d3c_4188_850d_9a3caafcdaa5 - mw5a301d6f_ffa1_4362_98de_0919a68808bc - mw1c7459d0_b5a9_4a89_8682_79fc8ca4ca6c + mw51e5ed29_82db_47fa_9eed_ab52b7786dd5 - mw8704b9b0_f93d_405a_89a1_e000c5b66896 + mwf5440ce3_586c_491f_ba71_bbf1c485027f - mw3ece1442_a0b3_47eb_a8bf_cb317a46165f) / cytosolmembraneandnucleus; // d[C_o]/dt
-    rDY[3] = (mwbe108cd1_a5d9_4d55_97c9_ac584df6a005 + mwad0ba91a_37fb_48f5_8392_6c043dfdd5dc - mw1d3d836b_77bd_489b_9a37_acc874344652) / cytosolmembraneandnucleus; // d[C_u]/dt
-    rDY[4] = (-mwad0ba91a_37fb_48f5_8392_6c043dfdd5dc - mw4b073704_f41a_43d1_8ff8_af03f1cb6e1d - mw322e8f78_68f6_4293_ae2a_ab238ec5cf9b + mw08c332d6_1aaf_498f_8e1c_13f1b9da85bf + mw3ece1442_a0b3_47eb_a8bf_cb317a46165f) / cytosolmembraneandnucleus; // d[C_c]/dt
-    rDY[5] = (-mw1c7459d0_b5a9_4a89_8682_79fc8ca4ca6c + mw51e5ed29_82db_47fa_9eed_ab52b7786dd5 + mwfb6f8dfa_2e07_4249_a8fe_af33ca27471e - mwaa4e7692_3290_45ab_8a38_b5ffd49ede87) / cytosolmembraneandnucleus; // d[A]/dt
-    rDY[6] = (mw1c7459d0_b5a9_4a89_8682_79fc8ca4ca6c - mw51e5ed29_82db_47fa_9eed_ab52b7786dd5) / cytosolmembraneandnucleus; // d[C_A]/dt
-    rDY[7] = (-mw8704b9b0_f93d_405a_89a1_e000c5b66896 - mw322e8f78_68f6_4293_ae2a_ab238ec5cf9b + mwf5440ce3_586c_491f_ba71_bbf1c485027f + mw08c332d6_1aaf_498f_8e1c_13f1b9da85bf + mw86ea3c28_4745_4a89_9cbd_0f23c603e01b - mwee62535f_931d_41e9_ad53_2cad54b94778) / cytosolmembraneandnucleus; // d[T]/dt
-    rDY[8] = (mw8704b9b0_f93d_405a_89a1_e000c5b66896 - mwf5440ce3_586c_491f_ba71_bbf1c485027f + mw1b250e04_290a_4689_9fc5_5f0bf6711e02 - mw1b250e04_290a_4689_9fc5_5f0bf6711e02) / cytosolmembraneandnucleus; // d[C_oT]/dt
-    rDY[9] = (mw322e8f78_68f6_4293_ae2a_ab238ec5cf9b - mw08c332d6_1aaf_498f_8e1c_13f1b9da85bf) / cytosolmembraneandnucleus; // d[C_cT]/dt
-    rDY[10] = (mw1b250e04_290a_4689_9fc5_5f0bf6711e02 - mw925599eb_19a0_4434_8be3_67c40721b71d) / cytosolmembraneandnucleus; // d[Y]/dt
+    rDY[3] = (mwbe108cd1_a5d9_4d55_97c9_ac584df6a005 + mwad0ba91a_37fb_48f5_8392_6c043dfdd5dc - mw1d3d836b_77bd_489b_9a37_acc874344652) / cytosolmembraneandnucleus;                                                                                                                                                                                                               // d[C_u]/dt
+    rDY[4] = (-mwad0ba91a_37fb_48f5_8392_6c043dfdd5dc - mw4b073704_f41a_43d1_8ff8_af03f1cb6e1d - mw322e8f78_68f6_4293_ae2a_ab238ec5cf9b + mw08c332d6_1aaf_498f_8e1c_13f1b9da85bf + mw3ece1442_a0b3_47eb_a8bf_cb317a46165f) / cytosolmembraneandnucleus;                                                                                                                            // d[C_c]/dt
+    rDY[5] = (-mw1c7459d0_b5a9_4a89_8682_79fc8ca4ca6c + mw51e5ed29_82db_47fa_9eed_ab52b7786dd5 + mwfb6f8dfa_2e07_4249_a8fe_af33ca27471e - mwaa4e7692_3290_45ab_8a38_b5ffd49ede87) / cytosolmembraneandnucleus;                                                                                                                                                                     // d[A]/dt
+    rDY[6] = (mw1c7459d0_b5a9_4a89_8682_79fc8ca4ca6c - mw51e5ed29_82db_47fa_9eed_ab52b7786dd5) / cytosolmembraneandnucleus;                                                                                                                                                                                                                                                        // d[C_A]/dt
+    rDY[7] = (-mw8704b9b0_f93d_405a_89a1_e000c5b66896 - mw322e8f78_68f6_4293_ae2a_ab238ec5cf9b + mwf5440ce3_586c_491f_ba71_bbf1c485027f + mw08c332d6_1aaf_498f_8e1c_13f1b9da85bf + mw86ea3c28_4745_4a89_9cbd_0f23c603e01b - mwee62535f_931d_41e9_ad53_2cad54b94778) / cytosolmembraneandnucleus;                                                                                   // d[T]/dt
+    rDY[8] = (mw8704b9b0_f93d_405a_89a1_e000c5b66896 - mwf5440ce3_586c_491f_ba71_bbf1c485027f + mw1b250e04_290a_4689_9fc5_5f0bf6711e02 - mw1b250e04_290a_4689_9fc5_5f0bf6711e02) / cytosolmembraneandnucleus;                                                                                                                                                                      // d[C_oT]/dt
+    rDY[9] = (mw322e8f78_68f6_4293_ae2a_ab238ec5cf9b - mw08c332d6_1aaf_498f_8e1c_13f1b9da85bf) / cytosolmembraneandnucleus;                                                                                                                                                                                                                                                        // d[C_cT]/dt
+    rDY[10] = (mw1b250e04_290a_4689_9fc5_5f0bf6711e02 - mw925599eb_19a0_4434_8be3_67c40721b71d) / cytosolmembraneandnucleus;                                                                                                                                                                                                                                                       // d[Y]/dt
 
     // Scale time appropriately
 }
 
-std::vector<double> VanLeeuwen2007NonDimSbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double> &rY)
+std::vector<double> VanLeeuwen2007NonDimSbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
 {
     ProcessRules(time, rY);
 
@@ -253,11 +252,7 @@ void VanLeeuwen2007NonDimSbmlOdeSystem::ProcessRules(double time, const std::vec
 
     // r24
     mw321b3e5e_f6ed_4345_9346_55ffb1ff2137 = (d_D + wnt_level * xi_D) * D;
-
 }
-
-
-
 
 // FUNCTIONS
 
@@ -309,7 +304,6 @@ void CellwiseOdeSystemInformation<VanLeeuwen2007NonDimSbmlOdeSystem>::Initialise
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(36.0);
 
-
     // DERIVED QUANTITIES
     this->mDerivedQuantityNames.push_back("C_F");
     this->mDerivedQuantityUnits.push_back("non-dim");
@@ -319,7 +313,6 @@ void CellwiseOdeSystemInformation<VanLeeuwen2007NonDimSbmlOdeSystem>::Initialise
 
     this->mDerivedQuantityNames.push_back("drag");
     this->mDerivedQuantityUnits.push_back("non-dim");
-
 
     // PARAMETERS
     this->mParameterNames.push_back("cytosolmembraneandnucleus");
@@ -341,8 +334,8 @@ void CellwiseOdeSystemInformation<VanLeeuwen2007NonDimSbmlOdeSystem>::Initialise
 }
 
 // Define SbmlSrnWrapperModel using wrappers
-#include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
+#include "SbmlSrnWrapperModel.hpp"
 
 typedef SbmlSrnWrapperModel<VanLeeuwen2007NonDimSbmlOdeSystem, 11> VanLeeuwen2007NonDimSbmlSrnModel;
 

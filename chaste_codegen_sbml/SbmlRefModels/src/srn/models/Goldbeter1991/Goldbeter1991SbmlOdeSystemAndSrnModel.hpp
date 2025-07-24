@@ -15,15 +15,15 @@ private:
     friend class boost::serialization::access;
 
     template <class Archive>
-    void serialize(Archive &ar, const unsigned int version)
+    void serialize(Archive& ar, const unsigned int version)
     {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractOdeSystem);
+        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractOdeSystem);
     }
 
     // CONSTANT PARAMETERS
     const double VM1 = 3.0; // VM1
     const double VM3 = 1.0; // VM3
-    const double Kc = 0.5; // Kc
+    const double Kc = 0.5;  // Kc
 
     // STATE VARIABLES
     double C; // Cyclin
@@ -48,50 +48,47 @@ private:
     double reaction6; // activation of cyclin protease
     double reaction7; // deactivation of cyclin protease
 
-
 public:
     Goldbeter1991SbmlOdeSystem(std::vector<double> stateVariables = std::vector<double>());
 
     ~Goldbeter1991SbmlOdeSystem();
 
-    void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
+    void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY);
     void ProcessRules(double time, const std::vector<double>& rY);
-
-
 
     // FUNCTIONS
 };
 
 namespace
 {
-    namespace serialization
+namespace serialization
+{
+    // Provide constructor for serializing Goldbeter1991SbmlOdeSystem
+    template <class Archive>
+    inline void save_construct_data(Archive& ar, const Goldbeter1991SbmlOdeSystem* t, const unsigned int version)
     {
-        // Provide constructor for serializing Goldbeter1991SbmlOdeSystem
-        template <class Archive>
-        inline void save_construct_data(Archive &ar, const Goldbeter1991SbmlOdeSystem * t, const unsigned int version)
-        {
-            // Save data required to construct instance
-            const std::vector<double> state_variables = t->rGetConstStateVariables();
-            ar << state_variables;
-        }
+        // Save data required to construct instance
+        const std::vector<double> state_variables = t->rGetConstStateVariables();
+        ar << state_variables;
+    }
 
-        // Provide constructor for de-serializing Goldbeter1991SbmlOdeSystem
-        template <class Archive>
-        inline void load_construct_data(Archive &ar, Goldbeter1991SbmlOdeSystem * t, const unsigned int version)
-        {
-            // Retrieve data from archive required to construct new instance
-            std::vector<double> state_variables;
-            ar >> state_variables;
+    // Provide constructor for de-serializing Goldbeter1991SbmlOdeSystem
+    template <class Archive>
+    inline void load_construct_data(Archive& ar, Goldbeter1991SbmlOdeSystem* t, const unsigned int version)
+    {
+        // Retrieve data from archive required to construct new instance
+        std::vector<double> state_variables;
+        ar >> state_variables;
 
-            // Invoke inplace constructor to initialise instance
-            ::new (t)Goldbeter1991SbmlOdeSystem(state_variables);
-        }
-    } // namespace serialization
-} // namespace ...
+        // Invoke inplace constructor to initialise instance
+        ::new (t) Goldbeter1991SbmlOdeSystem(state_variables);
+    }
+} // namespace serialization
+} // namespace
 
 // Define SbmlSrnWrapperModel using wrappers
-#include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
+#include "SbmlSrnWrapperModel.hpp"
 
 typedef SbmlSrnWrapperModel<Goldbeter1991SbmlOdeSystem, 3> Goldbeter1991SbmlSrnModel;
 

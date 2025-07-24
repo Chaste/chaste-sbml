@@ -10,7 +10,7 @@
 namespace sm = sbmlmath;
 
 Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem(std::vector<double> stateVariables)
-    : AbstractOdeSystem(3)
+        : AbstractOdeSystem(3)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Goldbeter1991SbmlOdeSystem>);
 
@@ -58,7 +58,6 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem(std::vector<double> state
     reaction6 = 0.0;
     reaction7 = 0.0;
 
-
     ProcessRules(0.0, mStateVariables);
 }
 
@@ -66,17 +65,16 @@ Goldbeter1991SbmlOdeSystem::~Goldbeter1991SbmlOdeSystem()
 {
 }
 
-void Goldbeter1991SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
+void Goldbeter1991SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
     ProcessRules(time, rY);
 
     rDY[0] = (reaction1 - reaction2 - reaction3) / cell; // d[C]/dt
-    rDY[1] = (reaction4 - reaction5) / cell; // d[M]/dt
-    rDY[2] = (reaction6 - reaction7) / cell; // d[X]/dt
+    rDY[1] = (reaction4 - reaction5) / cell;             // d[M]/dt
+    rDY[2] = (reaction6 - reaction7) / cell;             // d[X]/dt
 
     // Scale time appropriately
 }
-
 
 void Goldbeter1991SbmlOdeSystem::ProcessRules(double time, const std::vector<double>& rY)
 {
@@ -144,11 +142,7 @@ void Goldbeter1991SbmlOdeSystem::ProcessRules(double time, const std::vector<dou
         double V4 = 0.5;
         reaction7 = cell * V4 * X * std::pow(K4 + X, -1.0);
     }
-
 }
-
-
-
 
 // FUNCTIONS
 
@@ -168,7 +162,6 @@ void CellwiseOdeSystemInformation<Goldbeter1991SbmlOdeSystem>::Initialise()
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.01);
 
-
     // DERIVED QUANTITIES
 
     // PARAMETERS
@@ -179,8 +172,8 @@ void CellwiseOdeSystemInformation<Goldbeter1991SbmlOdeSystem>::Initialise()
 }
 
 // Define SbmlSrnWrapperModel using wrappers
-#include "SbmlSrnWrapperModel.hpp"
 #include "SbmlSrnWrapperModel.cpp"
+#include "SbmlSrnWrapperModel.hpp"
 
 typedef SbmlSrnWrapperModel<Goldbeter1991SbmlOdeSystem, 3> Goldbeter1991SbmlSrnModel;
 

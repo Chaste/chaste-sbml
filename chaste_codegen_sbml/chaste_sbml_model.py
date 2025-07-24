@@ -4,6 +4,7 @@ import abc
 import os
 import pathlib
 import re
+import subprocess
 from typing import TYPE_CHECKING
 
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -22,7 +23,7 @@ from libsbml import (
     formulaToString,
 )
 
-from ._config import NON_DIM_UNITS, ODE_SUFFIX, VarType
+from ._config import NON_DIM_UNITS, ODE_SUFFIX, ROOT_DIR, VarType
 from ._utils import (
     get_function_definition_arguments,
     get_species_concentration,
@@ -116,6 +117,19 @@ class ChasteSbmlModel:
             file_path = root_dir / filename
             with open(file_path, "w") as f:
                 f.write(code)
+
+        # Format with clang-format
+        for filename in self._outputs:
+            file_path = str(root_dir / filename)
+            subprocess.run(
+                [
+                    "clang-format",
+                    "-i",
+                    f"-style=file:{ROOT_DIR}/.clang-format",
+                    str(file_path),
+                ],
+                check=True,
+            )
 
     # -- PRIVATE ---------------------------------------
 
