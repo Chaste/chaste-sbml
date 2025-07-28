@@ -54,12 +54,17 @@ private:
     // EVENTS
     std::vector<bool> mEventsSatisfied;
     bool mEventsInitialised;
+
+    std::vector<bool> mStatesAdjusted;
+    std::vector<double> mStatesAdjustedValues;
 {% endif %}
 
 public:
     {{ ode_class_name }}(std::vector<double> stateVariables = std::vector<double>());
 
     ~{{ ode_class_name }}();
+
+    void AdjustOdeParameters(double time);
 
     void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
     void ProcessRules(double time, const std::vector<double>& rY);

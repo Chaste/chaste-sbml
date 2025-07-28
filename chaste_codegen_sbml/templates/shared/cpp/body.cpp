@@ -66,6 +66,9 @@ namespace sm = sbmlmath;
     // EVENTS
     mEventsSatisfied.resize({{ events|length }}, false);
     mEventsInitialised = false;
+
+    mStatesAdjusted.resize(8, false);
+    mStatesAdjustedValues.resize(8, 0.0);
 {% endif %}
 
     ProcessRules(0.0, mStateVariables);
@@ -73,6 +76,20 @@ namespace sm = sbmlmath;
 
 {{ ode_class_name }}::~{{ ode_class_name }}()
 {
+}
+
+void {{ ode_class_name }}::AdjustOdeParameters(double time)
+{
+{% if events %}
+    for (unsigned i = 0; i < mStatesAdjusted.size(); ++i)
+    {
+        if (mStatesAdjusted[i])
+        {
+            SetStateVariable(i, mStatesAdjustedValues[i]);
+            mStatesAdjusted[i] = false;
+        }
+    }
+{% endif %}
 }
 
 void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
@@ -144,8 +161,6 @@ double {{ ode_class_name }}::ProcessEvents(double time, const std::vector<double
     double min_dist = std::numeric_limits<double>::max();
     double event_dist = min_dist;
 
-    std::vector<bool> state_vars_updated({{ state_variables|length }}, false);
-
 {% for event in events %}
     // EVENT: {{ event["label"] }}
     event_dist = {{ event["distance"] }};
@@ -175,7 +190,8 @@ double {{ ode_class_name }}::ProcessEvents(double time, const std::vector<double
 {% for assignment in event["assignments"] %}
 {% if ( assignment["type"] == VarType.STATE_VARIABLE ) %}
             SetStateVariable({{ assignment["index"] }}, {{ assignment["rhs"] }});
-            state_vars_updated[{{ assignment["index"] }}] = true;
+            mStatesAdjustedValues[{{ assignment["index"] }}] = {{ assignment["rhs"] }};
+            mStatesAdjusted[{{ assignment["index"] }}] = true;
 {% elif ( assignment["type"] == VarType.VARIABLE_PARAMETER ) %}
             SetParameter({{ assignment["index"] }}, {{ assignment["rhs"] }});
 {% else %}
@@ -196,7 +212,7 @@ double {{ ode_class_name }}::ProcessEvents(double time, const std::vector<double
     {
         for (unsigned i = 0; i < {{ state_variables|length }}; ++i)
         {
-            if (!state_vars_updated[i])
+            if (!mStatesAdjusted[i])
             {
                 SetStateVariable(i, rY[i]);
             }
