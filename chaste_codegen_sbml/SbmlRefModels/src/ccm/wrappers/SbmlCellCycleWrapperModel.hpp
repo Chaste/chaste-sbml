@@ -143,6 +143,13 @@ public:
      */
     double GetStateVariable(const std::string& rName);
 
+     /**
+     * See AbstractCellCycleModel::ResetForDivision()
+     *
+     * @return whether the cell is ready to divide (enter M phase).
+     */
+    bool ReadyToDivide() override;
+
     /**
      * Solves the ODE system to a given time.
      *

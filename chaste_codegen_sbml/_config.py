@@ -22,3 +22,8 @@ class VarType(Enum):
     FUNCTION = 7
     REACTION = 8
     UNKNOWN = 9
+
+
+class EventType(Enum):
+    CELL_DIVISION = 1
+    UNKNOWN = 2

@@ -23,7 +23,7 @@ from libsbml import (
     formulaToString,
 )
 
-from ._config import NON_DIM_UNITS, ODE_SUFFIX, ROOT_DIR, VarType
+from ._config import NON_DIM_UNITS, ODE_SUFFIX, ROOT_DIR, EventType, VarType
 from ._utils import (
     get_function_definition_arguments,
     get_species_concentration,
@@ -49,6 +49,7 @@ class ChasteSbmlModel:
         lstrip_blocks=True,
     )
     _jinja_env.globals["VarType"] = VarType
+    _jinja_env.globals["EventType"] = EventType
 
     # -- PUBLIC --------------------------------------
 
@@ -187,7 +188,12 @@ class ChasteSbmlModel:
         self._variable_types[id_] = VarType.DERIVED_QUANTITY
 
     def _add_event(
-        self, label: str, trigger: str, assignments: list[dict[str, "Any"]], distance: str
+        self,
+        label: str,
+        trigger: str,
+        assignments: list[dict[str, "Any"]],
+        distance: str,
+        event_type: EventType,
     ) -> None:
         """Add an event to the template variables.
 
@@ -195,6 +201,7 @@ class ChasteSbmlModel:
         :param trigger: The event trigger formula.
         :param assignments: The event assignments.
         :param distance: The distance for the event trigger.
+        :param event_type: The type of the event (e.g., cell division).
         """
         self._events.append(
             {
@@ -203,6 +210,7 @@ class ChasteSbmlModel:
                 "trigger": trigger,
                 "assignments": assignments,
                 "distance": distance,
+                "type": event_type,
             }
         )
 
@@ -486,6 +494,16 @@ class ChasteSbmlModel:
 
         for event in self._sbml_events:
             label = event.getName().strip()
+
+            # Try to guess the event type
+            event_type = EventType.UNKNOWN
+
+            cell_division_terms = ["cell division", "cytokinesis", "mitosis", "meiosis"]
+            for term in cell_division_terms:
+                if all(word in label.lower() for word in term.split()):
+                    event_type = EventType.CELL_DIVISION
+                    break
+
             trigger_math = event.getTrigger().getMath()
             trigger_formula = self._convert_ast_formula(trigger_math)
 
@@ -569,7 +587,7 @@ class ChasteSbmlModel:
                     }
                 )
 
-            self._add_event(label, trigger_formula, assignments, trigger_distance)
+            self._add_event(label, trigger_formula, assignments, trigger_distance, event_type)
 
     def _format_function_definitions(self) -> None:
         """Add function definitions to template variables."""

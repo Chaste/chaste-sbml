@@ -67,6 +67,13 @@ namespace sm = sbmlmath;
     mEventsSatisfied.resize({{ events|length }}, false);
     mEventsInitialised = false;
 
+// mCellDivisionEvents.push_back(0);
+{% for event in events %}
+{% if event["type"] == EventType.CELL_DIVISION %}
+    mCellDivisionEvents.push_back(0);
+{% endif %}
+{% endfor %}
+
     mStatesAdjusted.resize(8, false);
     mStatesAdjustedValues.resize(8, 0.0);
 {% endif %}
@@ -90,6 +97,23 @@ void {{ ode_class_name }}::AdjustOdeParameters(double time)
         }
     }
 {% endif %}
+}
+
+bool {{ ode_class_name }}::ReadyToDivide()
+{
+{% if events %}
+    if (mEventsInitialised)
+    {
+        for (const unsigned &i : mCellDivisionEvents)
+        {
+            if (mEventsSatisfied[i])
+            {
+                return true;
+            }
+        }
+    }
+{% endif %}
+    return false;
 }
 
 void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
@@ -187,6 +211,7 @@ double {{ ode_class_name }}::ProcessEvents(double time, const std::vector<double
             event_dist = 0.0;
             min_dist = 0.0;
 
+            // Update relevant state variables and parameters
 {% for assignment in event["assignments"] %}
 {% if ( assignment["type"] == VarType.STATE_VARIABLE ) %}
             SetStateVariable({{ assignment["index"] }}, {{ assignment["rhs"] }});

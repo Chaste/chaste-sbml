@@ -194,6 +194,30 @@ double SbmlCellCycleWrapperModel<SBMLODE, SIZE>::GetStateVariable(const std::str
 }
 
 template <typename SBMLODE, unsigned SIZE>
+bool SbmlCellCycleWrapperModel<SBMLODE, SIZE>::ReadyToDivide()
+{
+    if (!mReadyToDivide)
+    {
+        bool was_ready_to_divide = mReadyToDivide;
+        double previous_divide_time = mDivideTime;
+
+        // Solves ODE to current time and update cell division flag and time
+        bool stopping_event_occurred = AbstractOdeBasedCellCycleModel::ReadyToDivide();
+
+        if (stopping_event_occurred)
+        {
+            // Reset division flag and time if stopping event is not cell division
+            if (!static_cast<SBMLODE*>(mpOdeSystem)->ReadyToDivide())
+            {
+                mReadyToDivide = was_ready_to_divide;
+                mDivideTime = previous_divide_time;
+            }
+        }
+    }
+    return mReadyToDivide;
+}
+
+template <typename SBMLODE, unsigned SIZE>
 bool SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SolveOdeToTime(double currentTime)
 {
     bool stopping_event_occurred = false;
