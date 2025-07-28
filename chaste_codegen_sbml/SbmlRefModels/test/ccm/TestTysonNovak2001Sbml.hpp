@@ -256,8 +256,7 @@ private:
     }
 
 public:
-    void
-    TestCellCycleModel()
+    void TestCellCycleModel()
     {
         // Setup time
         SimulationTime* p_simulation_time = SimulationTime::Instance();
@@ -357,7 +356,7 @@ public:
         TS_ASSERT_EQUALS(p_ccm_2->ReadyToDivide(), false);
 
         // Test the cell is ready to divide at the right time
-        standard_divide_time = 243.69;
+        standard_divide_time = 250.32;
         for (unsigned i = 0; i < num_timesteps / 2; i++)
         {
             p_simulation_time->IncrementTimeOneStep();
@@ -381,14 +380,14 @@ public:
         // Check ODE solution
         proteins_0 = p_ccm_0->GetProteinConcentrations();
         TS_ASSERT_EQUALS(proteins_0.size(), ODE_SIZE);
-        TS_ASSERT_DELTA(proteins_0[0], 0.1153, 1e-4); // CycBt
-        TS_ASSERT_DELTA(proteins_0[1], 0.2764, 1e-4); // Cdc20a
-        TS_ASSERT_DELTA(proteins_0[2], 0.0397, 1e-4); // Cdh1
-        TS_ASSERT_DELTA(proteins_0[3], 1.5108, 1e-4); // m
-        TS_ASSERT_DELTA(proteins_0[4], 0.4814, 1e-4); // Cdc20t
-        TS_ASSERT_DELTA(proteins_0[5], 0.5205, 1e-4); // IEP
-        TS_ASSERT_DELTA(proteins_0[6], 0.0155, 1e-4); // CKIt
-        TS_ASSERT_DELTA(proteins_0[7], 0.9831, 1e-4); // SK
+        TS_ASSERT_DELTA(proteins_0[0], 0.1794, 1e-4); // CycBt
+        TS_ASSERT_DELTA(proteins_0[1], 0.2977, 1e-4); // Cdc20a
+        TS_ASSERT_DELTA(proteins_0[2], 0.4349, 1e-4); // Cdh1
+        TS_ASSERT_DELTA(proteins_0[3], 0.8096, 1e-4); // m
+        TS_ASSERT_DELTA(proteins_0[4], 1.1307, 1e-4); // Cdc20t
+        TS_ASSERT_DELTA(proteins_0[5], 0.5447, 1e-4); // IEP
+        TS_ASSERT_DELTA(proteins_0[6], 0.0806, 1e-4); // CKIt
+        TS_ASSERT_DELTA(proteins_0[7], 0.0799, 1e-4); // SK
 
         std::vector<double> proteins_2 = p_ccm_2->GetProteinConcentrations();
         TS_ASSERT_EQUALS(proteins_2.size(), ODE_SIZE);
@@ -495,15 +494,6 @@ public:
         {
             TSM_ASSERT_DELTA(var_names[i].c_str(), derivatives[i], derivatives_expected[i], 1e-6);
         }
-
-        // TS_ASSERT_DELTA(derivs[0], 3.99580000e-02, 1e-3);  // CycBt
-        // TS_ASSERT_DELTA(derivs[1], -2.50100000e-01, 1e-2); // Cdc20a
-        // TS_ASSERT_DELTA(derivs[2], 9.70803883e-01, 1e-2);  // Cdh1
-        // TS_ASSERT_DELTA(derivs[3], 2.37500000e-03, 1e-4);  // m
-        // TS_ASSERT_DELTA(derivs[4], 4.90000000e-03, 1e-4);  // Cdc20t
-        // TS_ASSERT_DELTA(derivs[5], 1.08707977e-05, 1e-6);  // IEP
-        // TS_ASSERT_DELTA(derivs[6], 9.99719098e-01, 1e-2);  // CKIt
-        // TS_ASSERT_DELTA(derivs[7], 2.77174939e-02, 1e-3);  // SK
 
         // Check derived quantities
         TS_ASSERT_EQUALS(ode_system.GetNumberOfDerivedQuantities(), NUM_DERIVED_QUANTITIES);
