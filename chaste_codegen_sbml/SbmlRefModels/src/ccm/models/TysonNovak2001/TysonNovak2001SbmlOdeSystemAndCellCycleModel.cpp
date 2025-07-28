@@ -97,11 +97,26 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem(std::vector<double> sta
     mEventsSatisfied.resize(1, false);
     mEventsInitialised = false;
 
+    mStatesAdjusted.resize(8, false);
+    mStatesAdjustedValues.resize(8, 0.0);
+
     ProcessRules(0.0, mStateVariables);
 }
 
 TysonNovak2001SbmlOdeSystem::~TysonNovak2001SbmlOdeSystem()
 {
+}
+
+void TysonNovak2001SbmlOdeSystem::AdjustOdeParameters(double time)
+{
+    for (unsigned i = 0; i < mStatesAdjusted.size(); ++i)
+    {
+        if (mStatesAdjusted[i])
+        {
+            SetStateVariable(i, mStatesAdjustedValues[i]);
+            mStatesAdjusted[i] = false;
+        }
+    }
 }
 
 void TysonNovak2001SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
@@ -221,8 +236,6 @@ double TysonNovak2001SbmlOdeSystem::ProcessEvents(double time, const std::vector
     double min_dist = std::numeric_limits<double>::max();
     double event_dist = min_dist;
 
-    std::vector<bool> state_vars_updated(8, false);
-
     // EVENT: Cell division
     event_dist = (0.1) - (CycB)-std::numeric_limits<double>::epsilon();
 
@@ -249,7 +262,8 @@ double TysonNovak2001SbmlOdeSystem::ProcessEvents(double time, const std::vector
             min_dist = 0.0;
 
             SetStateVariable(3, m / 2.0);
-            state_vars_updated[3] = true;
+            mStatesAdjustedValues[3] = m / 2.0;
+            mStatesAdjusted[3] = true;
         }
         mEventsSatisfied[0] = true; // Flag the condition true
     }
@@ -263,7 +277,7 @@ double TysonNovak2001SbmlOdeSystem::ProcessEvents(double time, const std::vector
     {
         for (unsigned i = 0; i < 8; ++i)
         {
-            if (!state_vars_updated[i])
+            if (!mStatesAdjusted[i])
             {
                 SetStateVariable(i, rY[i]);
             }

@@ -84,6 +84,10 @@ Tan2014SbmlOdeSystem::~Tan2014SbmlOdeSystem()
 {
 }
 
+void Tan2014SbmlOdeSystem::AdjustOdeParameters(double time)
+{
+}
+
 void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
     ProcessRules(time, rY);

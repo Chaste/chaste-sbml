@@ -340,11 +340,26 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
     mEventsSatisfied.resize(4, false);
     mEventsInitialised = false;
 
+    mStatesAdjusted.resize(8, false);
+    mStatesAdjustedValues.resize(8, 0.0);
+
     ProcessRules(0.0, mStateVariables);
 }
 
 Chen2004SbmlOdeSystem::~Chen2004SbmlOdeSystem()
 {
+}
+
+void Chen2004SbmlOdeSystem::AdjustOdeParameters(double time)
+{
+    for (unsigned i = 0; i < mStatesAdjusted.size(); ++i)
+    {
+        if (mStatesAdjusted[i])
+        {
+            SetStateVariable(i, mStatesAdjustedValues[i]);
+            mStatesAdjusted[i] = false;
+        }
+    }
 }
 
 void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
@@ -802,8 +817,6 @@ double Chen2004SbmlOdeSystem::ProcessEvents(double time, const std::vector<doubl
     double min_dist = std::numeric_limits<double>::max();
     double event_dist = min_dist;
 
-    std::vector<bool> state_vars_updated(36, false);
-
     // EVENT: reset ORI
     event_dist = (0.0) - (CLB2 + CLB5 - KEZ2) - std::numeric_limits<double>::epsilon();
 
@@ -830,7 +843,8 @@ double Chen2004SbmlOdeSystem::ProcessEvents(double time, const std::vector<doubl
             min_dist = 0.0;
 
             SetStateVariable(25, 0.0);
-            state_vars_updated[25] = true;
+            mStatesAdjustedValues[25] = 0.0;
+            mStatesAdjusted[25] = true;
         }
         mEventsSatisfied[0] = true; // Flag the condition true
     }
@@ -933,12 +947,15 @@ double Chen2004SbmlOdeSystem::ProcessEvents(double time, const std::vector<doubl
             min_dist = 0.0;
 
             SetStateVariable(22, F * MASS);
-            state_vars_updated[22] = true;
+            mStatesAdjustedValues[22] = F * MASS;
+            mStatesAdjusted[22] = true;
             SetParameter(2, lte1l);
             SetStateVariable(0, 0.0);
-            state_vars_updated[0] = true;
+            mStatesAdjustedValues[0] = 0.0;
+            mStatesAdjusted[0] = true;
             SetStateVariable(32, 0.0);
-            state_vars_updated[32] = true;
+            mStatesAdjustedValues[32] = 0.0;
+            mStatesAdjusted[32] = true;
         }
         mEventsSatisfied[3] = true; // Flag the condition true
     }
@@ -952,7 +969,7 @@ double Chen2004SbmlOdeSystem::ProcessEvents(double time, const std::vector<doubl
     {
         for (unsigned i = 0; i < 36; ++i)
         {
-            if (!state_vars_updated[i])
+            if (!mStatesAdjusted[i])
             {
                 SetStateVariable(i, rY[i]);
             }

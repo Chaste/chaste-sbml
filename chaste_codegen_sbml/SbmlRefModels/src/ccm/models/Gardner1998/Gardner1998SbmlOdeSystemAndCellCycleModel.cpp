@@ -79,6 +79,10 @@ Gardner1998SbmlOdeSystem::~Gardner1998SbmlOdeSystem()
 {
 }
 
+void Gardner1998SbmlOdeSystem::AdjustOdeParameters(double time)
+{
+}
+
 void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
     ProcessRules(time, rY);

@@ -123,6 +123,10 @@ VanLeeuwen2007SbmlOdeSystem::~VanLeeuwen2007SbmlOdeSystem()
 {
 }
 
+void VanLeeuwen2007SbmlOdeSystem::AdjustOdeParameters(double time)
+{
+}
+
 void VanLeeuwen2007SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
     ProcessRules(time, rY);

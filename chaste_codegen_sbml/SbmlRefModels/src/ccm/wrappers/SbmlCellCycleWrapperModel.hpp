@@ -142,6 +142,22 @@ public:
      * @param rName the name of the state variable
      */
     double GetStateVariable(const std::string& rName);
+
+    /**
+     * Solves the ODE system to a given time.
+     *
+     * @param currentTime the current time
+     *
+     * @return whether a stopping event occurred.
+     */
+    bool SolveOdeToTime(double currentTime);
+
+    /**
+     * Adjust any ODE parameters needed before solving until currentTime.
+     *
+     * @param currentTime  the time up to which the system will be solved.
+     */
+    void AdjustOdeParameters(double currentTime);
 };
 
 #endif // SBMLCELLCYCLEWRAPPERMODEL_HPP_

@@ -65,6 +65,10 @@ Goldbeter1991SbmlOdeSystem::~Goldbeter1991SbmlOdeSystem()
 {
 }
 
+void Goldbeter1991SbmlOdeSystem::AdjustOdeParameters(double time)
+{
+}
+
 void Goldbeter1991SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
     ProcessRules(time, rY);

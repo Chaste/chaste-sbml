@@ -111,6 +111,10 @@ Chen2000SbmlOdeSystem::~Chen2000SbmlOdeSystem()
 {
 }
 
+void Chen2000SbmlOdeSystem::AdjustOdeParameters(double time)
+{
+}
+
 void Chen2000SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
     ProcessRules(time, rY);

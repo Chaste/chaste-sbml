@@ -61,6 +61,8 @@ public:
 
     ~Gardner1998SbmlOdeSystem();
 
+    void AdjustOdeParameters(double time);
+
     void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY);
     void ProcessRules(double time, const std::vector<double>& rY);
 

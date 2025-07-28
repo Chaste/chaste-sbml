@@ -36,6 +36,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef SBMLCELLCYCLEWRAPPERMODEL_CPP_
 #define SBMLCELLCYCLEWRAPPERMODEL_CPP_
 
+#include <iostream>
+
 #include "AbstractOdeBasedCellCycleModel.hpp"
 #include "BackwardEulerIvpOdeSolver.hpp"
 #include "CellCycleModelOdeSolver.hpp"
@@ -189,6 +191,35 @@ double SbmlCellCycleWrapperModel<SBMLODE, SIZE>::GetStateVariable(const std::str
 {
     assert(mpOdeSystem != nullptr);
     return mpOdeSystem->GetStateVariable(rName);
+}
+
+template <typename SBMLODE, unsigned SIZE>
+bool SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SolveOdeToTime(double currentTime)
+{
+    bool stopping_event_occurred = false;
+    if (mLastTime < currentTime)
+    {
+        AdjustOdeParameters(currentTime);
+
+        mpOdeSolver->SolveAndUpdateStateVariable(mpOdeSystem, mLastTime, currentTime, GetDt());
+
+        stopping_event_occurred = mpOdeSolver->StoppingEventOccurred();
+        if (stopping_event_occurred)
+        {
+            mLastTime = mpOdeSolver->GetStoppingTime();
+        }
+        else
+        {
+            mLastTime = currentTime;
+        }
+    }
+    return stopping_event_occurred;
+}
+
+template <typename SBMLODE, unsigned SIZE>
+void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::AdjustOdeParameters(double currentTime)
+{
+    static_cast<SBMLODE*>(mpOdeSystem)->AdjustOdeParameters(currentTime);
 }
 
 #endif // SBMLCELLCYCLEWRAPPERMODEL_CPP_
