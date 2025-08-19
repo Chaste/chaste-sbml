@@ -91,13 +91,13 @@ public:
      *
      * This overridden method sets up a new Ode system.
      */
-    void Initialise(); // override
+    void Initialise() override;
 
     /**
      * Reset cell-cycle model by calling AbstractOdeBasedCellCycleModelWithStoppingEvent::ResetForDivision()
      * and setting initial conditions for protein concentrations.
      */
-    void ResetForDivision();
+    void ResetForDivision() override;
 
     /**
      * Overridden builder method to create new copies of this Cell Cycle model.
@@ -143,21 +143,12 @@ public:
      */
     double GetStateVariable(const std::string& rName);
 
-     /**
+    /**
      * See AbstractCellCycleModel::ResetForDivision()
      *
      * @return whether the cell is ready to divide (enter M phase).
      */
     bool ReadyToDivide() override;
-
-    /**
-     * Solves the ODE system to a given time.
-     *
-     * @param currentTime the current time
-     *
-     * @return whether a stopping event occurred.
-     */
-    bool SolveOdeToTime(double currentTime);
 
     /**
      * Adjust any ODE parameters needed before solving until currentTime.

@@ -7,6 +7,7 @@
 
 #include "AbstractOdeSystem.hpp"
 #include "ChasteSerialization.hpp"
+#include "SbmlEventType.hpp"
 
 class Chen2004SbmlOdeSystem : public AbstractOdeSystem
 {
@@ -345,18 +346,21 @@ private:
     double Spindle_disassembly;                  // Spindle disassembly
 
     // EVENTS
-    std::vector<bool> mEventsSatisfied;
-    bool mEventsInitialised;
-
-    std::vector<bool> mStatesAdjusted;
-    std::vector<double> mStatesAdjustedValues;
+    std::vector<bool> mEventSatisfied;
+    std::vector<bool> mEventTriggered;
+    std::vector<SbmlEventType> mEventType;
+    std::vector<bool> mEventAdjustedStateVars;
+    std::vector<double> mEventAdjustedStateValues;
+    std::vector<bool> mEventAdjustedParameters;
+    std::vector<double> mEventAdjustedParameterValues;
 
 public:
     Chen2004SbmlOdeSystem(std::vector<double> stateVariables = std::vector<double>());
+    Chen2004SbmlOdeSystem(const Chen2004SbmlOdeSystem& rOdeSystem);
 
     ~Chen2004SbmlOdeSystem();
 
-    void AdjustOdeParameters(double time);
+    void AdjustParameters();
 
     void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY);
     void ProcessRules(double time, const std::vector<double>& rY);
@@ -365,7 +369,10 @@ public:
 
     double CalculateRootFunction(double time, const std::vector<double>& rY);
     bool CalculateStoppingEvent(double time, const std::vector<double>& rY);
+
     double ProcessEvents(double time, const std::vector<double>& rY);
+    bool HasEventOccurred(SbmlEventType eventType);
+    void ResetEventsOccurred();
 
     // FUNCTIONS
     inline double BB_218(double A1, double A2, double A3, double A4);

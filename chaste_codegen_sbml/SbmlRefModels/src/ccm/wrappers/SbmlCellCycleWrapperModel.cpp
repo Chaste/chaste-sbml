@@ -42,6 +42,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "BackwardEulerIvpOdeSolver.hpp"
 #include "CellCycleModelOdeSolver.hpp"
 #include "CvodeAdaptor.hpp"
+#include "SbmlEventType.hpp"
 #include "StemCellProliferativeType.hpp"
 #include "TransitCellProliferativeType.hpp"
 
@@ -89,7 +90,7 @@ SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SbmlCellCycleWrapperModel(const SbmlCe
      */
 
     assert(rModel.GetOdeSystem());
-    SetOdeSystem(new SBMLODE(rModel.GetOdeSystem()->rGetStateVariables()));
+    SetOdeSystem(new SBMLODE(static_cast<SBMLODE&>(*rModel.GetOdeSystem())));
 }
 
 template <typename SBMLODE, unsigned SIZE>
@@ -129,9 +130,11 @@ void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::Initialise()
 template <typename SBMLODE, unsigned SIZE>
 void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::ResetForDivision()
 {
+    assert(mReadyToDivide);
     AbstractOdeBasedCellCycleModel::ResetForDivision();
 
     assert(mpOdeSystem != nullptr);
+    static_cast<SBMLODE*>(mpOdeSystem)->ResetEventsOccurred();
 }
 
 template <typename SBMLODE, unsigned SIZE>
@@ -207,7 +210,7 @@ bool SbmlCellCycleWrapperModel<SBMLODE, SIZE>::ReadyToDivide()
         if (stopping_event_occurred)
         {
             // Reset division flag and time if stopping event is not cell division
-            if (!static_cast<SBMLODE*>(mpOdeSystem)->ReadyToDivide())
+            if (!static_cast<SBMLODE*>(mpOdeSystem)->HasEventOccurred(SbmlEventType::CELL_DIVISION))
             {
                 mReadyToDivide = was_ready_to_divide;
                 mDivideTime = previous_divide_time;
@@ -218,32 +221,9 @@ bool SbmlCellCycleWrapperModel<SBMLODE, SIZE>::ReadyToDivide()
 }
 
 template <typename SBMLODE, unsigned SIZE>
-bool SbmlCellCycleWrapperModel<SBMLODE, SIZE>::SolveOdeToTime(double currentTime)
-{
-    bool stopping_event_occurred = false;
-    if (mLastTime < currentTime)
-    {
-        AdjustOdeParameters(currentTime);
-
-        mpOdeSolver->SolveAndUpdateStateVariable(mpOdeSystem, mLastTime, currentTime, GetDt());
-
-        stopping_event_occurred = mpOdeSolver->StoppingEventOccurred();
-        if (stopping_event_occurred)
-        {
-            mLastTime = mpOdeSolver->GetStoppingTime();
-        }
-        else
-        {
-            mLastTime = currentTime;
-        }
-    }
-    return stopping_event_occurred;
-}
-
-template <typename SBMLODE, unsigned SIZE>
 void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::AdjustOdeParameters(double currentTime)
 {
-    static_cast<SBMLODE*>(mpOdeSystem)->AdjustOdeParameters(currentTime);
+    static_cast<SBMLODE*>(mpOdeSystem)->AdjustParameters();
 }
 
 #endif // SBMLCELLCYCLEWRAPPERMODEL_CPP_

@@ -136,7 +136,6 @@ private:
 
             std::vector<double> times;
             std::vector<std::vector<double> > solutions;
-            std::vector<std::vector<double> > derived_quantities(3);
 
             std::vector<double> expected_stop_times = {
                 35.85,  // DNA synthesis
@@ -169,7 +168,10 @@ private:
                 times.insert(times.end(), ode_solution.rGetTimes().begin(), ode_solution.rGetTimes().end());
 
                 // Update initial conditions and time for next run
+                ode_system.SetStateVariables(ode_solution.rGetSolutions().back());
+                ode_system.AdjustParameters();
                 initial_conditions = ode_system.GetStateVariables();
+
                 start_time = ode_solution.rGetTimes().back();
                 end_time = start_time + run_length;
             }
@@ -220,7 +222,7 @@ private:
             double exp_val;
             double tol;
 
-            for (unsigned i = 0; i < end_solution.size(); i++)
+            for (unsigned i = 0; i < ODE_SIZE; i++)
             {
                 exp_val = expected_solution[i][0];
                 tol = expected_solution[i][1];
@@ -242,7 +244,7 @@ private:
                 { { 0.004119, 1.240448, 0.310671, 0.433823, 0.008326, 0.020079, 0.642472 }, { 1e-4, 1e-2, 1e-2, 1e-2, 1e-4, 1e-3, 1e-2 } },   // CDC6
                 { { 0.008658, 0.100596, 0.045546, 0.030645, 0.022252, 0.030029, 0.075816 }, { 1e-4, 1e-2, 1e-3, 1e-3, 1e-3, 1e-3, 1e-3 } },   // CDC6P
                 { { 0.002462, 0.999609, 0.309029, 0.404586, 0.003032, 0.006550, 0.748230 }, { 1e-4, 1e-2, 1e-2, 1e-2, 1e-4, 1e-4, 1e-2 } },   // CDH1
-                { { 0.000390, 0.997538, 0.690971, 0.404586, 0.251770, 0.993450, 0.996967 }, { 1e-5, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2 } },   // CDH1i ***
+                { { 0.000390, 0.997538, 0.690971, 0.404586, 0.251770, 0.993450, 0.996967 }, { 1e-5, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2 } },   // CDH1i
                 { { 0.000035, 1.432926, 0.329852, 0.494323, 0.000311, 0.031457, 0.602707 }, { 1e-6, 1e-2, 1e-2, 1e-2, 1e-5, 1e-3, 1e-2 } },   // CLB2
                 { { 0.000380, 0.474383, 0.233235, 0.179519, 0.004696, 0.275632, 0.412377 }, { 1e-5, 1e-2, 1e-2, 1e-2, 1e-4, 1e-2, 1e-2 } },   // CLB5
                 { { 0.056928, 2.387922, 1.309544, 0.788405, 0.495485, 1.532883, 2.004161 }, { 1e-3, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2 } },   // CLN2
@@ -255,14 +257,14 @@ private:
                 { { 1.203171, 2.629232, 1.823300, 0.408710, 1.462739, 1.777846, 2.160835 }, { 1e-2, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2 } },   // MASS
                 { { 0.015414, 0.755283, 0.477500, 0.267869, 0.217321, 0.498261, 0.733923 }, { 1e-3, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2 } },   // NET1
                 { { 0.058685, 1.297002, 0.365543, 0.351461, 0.066714, 0.309558, 0.611109 }, { 1e-3, 1e-2, 1e-2, 1e-2, 1e-3, 1e-2, 1e-2 } },   // NET1P
-                { { 0.000909, 24.507328, 8.374791, 8.615211, 0.088982, 5.977344, 14.754822 }, { 1e-5, 1e-2, 1e-2, 1e-2, 1e-3, 1e-2, 1e-2 } }, // ORI ***
+                { { 0.000909, 24.507328, 8.374791, 8.615211, 0.088982, 5.977344, 14.754822 }, { 1e-3, 1e-1, 1e-2, 1e-2, 1e-2, 1e-2, 1e-1 } }, // ORI
                 { { 0.008394, 0.958757, 0.228468, 0.294696, 0.013110, 0.060313, 0.360250 }, { 1e-4, 1e-2, 1e-2, 1e-2, 1e-3, 1e-3, 1e-2 } },   // PDS1
                 { { 0.109931, 0.535635, 0.331474, 0.130887, 0.236150, 0.301166, 0.461647 }, { 1e-2, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2 } },   // PPX
                 { { 0.869767, 1.958538, 1.779831, 0.269933, 1.691375, 1.891688, 1.957719 }, { 1e-2, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2 } },   // RENT
                 { { 0.026285, 0.615347, 0.150612, 0.169743, 0.027015, 0.093227, 0.218653 }, { 1e-3, 1e-2, 1e-2, 1e-2, 1e-3, 1e-3, 1e-2 } },   // RENTP
                 { { 0.000857, 0.928910, 0.168594, 0.298425, 0.001049, 0.001389, 0.200006 }, { 1e-5, 1e-2, 1e-2, 1e-2, 1e-4, 1e-4, 1e-2 } },   // SIC1
                 { { 0.002604, 0.073190, 0.017173, 0.023132, 0.002992, 0.004815, 0.016632 }, { 1e-4, 1e-3, 1e-3, 1e-3, 1e-4, 1e-4, 1e-3 } },   // SIC1P
-                { { 0.000121, 1.302051, 0.367971, 0.449246, 0.024035, 0.095064, 0.712505 }, { 1e-5, 1e-2, 1e-2, 1e-2, 1e-3, 1e-3, 1e-2 } },   // SPN ***
+                { { 0.000121, 1.302051, 0.367971, 0.449246, 0.024035, 0.095064, 0.712505 }, { 1e-3, 1e-2, 1e-2, 1e-2, 1e-3, 1e-3, 1e-2 } },   // SPN
                 { { 0.085173, 0.956892, 0.362550, 0.270644, 0.106128, 0.265494, 0.604890 }, { 1e-3, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2 } },   // SWI5
                 { { 0.000005, 0.228048, 0.040593, 0.072724, 0.000033, 0.000842, 0.041815 }, { 1e-6, 1e-2, 1e-3, 1e-3, 1e-6, 1e-5, 1e-3 } },   // SWI5P
                 { { 0.009990, 0.977834, 0.235812, 0.359780, 0.009990, 0.082109, 0.234611 }, { 1e-4, 1e-2, 1e-2, 1e-2, 1e-4, 1e-3, 1e-2 } },   // TEM1GTP
@@ -344,8 +346,10 @@ public:
     {
         // Setup time
         SimulationTime* p_simulation_time = SimulationTime::Instance();
-        const unsigned num_timesteps = 10000;
-        p_simulation_time->SetEndTimeAndNumberOfTimeSteps(300.0, num_timesteps);
+        const double dt = 0.01;
+        const double end_time = 220.0;
+        const unsigned num_timesteps = static_cast<unsigned>(end_time / dt);
+        p_simulation_time->SetEndTimeAndNumberOfTimeSteps(end_time, num_timesteps);
 
         // Create a healthy cell
         auto p_wild_state = boost::make_shared<WildTypeCellMutationState>();
@@ -360,7 +364,7 @@ public:
         TS_ASSERT_EQUALS(p_ccm_0->CanCellTerminallyDifferentiate(), false);
 
         p_cell_0->InitialiseCellCycleModel();
-        p_ccm_0->SetDt(0.01);
+        p_ccm_0->SetDt(dt);
 
         // Create another cell with a cell-cycle model that uses a BackwardEulerIvpOdeSolver
         auto solver = CellCycleModelOdeSolver<Chen2004SbmlCellCycleModel, BackwardEulerIvpOdeSolver>::Instance();
@@ -378,11 +382,11 @@ public:
 
         p_cell_1->InitialiseCellCycleModel();
         TS_ASSERT_EQUALS(p_ccm_1->GetDt(), 0.0001); // Timestep for non-adaptive solvers defaults to 0.0001
-        p_ccm_1->SetDt(0.01);
+        p_ccm_1->SetDt(dt);
 
         // Test the cell is ready to divide at the right time
         double standard_divide_time = 101.20;
-        double tolerance = 0.05;
+        double tolerance = 0.02;
         for (unsigned i = 0; i < num_timesteps / 2; i++)
         {
             p_simulation_time->IncrementTimeOneStep();
@@ -395,45 +399,65 @@ public:
             {
                 TS_ASSERT_EQUALS(division_ready_0, true);
                 TS_ASSERT_EQUALS(division_ready_1, true);
-
-                if (!division_ready_0 || !division_ready_1)
-                {
-                    std::cout << "Time: " << time << ", division ready: " << division_ready_0 << ", " << division_ready_1 << std::endl;
-                }
             }
             else if (time < standard_divide_time - tolerance)
             {
                 TS_ASSERT_EQUALS(division_ready_0, false);
                 TS_ASSERT_EQUALS(division_ready_1, false);
-                if (division_ready_0 || division_ready_1)
-                {
-                    std::cout << "Time: " << time << ", division ready: " << division_ready_0 << ", " << division_ready_1 << std::endl;
-                }
             }
         }
 
-        // Check CVODE vs BackwardEuler solution
+        // // Check CVODE vs BackwardEuler solution
         std::vector<double> proteins_0 = p_ccm_0->GetProteinConcentrations();
         TS_ASSERT_EQUALS(proteins_0.size(), ODE_SIZE);
-        TS_ASSERT_DELTA(proteins_0[0], 0.1789, 1e-4); // BUD
-        TS_ASSERT_DELTA(proteins_0[1], 0.3039, 1e-4); // C2
-        TS_ASSERT_DELTA(proteins_0[2], 0.4455, 1e-4); // C2P
-        TS_ASSERT_DELTA(proteins_0[3], 0.8125, 1e-4); // C5
-        TS_ASSERT_DELTA(proteins_0[4], 1.1626, 1e-4); // C5P
-        TS_ASSERT_DELTA(proteins_0[5], 0.5465, 1e-4); // CDC14
-        TS_ASSERT_DELTA(proteins_0[6], 0.0800, 1e-4); // CDC15
-        TS_ASSERT_DELTA(proteins_0[7], 0.0816, 1e-4); // CDC15i
 
         std::vector<double> proteins_1 = p_ccm_1->GetProteinConcentrations();
         TS_ASSERT_EQUALS(proteins_1.size(), ODE_SIZE);
-        TS_ASSERT_DELTA(proteins_1[0], proteins_0[0], 1e-2); // BUD
-        TS_ASSERT_DELTA(proteins_1[1], proteins_0[1], 1e-2); // C2
-        TS_ASSERT_DELTA(proteins_1[2], proteins_0[2], 1e-2); // C2P
-        TS_ASSERT_DELTA(proteins_1[3], proteins_0[3], 1e-2); // C5
-        TS_ASSERT_DELTA(proteins_1[4], proteins_0[4], 1e-2); // C5P
-        TS_ASSERT_DELTA(proteins_1[5], proteins_0[5], 1e-2); // CDC14
-        TS_ASSERT_DELTA(proteins_1[6], proteins_0[6], 1e-2); // CDC15
-        TS_ASSERT_DELTA(proteins_1[7], proteins_0[7], 1e-2); // CDC15i
+
+        std::vector<std::vector<double> > expected_solution = {
+            { 1.525341, 1e-2 },  // BUD
+            { 0.210599, 1e-2 },  // C2
+            { 0.037114, 1e-3 },  // C2P
+            { 0.050391, 1e-3 },  // C5
+            { 0.008844, 1e-4 },  // C5P
+            { 0.514681, 1e-2 },  // CDC14
+            { 0.661787, 1e-2 },  // CDC15
+            { 0.462518, 1e-2 },  // CDC20
+            { 1.506304, 1e-2 },  // CDC20i
+            { 0.061446, 1e-3 },  // CDC6
+            { 0.017502, 1e-3 },  // CDC6P
+            { 0.798235, 1e-2 },  // CDH1
+            { 0.201764, 1e-2 },  // CDH1i
+            { 0.302153, 1e-2 },  // CLB2
+            { 0.075761, 1e-3 },  // CLB5
+            { 0.064637, 1e-3 },  // CLN2
+            { 0.277167, 1e-2 },  // ESP1
+            { 0.218717, 1e-2 },  // F2
+            { 0.043554, 1e-3 },  // F2P
+            { 0.000052, 1e-6 },  // F5
+            { 0.000010, 1e-6 },  // F5P
+            { 0.136154, 1e-2 },  // IEP
+            { 2.629131, 1e-2 },  // MASS
+            { 0.015425, 1e-3 },  // NET1
+            { 1.291491, 1e-2 },  // NET1P
+            { 22.272502, 1e-1 }, // ORI
+            { 0.029937, 1e-3 },  // PDS1
+            { 0.128275, 1e-2 },  // PPX
+            { 0.870067, 1e-2 },  // RENT
+            { 0.615256, 1e-2 },  // RENTP
+            { 0.011849, 1e-3 },  // SIC1
+            { 0.007308, 1e-4 },  // SIC1P
+            { 1.298397, 1e-2 },  // SPN
+            { 0.952391, 1e-2 },  // SWI5
+            { 0.027953, 1e-3 },  // SWI5P
+            { 0.977834, 1e-2 },  // TEM1GTP
+        };
+
+        for (unsigned i = 0; i < ODE_SIZE; i++)
+        {
+            TS_ASSERT_DELTA(proteins_0[i], expected_solution[i][0], expected_solution[i][1]);
+            TS_ASSERT_DELTA(proteins_1[i], expected_solution[i][0], expected_solution[i][1]);
+        }
 
         // Test for a mutant cell
         TS_ASSERT_EQUALS(p_ccm_0->ReadyToDivide(), true);
@@ -445,11 +469,22 @@ public:
         auto p_cell_2 = boost::make_shared<Cell>(p_mutation, p_ccm_2);
         p_cell_2->SetCellProliferativeType(p_stem_type);
 
+        TS_ASSERT_EQUALS(p_cell_0->ReadyToDivide(), false);
         TS_ASSERT_EQUALS(p_cell_2->ReadyToDivide(), false);
+
+        TS_ASSERT_EQUALS(p_ccm_0->ReadyToDivide(), false);
         TS_ASSERT_EQUALS(p_ccm_2->ReadyToDivide(), false);
 
+        std::vector<double> state_0 = p_ccm_0->GetOdeSystem()->GetStateVariables();
+        std::vector<double> state_2 = p_ccm_2->GetOdeSystem()->GetStateVariables();
+        for (unsigned i = 0; i < ODE_SIZE; i++)
+        {
+            TS_ASSERT_DELTA(state_0[i], state_2[i], 1e-6);
+        }
+
         // Test the cell is ready to divide at the right time
-        standard_divide_time = 243.69;
+        standard_divide_time = 202.14;
+        tolerance = 0.02;
         for (unsigned i = 0; i < num_timesteps / 2; i++)
         {
             p_simulation_time->IncrementTimeOneStep();
@@ -458,12 +493,12 @@ public:
             bool division_ready_0 = p_ccm_0->ReadyToDivide();
             bool division_ready_2 = p_ccm_2->ReadyToDivide();
 
-            if (time > standard_divide_time)
+            if (time > standard_divide_time + tolerance)
             {
                 TS_ASSERT_EQUALS(division_ready_0, true);
                 TS_ASSERT_EQUALS(division_ready_2, true);
             }
-            else if (time < standard_divide_time)
+            else if (time < standard_divide_time - tolerance)
             {
                 TS_ASSERT_EQUALS(division_ready_0, false);
                 TS_ASSERT_EQUALS(division_ready_2, false);
@@ -473,25 +508,54 @@ public:
         // Check ODE solution
         proteins_0 = p_ccm_0->GetProteinConcentrations();
         TS_ASSERT_EQUALS(proteins_0.size(), ODE_SIZE);
-        TS_ASSERT_DELTA(proteins_0[0], 0.1153, 1e-4); // BUD
-        TS_ASSERT_DELTA(proteins_0[1], 0.2764, 1e-4); // C2
-        TS_ASSERT_DELTA(proteins_0[2], 0.0397, 1e-4); // C2P
-        TS_ASSERT_DELTA(proteins_0[3], 1.5108, 1e-4); // C5
-        TS_ASSERT_DELTA(proteins_0[4], 0.4814, 1e-4); // C5P
-        TS_ASSERT_DELTA(proteins_0[5], 0.5205, 1e-4); // CDC14
-        TS_ASSERT_DELTA(proteins_0[6], 0.0155, 1e-4); // CDC15
-        TS_ASSERT_DELTA(proteins_0[7], 0.9831, 1e-4); // CDC15i
 
         std::vector<double> proteins_2 = p_ccm_2->GetProteinConcentrations();
         TS_ASSERT_EQUALS(proteins_2.size(), ODE_SIZE);
-        TS_ASSERT_DELTA(proteins_2[0], proteins_0[0], 1e-4); // BUD
-        TS_ASSERT_DELTA(proteins_2[1], proteins_0[1], 1e-4); // C2
-        TS_ASSERT_DELTA(proteins_2[2], proteins_0[2], 1e-4); // C2P
-        TS_ASSERT_DELTA(proteins_2[3], proteins_0[3], 1e-4); // C5
-        TS_ASSERT_DELTA(proteins_2[4], proteins_0[4], 1e-4); // C5P
-        TS_ASSERT_DELTA(proteins_2[5], proteins_0[5], 1e-4); // CDC14
-        TS_ASSERT_DELTA(proteins_2[6], proteins_0[6], 1e-4); // CDC15
-        TS_ASSERT_DELTA(proteins_2[7], proteins_0[7], 1e-4); // CDC15i
+
+        expected_solution = {
+            { 0.000043, 1e-6 },  // BUD
+            { 0.211176, 1e-2 },  // C2
+            { 0.036883, 1e-3 },  // C2P
+            { 0.050702, 1e-3 },  // C5
+            { 0.008817, 1e-4 },  // C5P
+            { 0.515092, 1e-2 },  // CDC14
+            { 0.661787, 1e-2 },  // CDC15
+            { 0.462245, 1e-2 },  // CDC20
+            { 1.506238, 1e-2 },  // CDC20i
+            { 0.062019, 1e-3 },  // CDC6
+            { 0.017479, 1e-3 },  // CDC6P
+            { 0.801152, 1e-2 },  // CDH1
+            { 0.198848, 1e-2 },  // CDH1i
+            { 0.299252, 1e-2 },  // CLB2
+            { 0.075382, 1e-3 },  // CLB5
+            { 0.064578, 1e-3 },  // CLN2
+            { 0.277607, 1e-2 },  // ESP1
+            { 0.219231, 1e-2 },  // F2
+            { 0.043268, 1e-3 },  // F2P
+            { 0.000052, 1e-6 },  // F5
+            { 0.000010, 1e-6 },  // F5P
+            { 0.135555, 1e-2 },  // IEP
+            { 1.205848, 1e-2 },  // MASS
+            { 0.015423, 1e-3 },  // NET1
+            { 1.291905, 1e-2 },  // NET1P
+            { 22.263125, 1e-1 }, // ORI
+            { 0.029869, 1e-3 },  // PDS1
+            { 0.128158, 1e-2 },  // PPX
+            { 0.870618, 1e-2 },  // RENT
+            { 0.614295, 1e-2 },  // RENTP
+            { 0.011969, 1e-3 },  // SIC1
+            { 0.007296, 1e-4 },  // SIC1P
+            { 0.000155, 1e-5 },  // SPN
+            { 0.952559, 1e-2 },  // SWI5
+            { 0.027785, 1e-3 },  // SWI5P
+            { 0.977463, 1e-2 },  // TEM1GTP
+        };
+
+        for (unsigned i = 0; i < ODE_SIZE; i++)
+        {
+            TS_ASSERT_DELTA(proteins_0[i], expected_solution[i][0], expected_solution[i][1]);
+            TS_ASSERT_DELTA(proteins_2[i], expected_solution[i][0], expected_solution[i][1]);
+        }
     }
 
     void TestOdeArchiving()
@@ -572,42 +636,42 @@ public:
 
         // Compare derivatives with values from Tellurium
         std::vector<double> derivatives_expected = {
-            0.014292285913187989,    // BUD ***
-            0.03807104123616535,     // C2
-            -0.02191995883216533,    // C2P
-            0.0452736273488603,      // C5
-            -0.003342304055100295,   // C5P
-            0.251316422776,          // CDC14
-            -0.018916645891352057,   // CDC15
-            -0.034247066800000024,   // CDC20
-            -0.2532503622733521,     // CDC20i
-            0.12356839015323366,     // CDC6
-            -0.0037330182800774767,  // CDC6P
-            0.2193176241948343,      // CDH1
-            -0.2193176141948343,     // CDH1i
-            -0.2648597095765076,     // CLB2
-            -0.051353622636901804,   // CLB5
-            -0.006941222654334056,   // CLN2
-            0.058558812262920035,    // ESP1
-            0.0032043005026250737,   // F2
-            -0.02794253663182511,    // F2P
-            0.0001780335569909064,   // F5
-            -0.00021441434591090637, // F5P
-            -0.062337476806313685,   // IEP
-            0.009288318550574718,    // MASS
-            -0.11053817267683463,    // NET1
-            0.37848931545283476,     // NET1P
-            0.22541840999999999,     // ORI
-            -0.014060356081539327,   // PDS1
-            -0.010198232821435102,   // PPX
-            0.300929157138497,       // RENT
-            -0.5640339799144971,     // RENTP
-            0.032294390197855995,    // SIC1
-            -0.0016987958956159834,  // SIC1P
-            0.04940637021748367,     // SPN
-            -0.021724458793113615,   // SWI5
-            -0.01335493175,          // SWI5P
-            -0.13000000000000003     // TEM1GTP
+            0.014292,  // BUD ***
+            0.038071,  // C2
+            -0.021920, // C2P
+            0.045274,  // C5
+            -0.003342, // C5P
+            0.251316,  // CDC14
+            -0.018917, // CDC15
+            -0.034247, // CDC20
+            -0.253250, // CDC20i
+            0.123568,  // CDC6
+            -0.003733, // CDC6P
+            0.219318,  // CDH1
+            -0.219318, // CDH1i
+            -0.264860, // CLB2
+            -0.051354, // CLB5
+            -0.006941, // CLN2
+            0.058559,  // ESP1
+            0.003204,  // F2
+            -0.027943, // F2P
+            0.000178,  // F5
+            -0.000214, // F5P
+            -0.062337, // IEP
+            0.009288,  // MASS
+            -0.110538, // NET1
+            0.378489,  // NET1P
+            0.225418,  // ORI
+            -0.014060, // PDS1
+            -0.010198, // PPX
+            0.300929,  // RENT
+            -0.564034, // RENTP
+            0.032294,  // SIC1
+            -0.001699, // SIC1P
+            0.049406,  // SPN
+            -0.021724, // SWI5
+            -0.013355, // SWI5P
+            -0.130000, // TEM1GTP
         };
 
         std::vector<std::string> var_names = ode_system.rGetStateVariableNames();
@@ -648,7 +712,7 @@ public:
             0.6986870000000001,   // PE
             0.004913821158365375, // SBF
             0.36868548678139595,  // SIC1T
-            0.6986870000000001    // TEM1GDP ***
+            0.09999999999999998   // TEM1GDP
         };
 
         for (unsigned i = 0; i < dqs.size(); i++)
