@@ -223,7 +223,7 @@ bool SbmlCellCycleWrapperModel<SBMLODE, SIZE>::ReadyToDivide()
 template <typename SBMLODE, unsigned SIZE>
 void SbmlCellCycleWrapperModel<SBMLODE, SIZE>::AdjustOdeParameters(double currentTime)
 {
-    static_cast<SBMLODE*>(mpOdeSystem)->AdjustParameters();
+    static_cast<SBMLODE*>(mpOdeSystem)->AdjustParameters(currentTime);
 }
 
 #endif // SBMLCELLCYCLEWRAPPERMODEL_CPP_

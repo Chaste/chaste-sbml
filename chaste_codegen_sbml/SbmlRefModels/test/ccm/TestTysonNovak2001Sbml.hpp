@@ -146,9 +146,12 @@ private:
                 derived_quantities[2].insert(derived_quantities[2].end(), dq_mad.begin(), dq_mad.end());
 
                 // Update initial conditions and time for next run
-                initial_conditions = ode_system.GetStateVariables();
                 start_time = ode_solution.rGetTimes().back();
                 end_time = start_time + run_length;
+
+                ode_system.SetStateVariables(ode_solution.rGetSolutions().back());
+                ode_system.AdjustParameters(start_time);
+                initial_conditions = ode_system.GetStateVariables();
             }
 
             // Compare solution stats with Tellurium values
@@ -508,7 +511,7 @@ public:
         TS_ASSERT_DELTA(derived_quantities[2], 1.0, 1e-3);   // Mad
     }
 
-    void XTestOdeWithChasteSolver()
+    void TestOdeWithChasteSolver()
     {
         // Solve system using backward Euler solver
         BackwardEulerIvpOdeSolver backward_euler_solver(ODE_SIZE);
