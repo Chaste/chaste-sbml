@@ -7,9 +7,7 @@
 
 #include "AbstractOdeSystem.hpp"
 #include "ChasteSerialization.hpp"
-{% if events %}
 #include "SbmlEventType.hpp"
-{% endif %}
 
 class {{ ode_class_name }} : public AbstractOdeSystem
 {
@@ -54,7 +52,6 @@ private:
 {% endfor %}
 
     // EVENTS
-{% if events %}
     std::vector<bool> mEventSatisfied;
     std::vector<bool> mEventTriggered;
     std::vector<SbmlEventType> mEventType;
@@ -62,7 +59,6 @@ private:
     std::vector<double> mEventAdjustedStateValues;
     std::vector<bool> mEventAdjustedParameters;
     std::vector<double> mEventAdjustedParameterValues;
-{% endif %}
 
 public:
     /** 
@@ -84,16 +80,13 @@ public:
      */
     ~{{ ode_class_name }}();
 
-{% if events %}
     /**
      * Adjust parameters and state variables after a stopping event
      * 
      * @param time The current time
      */
     void AdjustParameters(double time);
-{% endif %}
 
-{% if events %}
     /**
      * Calculate whether the conditions to trigger an event have been met
      * (Used by CVODE solver to find exact stopping position)
@@ -104,9 +97,7 @@ public:
      * @return How close we are to the root of the stopping condition
      */
     double CalculateRootFunction(double time, const std::vector<double>& rY) override;
-{% endif %}
 
-{% if events %}
     /** 
      * Calculate whether the conditions to trigger an event have been met
      * 
@@ -116,9 +107,7 @@ public:
      * @return True if conditions for an event are met, false otherwise
      */
     bool CalculateStoppingEvent(double time, const std::vector<double>& rY) override;
-{% endif %}
 
-{% if derived_quantities %}
     /**
      * Compute the derived quantities from the given system state.
      *
@@ -128,7 +117,6 @@ public:
      * @return a vector of derived quantities
      */
     std::vector<double> ComputeDerivedQuantities(double time, const std::vector<double> &rY);
-{% endif %}
 
     /**
      * Compute the RHS of the ODE system.
@@ -141,7 +129,6 @@ public:
      */
     void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY) override;
 
-{% if events %}
     /**
      * Check if a specific type of event has occurred.
      *
@@ -150,9 +137,7 @@ public:
      * @return True if the type of event has occurred, false otherwise
      */
     bool HasEventOccurred(SbmlEventType eventType);
-{% endif %}
 
-{% if events %}
     /**
      * Process the events in the model.
      * 
@@ -162,14 +147,11 @@ public:
      * @return How close we are to the time of the next event
      */
     double ProcessModelEvents(double time, const std::vector<double>& rY);
-{% endif %}
 
-{% if events %}
     /**
      * Reset the flags that indicate which events have been triggered.
      */
     void ResetEventsOccurred();
-{% endif %}
 
     /** 
      * Run the equations governing the model to update state.
@@ -179,8 +161,7 @@ public:
      */
     void RunModelRules(double time, const std::vector<double>& rY);
 
-
-    // FUNCTIONS
+    // MODEL FUNCTIONS
 {% for func in functions %}
     inline double {{ func["id"] }}({{ func["args"] }});
 {% endfor %}

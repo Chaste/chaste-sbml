@@ -3,9 +3,7 @@
 #include <vector>
 
 #include "CellwiseOdeSystemInformation.hpp"
-{% if events %}
 #include "SbmlEventType.hpp"
-{% endif %}
 #include "SbmlMath.hpp"
 
 #include "{{ model_hpp_file }}"
@@ -65,7 +63,6 @@ namespace sm = sbmlmath;
     {{ reaction["id"] }} = 0.0;
 {% endfor %}
 
-{% if events %}
     // EVENTS
     mEventType.resize({{ events|length }}, SbmlEventType::UNKNOWN);
 
@@ -87,17 +84,28 @@ namespace sm = sbmlmath;
 
     mEventAdjustedStateVars.resize({{ state_variables|length }}, false);
     mEventAdjustedStateValues.resize({{ state_variables|length }}, 0.0);
-{% endif %}
 
     // Run model rules to complete state initialisation
     RunModelRules(0.0, mStateVariables);
+}
+
+{{ ode_class_name }}::{{ ode_class_name }}(const {{ ode_class_name }}& rOdeSystem)
+        : {{ ode_class_name }}(rOdeSystem.mStateVariables)
+{
+    mEventSatisfied = rOdeSystem.mEventSatisfied;
+    mEventTriggered = rOdeSystem.mEventTriggered;
+
+    mEventAdjustedParameters = rOdeSystem.mEventAdjustedParameters;
+    mEventAdjustedParameterValues = rOdeSystem.mEventAdjustedParameterValues;
+
+    mEventAdjustedStateVars = rOdeSystem.mEventAdjustedStateVars;
+    mEventAdjustedStateValues = rOdeSystem.mEventAdjustedStateValues;
 }
 
 {{ ode_class_name }}::~{{ ode_class_name }}()
 {
 }
 
-{% if events %}
 void {{ ode_class_name }}::AdjustParameters(double time)
 {
     for (unsigned i = 0; i < mEventAdjustedParameters.size(); ++i)
@@ -117,23 +125,17 @@ void {{ ode_class_name }}::AdjustParameters(double time)
         }
     }
 }
-{% endif %}
 
-{% if events %}
 double {{ ode_class_name }}::CalculateRootFunction(double time, const std::vector<double> &rY)
 {
     return ProcessModelEvents(time, rY);
 }
-{% endif %}
 
-{% if events %}
 bool {{ ode_class_name }}::CalculateStoppingEvent(double time, const std::vector<double> &rY)
 {
     return ProcessModelEvents(time, rY) == 0.0;
 }
-{% endif %}
 
-{% if derived_quantities %}
 std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, const std::vector<double> &rY)
 {
     RunModelRules(time, rY);
@@ -144,7 +146,6 @@ std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, 
 {% endfor %}
     return dqs;
 }
-{% endif %}
 
 void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
@@ -157,7 +158,6 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
     // TODO: Scale time appropriately
 }
 
-{% if events %}
 bool {{ ode_class_name }}::HasEventOccurred(SbmlEventType eventType)
 {
     for (unsigned i = 0; i < mEventTriggered.size(); ++i)
@@ -169,14 +169,80 @@ bool {{ ode_class_name }}::HasEventOccurred(SbmlEventType eventType)
     }
     return false;
 }
-{% endif %}
 
-{% if events %}
+double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<double> &rY)
+{
+    std::fill(std::begin(mEventAdjustedParameters), std::end(mEventAdjustedParameters), false);
+    std::fill(std::begin(mEventAdjustedStateVars), std::end(mEventAdjustedStateVars), false);
+
+    double min_dist = std::numeric_limits<double>::max();
+
+{% for event in events %}
+    //========================================
+    // EVENT: {{ event["label"] }}
+    //========================================
+    {
+        double event_dist = {{ event["distance"] }};
+
+        // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
+        if (std::abs(event_dist) < 1.0)
+        {
+            event_dist = 1.0;
+        }
+
+        // Update min_dist
+        if (std::abs(event_dist) < std::abs(min_dist))
+        {
+            min_dist = event_dist;
+        }
+
+        // Process the event
+        if ({{ event["trigger"] }})
+        {
+            if (!mEventSatisfied[{{ event["index"] }}])
+            {
+                // The condition is transitioning from false -> true: trigger the event
+                mEventTriggered[{{ event["index"] }}] = true;
+                event_dist = 0.0;
+                min_dist = 0.0;
+
+                // Adjust relevant state variables and parameters
+{% for assignment in event["assignments"] %}
+{% if ( assignment["type"] == VarType.STATE_VARIABLE ) %}
+                // {{ assignment["lhs"] }} = {{ assignment["rhs"] }}
+                mEventAdjustedStateVars[{{ assignment["index"] }}] = true;
+                mEventAdjustedStateValues[{{ assignment["index"] }}] = {{ assignment["rhs"] }};
+
+{% elif ( assignment["type"] == VarType.VARIABLE_PARAMETER ) %}
+                // {{ assignment["lhs"] }} = {{ assignment["rhs"] }}
+                mEventAdjustedParameters[{{ assignment["index"] }}] = true;
+                mEventAdjustedParameterValues[{{ assignment["index"] }}] = {{ assignment["rhs"] }};
+
+{% else %}
+                {{ assignment["lhs"] }} = {{ assignment["rhs"] }}; {# TODO: does this case exist? #}
+
+{% endif %}
+{% endfor %} {# 'for assignment in event["assignments"]' #}
+
+            }
+            mEventSatisfied[{{ event["index"] }}] = true;
+        }
+        else
+        {
+            mEventSatisfied[{{ event["index"] }}] = false;
+            mEventTriggered[{{ event["index"] }}] = false;
+        }
+    }
+
+{% endfor %} {# 'for event in events' #}
+
+    return min_dist; // Distance to closest event
+}
+
 void {{ ode_class_name }}::ResetEventsOccurred()
 {
     std::fill(mEventTriggered.begin(), mEventTriggered.end(), false);
 }
-{% endif %}
 
 void {{ ode_class_name }}::RunModelRules(double time, const std::vector<double>& rY)
 {
@@ -215,77 +281,7 @@ void {{ ode_class_name }}::RunModelRules(double time, const std::vector<double>&
 {% endfor %}
 }
 
-{% if events %}
-double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<double> &rY)
-{
-    std::fill(std::begin(mEventAdjustedParameters), std::end(mEventAdjustedParameters), false);
-    std::fill(std::begin(mEventAdjustedStateVars), std::end(mEventAdjustedStateVars), false);
-
-    double min_dist = std::numeric_limits<double>::max();
-    double event_dist = min_dist;
-
-{% for event in events %}
-    //========================================
-    // EVENT: {{ event["label"] }}
-    //========================================
-    event_dist = {{ event["distance"] }};
-
-    // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
-    if (std::abs(event_dist) < 1.0)
-    {
-        event_dist = 1.0;
-    }
-
-    // Update min_dist
-    if (std::abs(event_dist) < std::abs(min_dist))
-    {
-        min_dist = event_dist;
-    }
-
-    // Process the event
-    if ({{ event["trigger"] }})
-    {
-        if (!mEventSatisfied[{{ event["index"] }}])
-        {
-            // The condition is transitioning from false -> true: trigger the event
-            mEventTriggered[{{ event["index"] }}] = true;
-            event_dist = 0.0;
-            min_dist = 0.0;
-
-            // Adjust relevant state variables and parameters
-{% for assignment in event["assignments"] %}
-{% if ( assignment["type"] == VarType.STATE_VARIABLE ) %}
-            // {{ assignment["lhs"] }} = {{ assignment["rhs"] }}
-            mEventAdjustedStateVars[{{ assignment["index"] }}] = true;
-            mEventAdjustedStateValues[{{ assignment["index"] }}] = {{ assignment["rhs"] }};
-
-{% elif ( assignment["type"] == VarType.VARIABLE_PARAMETER ) %}
-            // {{ assignment["lhs"] }} = {{ assignment["rhs"] }}
-            mEventAdjustedParameters[{{ assignment["index"] }}] = true;
-            mEventAdjustedParameterValues[{{ assignment["index"] }}] = {{ assignment["rhs"] }};
-
-{% else %}
-            {{ assignment["lhs"] }} = {{ assignment["rhs"] }}; {# TODO: does this case exist? #}
-
-{% endif %}
-{% endfor %} {# 'for assignment in event["assignments"]' #}
-
-        }
-        mEventSatisfied[{{ event["index"] }}] = true;
-    }
-    else
-    {
-        mEventSatisfied[{{ event["index"] }}] = false;
-        mEventTriggered[{{ event["index"] }}] = false;
-    }
-
-{% endfor %} {# 'for event in events' #}
-
-    return min_dist; // Distance to closest event
-}
-{% endif %} {# 'if events' #}
-
-// FUNCTIONS
+// MODEL FUNCTIONS
 {% for func in functions %}
 inline double {{ ode_class_name }}::{{ func["id"] }}({{ func["args"] }})
 {
