@@ -337,12 +337,11 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
     Spindle_formation = 0.0;
     Spindle_disassembly = 0.0;
 
-    ProcessRules(0.0, mStateVariables);
-
     // EVENTS
     mEventType.resize(4, SbmlEventType::UNKNOWN);
 
     // Uncomment lines below for events that should trigger cell division
+
     // mEventType[0] = SbmlEventType::CELL_DIVISION; // reset ORI
     // mEventType[1] = SbmlEventType::CELL_DIVISION; // start DNA synthesis
     // mEventType[2] = SbmlEventType::CELL_DIVISION; // spindle checkpoint
@@ -356,6 +355,9 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
 
     mEventAdjustedStateVars.resize(36, false);
     mEventAdjustedStateValues.resize(36, 0.0);
+
+    // Run model rules to complete state initialisation
+    RunModelRules(0.0, mStateVariables);
 }
 
 Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(const Chen2004SbmlOdeSystem& rOdeSystem)
@@ -363,6 +365,10 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(const Chen2004SbmlOdeSystem& rOdeSy
 {
     mEventSatisfied = rOdeSystem.mEventSatisfied;
     mEventTriggered = rOdeSystem.mEventTriggered;
+
+    mEventAdjustedParameters = rOdeSystem.mEventAdjustedParameters;
+    mEventAdjustedParameterValues = rOdeSystem.mEventAdjustedParameterValues;
+
     mEventAdjustedStateVars = rOdeSystem.mEventAdjustedStateVars;
     mEventAdjustedStateValues = rOdeSystem.mEventAdjustedStateValues;
 }
@@ -371,7 +377,7 @@ Chen2004SbmlOdeSystem::~Chen2004SbmlOdeSystem()
 {
 }
 
-void Chen2004SbmlOdeSystem::AdjustParameters()
+void Chen2004SbmlOdeSystem::AdjustParameters(double time)
 {
     for (unsigned i = 0; i < mEventAdjustedParameters.size(); ++i)
     {
@@ -391,26 +397,42 @@ void Chen2004SbmlOdeSystem::AdjustParameters()
     }
 }
 
-bool Chen2004SbmlOdeSystem::HasEventOccurred(SbmlEventType eventType)
+double Chen2004SbmlOdeSystem::CalculateRootFunction(double time, const std::vector<double>& rY)
 {
-    for (unsigned i = 0; i < mEventTriggered.size(); ++i)
-    {
-        if (mEventTriggered[i] && mEventType[i] == eventType)
-        {
-            return true;
-        }
-    }
-    return false;
+    return ProcessModelEvents(time, rY);
 }
 
-void Chen2004SbmlOdeSystem::ResetEventsOccurred()
+bool Chen2004SbmlOdeSystem::CalculateStoppingEvent(double time, const std::vector<double>& rY)
 {
-    std::fill(mEventTriggered.begin(), mEventTriggered.end(), false);
+    return ProcessModelEvents(time, rY) == 0.0;
+}
+
+std::vector<double> Chen2004SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
+{
+    RunModelRules(time, rY);
+
+    std::vector<double> dqs;
+    dqs.push_back(BCK2);
+    dqs.push_back(CDC14T);
+    dqs.push_back(CDC15i);
+    dqs.push_back(CDC6T);
+    dqs.push_back(CKIT);
+    dqs.push_back(CLB2T);
+    dqs.push_back(CLB5T);
+    dqs.push_back(CLN3);
+    dqs.push_back(IE);
+    dqs.push_back(MCM1);
+    dqs.push_back(NET1T);
+    dqs.push_back(PE);
+    dqs.push_back(SBF);
+    dqs.push_back(SIC1T);
+    dqs.push_back(TEM1GDP);
+    return dqs;
 }
 
 void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
-    ProcessRules(time, rY);
+    RunModelRules(time, rY);
 
     rDY[0] = (Budding - Negative_regulation_of_Cell_budding) / cell;                                                                                                                                                                                        // d[BUD]/dt
     rDY[1] = (Assoc_of_CLB2_and_SIC1 - Dissoc_of_CLB2SIC1_complex - Phosphorylation_of_C2 + Dephosphorylation_of_C2P - Degradation_of_CLB2_in_C2) / cell;                                                                                                   // d[C2]/dt
@@ -449,33 +471,229 @@ void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     rDY[34] = (-Degradation_of_SWI5P - Activation_of_SWI5 + Inactivation_of_SWI5) / cell;                                                                                                                                                                   // d[SWI5P]/dt
     rDY[35] = (TEM1_activation - inactivation_1) / cell;                                                                                                                                                                                                    // d[TEM1GTP]/dt
 
-    // Scale time appropriately
+    // TODO: Scale time appropriately
 }
 
-std::vector<double> Chen2004SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
+bool Chen2004SbmlOdeSystem::HasEventOccurred(SbmlEventType eventType)
 {
-    ProcessRules(time, rY);
-
-    std::vector<double> dqs;
-    dqs.push_back(BCK2);
-    dqs.push_back(CDC14T);
-    dqs.push_back(CDC15i);
-    dqs.push_back(CDC6T);
-    dqs.push_back(CKIT);
-    dqs.push_back(CLB2T);
-    dqs.push_back(CLB5T);
-    dqs.push_back(CLN3);
-    dqs.push_back(IE);
-    dqs.push_back(MCM1);
-    dqs.push_back(NET1T);
-    dqs.push_back(PE);
-    dqs.push_back(SBF);
-    dqs.push_back(SIC1T);
-    dqs.push_back(TEM1GDP);
-    return dqs;
+    for (unsigned i = 0; i < mEventTriggered.size(); ++i)
+    {
+        if (mEventTriggered[i] && mEventType[i] == eventType)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
-void Chen2004SbmlOdeSystem::ProcessRules(double time, const std::vector<double>& rY)
+double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double>& rY)
+{
+    std::fill(std::begin(mEventAdjustedParameters), std::end(mEventAdjustedParameters), false);
+    std::fill(std::begin(mEventAdjustedStateVars), std::end(mEventAdjustedStateVars), false);
+
+    double min_dist = std::numeric_limits<double>::max();
+
+    //========================================
+    // EVENT: reset ORI
+    //========================================
+    {
+        double event_dist = (0.0) - (CLB2 + CLB5 - KEZ2) - std::numeric_limits<double>::epsilon();
+
+        // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
+        if (std::abs(event_dist) < 1.0)
+        {
+            event_dist = 1.0;
+        }
+
+        // Update min_dist
+        if (std::abs(event_dist) < std::abs(min_dist))
+        {
+            min_dist = event_dist;
+        }
+
+        // Process the event
+        if (sm::lt(CLB2 + CLB5 - KEZ2, 0.0))
+        {
+            if (!mEventSatisfied[0])
+            {
+                // The condition is transitioning from false -> true: trigger the event
+                mEventTriggered[0] = true;
+                event_dist = 0.0;
+                min_dist = 0.0;
+
+                // Adjust relevant state variables and parameters
+                // ORI = 0.0
+                mEventAdjustedStateVars[25] = true;
+                mEventAdjustedStateValues[25] = 0.0;
+            }
+            mEventSatisfied[0] = true;
+        }
+        else
+        {
+            mEventSatisfied[0] = false;
+            mEventTriggered[0] = false;
+        }
+    }
+
+    //========================================
+    // EVENT: start DNA synthesis
+    //========================================
+    {
+        double event_dist = (ORI - 1.0) - (0.0) - std::numeric_limits<double>::epsilon();
+
+        // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
+        if (std::abs(event_dist) < 1.0)
+        {
+            event_dist = 1.0;
+        }
+
+        // Update min_dist
+        if (std::abs(event_dist) < std::abs(min_dist))
+        {
+            min_dist = event_dist;
+        }
+
+        // Process the event
+        if (sm::gt(ORI - 1.0, 0.0))
+        {
+            if (!mEventSatisfied[1])
+            {
+                // The condition is transitioning from false -> true: trigger the event
+                mEventTriggered[1] = true;
+                event_dist = 0.0;
+                min_dist = 0.0;
+
+                // Adjust relevant state variables and parameters
+                // MAD2 = mad2h
+                mEventAdjustedParameters[3] = true;
+                mEventAdjustedParameterValues[3] = mad2h;
+
+                // BUB2 = bub2h
+                mEventAdjustedParameters[1] = true;
+                mEventAdjustedParameterValues[1] = bub2h;
+            }
+            mEventSatisfied[1] = true;
+        }
+        else
+        {
+            mEventSatisfied[1] = false;
+            mEventTriggered[1] = false;
+        }
+    }
+
+    //========================================
+    // EVENT: spindle checkpoint
+    //========================================
+    {
+        double event_dist = (SPN - 1.0) - (0.0) - std::numeric_limits<double>::epsilon();
+
+        // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
+        if (std::abs(event_dist) < 1.0)
+        {
+            event_dist = 1.0;
+        }
+
+        // Update min_dist
+        if (std::abs(event_dist) < std::abs(min_dist))
+        {
+            min_dist = event_dist;
+        }
+
+        // Process the event
+        if (sm::gt(SPN - 1.0, 0.0))
+        {
+            if (!mEventSatisfied[2])
+            {
+                // The condition is transitioning from false -> true: trigger the event
+                mEventTriggered[2] = true;
+                event_dist = 0.0;
+                min_dist = 0.0;
+
+                // Adjust relevant state variables and parameters
+                // MAD2 = mad2l
+                mEventAdjustedParameters[3] = true;
+                mEventAdjustedParameterValues[3] = mad2l;
+
+                // LTE1 = lte1h
+                mEventAdjustedParameters[2] = true;
+                mEventAdjustedParameterValues[2] = lte1h;
+
+                // BUB2 = bub2l
+                mEventAdjustedParameters[1] = true;
+                mEventAdjustedParameterValues[1] = bub2l;
+            }
+            mEventSatisfied[2] = true;
+        }
+        else
+        {
+            mEventSatisfied[2] = false;
+            mEventTriggered[2] = false;
+        }
+    }
+
+    //========================================
+    // EVENT: cell division
+    //========================================
+    {
+        double event_dist = (0.0) - (CLB2 - KEZ) - std::numeric_limits<double>::epsilon();
+
+        // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
+        if (std::abs(event_dist) < 1.0)
+        {
+            event_dist = 1.0;
+        }
+
+        // Update min_dist
+        if (std::abs(event_dist) < std::abs(min_dist))
+        {
+            min_dist = event_dist;
+        }
+
+        // Process the event
+        if (sm::lt(CLB2 - KEZ, 0.0))
+        {
+            if (!mEventSatisfied[3])
+            {
+                // The condition is transitioning from false -> true: trigger the event
+                mEventTriggered[3] = true;
+                event_dist = 0.0;
+                min_dist = 0.0;
+
+                // Adjust relevant state variables and parameters
+                // MASS = F * MASS
+                mEventAdjustedStateVars[22] = true;
+                mEventAdjustedStateValues[22] = F * MASS;
+
+                // LTE1 = lte1l
+                mEventAdjustedParameters[2] = true;
+                mEventAdjustedParameterValues[2] = lte1l;
+
+                // BUD = 0.0
+                mEventAdjustedStateVars[0] = true;
+                mEventAdjustedStateValues[0] = 0.0;
+
+                // SPN = 0.0
+                mEventAdjustedStateVars[32] = true;
+                mEventAdjustedStateValues[32] = 0.0;
+            }
+            mEventSatisfied[3] = true;
+        }
+        else
+        {
+            mEventSatisfied[3] = false;
+            mEventTriggered[3] = false;
+        }
+    }
+
+    return min_dist; // Distance to closest event
+}
+
+void Chen2004SbmlOdeSystem::ResetEventsOccurred()
+{
+    std::fill(mEventTriggered.begin(), mEventTriggered.end(), false);
+}
+
+void Chen2004SbmlOdeSystem::RunModelRules(double time, const std::vector<double>& rY)
 {
     // STATE VARIABLES
     BUD = rY[0];
@@ -856,194 +1074,7 @@ void Chen2004SbmlOdeSystem::ProcessRules(double time, const std::vector<double>&
     Spindle_disassembly = Mass_Action_1_222(kdspn, SPN);
 }
 
-double Chen2004SbmlOdeSystem::ProcessEvents(double time, const std::vector<double>& rY)
-{
-    std::fill(std::begin(mEventAdjustedParameters), std::end(mEventAdjustedParameters), false);
-    std::fill(std::begin(mEventAdjustedStateVars), std::end(mEventAdjustedStateVars), false);
-
-    double min_dist = std::numeric_limits<double>::max();
-    double event_dist = min_dist;
-
-    //===== EVENT: reset ORI ====================
-    event_dist = (0.0) - (CLB2 + CLB5 - KEZ2) - std::numeric_limits<double>::epsilon();
-
-    // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
-    if (std::abs(event_dist) < 1.0)
-    {
-        event_dist = 1.0;
-    }
-
-    // Update min_dist
-    if (std::abs(event_dist) < std::abs(min_dist))
-    {
-        min_dist = event_dist;
-    }
-
-    // Process the event
-    if (sm::lt(CLB2 + CLB5 - KEZ2, 0.0))
-    {
-        if (!mEventSatisfied[0])
-        {
-            // Condition transitioning false -> true: trigger event
-            mEventTriggered[0] = true;
-            event_dist = 0.0;
-            min_dist = 0.0;
-
-            // Update relevant state variables and parameters
-            mEventAdjustedStateValues[25] = 0.0;
-            mEventAdjustedStateVars[25] = true;
-        }
-        mEventSatisfied[0] = true; // Flag the condition true
-    }
-    else
-    {
-        mEventSatisfied[0] = false; // Flag the condition false
-        mEventTriggered[0] = false;
-    }
-
-    //===== EVENT: start DNA synthesis ====================
-    event_dist = (ORI - 1.0) - (0.0) - std::numeric_limits<double>::epsilon();
-
-    // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
-    if (std::abs(event_dist) < 1.0)
-    {
-        event_dist = 1.0;
-    }
-
-    // Update min_dist
-    if (std::abs(event_dist) < std::abs(min_dist))
-    {
-        min_dist = event_dist;
-    }
-
-    // Process the event
-    if (sm::gt(ORI - 1.0, 0.0))
-    {
-        if (!mEventSatisfied[1])
-        {
-            // Condition transitioning false -> true: trigger event
-            mEventTriggered[1] = true;
-            event_dist = 0.0;
-            min_dist = 0.0;
-
-            // Adjust relevant state variables and parameters
-            mEventAdjustedParameters[3] = true;
-            mEventAdjustedParameterValues[3] = mad2h;
-
-            mEventAdjustedParameters[1] = true;
-            mEventAdjustedParameterValues[1] = bub2h;
-        }
-        mEventSatisfied[1] = true;
-    }
-    else
-    {
-        mEventSatisfied[1] = false;
-        mEventTriggered[1] = false;
-    }
-
-    //===== EVENT: spindle checkpoint ====================
-    event_dist = (SPN - 1.0) - (0.0) - std::numeric_limits<double>::epsilon();
-
-    // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
-    if (std::abs(event_dist) < 1.0)
-    {
-        event_dist = 1.0;
-    }
-
-    // Update min_dist
-    if (std::abs(event_dist) < std::abs(min_dist))
-    {
-        min_dist = event_dist;
-    }
-
-    // Process the event
-    if (sm::gt(SPN - 1.0, 0.0))
-    {
-        if (!mEventSatisfied[2])
-        {
-            // Condition transitioning false -> true: trigger event
-            mEventTriggered[2] = true;
-            event_dist = 0.0;
-            min_dist = 0.0;
-
-            // Adjust relevant state variables and parameters
-            mEventAdjustedParameters[3] = true;
-            mEventAdjustedParameterValues[3] = mad2l;
-
-            mEventAdjustedParameters[2] = true;
-            mEventAdjustedParameterValues[2] = lte1h;
-
-            mEventAdjustedParameters[1] = true;
-            mEventAdjustedParameterValues[1] = bub2l;
-        }
-        mEventSatisfied[2] = true;
-    }
-    else
-    {
-        mEventSatisfied[2] = false;
-        mEventTriggered[2] = false;
-    }
-    //===== EVENT: cell division ====================
-    event_dist = (0.0) - (CLB2 - KEZ) - std::numeric_limits<double>::epsilon();
-
-    // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
-    if (std::abs(event_dist) < 1.0)
-    {
-        event_dist = 1.0;
-    }
-
-    // Update min_dist
-    if (std::abs(event_dist) < std::abs(min_dist))
-    {
-        min_dist = event_dist;
-    }
-
-    // Process the event
-    if (sm::lt(CLB2 - KEZ, 0.0))
-    {
-        if (!mEventSatisfied[3])
-        {
-            // Condition transitioning false -> true: trigger event
-            mEventTriggered[3] = true;
-            event_dist = 0.0;
-            min_dist = 0.0;
-
-            // Adjust relevant state variables and parameters
-            mEventAdjustedStateValues[22] = F * MASS;
-            mEventAdjustedStateVars[22] = true;
-
-            mEventAdjustedParameters[2] = true;
-            mEventAdjustedParameterValues[2] = lte1l;
-
-            mEventAdjustedStateValues[0] = 0.0;
-            mEventAdjustedStateVars[0] = true;
-
-            mEventAdjustedStateValues[32] = 0.0;
-            mEventAdjustedStateVars[32] = true;
-        }
-        mEventSatisfied[3] = true;
-    }
-    else
-    {
-        mEventSatisfied[3] = false;
-        mEventTriggered[3] = false;
-    }
-
-    // Distance to closest event
-    return min_dist;
-}
-
-double Chen2004SbmlOdeSystem::CalculateRootFunction(double time, const std::vector<double>& rY)
-{
-    return ProcessEvents(time, rY);
-}
-
-bool Chen2004SbmlOdeSystem::CalculateStoppingEvent(double time, const std::vector<double>& rY)
-{
-    return ProcessEvents(time, rY) == 0.0;
-}
-
-// FUNCTIONS
+// MODEL FUNCTIONS
 inline double Chen2004SbmlOdeSystem::BB_218(double A1, double A2, double A3, double A4)
 {
     return A2 - A1 + A3 * A2 + A4 * A1;

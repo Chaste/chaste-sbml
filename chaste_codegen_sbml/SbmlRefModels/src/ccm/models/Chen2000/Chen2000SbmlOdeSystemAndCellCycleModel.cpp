@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "CellwiseOdeSystemInformation.hpp"
+#include "SbmlEventType.hpp"
 #include "SbmlMath.hpp"
 
 #include "Chen2000SbmlOdeSystemAndCellCycleModel.hpp"
@@ -104,20 +105,82 @@ Chen2000SbmlOdeSystem::Chen2000SbmlOdeSystem(std::vector<double> stateVariables)
 
     // REACTIONS
 
-    ProcessRules(0.0, mStateVariables);
+    // EVENTS
+    mEventType.resize(0, SbmlEventType::UNKNOWN);
+
+    // Uncomment lines below for events that should trigger cell division
+
+    mEventSatisfied.resize(0, true); // Prevent events from triggering at the start
+    mEventTriggered.resize(0, false);
+
+    mEventAdjustedParameters.resize(1, false);
+    mEventAdjustedParameterValues.resize(1, 0.0);
+
+    mEventAdjustedStateVars.resize(13, false);
+    mEventAdjustedStateValues.resize(13, 0.0);
+
+    // Run model rules to complete state initialisation
+    RunModelRules(0.0, mStateVariables);
+}
+
+Chen2000SbmlOdeSystem::Chen2000SbmlOdeSystem(const Chen2000SbmlOdeSystem& rOdeSystem)
+        : Chen2000SbmlOdeSystem(rOdeSystem.mStateVariables)
+{
+    mEventSatisfied = rOdeSystem.mEventSatisfied;
+    mEventTriggered = rOdeSystem.mEventTriggered;
+
+    mEventAdjustedParameters = rOdeSystem.mEventAdjustedParameters;
+    mEventAdjustedParameterValues = rOdeSystem.mEventAdjustedParameterValues;
+
+    mEventAdjustedStateVars = rOdeSystem.mEventAdjustedStateVars;
+    mEventAdjustedStateValues = rOdeSystem.mEventAdjustedStateValues;
 }
 
 Chen2000SbmlOdeSystem::~Chen2000SbmlOdeSystem()
 {
 }
 
-void Chen2000SbmlOdeSystem::AdjustOdeParameters(double time)
+void Chen2000SbmlOdeSystem::AdjustParameters(double time)
 {
+    for (unsigned i = 0; i < mEventAdjustedParameters.size(); ++i)
+    {
+        if (mEventAdjustedParameters[i])
+        {
+            SetParameter(i, mEventAdjustedParameterValues[i]);
+        }
+    }
+
+    for (unsigned i = 0; i < mEventAdjustedStateVars.size(); ++i)
+    {
+        if (mEventAdjustedStateVars[i])
+        {
+            SetStateVariable(i, mEventAdjustedStateValues[i]);
+            mEventAdjustedStateVars[i] = false;
+        }
+    }
+}
+
+double Chen2000SbmlOdeSystem::CalculateRootFunction(double time, const std::vector<double>& rY)
+{
+    return ProcessModelEvents(time, rY);
+}
+
+bool Chen2000SbmlOdeSystem::CalculateStoppingEvent(double time, const std::vector<double>& rY)
+{
+    return ProcessModelEvents(time, rY) == 0.0;
+}
+
+std::vector<double> Chen2000SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
+{
+    RunModelRules(time, rY);
+
+    std::vector<double> dqs;
+    return dqs;
 }
 
 void Chen2000SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
-    ProcessRules(time, rY);
+    RunModelRules(time, rY);
 
     rDY[0] = mass * (ks_n2 + ks_n2_ * SBF) - kd_n2 * Cln2;                                                         // d[Cln2]/dt
     rDY[1] = mass * (ks_b2 + ks_b2_ * Mcm1) - Vd_b2 * Clb2_T;                                                      // d[Clb2_T]/dt
@@ -133,10 +196,37 @@ void Chen2000SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     rDY[11] = ks_bud * (Cln2 + Cln3 + epsilonbud_b5 * Clb5) - kd_bud * BUD;                                        // d[BUD]/dt
     rDY[12] = ks_spn * Clb2 / (J_spn + Clb2) - kd_spn * SPN;                                                       // d[SPN]/dt
 
-    // Scale time appropriately
+    // TODO: Scale time appropriately
 }
 
-void Chen2000SbmlOdeSystem::ProcessRules(double time, const std::vector<double>& rY)
+bool Chen2000SbmlOdeSystem::HasEventOccurred(SbmlEventType eventType)
+{
+    for (unsigned i = 0; i < mEventTriggered.size(); ++i)
+    {
+        if (mEventTriggered[i] && mEventType[i] == eventType)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+double Chen2000SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double>& rY)
+{
+    std::fill(std::begin(mEventAdjustedParameters), std::end(mEventAdjustedParameters), false);
+    std::fill(std::begin(mEventAdjustedStateVars), std::end(mEventAdjustedStateVars), false);
+
+    double min_dist = std::numeric_limits<double>::max();
+
+    return min_dist; // Distance to closest event
+}
+
+void Chen2000SbmlOdeSystem::ResetEventsOccurred()
+{
+    std::fill(mEventTriggered.begin(), mEventTriggered.end(), false);
+}
+
+void Chen2000SbmlOdeSystem::RunModelRules(double time, const std::vector<double>& rY)
 {
     // STATE VARIABLES
     Cln2 = rY[0];
@@ -176,7 +266,7 @@ void Chen2000SbmlOdeSystem::ProcessRules(double time, const std::vector<double>&
     // REACTIONS
 }
 
-// FUNCTIONS
+// MODEL FUNCTIONS
 
 template <>
 void CellwiseOdeSystemInformation<Chen2000SbmlOdeSystem>::Initialise()

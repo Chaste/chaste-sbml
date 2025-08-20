@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "CellwiseOdeSystemInformation.hpp"
+#include "SbmlEventType.hpp"
 #include "SbmlMath.hpp"
 
 #include "VanLeeuwen2007NonDimSbmlOdeSystemAndSrnModel.hpp"
@@ -116,20 +117,85 @@ VanLeeuwen2007NonDimSbmlOdeSystem::VanLeeuwen2007NonDimSbmlOdeSystem(std::vector
     mw925599eb_19a0_4434_8be3_67c40721b71d = 0.0;
     mw321b3e5e_f6ed_4345_9346_55ffb1ff2137 = 0.0;
 
-    ProcessRules(0.0, mStateVariables);
+    // EVENTS
+    mEventType.resize(0, SbmlEventType::UNKNOWN);
+
+    // Uncomment lines below for events that should trigger cell division
+
+    mEventSatisfied.resize(0, true); // Prevent events from triggering at the start
+    mEventTriggered.resize(0, false);
+
+    mEventAdjustedParameters.resize(5, false);
+    mEventAdjustedParameterValues.resize(5, 0.0);
+
+    mEventAdjustedStateVars.resize(11, false);
+    mEventAdjustedStateValues.resize(11, 0.0);
+
+    // Run model rules to complete state initialisation
+    RunModelRules(0.0, mStateVariables);
+}
+
+VanLeeuwen2007NonDimSbmlOdeSystem::VanLeeuwen2007NonDimSbmlOdeSystem(const VanLeeuwen2007NonDimSbmlOdeSystem& rOdeSystem)
+        : VanLeeuwen2007NonDimSbmlOdeSystem(rOdeSystem.mStateVariables)
+{
+    mEventSatisfied = rOdeSystem.mEventSatisfied;
+    mEventTriggered = rOdeSystem.mEventTriggered;
+
+    mEventAdjustedParameters = rOdeSystem.mEventAdjustedParameters;
+    mEventAdjustedParameterValues = rOdeSystem.mEventAdjustedParameterValues;
+
+    mEventAdjustedStateVars = rOdeSystem.mEventAdjustedStateVars;
+    mEventAdjustedStateValues = rOdeSystem.mEventAdjustedStateValues;
 }
 
 VanLeeuwen2007NonDimSbmlOdeSystem::~VanLeeuwen2007NonDimSbmlOdeSystem()
 {
 }
 
-void VanLeeuwen2007NonDimSbmlOdeSystem::AdjustOdeParameters(double time)
+void VanLeeuwen2007NonDimSbmlOdeSystem::AdjustParameters(double time)
 {
+    for (unsigned i = 0; i < mEventAdjustedParameters.size(); ++i)
+    {
+        if (mEventAdjustedParameters[i])
+        {
+            SetParameter(i, mEventAdjustedParameterValues[i]);
+        }
+    }
+
+    for (unsigned i = 0; i < mEventAdjustedStateVars.size(); ++i)
+    {
+        if (mEventAdjustedStateVars[i])
+        {
+            SetStateVariable(i, mEventAdjustedStateValues[i]);
+            mEventAdjustedStateVars[i] = false;
+        }
+    }
+}
+
+double VanLeeuwen2007NonDimSbmlOdeSystem::CalculateRootFunction(double time, const std::vector<double>& rY)
+{
+    return ProcessModelEvents(time, rY);
+}
+
+bool VanLeeuwen2007NonDimSbmlOdeSystem::CalculateStoppingEvent(double time, const std::vector<double>& rY)
+{
+    return ProcessModelEvents(time, rY) == 0.0;
+}
+
+std::vector<double> VanLeeuwen2007NonDimSbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
+{
+    RunModelRules(time, rY);
+
+    std::vector<double> dqs;
+    dqs.push_back(C_F);
+    dqs.push_back(C_T);
+    dqs.push_back(drag);
+    return dqs;
 }
 
 void VanLeeuwen2007NonDimSbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
-    ProcessRules(time, rY);
+    RunModelRules(time, rY);
 
     rDY[0] = (-mwcfbf7716_cc13_473c_979a_033c57a28857 + mwab347951_a286_432d_b03b_254dcdba4a25 + mwc497befc_0edd_4b0d_8895_77dbfa05a4be - mwfa0f5940_d4e9_44e1_8a0c_379d6fdf9d0f) / cytosolmembraneandnucleus;                                                                                                                                                                     // d[X]/dt
     rDY[1] = (mwcfbf7716_cc13_473c_979a_033c57a28857 - mwab347951_a286_432d_b03b_254dcdba4a25 + mwbe108cd1_a5d9_4d55_97c9_ac584df6a005 - mwbe108cd1_a5d9_4d55_97c9_ac584df6a005 + mwad0ba91a_37fb_48f5_8392_6c043dfdd5dc - mwad0ba91a_37fb_48f5_8392_6c043dfdd5dc - mw321b3e5e_f6ed_4345_9346_55ffb1ff2137) / cytosolmembraneandnucleus;                                           // d[D]/dt
@@ -143,21 +209,37 @@ void VanLeeuwen2007NonDimSbmlOdeSystem::EvaluateYDerivatives(double time, const 
     rDY[9] = (mw322e8f78_68f6_4293_ae2a_ab238ec5cf9b - mw08c332d6_1aaf_498f_8e1c_13f1b9da85bf) / cytosolmembraneandnucleus;                                                                                                                                                                                                                                                        // d[C_cT]/dt
     rDY[10] = (mw1b250e04_290a_4689_9fc5_5f0bf6711e02 - mw925599eb_19a0_4434_8be3_67c40721b71d) / cytosolmembraneandnucleus;                                                                                                                                                                                                                                                       // d[Y]/dt
 
-    // Scale time appropriately
+    // TODO: Scale time appropriately
 }
 
-std::vector<double> VanLeeuwen2007NonDimSbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
+bool VanLeeuwen2007NonDimSbmlOdeSystem::HasEventOccurred(SbmlEventType eventType)
 {
-    ProcessRules(time, rY);
-
-    std::vector<double> dqs;
-    dqs.push_back(C_F);
-    dqs.push_back(C_T);
-    dqs.push_back(drag);
-    return dqs;
+    for (unsigned i = 0; i < mEventTriggered.size(); ++i)
+    {
+        if (mEventTriggered[i] && mEventType[i] == eventType)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
-void VanLeeuwen2007NonDimSbmlOdeSystem::ProcessRules(double time, const std::vector<double>& rY)
+double VanLeeuwen2007NonDimSbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double>& rY)
+{
+    std::fill(std::begin(mEventAdjustedParameters), std::end(mEventAdjustedParameters), false);
+    std::fill(std::begin(mEventAdjustedStateVars), std::end(mEventAdjustedStateVars), false);
+
+    double min_dist = std::numeric_limits<double>::max();
+
+    return min_dist; // Distance to closest event
+}
+
+void VanLeeuwen2007NonDimSbmlOdeSystem::ResetEventsOccurred()
+{
+    std::fill(mEventTriggered.begin(), mEventTriggered.end(), false);
+}
+
+void VanLeeuwen2007NonDimSbmlOdeSystem::RunModelRules(double time, const std::vector<double>& rY)
 {
     // STATE VARIABLES
     X = rY[0];
@@ -258,7 +340,7 @@ void VanLeeuwen2007NonDimSbmlOdeSystem::ProcessRules(double time, const std::vec
     mw321b3e5e_f6ed_4345_9346_55ffb1ff2137 = (d_D + wnt_level * xi_D) * D;
 }
 
-// FUNCTIONS
+// MODEL FUNCTIONS
 
 template <>
 void CellwiseOdeSystemInformation<VanLeeuwen2007NonDimSbmlOdeSystem>::Initialise()

@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "CellwiseOdeSystemInformation.hpp"
+#include "SbmlEventType.hpp"
 #include "SbmlMath.hpp"
 
 #include "Tan2014SbmlOdeSystemAndSrnModel.hpp"
@@ -77,20 +78,83 @@ Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem(std::vector<double> stateVariables)
     K_c_active = 0.0;
     K_n_active = 0.0;
 
-    ProcessRules(0.0, mStateVariables);
+    // EVENTS
+    mEventType.resize(0, SbmlEventType::UNKNOWN);
+
+    // Uncomment lines below for events that should trigger cell division
+
+    mEventSatisfied.resize(0, true); // Prevent events from triggering at the start
+    mEventTriggered.resize(0, false);
+
+    mEventAdjustedParameters.resize(5, false);
+    mEventAdjustedParameterValues.resize(5, 0.0);
+
+    mEventAdjustedStateVars.resize(6, false);
+    mEventAdjustedStateValues.resize(6, 0.0);
+
+    // Run model rules to complete state initialisation
+    RunModelRules(0.0, mStateVariables);
+}
+
+Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem(const Tan2014SbmlOdeSystem& rOdeSystem)
+        : Tan2014SbmlOdeSystem(rOdeSystem.mStateVariables)
+{
+    mEventSatisfied = rOdeSystem.mEventSatisfied;
+    mEventTriggered = rOdeSystem.mEventTriggered;
+
+    mEventAdjustedParameters = rOdeSystem.mEventAdjustedParameters;
+    mEventAdjustedParameterValues = rOdeSystem.mEventAdjustedParameterValues;
+
+    mEventAdjustedStateVars = rOdeSystem.mEventAdjustedStateVars;
+    mEventAdjustedStateValues = rOdeSystem.mEventAdjustedStateValues;
 }
 
 Tan2014SbmlOdeSystem::~Tan2014SbmlOdeSystem()
 {
 }
 
-void Tan2014SbmlOdeSystem::AdjustOdeParameters(double time)
+void Tan2014SbmlOdeSystem::AdjustParameters(double time)
 {
+    for (unsigned i = 0; i < mEventAdjustedParameters.size(); ++i)
+    {
+        if (mEventAdjustedParameters[i])
+        {
+            SetParameter(i, mEventAdjustedParameterValues[i]);
+        }
+    }
+
+    for (unsigned i = 0; i < mEventAdjustedStateVars.size(); ++i)
+    {
+        if (mEventAdjustedStateVars[i])
+        {
+            SetStateVariable(i, mEventAdjustedStateValues[i]);
+            mEventAdjustedStateVars[i] = false;
+        }
+    }
+}
+
+double Tan2014SbmlOdeSystem::CalculateRootFunction(double time, const std::vector<double>& rY)
+{
+    return ProcessModelEvents(time, rY);
+}
+
+bool Tan2014SbmlOdeSystem::CalculateStoppingEvent(double time, const std::vector<double>& rY)
+{
+    return ProcessModelEvents(time, rY) == 0.0;
+}
+
+std::vector<double> Tan2014SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
+{
+    RunModelRules(time, rY);
+
+    std::vector<double> dqs;
+    dqs.push_back(drag);
+    return dqs;
 }
 
 void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
-    ProcessRules(time, rY);
+    RunModelRules(time, rY);
 
     rDY[0] = (Bsynthesis - kDegradation - kC - kdiffusion - K_c_active + K_n_active) / CytosolMembrane; // d[bcat_cm]/dt
     rDY[1] = (-kC) / CytosolMembrane;                                                                   // d[ligand_cm]/dt
@@ -99,19 +163,37 @@ void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<d
     rDY[4] = (-kN) / nucleus;                                                                           // d[ligand_nu]/dt
     rDY[5] = (kN) / nucleus;                                                                            // d[complex_nu]/dt
 
-    // Scale time appropriately
+    // TODO: Scale time appropriately
 }
 
-std::vector<double> Tan2014SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
+bool Tan2014SbmlOdeSystem::HasEventOccurred(SbmlEventType eventType)
 {
-    ProcessRules(time, rY);
-
-    std::vector<double> dqs;
-    dqs.push_back(drag);
-    return dqs;
+    for (unsigned i = 0; i < mEventTriggered.size(); ++i)
+    {
+        if (mEventTriggered[i] && mEventType[i] == eventType)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
-void Tan2014SbmlOdeSystem::ProcessRules(double time, const std::vector<double>& rY)
+double Tan2014SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double>& rY)
+{
+    std::fill(std::begin(mEventAdjustedParameters), std::end(mEventAdjustedParameters), false);
+    std::fill(std::begin(mEventAdjustedStateVars), std::end(mEventAdjustedStateVars), false);
+
+    double min_dist = std::numeric_limits<double>::max();
+
+    return min_dist; // Distance to closest event
+}
+
+void Tan2014SbmlOdeSystem::ResetEventsOccurred()
+{
+    std::fill(mEventTriggered.begin(), mEventTriggered.end(), false);
+}
+
+void Tan2014SbmlOdeSystem::RunModelRules(double time, const std::vector<double>& rY)
 {
     // STATE VARIABLES
     bcat_cm = rY[0];
@@ -147,7 +229,7 @@ void Tan2014SbmlOdeSystem::ProcessRules(double time, const std::vector<double>& 
     K_n_active = K_n_active_k * bcat_nu;
 }
 
-// FUNCTIONS
+// MODEL FUNCTIONS
 
 template <>
 void CellwiseOdeSystemInformation<Tan2014SbmlOdeSystem>::Initialise()

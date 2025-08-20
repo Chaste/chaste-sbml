@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "CellwiseOdeSystemInformation.hpp"
+#include "SbmlEventType.hpp"
 #include "SbmlMath.hpp"
 
 #include "TysonNovak2001SbmlOdeSystemAndCellCycleModel.hpp"
@@ -94,34 +95,86 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem(std::vector<double> sta
     SKdegradation = 0.0;
 
     // EVENTS
-    mEventsSatisfied.resize(1, false);
-    mEventsInitialised = false;
+    mEventType.resize(1, SbmlEventType::UNKNOWN);
 
-    mStatesAdjusted.resize(8, false);
-    mStatesAdjustedValues.resize(8, 0.0);
+    // Uncomment lines below for events that should trigger cell division
 
-    ProcessRules(0.0, mStateVariables);
+    mEventType[0] = SbmlEventType::CELL_DIVISION; // Cell division
+
+    mEventSatisfied.resize(1, true); // Prevent events from triggering at the start
+    mEventTriggered.resize(1, false);
+
+    mEventAdjustedParameters.resize(1, false);
+    mEventAdjustedParameterValues.resize(1, 0.0);
+
+    mEventAdjustedStateVars.resize(8, false);
+    mEventAdjustedStateValues.resize(8, 0.0);
+
+    // Run model rules to complete state initialisation
+    RunModelRules(0.0, mStateVariables);
+}
+
+TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem(const TysonNovak2001SbmlOdeSystem& rOdeSystem)
+        : TysonNovak2001SbmlOdeSystem(rOdeSystem.mStateVariables)
+{
+    mEventSatisfied = rOdeSystem.mEventSatisfied;
+    mEventTriggered = rOdeSystem.mEventTriggered;
+
+    mEventAdjustedParameters = rOdeSystem.mEventAdjustedParameters;
+    mEventAdjustedParameterValues = rOdeSystem.mEventAdjustedParameterValues;
+
+    mEventAdjustedStateVars = rOdeSystem.mEventAdjustedStateVars;
+    mEventAdjustedStateValues = rOdeSystem.mEventAdjustedStateValues;
 }
 
 TysonNovak2001SbmlOdeSystem::~TysonNovak2001SbmlOdeSystem()
 {
 }
 
-void TysonNovak2001SbmlOdeSystem::AdjustOdeParameters(double time)
+void TysonNovak2001SbmlOdeSystem::AdjustParameters(double time)
 {
-    for (unsigned i = 0; i < mStatesAdjusted.size(); ++i)
+    for (unsigned i = 0; i < mEventAdjustedParameters.size(); ++i)
     {
-        if (mStatesAdjusted[i])
+        if (mEventAdjustedParameters[i])
         {
-            SetStateVariable(i, mStatesAdjustedValues[i]);
-            mStatesAdjusted[i] = false;
+            SetParameter(i, mEventAdjustedParameterValues[i]);
+        }
+    }
+
+    for (unsigned i = 0; i < mEventAdjustedStateVars.size(); ++i)
+    {
+        if (mEventAdjustedStateVars[i])
+        {
+            SetStateVariable(i, mEventAdjustedStateValues[i]);
+            mEventAdjustedStateVars[i] = false;
         }
     }
 }
 
+double TysonNovak2001SbmlOdeSystem::CalculateRootFunction(double time, const std::vector<double>& rY)
+{
+    return ProcessModelEvents(time, rY);
+}
+
+bool TysonNovak2001SbmlOdeSystem::CalculateStoppingEvent(double time, const std::vector<double>& rY)
+{
+    return ProcessModelEvents(time, rY) == 0.0;
+}
+
+std::vector<double> TysonNovak2001SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
+{
+    RunModelRules(time, rY);
+
+    std::vector<double> dqs;
+    dqs.push_back(CycB);
+    dqs.push_back(Trimer);
+    dqs.push_back(Mad);
+    return dqs;
+}
+
 void TysonNovak2001SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
-    ProcessRules(time, rY);
+    RunModelRules(time, rY);
 
     rDY[0] = (CycBt_synthesis - CycBdegradation - CycBdegradationviaCdh1 - CycBtdegradationviaCdc20a) / cell; // d[CycBt]/dt
     rDY[1] = (Cdc20activation - Cdc20ainhibition - Cdc20adegradation) / cell;                                 // d[Cdc20a]/dt
@@ -132,21 +185,79 @@ void TysonNovak2001SbmlOdeSystem::EvaluateYDerivatives(double time, const std::v
     rDY[6] = (CKItsynthesis - CKIdegradation - CKItphosphorilationviaSK - eq_7) / cell;                       // d[CKIt]/dt
     rDY[7] = (SKsynthesis - SKdegradation) / cell;                                                            // d[SK]/dt
 
-    // Scale time appropriately
+    // TODO: Scale time appropriately
 }
 
-std::vector<double> TysonNovak2001SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
+bool TysonNovak2001SbmlOdeSystem::HasEventOccurred(SbmlEventType eventType)
 {
-    ProcessRules(time, rY);
-
-    std::vector<double> dqs;
-    dqs.push_back(CycB);
-    dqs.push_back(Trimer);
-    dqs.push_back(Mad);
-    return dqs;
+    for (unsigned i = 0; i < mEventTriggered.size(); ++i)
+    {
+        if (mEventTriggered[i] && mEventType[i] == eventType)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
-void TysonNovak2001SbmlOdeSystem::ProcessRules(double time, const std::vector<double>& rY)
+double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double>& rY)
+{
+    std::fill(std::begin(mEventAdjustedParameters), std::end(mEventAdjustedParameters), false);
+    std::fill(std::begin(mEventAdjustedStateVars), std::end(mEventAdjustedStateVars), false);
+
+    double min_dist = std::numeric_limits<double>::max();
+
+    //========================================
+    // EVENT: Cell division
+    //========================================
+    {
+        double event_dist = (0.1) - (CycB)-std::numeric_limits<double>::epsilon();
+
+        // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
+        if (std::abs(event_dist) < 1.0)
+        {
+            event_dist = 1.0;
+        }
+
+        // Update min_dist
+        if (std::abs(event_dist) < std::abs(min_dist))
+        {
+            min_dist = event_dist;
+        }
+
+        // Process the event
+        if (sm::lt(CycB, 0.1))
+        {
+            if (!mEventSatisfied[0])
+            {
+                // The condition is transitioning from false -> true: trigger the event
+                mEventTriggered[0] = true;
+                event_dist = 0.0;
+                min_dist = 0.0;
+
+                // Adjust relevant state variables and parameters
+                // m = m / 2.0
+                mEventAdjustedStateVars[3] = true;
+                mEventAdjustedStateValues[3] = m / 2.0;
+            }
+            mEventSatisfied[0] = true;
+        }
+        else
+        {
+            mEventSatisfied[0] = false;
+            mEventTriggered[0] = false;
+        }
+    }
+
+    return min_dist; // Distance to closest event
+}
+
+void TysonNovak2001SbmlOdeSystem::ResetEventsOccurred()
+{
+    std::fill(mEventTriggered.begin(), mEventTriggered.end(), false);
+}
+
+void TysonNovak2001SbmlOdeSystem::RunModelRules(double time, const std::vector<double>& rY)
 {
     // STATE VARIABLES
     CycBt = rY[0];
@@ -229,78 +340,7 @@ void TysonNovak2001SbmlOdeSystem::ProcessRules(double time, const std::vector<do
     SKdegradation = k14 * SK;
 }
 
-double TysonNovak2001SbmlOdeSystem::ProcessEvents(double time, const std::vector<double>& rY)
-{
-    ProcessRules(time, rY);
-
-    double min_dist = std::numeric_limits<double>::max();
-    double event_dist = min_dist;
-
-    // EVENT: Cell division
-    event_dist = (0.1) - (CycB)-std::numeric_limits<double>::epsilon();
-
-    // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
-    if (std::abs(event_dist) < 1.0)
-    {
-        event_dist = 1.0;
-    }
-
-    // Update min_dist
-    if (std::abs(event_dist) < std::abs(min_dist))
-    {
-        min_dist = event_dist;
-    }
-
-    // Process the event
-    if (sm::lt(CycB, 0.1))
-    {
-        if (!mEventsSatisfied[0] && mEventsInitialised)
-        {
-            // The condition is transitioning from false to true,
-            // and this is not the first time-step => trigger the event.
-            event_dist = 0.0;
-            min_dist = 0.0;
-
-            SetStateVariable(3, m / 2.0);
-            mStatesAdjustedValues[3] = m / 2.0;
-            mStatesAdjusted[3] = true;
-        }
-        mEventsSatisfied[0] = true; // Flag the condition true
-    }
-    else
-    {
-        mEventsSatisfied[0] = false; // Flag the condition false
-    }
-
-    // Event triggered, update state variables if necessary
-    if (min_dist == 0.0)
-    {
-        for (unsigned i = 0; i < 8; ++i)
-        {
-            if (!mStatesAdjusted[i])
-            {
-                SetStateVariable(i, rY[i]);
-            }
-        }
-    }
-
-    mEventsInitialised = true; // Flag that events have been processed at least once
-
-    // Distance to closest event
-    return min_dist;
-}
-
-double TysonNovak2001SbmlOdeSystem::CalculateRootFunction(double time, const std::vector<double>& rY)
-{
-    return ProcessEvents(time, rY);
-}
-
-bool TysonNovak2001SbmlOdeSystem::CalculateStoppingEvent(double time, const std::vector<double>& rY)
-{
-    return ProcessEvents(time, rY) == 0.0;
-}
-
-// FUNCTIONS
+// MODEL FUNCTIONS
 inline double TysonNovak2001SbmlOdeSystem::GK(double A1, double A2, double A3, double A4)
 {
     return 2.0 * A4 * A1 / (A2 - A1 + A3 * A2 + A4 * A1 + sm::root(2.0, std::pow(A2 - A1 + A3 * A2 + A4 * A1, 2.0) - 4.0 * (A2 - A1) * A4 * A1));

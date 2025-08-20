@@ -7,11 +7,12 @@
 
 #include "AbstractOdeSystem.hpp"
 #include "ChasteSerialization.hpp"
+#include "SbmlEventType.hpp"
 
 class VanLeeuwen2007SbmlOdeSystem : public AbstractOdeSystem
 {
 private:
-    // (De-)serialize VanLeeuwen2007SbmlOdeSystem
+    // (De-)Serialize VanLeeuwen2007SbmlOdeSystem
     friend class boost::serialization::access;
 
     template <class Archive>
@@ -102,19 +103,117 @@ private:
     double mw9ab26a4c_bd70_45e0_bacc_f830ab28abca; // r14
     double mw931baf8f_6572_46f6_96eb_cae40ee267b7; // r24
 
+    // EVENTS
+    std::vector<bool> mEventSatisfied;
+    std::vector<bool> mEventTriggered;
+    std::vector<SbmlEventType> mEventType;
+    std::vector<bool> mEventAdjustedStateVars;
+    std::vector<double> mEventAdjustedStateValues;
+    std::vector<bool> mEventAdjustedParameters;
+    std::vector<double> mEventAdjustedParameterValues;
+
 public:
+    /**
+     * Default constructor
+     *
+     * @param stateVariables Initial state variables (optional)
+     */
     VanLeeuwen2007SbmlOdeSystem(std::vector<double> stateVariables = std::vector<double>());
 
+    /**
+     * Copy constructor
+     *
+     * @param rOdeSystem Reference to the original instance
+     */
+    VanLeeuwen2007SbmlOdeSystem(const VanLeeuwen2007SbmlOdeSystem& rOdeSystem);
+
+    /**
+     * Destructor
+     */
     ~VanLeeuwen2007SbmlOdeSystem();
 
-    void AdjustOdeParameters(double time);
+    /**
+     * Adjust parameters and state variables after a stopping event
+     *
+     * @param time The current time
+     */
+    void AdjustParameters(double time);
 
-    void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY);
-    void ProcessRules(double time, const std::vector<double>& rY);
+    /**
+     * Calculate whether the conditions to trigger an event have been met
+     * (Used by CVODE solver to find exact stopping position)
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     *
+     * @return How close we are to the root of the stopping condition
+     */
+    double CalculateRootFunction(double time, const std::vector<double>& rY) override;
 
+    /**
+     * Calculate whether the conditions to trigger an event have been met
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     *
+     * @return True if conditions for an event are met, false otherwise
+     */
+    bool CalculateStoppingEvent(double time, const std::vector<double>& rY) override;
+
+    /**
+     * Compute the derived quantities from the given system state.
+     *
+     * @param time  the time at which to compute the derived quantities
+     * @param rY a vector of values for the state variables
+     *
+     * @return a vector of derived quantities
+     */
     std::vector<double> ComputeDerivedQuantities(double time, const std::vector<double>& rY);
 
-    // FUNCTIONS
+    /**
+     * Compute the RHS of the ODE system.
+     *
+     * An ODE solver will call this function repeatedly to solve for y = [y1 ... yn].
+     *
+     * @param time the time used to evaluate the RHS.
+     * @param rY an input solution vector used to evaluate the RHS.
+     * @param rDY an output vector to be filled in with the resulting derivatives y' = [y1' ... yn'].
+     */
+    void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY) override;
+
+    /**
+     * Check if a specific type of event has occurred.
+     *
+     * @param eventType The type of event to check
+     *
+     * @return True if the type of event has occurred, false otherwise
+     */
+    bool HasEventOccurred(SbmlEventType eventType);
+
+    /**
+     * Process the events in the model.
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     *
+     * @return How close we are to the time of the next event
+     */
+    double ProcessModelEvents(double time, const std::vector<double>& rY);
+
+    /**
+     * Reset the flags that indicate which events have been triggered.
+     */
+    void ResetEventsOccurred();
+
+    /**
+     * Run the equations governing the model to update state.
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     */
+    void RunModelRules(double time, const std::vector<double>& rY);
+
+    // MODEL FUNCTIONS
 };
 
 namespace
