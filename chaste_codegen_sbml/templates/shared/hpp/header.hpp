@@ -7,11 +7,14 @@
 
 #include "AbstractOdeSystem.hpp"
 #include "ChasteSerialization.hpp"
+{% if events %}
+#include "SbmlEventType.hpp"
+{% endif %}
 
 class {{ ode_class_name }} : public AbstractOdeSystem
 {
 private:
-    // (De-)serialize {{ ode_class_name }}
+    // (De-)Serialize {{ ode_class_name }}
     friend class boost::serialization::access;
 
     template <class Archive>
@@ -50,37 +53,132 @@ private:
     double {{ reaction["id"] }}; // {{ reaction["label"] }}
 {% endfor %}
 
-{% if events %}
     // EVENTS
-    std::vector<bool> mEventsSatisfied;
-    bool mEventsInitialised;
-
-    std::vector<unsigned> mCellDivisionEvents;
-
-    std::vector<bool> mStatesAdjusted;
-    std::vector<double> mStatesAdjustedValues;
+{% if events %}
+    std::vector<bool> mEventSatisfied;
+    std::vector<bool> mEventTriggered;
+    std::vector<SbmlEventType> mEventType;
+    std::vector<bool> mEventAdjustedStateVars;
+    std::vector<double> mEventAdjustedStateValues;
+    std::vector<bool> mEventAdjustedParameters;
+    std::vector<double> mEventAdjustedParameterValues;
 {% endif %}
 
 public:
+    /** 
+     * Default constructor
+     * 
+     * @param stateVariables Initial state variables (optional)
+     */
     {{ ode_class_name }}(std::vector<double> stateVariables = std::vector<double>());
 
+    /**
+     * Copy constructor
+     * 
+     * @param rOdeSystem Reference to the original instance
+     */
+    {{ ode_class_name }}(const {{ ode_class_name }}& rOdeSystem);
+
+    /**
+     * Destructor
+     */
     ~{{ ode_class_name }}();
 
-    void AdjustOdeParameters(double time);
-    bool ReadyToDivide();
-
-    void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY);
-    void ProcessRules(double time, const std::vector<double>& rY);
-
-{% if derived_quantities %}
-    std::vector<double> ComputeDerivedQuantities(double time, const std::vector<double> &rY);
+{% if events %}
+    /**
+     * Adjust parameters and state variables after a stopping event
+     * 
+     * @param time The current time
+     */
+    void AdjustParameters(double time);
 {% endif %}
 
 {% if events %}
-    double CalculateRootFunction(double time, const std::vector<double>& rY);
-    bool CalculateStoppingEvent(double time, const std::vector<double>& rY);
-    double ProcessEvents(double time, const std::vector<double>& rY);
+    /**
+     * Calculate whether the conditions to trigger an event have been met
+     * (Used by CVODE solver to find exact stopping position)
+     * 
+     * @param time The current time
+     * @param rY The current state variables
+     * 
+     * @return How close we are to the root of the stopping condition
+     */
+    double CalculateRootFunction(double time, const std::vector<double>& rY) override;
 {% endif %}
+
+{% if events %}
+    /** 
+     * Calculate whether the conditions to trigger an event have been met
+     * 
+     * @param time The current time
+     * @param rY The current state variables
+     * 
+     * @return True if conditions for an event are met, false otherwise
+     */
+    bool CalculateStoppingEvent(double time, const std::vector<double>& rY) override;
+{% endif %}
+
+{% if derived_quantities %}
+    /**
+     * Compute the derived quantities from the given system state.
+     *
+     * @param time  the time at which to compute the derived quantities
+     * @param rY a vector of values for the state variables
+     * 
+     * @return a vector of derived quantities
+     */
+    std::vector<double> ComputeDerivedQuantities(double time, const std::vector<double> &rY);
+{% endif %}
+
+    /**
+     * Compute the RHS of the ODE system.
+     * 
+     * An ODE solver will call this function repeatedly to solve for y = [y1 ... yn].
+     *
+     * @param time the time used to evaluate the RHS.
+     * @param rY an input solution vector used to evaluate the RHS.
+     * @param rDY an output vector to be filled in with the resulting derivatives y' = [y1' ... yn'].
+     */
+    void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY) override;
+
+{% if events %}
+    /**
+     * Check if a specific type of event has occurred.
+     *
+     * @param eventType The type of event to check
+     * 
+     * @return True if the type of event has occurred, false otherwise
+     */
+    bool HasEventOccurred(SbmlEventType eventType);
+{% endif %}
+
+{% if events %}
+    /**
+     * Process the events in the model.
+     * 
+     * @param time The current time
+     * @param rY The current state variables
+     * 
+     * @return How close we are to the time of the next event
+     */
+    double ProcessModelEvents(double time, const std::vector<double>& rY);
+{% endif %}
+
+{% if events %}
+    /**
+     * Reset the flags that indicate which events have been triggered.
+     */
+    void ResetEventsOccurred();
+{% endif %}
+
+    /** 
+     * Run the equations governing the model to update state.
+     * 
+     * @param time The current time
+     * @param rY The current state variables
+     */
+    void RunModelRules(double time, const std::vector<double>& rY);
+
 
     // FUNCTIONS
 {% for func in functions %}

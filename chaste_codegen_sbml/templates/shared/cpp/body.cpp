@@ -3,6 +3,9 @@
 #include <vector>
 
 #include "CellwiseOdeSystemInformation.hpp"
+{% if events %}
+#include "SbmlEventType.hpp"
+{% endif %}
 #include "SbmlMath.hpp"
 
 #include "{{ model_hpp_file }}"
@@ -64,73 +67,76 @@ namespace sm = sbmlmath;
 
 {% if events %}
     // EVENTS
-    mEventsSatisfied.resize({{ events|length }}, false);
-    mEventsInitialised = false;
+    mEventType.resize({{ events|length }}, SbmlEventType::UNKNOWN);
 
-// mCellDivisionEvents.push_back(0);
+    // Uncomment lines below for events that should trigger cell division
+
 {% for event in events %}
 {% if event["type"] == EventType.CELL_DIVISION %}
-    mCellDivisionEvents.push_back(0);
+    mEventType[{{ event["index"] }}] = SbmlEventType::CELL_DIVISION; // {{ event["label"] }}
+{% else %}
+    // mEventType[{{ event["index"] }}] = SbmlEventType::CELL_DIVISION; // {{ event["label"] }}
 {% endif %}
 {% endfor %}
 
-    mStatesAdjusted.resize(8, false);
-    mStatesAdjustedValues.resize(8, 0.0);
+    mEventSatisfied.resize({{ events|length }}, true); // Prevent events from triggering at the start
+    mEventTriggered.resize({{ events|length }}, false);
+
+    mEventAdjustedParameters.resize({{ variable_parameters|length }}, false);
+    mEventAdjustedParameterValues.resize({{ variable_parameters|length }}, 0.0);
+
+    mEventAdjustedStateVars.resize({{ state_variables|length }}, false);
+    mEventAdjustedStateValues.resize({{ state_variables|length }}, 0.0);
 {% endif %}
 
-    ProcessRules(0.0, mStateVariables);
+    // Run model rules to complete state initialisation
+    RunModelRules(0.0, mStateVariables);
 }
 
 {{ ode_class_name }}::~{{ ode_class_name }}()
 {
 }
 
-void {{ ode_class_name }}::AdjustOdeParameters(double time)
-{
 {% if events %}
-    for (unsigned i = 0; i < mStatesAdjusted.size(); ++i)
+void {{ ode_class_name }}::AdjustParameters(double time)
+{
+    for (unsigned i = 0; i < mEventAdjustedParameters.size(); ++i)
     {
-        if (mStatesAdjusted[i])
+        if (mEventAdjustedParameters[i])
         {
-            SetStateVariable(i, mStatesAdjustedValues[i]);
-            mStatesAdjusted[i] = false;
+            SetParameter(i, mEventAdjustedParameterValues[i]);
         }
     }
-{% endif %}
-}
 
-bool {{ ode_class_name }}::ReadyToDivide()
-{
-{% if events %}
-    if (mEventsInitialised)
+    for (unsigned i = 0; i < mEventAdjustedStateVars.size(); ++i)
     {
-        for (const unsigned &i : mCellDivisionEvents)
+        if (mEventAdjustedStateVars[i])
         {
-            if (mEventsSatisfied[i])
-            {
-                return true;
-            }
+            SetStateVariable(i, mEventAdjustedStateValues[i]);
+            mEventAdjustedStateVars[i] = false;
         }
     }
+}
 {% endif %}
-    return false;
-}
 
-void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
+{% if events %}
+double {{ ode_class_name }}::CalculateRootFunction(double time, const std::vector<double> &rY)
 {
-    ProcessRules(time, rY);
-
-{% for var in state_variables %}
-    rDY[{{ var["index"] }}] = {{ var["rhs"] }}; // d[{{ var["id"] }}]/dt
-{% endfor %}
-
-    // Scale time appropriately
+    return ProcessModelEvents(time, rY);
 }
+{% endif %}
+
+{% if events %}
+bool {{ ode_class_name }}::CalculateStoppingEvent(double time, const std::vector<double> &rY)
+{
+    return ProcessModelEvents(time, rY) == 0.0;
+}
+{% endif %}
 
 {% if derived_quantities %}
 std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, const std::vector<double> &rY)
 {
-    ProcessRules(time, rY);
+    RunModelRules(time, rY);
 
     std::vector<double> dqs;
 {% for dq in derived_quantities %}
@@ -140,7 +146,39 @@ std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, 
 }
 {% endif %}
 
-void {{ ode_class_name }}::ProcessRules(double time, const std::vector<double>& rY)
+void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
+{
+    RunModelRules(time, rY);
+
+{% for var in state_variables %}
+    rDY[{{ var["index"] }}] = {{ var["rhs"] }}; // d[{{ var["id"] }}]/dt
+{% endfor %}
+
+    // TODO: Scale time appropriately
+}
+
+{% if events %}
+bool {{ ode_class_name }}::HasEventOccurred(SbmlEventType eventType)
+{
+    for (unsigned i = 0; i < mEventTriggered.size(); ++i)
+    {
+        if (mEventTriggered[i] && mEventType[i] == eventType)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+{% endif %}
+
+{% if events %}
+void {{ ode_class_name }}::ResetEventsOccurred()
+{
+    std::fill(mEventTriggered.begin(), mEventTriggered.end(), false);
+}
+{% endif %}
+
+void {{ ode_class_name }}::RunModelRules(double time, const std::vector<double>& rY)
 {
     // STATE VARIABLES
 {% for var in state_variables %}
@@ -178,15 +216,18 @@ void {{ ode_class_name }}::ProcessRules(double time, const std::vector<double>& 
 }
 
 {% if events %}
-double {{ ode_class_name }}::ProcessEvents(double time, const std::vector<double> &rY)
+double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<double> &rY)
 {
-    ProcessRules(time, rY);
+    std::fill(std::begin(mEventAdjustedParameters), std::end(mEventAdjustedParameters), false);
+    std::fill(std::begin(mEventAdjustedStateVars), std::end(mEventAdjustedStateVars), false);
 
     double min_dist = std::numeric_limits<double>::max();
     double event_dist = min_dist;
 
 {% for event in events %}
+    //========================================
     // EVENT: {{ event["label"] }}
+    //========================================
     event_dist = {{ event["distance"] }};
 
     // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
@@ -204,66 +245,45 @@ double {{ ode_class_name }}::ProcessEvents(double time, const std::vector<double
     // Process the event
     if ({{ event["trigger"] }})
     {
-        if (!mEventsSatisfied[{{ loop.index0 }}] && mEventsInitialised)
+        if (!mEventSatisfied[{{ event["index"] }}])
         {
-            // The condition is transitioning from false to true,
-            // and this is not the first time-step => trigger the event.
+            // The condition is transitioning from false -> true: trigger the event
+            mEventTriggered[{{ event["index"] }}] = true;
             event_dist = 0.0;
             min_dist = 0.0;
 
-            // Update relevant state variables and parameters
+            // Adjust relevant state variables and parameters
 {% for assignment in event["assignments"] %}
 {% if ( assignment["type"] == VarType.STATE_VARIABLE ) %}
-            SetStateVariable({{ assignment["index"] }}, {{ assignment["rhs"] }});
-            mStatesAdjustedValues[{{ assignment["index"] }}] = {{ assignment["rhs"] }};
-            mStatesAdjusted[{{ assignment["index"] }}] = true;
+            // {{ assignment["lhs"] }} = {{ assignment["rhs"] }}
+            mEventAdjustedStateVars[{{ assignment["index"] }}] = true;
+            mEventAdjustedStateValues[{{ assignment["index"] }}] = {{ assignment["rhs"] }};
+
 {% elif ( assignment["type"] == VarType.VARIABLE_PARAMETER ) %}
-            SetParameter({{ assignment["index"] }}, {{ assignment["rhs"] }});
+            // {{ assignment["lhs"] }} = {{ assignment["rhs"] }}
+            mEventAdjustedParameters[{{ assignment["index"] }}] = true;
+            mEventAdjustedParameterValues[{{ assignment["index"] }}] = {{ assignment["rhs"] }};
+
 {% else %}
-            {{ assignment["lhs"] }} = {{ assignment["rhs"] }}; 
+            {{ assignment["lhs"] }} = {{ assignment["rhs"] }}; {# TODO: does this case exist? #}
+
 {% endif %}
-{% endfor %}
+{% endfor %} {# 'for assignment in event["assignments"]' #}
+
         }
-        mEventsSatisfied[{{ loop.index0 }}] = true; // Flag the condition true
+        mEventSatisfied[{{ event["index"] }}] = true;
     }
     else
     {
-        mEventsSatisfied[{{ loop.index0 }}] = false; // Flag the condition false
-    }
-{% endfor %}
-
-    // Event triggered, update state variables if necessary
-    if (min_dist == 0.0)
-    {
-        for (unsigned i = 0; i < {{ state_variables|length }}; ++i)
-        {
-            if (!mStatesAdjusted[i])
-            {
-                SetStateVariable(i, rY[i]);
-            }
-        }
+        mEventSatisfied[{{ event["index"] }}] = false;
+        mEventTriggered[{{ event["index"] }}] = false;
     }
 
-    mEventsInitialised = true; // Flag that events have been processed at least once
+{% endfor %} {# 'for event in events' #}
 
-    // Distance to closest event
-    return min_dist;
+    return min_dist; // Distance to closest event
 }
-{% endif %}
-
-{% if events %}
-double {{ ode_class_name }}::CalculateRootFunction(double time, const std::vector<double> &rY)
-{
-    return ProcessEvents(time, rY);
-}
-{% endif %}
-
-{% if events %}
-bool {{ ode_class_name }}::CalculateStoppingEvent(double time, const std::vector<double> &rY)
-{
-    return ProcessEvents(time, rY) == 0.0;
-}
-{% endif %}
+{% endif %} {# 'if events' #}
 
 // FUNCTIONS
 {% for func in functions %}
