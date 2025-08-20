@@ -10,14 +10,14 @@ class ChasteSbmlSrnModel(ChasteSbmlModel):
     """Class for generating Chaste code for an SRN model from SBML data."""
 
     # -- PUBLIC ---------------------------------------
-    def __init__(self, sbml_file: str, model_name: str = None, **kwargs) -> None:
+    def __init__(self, sbml_file: str, model_name: str = "", **kwargs) -> None:
         """Initialise the ChasteSbmlSrnModel."""
         super().__init__(sbml_file, model_name, SRN_SUFFIX, **kwargs)
 
     @property
     def srn_cpp_filename(self) -> str:
         """Get the output {srn_model}.cpp filename."""
-        return pathlib.Path(self.srn_hpp_filename).with_suffix(".cpp")
+        return str(pathlib.Path(self.srn_hpp_filename).with_suffix(".cpp"))
 
     @property
     def srn_hpp_filename(self) -> str:

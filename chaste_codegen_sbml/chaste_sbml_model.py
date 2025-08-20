@@ -3,27 +3,38 @@
 import abc
 import os
 import pathlib
+import re
+import subprocess
 from typing import TYPE_CHECKING
 
 from jinja2 import Environment, PackageLoader, select_autoescape
-from libsbml import Parameter, SBMLReader, Species, formulaToString
+from libsbml import (
+    AST_NAME,
+    AST_RELATIONAL_EQ,
+    AST_RELATIONAL_GEQ,
+    AST_RELATIONAL_GT,
+    AST_RELATIONAL_LEQ,
+    AST_RELATIONAL_LT,
+    AST_RELATIONAL_NEQ,
+    SBML_ALGEBRAIC_RULE,
+    SBML_ASSIGNMENT_RULE,
+    SBML_RATE_RULE,
+    SBMLReader,
+    formulaToString,
+)
 
-from ._config import ODE_SUFFIX, SHORT_NAME_LEN
+from ._config import NON_DIM_UNITS, ODE_SUFFIX, ROOT_DIR, EventType, VarType
 from ._utils import (
-    convert_formula,
-    convert_function_body,
     get_function_definition_arguments,
     get_species_concentration,
-    sort_nodes,
-    varname_camelcase,
-    varname_sanitize,
+    varname_staggercase,
 )
 
 if TYPE_CHECKING:
     from typing import Any
 
     from jinja2.environment import Template
-    from libsbml import SBase
+    from libsbml import ASTNode, Rule
 
 
 class ChasteSbmlModel:
@@ -37,12 +48,12 @@ class ChasteSbmlModel:
         trim_blocks=True,
         lstrip_blocks=True,
     )
+    _jinja_env.globals["VarType"] = VarType
+    _jinja_env.globals["EventType"] = EventType
 
-    SPECIAL_PARAMETER_NAMES = ["wnt", "gamma", "ComplexTransit"]
+    # -- PUBLIC --------------------------------------
 
-    # -- PUBLIC ---------------------------------------
-
-    def __init__(self, sbml_file: str, model_name: str = None, model_suffix: str = None) -> None:
+    def __init__(self, sbml_file: str, model_name: str = "", model_suffix: str = "") -> None:
         """Initialise the ChasteSbmlModel.
 
         :param sbml: The SBML file.
@@ -57,37 +68,40 @@ class ChasteSbmlModel:
             self._model_name = model_name
         else:
             filename = os.path.splitext(os.path.basename(self._sbml_file))[0]
-            self._model_name = varname_camelcase(filename).title()
+            model_name = varname_staggercase(filename) + "Sbml"
+            self._model_name = model_name[0].upper() + model_name[1:]
 
         self._model_suffix = model_suffix
         self._ode_class_name = self._model_name + ODE_SUFFIX
         self._model_class_name = f"{self._model_name}{self._model_suffix}Model"
         self._wrapper_class_name = f"Sbml{self._model_suffix}WrapperModel"
 
-        self._model = SBMLReader().readSBMLFromFile(self._sbml_file).getModel()
-        self._compartments = self._model.getListOfCompartments()
-        self._events = self._model.getListOfEvents()
-        self._function_definitions = self._model.getListOfFunctionDefinitions()
-        self._parameters = self._model.getListOfParameters()
-        self._reactions = self._model.getListOfReactions()
-        self._rules = self._model.getListOfRules()
-        self._species = self._model.getListOfSpecies()
-        self._unit_definitions = self._model.getListOfUnitDefinitions()
+        self._sbml_model = SBMLReader().readSBMLFromFile(self._sbml_file).getModel()
+        self._sbml_compartments = self._sbml_model.getListOfCompartments()
+        self._sbml_events = self._sbml_model.getListOfEvents()
+        self._sbml_function_definitions = self._sbml_model.getListOfFunctionDefinitions()
+        self._sbml_parameters = self._sbml_model.getListOfParameters()
+        self._sbml_reactions = self._sbml_model.getListOfReactions()
+        self._sbml_rules = self._sbml_model.getListOfRules()
+        self._sbml_species = self._sbml_model.getListOfSpecies()
+        self._sbml_unit_definitions = self._sbml_model.getListOfUnitDefinitions()
 
-        self._varnames = {}
+        self._variable_types = {}  # { id: VarType }
+        self._odes = {}  # { id: str }
 
-        self._odes_dict = None
-        self._update_odes_dict()
-
-        self._rules_dict = None
-        self._update_rules_dict()
-
-        self._state_parameters = None
-        self._state_variables = None
-        self._update_state()
-        self._num_state_vars = len(self._state_variables)
+        self._assignment_rules = []  # [ { id: str, label: str, ... } ]
+        self._state_variables = []  # [ { id: str, label: str, ... } ]
+        self._derived_quantities = []  # [ { id: str, label: str, ... } ]
+        self._variable_parameters = []  # [ { id: str, label: str, ... } ]
+        self._constant_parameters = []  # [ { id: str, label: str, ... } ]
+        self._rule_based_parameters = []  # [ { id: str, label: str, ... } ]
+        self._reactions = []  # [ { id: str, label: str, ... } ]
+        self._events = []  # [ { name: str, trigger: str, ... } ]
+        self._functions = []  # [ { name: str, args: [str], body: str } ]
 
         self._outputs = {}  # { filename: code }
+
+        self._process_model()
 
     def write(self, output_directory=None):
         """Generate Chaste code and write to file."""
@@ -105,33 +119,119 @@ class ChasteSbmlModel:
             with open(file_path, "w") as f:
                 f.write(code)
 
+        # Format with clang-format
+        for filename in self._outputs:
+            file_path = str(root_dir / filename)
+            subprocess.run(
+                [
+                    "clang-format",
+                    "-i",
+                    f"-style=file:{ROOT_DIR}/.clang-format",
+                    str(file_path),
+                ],
+                check=True,
+            )
+
     # -- PRIVATE ---------------------------------------
 
     @abc.abstractmethod
     def _generate(self) -> None:
         """Generate Chaste code for the model.
         This method should be implemented by subclasses.
-        Generated code should be stored in the outputs using _add_output.
+        Generated code should be stored in the outputs using `_add_output`.
+
+        Example:
+        cpp_code = ...
+        hpp_code = ...
+        self._add_output(cpp_filename, cpp_code)
+        self._add_output(hpp_filename, hpp_code)
         """
         return
 
-    def _add_state_parameter(self, obj_id: "str") -> None:
-        """Add a state parameter to the model data.
+    def _add_assignment_rule(self, id_: str, label: str, lhs: str, rhs: str) -> None:
+        """Add an assignment rule to the template variables."""
+        self._assignment_rules.append(
+            {
+                "id": id_,
+                "label": label,
+                "index": len(self._assignment_rules),
+                "lhs": lhs,
+                "rhs": rhs,
+            }
+        )
+        self._variable_types[id_] = VarType.ASSIGNMENT_RULE
 
-        :param obj_id: The id of the Parameter / Species.
+    def _add_constant_parameter(self, id_: str, label: str, value: float, units: str) -> None:
+        """Add a constant parameter to the template variables."""
+        self._constant_parameters.append(
+            {
+                "id": id_,
+                "label": label,
+                "index": len(self._constant_parameters),
+                "value": value,
+                "units": units,
+            }
+        )
+        self._variable_types[id_] = VarType.CONSTANT_PARAMETER
+
+    def _add_derived_quantity(self, id_: str, label: str, units: str, rhs: str) -> None:
+        """Add a derived quantity to the template variables."""
+        self._derived_quantities.append(
+            {
+                "id": id_,
+                "label": label,
+                "index": len(self._derived_quantities),
+                "rhs": rhs,
+                "units": units,
+            }
+        )
+        self._variable_types[id_] = VarType.DERIVED_QUANTITY
+
+    def _add_event(
+        self,
+        label: str,
+        trigger: str,
+        assignments: list[dict[str, "Any"]],
+        distance: str,
+        event_type: EventType,
+    ) -> None:
+        """Add an event to the template variables.
+
+        :param label: The event description.
+        :param trigger: The event trigger formula.
+        :param assignments: The event assignments.
+        :param distance: The distance for the event trigger.
+        :param event_type: The type of the event (e.g., cell division).
         """
-        if obj_id not in self._state_parameters:
-            index = len(self._state_parameters)
-            self._state_parameters[obj_id] = index
+        self._events.append(
+            {
+                "label": label,
+                "index": len(self._events),
+                "trigger": trigger,
+                "assignments": assignments,
+                "distance": distance,
+                "type": event_type,
+            }
+        )
 
-    def _add_state_variable(self, obj_id: "str") -> None:
-        """Add a state variable to the model data.
+    def _add_function(self, id_: str, label: str, args: str, body: str) -> None:
+        """Add a function to the template variables.
 
-        :param obj_id: The id of the Species.
+        :param id_: The function ID.
+        :param label: The function description.
+        :param args: The function arguments.
+        :param body: The function body.
         """
-        if obj_id not in self._state_variables:
-            index = len(self._state_variables)
-            self._state_variables[obj_id] = index
+        self._functions.append(
+            {
+                "id": id_,
+                "label": label,
+                "index": len(self._functions),
+                "args": args,
+                "body": body,
+            }
+        )
+        self._variable_types[id_] = VarType.FUNCTION
 
     def _add_output(self, filename: str, code: str) -> None:
         """Add generated code to the outputs dictionary.
@@ -141,90 +241,369 @@ class ChasteSbmlModel:
         """
         self._outputs[filename] = code
 
-    def _format_compartments(self) -> list[dict[str, "Any"]]:
-        """Get a list of compartment dictionaries for the model.
+    def _add_reaction(
+        self, id_: str, label: str, rhs: str, parameters: list[dict[str, "Any"]]
+    ) -> None:
+        """Add a reaction to the template variables."""
+        self._reactions.append(
+            {
+                "id": id_,
+                "label": label,
+                "index": len(self._reactions),
+                "rhs": rhs,
+                "parameters": parameters,
+            }
+        )
+        self._variable_types[id_] = VarType.REACTION
 
-        :return: A list of compartment dictionaries.
+    def _add_rule_based_parameter(
+        self, id_: str, label: str, initial_value: float, units: str = NON_DIM_UNITS
+    ) -> None:
+        """Add a rule parameter to the template variables."""
+        self._rule_based_parameters.append(
+            {
+                "id": id_,
+                "label": label,
+                "index": len(self._rule_based_parameters),
+                "initial_value": initial_value,
+                "units": units,
+            }
+        )
+        self._variable_types[id_] = VarType.RULE_BASED_PARAMETER
+
+    def _add_state_variable(
+        self, id_: str, label: str, initial_value: float, units: str, rhs: str
+    ) -> None:
+        """Add a state variable to the template variables."""
+        self._state_variables.append(
+            {
+                "id": id_,
+                "label": label,
+                "index": len(self._state_variables),
+                "initial_value": initial_value,
+                "rhs": rhs,
+                "units": units,
+            }
+        )
+        self._variable_types[id_] = VarType.STATE_VARIABLE
+
+    def _add_variable_parameter(
+        self, id_: str, label: str, initial_value: float, units: str = NON_DIM_UNITS
+    ) -> None:
+        """Add a variable parameter to the template variables."""
+        self._variable_parameters.append(
+            {
+                "id": id_,
+                "label": label,
+                "index": len(self._variable_parameters),
+                "initial_value": initial_value,
+                "units": units,
+            }
+        )
+        self._variable_types[id_] = VarType.VARIABLE_PARAMETER
+
+    def _convert_ast_formula(self, ast_formula: "ASTNode") -> str:
+        """Convert SBML AST formula to equivalent C++ string.
+
+        :param ast: The AST formula.
+        :param convert_names: Whether to convert state variable and parameter names.
+        :return: The equivalent C++ string.
         """
-        return [
-            {"id": c.getId(), "varname": self._get_varname(c), "size": c.getSize()}
-            for c in self._compartments
-        ]
+        return self._convert_str_formula(formulaToString(ast_formula))
 
-    def _format_events(self) -> list[dict[str, "Any"]]:
-        """Get a list of event dictionaries for the model.
+    def _convert_str_formula(self, formula: str) -> str:
+        """Convert SBML string formula to equivalent C++ string.
 
-        :return: A list of event dictionaries.
+        :param ast: The string formula.
+        :return: The equivalent C++ string.
         """
-        event_dicts = []
-        for event in self._events:
-            trigger = event.getTrigger()
-            tokens = []
-            for node in sort_nodes(trigger.getMath()):
-                if node.isNumber():
-                    token = str(node.getValue())
-                elif node.isName():
-                    # Replace species variable name with Chaste equivalent.
-                    token = node.getName()
-                    index = self._get_state_variable_index(token)
-                    if index is not None:
-                        token = f"rY[{index}]"
 
+        # Convert all integers to doubles
+        # TODO: Instead of regex, traverse AST and convert AST_INTEGER nodes to AST_REAL
+        formula = re.sub(r"(?<!\.)\b[0-9]+\b(?!\.)", lambda x: f"{x[0]}.0", formula)
+
+        # TODO: implies, lambda, delay
+
+        # SBML contants to be replaced with C++ equivalents
+        constants = {
+            "avogadro": "sm::AVOGADRO",
+            "exponentiale": "M_E",
+            "inf": "std::numeric_limits<double>::infinity()",
+            "infinity": "std::numeric_limits<double>::infinity()",
+            "nan": "NAN",
+            "notanumber": "NAN",
+            "pi": "M_PI",
+            "time": "SimulationTime::Instance()->GetTimeStep()",
+        }
+        # skip: "true", "false"
+
+        # SBML functions with same name as C++ equivalents
+        unchanged_functions = {
+            "acos",
+            "acosh",
+            "asin",
+            "asinh",
+            "atan",
+            "atanh",
+            "ceil",
+            "cos",
+            "cosh",
+            "exp",
+            "floor",
+            "pow",
+            "sin",
+            "sinh",
+            "sqrt",
+            "tan",
+            "tanh",
+        }
+
+        # SBML functions with different names in C++
+        renamed_functions = {
+            "abs": "fabs",
+            "arccos": "acos",
+            "arccosh": "acosh",
+            "arcsin": "asin",
+            "arcsinh": "asinh",
+            "arctan": "atan",
+            "arctanh": "atanh",
+            "ceiling": "ceil",
+            "ln": "log",
+            "power": "pow",
+            "rem": "fmod",
+        }
+
+        # SBML functions with custom implementations
+        custom_functions = {
+            "and": "and_",
+            "acot": "acot",
+            "acoth": "acoth",
+            "acsc": "acsc",
+            "acsch": "acsch",
+            "asec": "asec",
+            "asech": "asech",
+            "arccot": "acot",
+            "arccoth": "acoth",
+            "arccsc": "acsc",
+            "arccsch": "acsch",
+            "arcsec": "asec",
+            "arcsech": "asech",
+            "cot": "cot",
+            "coth": "coth",
+            "csc": "csc",
+            "csch": "csch",
+            "eq": "eq",
+            "factorial": "factorial",
+            "geq": "geq",
+            "gt": "gt",
+            "leq": "leq",
+            "log": "log",
+            "lt": "lt",
+            "max": "max",
+            "min": "min",
+            "neq": "neq",
+            "not": "not_",
+            "or": "or_",
+            "piecewise": "piecewise",
+            "quotient": "quotient",
+            "root": "root",
+            "sec": "sec",
+            "sech": "sech",
+            "sqr": "sqr",
+            "xor": "xor_",
+        }
+
+        # TODO: From SBML Level 3 upwards, log defaults to base 10.
+        # SBML versions lower than 3 default to base e.
+        # See https://sbml.org/software/libsbml/5.18.0/docs/formatted/python-api/namespacelibsbml.html#a8e96a5a70569ae32655c6302638f6dc3  # noqa: B950
+
+        tokens = re.findall(r"\w+|\W+", formula)
+
+        cpp_tokens = []
+        for token in tokens:
+            cpp_token = token
+
+            # Replace function names and constants.
+            if token in constants:
+                cpp_token = f"{constants[token]}"
+
+            elif token in unchanged_functions:
+                cpp_token = f"std::{token}"
+
+            elif token in renamed_functions:
+                cpp_token = f"std::{renamed_functions[token]}"
+
+            elif token in custom_functions:
+                cpp_token = f"sm::{custom_functions[token]}"
+
+            cpp_tokens.append(cpp_token)
+        cpp_formula = "".join(cpp_tokens)
+        return cpp_formula
+
+    def _extract_odes(self) -> None:
+        """Extract the ODEs equations for each species."""
+        self._odes = {}
+
+        # Extract ODEs from reactions:
+        # each ODE will essentially be the sum of the products minus the
+        # sum of the reactants divided by the compartment volume
+        for reaction in self._sbml_reactions:
+            reaction_id = reaction.getId()
+
+            # Decompose reaction into sum of products minus sum of reactants
+            products = reaction.getListOfProducts()
+            for product in products:
+                species_id = product.getSpecies()
+
+                if species_id in self._odes:
+                    self._odes[species_id] += " + " + reaction_id
                 else:
-                    token = convert_formula(node.getName())
-                tokens.append(token)
-            trigger_formula = " ".join(tokens)
+                    self._odes[species_id] = reaction_id
 
-            assignment_formulas = []
+            reactants = reaction.getListOfReactants()
+            for reactant in reactants:
+                species_id = reactant.getSpecies()
+
+                if species_id in self._odes:
+                    self._odes[species_id] += " - " + reaction_id
+                else:
+                    self._odes[species_id] = "-" + reaction_id
+
+        # Extract ODEs from rate rules
+        rate_rules = [r for r in self._sbml_rules if r.getTypeCode() == SBML_RATE_RULE]
+        for rule in rate_rules:
+            lhs = rule.getVariable()
+            if lhs in self._odes:
+                raise ValueError(f"{lhs} has both a rate rule and a reaction.")
+
+            rhs = self._convert_str_formula(rule.getFormula())
+            self._odes[lhs] = rhs
+
+    def _format_compartments(self) -> None:
+        """Add compartments to template variables."""
+        for compartment in self._sbml_compartments:
+            id_ = compartment.getId()
+            label = compartment.getName().strip()
+            value = compartment.getSize()
+            self._add_variable_parameter(id_, label, value)
+
+    def _format_events(self) -> None:
+        """Add events to template variables."""
+
+        # TODO: Add priority
+
+        for event in self._sbml_events:
+            label = event.getName().strip()
+
+            # Try to guess the event type
+            event_type = EventType.UNKNOWN
+
+            cell_division_terms = ["cell division", "cytokinesis", "mitosis", "meiosis"]
+            for term in cell_division_terms:
+                if all(word in label.lower() for word in term.split()):
+                    event_type = EventType.CELL_DIVISION
+                    break
+
+            trigger_math = event.getTrigger().getMath()
+            trigger_formula = self._convert_ast_formula(trigger_math)
+
+            trigger_distance = "1.0"
+            node_type = trigger_math.getType()
+            if node_type in [
+                AST_RELATIONAL_LT,
+                AST_RELATIONAL_GT,
+                AST_RELATIONAL_EQ,
+                AST_RELATIONAL_LEQ,
+                AST_RELATIONAL_GEQ,
+                AST_RELATIONAL_NEQ,
+            ]:
+                lc = self._convert_ast_formula(trigger_math.getLeftChild())
+                rc = self._convert_ast_formula(trigger_math.getRightChild())
+
+                # Distance is negative when the condition is false,
+                # zero at the point where the condition switches from false to true,
+                # and positive when the condition is true.
+                if node_type == AST_RELATIONAL_GT:
+                    # gt(4.5    , 5.0    ) -> condition=false, dist=-0.5-eps
+                    # gt(5.0    , 5.0+eps) -> condition=false, dist=-eps-eps
+                    # gt(5.0    , 5.0    ) -> condition=false, dist=-eps
+                    # gt(5.0+eps, 5.0    ) -> condition=true, dist=0.0
+                    # gt(5.5    , 5.0    ) -> condition=true, dist=0.5-eps
+                    trigger_distance = f"({lc}) - ({rc}) - std::numeric_limits<double>::epsilon()"
+                elif node_type == AST_RELATIONAL_GEQ:
+                    # geq(4.5    , 5.0    ) -> condition=false, dist=-0.5
+                    # geq(5.0    , 5.0+eps) -> condition=false, dist=-eps
+                    # geq(5.0    , 5.0    ) -> condition=true, dist=0.0
+                    # geq(5.0+eps, 5.0    ) -> condition=true, dist=eps
+                    # geq(5.5    , 5.0    ) -> condition=true, dist=0.5
+                    trigger_distance = f"({lc}) - ({rc})"
+                elif node_type == AST_RELATIONAL_LT:
+                    # lt(5.5    , 5.0    ) -> condition=false, dist=-0.5-eps
+                    # lt(5.0+eps, 5.0    ) -> condition=false, dist=-eps-eps
+                    # lt(5.0    , 5.0    ) -> condition=false, dist=-eps
+                    # lt(5.0    , 5.0+eps) -> condition=true, dist=0.0
+                    # lt(4.5    , 5.0    ) -> condition=true, dist=0.5-eps
+                    trigger_distance = f"({rc}) - ({lc}) - std::numeric_limits<double>::epsilon()"
+                elif node_type == AST_RELATIONAL_LEQ:
+                    # leq(5.5    , 5.0    ) -> condition=false, dist=-0.5
+                    # leq(5.0+eps, 5.0    ) -> condition=false, dist=-eps
+                    # leq(5.0    , 5.0    ) -> condition=true, dist=0.0
+                    # leq(5.0    , 5.0+eps) -> condition=true, dist=eps
+                    # leq(4.5    , 5.0    ) -> condition=true, dist=0.5
+                    trigger_distance = f"({rc}) - ({lc})"
+                elif node_type == AST_RELATIONAL_EQ:
+                    # eq(4.5    , 5.0    ) -> condition=false, dist=-0.5
+                    # eq(5.0    , 5.0+eps) -> condition=false, dist=-eps
+                    # eq(5.0    , 5.0    ) -> condition=true, dist=0.0
+                    # eq(5.0+eps, 5.0    ) -> condition=false, dist=-eps
+                    # eq(5.5    , 5.0    ) -> condition=false, dist=-0.5
+                    trigger_distance = f"-std::abs(({lc}) - ({rc}))"
+                else:  # AST_RELATIONAL_NEQ
+                    # neq(4.5    , 5.0    ) -> condition=true, dist=0.5-eps
+                    # neq(5.0    , 5.0+eps) -> condition=true, dist=0.0
+                    # neq(5.0    , 5.0    ) -> condition=false, dist=-eps
+                    # neq(5.0+eps, 5.0    ) -> condition=true, dist=0.0
+                    # neq(5.5    , 5.0    ) -> condition=true, dist=0.5-eps
+                    trigger_distance = (
+                        f"std::abs(({lc}) - ({rc})) - std::numeric_limits<double>::epsilon()"
+                    )
+
+                # TODO: Distance calculation assumes two operands. Extend to more operands?
+                # e.g. trigger: geq(3.0, 6.0, 7.0, 9.0) -> condition=false, dist=min(3.0, 1.0, 2.0)=1.0
+
+            assignments = []
             for assignment in event.getListOfEventAssignments():
-                # Replace species variable name with Chaste equivalent.
                 lhs = assignment.getVariable()
-                index = self._get_state_variable_index(lhs)
-                if index is not None:
-                    lhs = f"this->rGetStateVariables()[{index}]"
+                type_ = self._get_variable_type(lhs)
+                index = self._get_variable_index(lhs)
+                rhs = self._convert_ast_formula(assignment.getMath())
 
-                formula = convert_formula(formulaToString(assignment.getMath()))
-                formula_tokens = formula.split(" ")
-                tokens = []
-                for token in formula_tokens:
-                    # Replace species variable name with Chaste equivalent.
-                    index = self._get_state_variable_index(token)
-                    if index is not None:
-                        token = f"rY[{index}]"
-                    tokens.append(token)
-                rhs = " ".join(tokens)
+                assignments.append(
+                    {
+                        "index": index,
+                        "lhs": lhs,
+                        "rhs": rhs,
+                        "type": type_,
+                    }
+                )
 
-                if lhs and rhs:
-                    assignment_formulas.append({"lhs": lhs, "rhs": rhs})
+            self._add_event(label, trigger_formula, assignments, trigger_distance, event_type)
 
-            event_dicts.append(
-                {
-                    "trigger": trigger_formula,
-                    "assignments": assignment_formulas,
-                }
-            )
-        return event_dicts
-
-    def _format_function_definitions(self) -> list[dict[str, "Any"]]:
-        """Get a list of function definition dictionaries for the model.
-
-        :return: A list of function definition dictionaries.
-        """
-        function_definition_dicts = []
-        for fd in self._function_definitions:
+    def _format_function_definitions(self) -> None:
+        """Add function definitions to template variables."""
+        for fd in self._sbml_function_definitions:
             fd_id = fd.getId()
+            label = fd.getName().strip()
             arg_list = get_function_definition_arguments(fd)
             args = ", ".join(map(lambda x: f"double {x}", arg_list))
-            body = convert_function_body(fd.getBody())
+            body = self._convert_ast_formula(fd.getBody())
 
-            function_definition_dicts.append(
-                {
-                    "id": fd_id,
-                    "args": args,
-                    "body": body,
-                }
+            self._add_function(
+                fd_id,
+                label,
+                args,
+                body,
             )
-        return function_definition_dicts
 
     def _format_header_guard(self, filename: str) -> str:
         """Get the header guard for a file.
@@ -234,211 +613,119 @@ class ChasteSbmlModel:
         """
         return filename.upper().replace(".", "_") + "_"
 
-    def _format_parameters(self) -> list[dict[str, "Any"]]:
-        """Get a list of parameter dictionaries for the model.
+    def _format_parameters(self) -> None:
+        """Add parameters to template variables."""
 
-        :return: A list of parameter dictionaries.
-        """
-        parameter_dicts = []
-        for param in self._parameters:
+        # Note: rules must be processed before parameters
+        if not self._assignment_rules:
+            if any(r.getTypeCode() == SBML_ASSIGNMENT_RULE for r in self._sbml_rules):
+                raise RuntimeError("Please process rules before parameters.")
+        assignment_rules = {r["lhs"]: r["rhs"] for r in self._assignment_rules}
+
+        for param in self._sbml_parameters:
             param_id = param.getId()
-            name = self._get_name(param)
-            varname = self._get_varname(param)
+            label = param.getName().strip()
 
-            default = 0.0
-            is_special = self._is_special_parameter(param)
-            if is_special:
-                # Special strings in the parameter name
-                # TODO: Review how to handle these special parameters
-                if any(x in name for x in ["gamma", "ComplexTransit"]):
-                    default = 1.0
-                # 0.0 for wnt and everything else
-            elif param.isSetValue():
-                default = param.getValue()
+            value = param.getValue() if param.isSetValue() else 0.0
+            units = param.getUnits() if param.isSetUnits() else NON_DIM_UNITS
 
-            value = param.getValue()  # TODO: if param.isSetValue() else p_default ?
-            units = param.getUnits() if param.isSetUnits() else "non-dim"
+            if param_id in self._odes:
+                # State variable
+                rhs = self._odes[param_id]
+                self._add_state_variable(param_id, label, value, units, rhs)
+            elif param_id in assignment_rules:
+                # Rule-based parameter
+                self._add_rule_based_parameter(param_id, label, value, units)
+            elif param.isSetConstant() and not param.getConstant():
+                # Variable parameter
+                self._add_variable_parameter(param_id, label, value, units)
+            else:
+                # Constant parameter
+                self._add_constant_parameter(param_id, label, value, units)
 
-            is_defined = (param.isSetValue() or param_id in self._rules_dict) and not is_special
+    def _format_reactions(self) -> None:
+        """Add reactions to template variables."""
 
-            is_state_parameter = self._is_state_parameter(param)
-            state_parameter_index = self._get_state_parameter_index(param_id)
-
-            parameter_dicts.append(
-                {
-                    "default": default,
-                    "id": param_id,
-                    "is_defined": is_defined,
-                    "is_state_parameter": is_state_parameter,
-                    "name": name,
-                    "state_parameter_index": state_parameter_index,
-                    "units": units,
-                    "value": value,
-                    "varname": varname,
-                }
-            )
-        return parameter_dicts
-
-    def _format_reactions(self) -> list[dict[str, "Any"]]:
-        """Get a list of reaction dictionaries for the model.
-
-        :return: A list of reaction dictionaries.
-        """
-        reaction_dicts = []
-        for reaction in self._reactions:
+        for reaction in self._sbml_reactions:
             reaction_id = reaction.getId()
-            name = reaction.getName()
-            varname = self._get_varname(reaction)
+            label = reaction.getName().strip()
 
             kinetic_law = reaction.getKineticLaw()
-            rhs = convert_formula(kinetic_law.getFormula())
+            rhs = self._convert_str_formula(kinetic_law.getFormula())
 
-            reaction_dict = {
-                "id": reaction_id,
-                "name": name,
-                "parameters": [],
-                "rhs": rhs,
-                "varname": varname,
-            }
-
-            parameters = kinetic_law.getListOfParameters()
-            for param in parameters:
+            reaction_parameters = []
+            sbml_parameters = kinetic_law.getListOfParameters()
+            for param in sbml_parameters:
                 param_id = param.getId()
-                param_name = self._get_name(param)
-                param_varname = self._get_varname(param)
+                param_descr = param.getName().strip()
                 param_value = param.getValue()  # TODO: What if not set?
-
-                reaction_dict["parameters"].append(
+                reaction_parameters.append(
                     {
                         "id": param_id,
-                        "name": param_name,
-                        "varname": param_varname,
+                        "label": param_descr,
                         "value": param_value,
                     }
                 )
 
-            reaction_dicts.append(reaction_dict)
-        return reaction_dicts
+            self._add_reaction(reaction_id, label, rhs, reaction_parameters)
 
-    def _format_rules(self) -> list[dict[str, "Any"]]:
-        """Get a list of rule dictionaries for the model.
+    def _format_rules(self) -> None:
+        """Add rules to template variables."""
+        # Sort assignment rules - variables on rhs must be defined before they are used
+        assignment_rules = [r for r in self._sbml_rules if r.getTypeCode() == SBML_ASSIGNMENT_RULE]
+        assignment_rules = self._sort_rules(assignment_rules)
 
-        :return: A list of rule dictionaries.
-        """
-        return [{"id": r.getId(), "formula": convert_formula(r.getFormula())} for r in self._rules]
+        for rule in assignment_rules:
+            rule_id = rule.getId()
+            label = rule.getName().strip()
+            lhs = rule.getVariable()
+            rhs = self._convert_str_formula(rule.getFormula())
+            self._add_assignment_rule(rule_id, label, lhs, rhs)
 
-    def _format_species(self) -> list[dict[str, "Any"]]:
-        """Get a list of species dictionaries for the model.
+        # Algebraic rules are not implemented
+        if any(r.getTypeCode() == SBML_ALGEBRAIC_RULE for r in self._sbml_rules):
+            raise NotImplementedError("Algebraic rules are not yet supported.")
 
-        :return: A list of species dictionaries.
-        """
-        species_dicts = []
-        # time_multiplier = self._get_timescale_multiplier()
-        ode_index = 0
+        # Note: Rate rules are handled during ODE extraction
 
-        for species in self._species:
+    def _format_species(self) -> None:
+        """Add species to template variables."""
+
+        # Note: rules must be processed before species
+        if not self._assignment_rules:
+            if any(r.getTypeCode() == SBML_ASSIGNMENT_RULE for r in self._sbml_rules):
+                raise RuntimeError("Please process rules before species.")
+        assignment_rules = {r["lhs"]: r["rhs"] for r in self._assignment_rules}
+
+        for species in self._sbml_species:
             species_id = species.getId()
-            name = self._get_name(species)
-            varname = self._get_varname(species)
-            concentration = get_species_concentration(species)
+            label = species.getName().strip()
+            initial_value = get_species_concentration(species)
 
-            is_state_parameter = self._is_state_parameter(species)
-            state_parameter_index = self._get_state_parameter_index(species_id)
+            # If there's a compartment we'll normalise the ODEs, so declare it as non-dimensional
+            compartment_id = species.getCompartment()
+            compartment = self._sbml_compartments.get(compartment_id)
+            units = NON_DIM_UNITS if compartment else species.getSubstanceUnits()
 
-            is_state_variable = not is_state_parameter
-            state_variable_index = self._get_state_variable_index(species_id)
+            if species_id in assignment_rules:
+                # Derived quantity (includes boundary conditions)
+                rhs = assignment_rules[species_id]
+                self._add_derived_quantity(species_id, label, units, rhs)
 
-            comp_id = species.getCompartment()
-            comp = self._compartments.get(comp_id)
-            comp_varname = self._get_varname(comp)
-
-            # If there's a compartment we'll normalise the ODE so declare it as non-dimensional
-            units = "non-dim" if comp else species.getSubstanceUnits()
-
-            species_dict = {
-                "concentration": concentration,
-                "id": species_id,
-                "is_state_parameter": is_state_parameter,
-                "is_state_variable": is_state_variable,
-                "name": name,
-                "state_parameter_index": state_parameter_index,
-                "state_variable_index": state_variable_index,
-                "units": units,
-                "varname": varname,
-            }
-
-            # ODE system
-            lhs = None
-            rhs = None
-            if species_id in self._odes_dict:
-                if not species.getBoundaryCondition():
-                    index = ode_index
-                    lhs = f"rDY[{index}]"
-                    rhs = f"({self._odes_dict[species_id]}) / {comp_varname}"
-                    ode_index += 1
+            elif species_id in self._odes:
+                # State variable
+                rhs = f"({self._odes[species_id]}) / {compartment_id}"  # Normalised ODE
+                self._add_state_variable(species_id, label, initial_value, units, rhs)
 
                 # TODO: Handle time scaling
+                # time_multiplier = self._get_timescale_multiplier()
                 # if time_multiplier != 1.0:
                 #     # This does not include species defined in algebraic rules
-                #     f"rDY[{index}] *= {time_multiplier};"
+                #     f"rDY[{state_variable_index}] *= {time_multiplier};"
 
-            elif is_state_variable and (species_id == "drag" or varname == "drag"):
-                index = ode_index
-                lhs = f"rDY[{index}]"
-                rhs = f"(drag - rY[{state_variable_index}]) / {comp_varname}"
-                ode_index += 1
-
-            elif species_id in self._rules_dict:
-                # Species defined by algebraic rules are not in odes_dict
-                # Assuming these are assignments where variables are added together to represent a total
-                formula = self._rules_dict[species_id]
-                tokens = formula.split(" ")
-                rhs_tokens = []
-                for token in tokens:
-                    state_var_index = self._get_state_variable_index(token)
-                    if state_var_index is not None:
-                        rhs_tokens.append(f"rDY[{state_var_index}]")
-
-                if rhs_tokens:
-                    index = ode_index
-                    lhs = f"rDY[{index}]"
-                    rhs = f"({' + '.join(rhs_tokens)}) / {comp_varname}"
-                    ode_index += 1
-
-            # TODO: include other rules
-
-            if lhs and rhs:
-                species_dict["ode"] = {"lhs": lhs, "rhs": rhs}
-
-            species_dicts.append(species_dict)
-        return species_dicts
-
-    def _get_name(self, obj: "SBase") -> str:
-        """Get the name of a libSBML object, or the ID if it doesn't have one.
-
-        :param obj: The object.
-        :return: The object name, or ID.
-        """
-        obj_name = obj.getName().strip()
-        if obj_name:
-            return obj_name
-        return obj.getId()
-
-    def _get_state_parameter_index(self, obj_id: "str") -> int:
-        """Get the index of a state parameter.
-
-        :param obj_id: The id of the Parameter / Species.
-        :return: The state parameter index.
-        """
-        return self._state_parameters.get(obj_id)
-
-    def _get_state_variable_index(self, obj_id: "str") -> int:
-        """Get the index of a state variable.
-
-        :param obj_id: The id of the Species.
-        :return: The state variable index.
-        """
-        return self._state_variables.get(obj_id)
+            else:
+                # Variable parameter
+                self._add_variable_parameter(species_id, label, initial_value, units)
 
     def _get_template(self, name: str) -> "Template":
         """Get a Jinja2 template.
@@ -448,25 +735,26 @@ class ChasteSbmlModel:
         """
         return self._jinja_env.get_template(name)
 
-    def _get_template_vars(self, hpp_filename: str) -> dict[str, str]:
-        """Generate the template variables for the model cpp file.
+    def _get_template_vars(self, hpp_filename: str) -> dict[str, "Any"]:
+        """Generate the template variables for the model C++ files.
 
         :param hpp_filename: The hpp filename for the model.
-        return: The template variables for the model cpp file.
+        :return: The template variables for the model C++ files.
         """
         return dict(
-            compartments=self._format_compartments(),
-            events=self._format_events(),
-            function_definitions=self._format_function_definitions(),
+            assignment_rules=self._assignment_rules,
+            constant_parameters=self._constant_parameters,
+            derived_quantities=self._derived_quantities,
+            events=self._events,
+            functions=self._functions,
             header_guard=self._format_header_guard(hpp_filename),
-            model_hpp_file=hpp_filename,
             model_class_name=self._model_class_name,
+            model_hpp_file=hpp_filename,
             ode_class_name=self._ode_class_name,
-            parameters=self._format_parameters(),
-            reactions=self._format_reactions(),
-            rules=self._format_rules(),
-            num_state_vars=self._num_state_vars,
-            species=self._format_species(),
+            reactions=self._reactions,
+            rule_based_parameters=self._rule_based_parameters,
+            state_variables=self._state_variables,
+            variable_parameters=self._variable_parameters,
             wrapper_class_name=self._wrapper_class_name,
         )
 
@@ -477,127 +765,184 @@ class ChasteSbmlModel:
 
         :return: The timescale multiplier.
         """
-        for unit_def in self._unit_definitions:
+        for unit_def in self._sbml_unit_definitions:
             u_id = unit_def.getId()
             if u_id.lower() == "time":  # Do people ever call this something different?
-                timescale = unit_def.getName().lower()
+                timescale = unit_def.getName().strip().lower()
                 if "minute" in timescale:
                     return 60.0
                 elif "hour" in timescale:
                     return 1.0
         return 3600.0
 
-    def _get_varname(self, obj: "SBase") -> str:
-        """Get a suitable C++ variable name for a libSBML object.
+    def _get_variable_index(self, id_: str) -> int:
+        """Get the index of a variable"""
+        var_type = self._get_variable_type(id_)
 
-        :param obj: The object.
-        :return: The variable name.
+        if var_type == VarType.STATE_VARIABLE:
+            for state_variable in self._state_variables:
+                if state_variable["id"] == id_:
+                    return state_variable["index"]
+
+        elif var_type == VarType.DERIVED_QUANTITY:
+            for dq in self._derived_quantities:
+                if dq["id"] == id_:
+                    return dq["index"]
+
+        elif var_type == VarType.CONSTANT_PARAMETER:
+            for param in self._constant_parameters:
+                if param["id"] == id_:
+                    return param["index"]
+
+        elif var_type == VarType.VARIABLE_PARAMETER:
+            for param in self._variable_parameters:
+                if param["id"] == id_:
+                    return param["index"]
+
+        elif var_type == VarType.RULE_BASED_PARAMETER:
+            for param in self._rule_based_parameters:
+                if param["id"] == id_:
+                    return param["index"]
+
+        elif var_type == VarType.ASSIGNMENT_RULE:
+            for rule in self._assignment_rules:
+                if rule["id"] == id_:
+                    return rule["index"]
+
+        elif var_type == VarType.FUNCTION:
+            for func in self._functions:
+                if func["id"] == id_:
+                    return func["index"]
+
+        elif var_type == VarType.REACTION:
+            for reaction in self._reactions:
+                if reaction["id"] == id_:
+                    return reaction["index"]
+
+        raise ValueError(f"ID '{id_}' is not a recognized variable.")
+
+    def _get_variable_type(self, var_id: str) -> bool:
+        """Get the type of a variable based on its ID."""
+        return self._variable_types.get(var_id, VarType.UNKNOWN)
+
+    def _process_model(self) -> None:
+        """Process the SBML model to set up the formatted variables for templates."""
+
+        self._variable_types = {}
+        self._odes = {}
+
+        self._assignment_rules = []
+        self._state_variables = []
+        self._derived_quantities = []
+        self._variable_parameters = []
+        self._constant_parameters = []
+        self._rule_based_parameters = []
+
+        self._reactions = []
+        self._events = []
+        self._functions = []
+
+        self._extract_odes()
+
+        self._format_rules()
+        self._format_compartments()
+        self._format_species()
+        self._format_parameters()
+
+        self._format_reactions()
+        self._format_events()
+        self._format_function_definitions()
+
+    def _sort_rules(self, rules: list["Rule"]) -> list["Rule"]:
+        """Sort rules based on their dependency.
+        Rules are sorted such that if rule A depends on B (A -> B), then B comes
+        before A. It is assumed that the input rules are acyclic. This function
+        can't sort cyclic dependencies such as A -> B -> A, or A -> B -> C -> A.
+
+        :param rules: The list of rules to sort.
+        :return: The sorted list of rules.
         """
-        obj_id = obj.getId()
-        if obj_id in self._varnames:
-            return self._varnames[obj_id]
 
-        # Prefer the name if it is reasonably short, or shorter than the ID
-        obj_name = varname_sanitize(self._get_name(obj))
-        if 0 < len(obj_name) <= max(SHORT_NAME_LEN, len(obj_id)):
-            var = obj_name
-        else:
-            var = obj_id
-
-        # Check that all generated variable names are unique
-        if var in self._varnames.values():
-            i = 0
-            while f"{var}_{i}" in self._varnames.values():
-                i += 1
-            var = f"{var}_{i}"
-
-        self._varnames[obj_id] = var
-        return var
-
-    def _is_special_parameter(self, parameter: "Parameter") -> bool:
-        """Check if a parameter has a special name.
-
-        :param parameter: The Parameter.
-        :return: True if special, False otherwise.
-        """
-        name = parameter.getName()
-        return name and any(s in name for s in self.SPECIAL_PARAMETER_NAMES)
-
-    def _is_state_parameter(self, obj: "Species | Parameter") -> bool:
-        """Check if a species or parameter is defined as a state parameter for Chaste.
-
-        :param obj: The species or parameter to check.
-        :return: True if defined as a parameter, False otherwise.
-        """
-        # Any species not defined by an ODE or rule is set as a state parameter
-        if isinstance(obj, Species):
-            species_id = obj.getId()
-            return (species_id not in self._odes_dict) and (species_id not in self._rules_dict)
-
-        if isinstance(obj, Parameter):
-            # Parameters with special strings in their name are state parameters.
-            if self._is_special_parameter(obj):
+        def _search_formula(node: "ASTNode", name: str) -> bool:
+            """Recursively search for a variable name in the AST formula."""
+            if node is None:
+                return False
+            if node.getType() == AST_NAME and node.getName() == name:
                 return True
 
-            # Also, parameters with unset values are state parameters.
-            parameter_id = obj.getId()
-            return (not obj.isSetValue()) and (parameter_id not in self._rules_dict)
+            for i in range(node.getNumChildren()):
+                child = node.getChild(i)
+                if _search_formula(child, name):
+                    return True
+            return False
 
-        return False
+        _compare_cache = dict()
 
-    def _update_state(self) -> None:
-        """Set the state parameters and state variables for the model."""
-        self._state_parameters = {}
-        self._state_variables = {}
+        def _compare_rules(rule_a: "Rule", rule_b: "Rule") -> int:
+            """Compare two rules based on their dependency.
 
-        for species in self._species:
-            if self._is_state_parameter(species):
-                self._add_state_parameter(species.getId())
-            else:
-                self._add_state_variable(species.getId())
+            :param rule_a: The first rule (A).
+            :param rule_b: The second rule (B).
 
-        for param in self._parameters:
-            if self._is_state_parameter(param):
-                self._add_state_parameter(param.getId())
+            :return: An integer indicating the order of the rules.
+                -1 if A < B (A comes before B)
+                1 if A > B (A comes after B)
+                0 if the order doesn't matter
+            """
 
-    def _update_odes_dict(self) -> None:
-        """Set the ODEs dictionary of equations corresponding to each species.
+            id_a = rule_a.getId()
+            id_b = rule_b.getId()
 
-        Each ODE will essentially be the sum of the products minus the sum of
-        the reactants divided by the compartment volume
-        """
-        self._odes_dict = {}
-        for reaction in self._reactions:
-            reaction_var = self._get_varname(reaction)
+            order = _compare_cache.get((id_a, id_b), None)
+            if order is not None:
+                return order
 
-            # Decompose reaction into sum of products minus sum of reactants
-            products = reaction.getListOfProducts()
-            for product in products:
-                # Get the species concerning the product
-                species_id = product.getSpecies()
+            var_a = rule_a.getVariable()
+            var_b = rule_b.getVariable()
 
-                # TODO: Do we need to do something special with boundary conditions?
-                # species = self._model.getSpecies(species_id)
-                # if species.isSetBoundaryCondition() and not species.getBoundaryCondition():
+            rhs_a = rule_a.getMath()
+            rhs_b = rule_b.getMath()
 
-                if species_id in self._odes_dict:
-                    self._odes_dict[species_id] += " + " + reaction_var
+            # Check if var_a is in rhs_b
+            if _search_formula(rhs_b, var_a):
+                # var_a is used in rhs_b: rule_a comes before rule_b
+                _compare_cache[(id_a, id_b)] = -1
+                _compare_cache[(id_b, id_a)] = 1
+                return -1
+
+            # Check if var_b is in rhs_a
+            if _search_formula(rhs_a, var_b):
+                # var_b is used in rhs_a: rule_b comes before rule_a
+                _compare_cache[(id_a, id_b)] = 1
+                _compare_cache[(id_b, id_a)] = -1
+                return 1
+
+            # Order doesn't matter
+            _compare_cache[(id_a, id_b)] = 0
+            _compare_cache[(id_b, id_a)] = 0
+            return 0
+
+        def _insertion_sort(rules: list["Rule"]) -> list["Rule"]:
+            """Sort rules using insertion sort based on their dependency."""
+            # We need to compare each rule to all the others until we find a
+            # non-zero comparison i.e. a +1 or -1 match (or until we exhaust
+            # all options) because of cases such as:
+            # Initial order: (a, b, c)
+            # a == b (order doesn't matter, comparison is 0);
+            # b == c (order doesn't matter, comparison is 0);
+            # a > c (a should come after c, comparison is 1);
+            # If we only compare (a, b) and (b, c), no changes will be made.
+            sorted_rules = []
+
+            for rule_a in rules:
+                for i, rule_b in enumerate(sorted_rules):
+                    if _compare_rules(rule_a, rule_b) < 0:  # rule_a < rule_b
+                        sorted_rules.insert(i, rule_a)
+                        break
                 else:
-                    self._odes_dict[species_id] = reaction_var
+                    # rule_a comes after everything already in sorted_rules
+                    sorted_rules.append(rule_a)
 
-            reactants = reaction.getListOfReactants()
-            for reactant in reactants:
-                species_id = reactant.getSpecies()
+            return sorted_rules
 
-                # TODO: Do we need to do something special with boundary conditions?
-                # species = self._model.getSpecies(species_id)
-                # if species.isSetBoundaryCondition() and not species.getBoundaryCondition():
-
-                if species_id in self._odes_dict:
-                    self._odes_dict[species_id] += " - " + reaction_var
-                else:
-                    self._odes_dict[species_id] = "-" + reaction_var
-
-    def _update_rules_dict(self) -> None:
-        """Set the dictionary of species defined by reaction rules."""
-        self._rules_dict = {r.getId(): convert_formula(r.getFormula()) for r in self._rules}
+        return _insertion_sort(rules)

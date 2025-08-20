@@ -1,190 +1,332 @@
-#include "{{ model_hpp_file }}"
-#include "CellwiseOdeSystemInformation.hpp"
+#include <cmath>
+#include <limits>
+#include <vector>
 
-/* SBML ODE System */
+#include "CellwiseOdeSystemInformation.hpp"
+#include "SbmlEventType.hpp"
+#include "SbmlMath.hpp"
+
+#include "{{ model_hpp_file }}"
+
+namespace sm = sbmlmath;
+
 {{ ode_class_name }}::{{ ode_class_name }}(std::vector<double> stateVariables)
-    : AbstractOdeSystem({{ num_state_vars }})
+    : AbstractOdeSystem({{ state_variables|length }})
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<{{ ode_class_name }}>);
 
-    Init();
-
-{% for sp in species %}
-{% if sp["is_state_variable"] is true() %}
-    SetDefaultInitialCondition({{ sp["state_variable_index"] }}, {{ sp["concentration"] }}); // {{ sp["name"] }}
-{% endif %}
+    // STATE VARIABLES
+{% for var in state_variables %}
+    {{ var["id"] }} = {{ var["initial_value"] }};
 {% endfor %}
 
-{% for param in parameters %}
-{% if param["is_defined"] is false() %}
-    this->mParameters.push_back({{ param["default"] }}); // {{ param["id"] }}
-{% endif %}
+{% for var in state_variables %}
+    SetDefaultInitialCondition({{ var["index"] }}, {{ var["id"] }});
 {% endfor %}
 
-    if (stateVariables != std::vector<double>())
+    if (stateVariables.size() == {{ state_variables|length }})
     {
-        SetStateVariables(stateVariables);
+{% for var in state_variables %}
+        {{ var["id"] }} = stateVariables[{{ var["index"] }}];
+{% endfor %}
     }
+    else if (stateVariables.size() != 0)
+    {
+        EXCEPTION("{{ ode_class_name }}: Expected {{ state_variables|length }} state variables, got " + std::to_string(stateVariables.size()));
+    }
+
+{% for var in state_variables %}
+    mStateVariables.push_back({{ var["id"] }});
+{% endfor %}
+
+    // DERIVED QUANTITIES
+{% for dq in derived_quantities %}
+    {{ dq["id"] }} = 0.0;
+{% endfor %}
+
+    // VARIABLE PARAMETERS
+{% for param in variable_parameters %}
+    {{ param["id"] }} = {{ param["initial_value"] }};
+{% endfor %}
+
+{% for param in variable_parameters %}
+    mParameters.push_back({{ param["id"] }});
+{% endfor %}
+
+    // RULE-BASED PARAMETERS
+{% for var in rule_based_parameters %}
+    {{ var['id'] }} = 0.0;
+{% endfor %}
+
+    // REACTIONS
+{% for reaction in reactions %}
+    {{ reaction["id"] }} = 0.0;
+{% endfor %}
+
+    // EVENTS
+    mEventType.resize({{ events|length }}, SbmlEventType::UNKNOWN);
+
+    // Uncomment lines below for events that should trigger cell division
+
+{% for event in events %}
+{% if event["type"] == EventType.CELL_DIVISION %}
+    mEventType[{{ event["index"] }}] = SbmlEventType::CELL_DIVISION; // {{ event["label"] }}
+{% else %}
+    // mEventType[{{ event["index"] }}] = SbmlEventType::CELL_DIVISION; // {{ event["label"] }}
+{% endif %}
+{% endfor %}
+
+    mEventSatisfied.resize({{ events|length }}, true); // Prevent events from triggering at the start
+    mEventTriggered.resize({{ events|length }}, false);
+
+    mEventAdjustedParameters.resize({{ variable_parameters|length }}, false);
+    mEventAdjustedParameterValues.resize({{ variable_parameters|length }}, 0.0);
+
+    mEventAdjustedStateVars.resize({{ state_variables|length }}, false);
+    mEventAdjustedStateValues.resize({{ state_variables|length }}, 0.0);
+
+    // Run model rules to complete state initialisation
+    RunModelRules(0.0, mStateVariables);
+}
+
+{{ ode_class_name }}::{{ ode_class_name }}(const {{ ode_class_name }}& rOdeSystem)
+        : {{ ode_class_name }}(rOdeSystem.mStateVariables)
+{
+    mEventSatisfied = rOdeSystem.mEventSatisfied;
+    mEventTriggered = rOdeSystem.mEventTriggered;
+
+    mEventAdjustedParameters = rOdeSystem.mEventAdjustedParameters;
+    mEventAdjustedParameterValues = rOdeSystem.mEventAdjustedParameterValues;
+
+    mEventAdjustedStateVars = rOdeSystem.mEventAdjustedStateVars;
+    mEventAdjustedStateValues = rOdeSystem.mEventAdjustedStateValues;
 }
 
 {{ ode_class_name }}::~{{ ode_class_name }}()
 {
 }
 
-{% for fd in function_definitions %}
-double {{ ode_class_name }}::{{ fd["id"] }}({{ fd["args"] }})
+void {{ ode_class_name }}::AdjustParameters(double time)
 {
-    return {{ fd["body"]}};
+    for (unsigned i = 0; i < mEventAdjustedParameters.size(); ++i)
+    {
+        if (mEventAdjustedParameters[i])
+        {
+            SetParameter(i, mEventAdjustedParameterValues[i]);
+        }
+    }
+
+    for (unsigned i = 0; i < mEventAdjustedStateVars.size(); ++i)
+    {
+        if (mEventAdjustedStateVars[i])
+        {
+            SetStateVariable(i, mEventAdjustedStateValues[i]);
+            mEventAdjustedStateVars[i] = false;
+        }
+    }
 }
-{% endfor %}
 
-void {{ ode_class_name }}::Init()
+double {{ ode_class_name }}::CalculateRootFunction(double time, const std::vector<double> &rY)
 {
-{% if compartments %}
-    /* Initialise model compartments. */
-{% for comp in compartments %}
-    {{ comp["id"] }} = {{ comp["size"] }};
-{% endfor %}
-{% endif %}
+    return ProcessModelEvents(time, rY);
+}
 
-{% if parameters %}
-    /* Initialise model parameters. */
-{% for param in parameters %}
-    {{ param["id"] }} = {{ param["value"] }};
-{% endfor %}
-{% endif %}
+bool {{ ode_class_name }}::CalculateStoppingEvent(double time, const std::vector<double> &rY)
+{
+    return ProcessModelEvents(time, rY) == 0.0;
+}
 
-{% if events %}
-    /* Initialise vector to check if events have been triggered. */
-    eventsSatisfied.resize({{ events|length }}, false);
-{% endif %}
+std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, const std::vector<double> &rY)
+{
+    RunModelRules(time, rY);
+
+    std::vector<double> dqs;
+{% for dq in derived_quantities %}
+    dqs.push_back({{ dq["id"] }});
+{% endfor %}
+    return dqs;
 }
 
 void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-    /* Define state variables */
-{% for sp in species %}
-{% if sp["is_state_variable"] is true() %}
-    double {{ sp["id"] }} = rY[{{ sp["state_variable_index"] }}]; // {{ sp["name"] }}
-{% endif %}
+    RunModelRules(time, rY);
+
+{% for var in state_variables %}
+    rDY[{{ var["index"] }}] = {{ var["rhs"] }}; // d[{{ var["id"] }}]/dt
 {% endfor %}
 
-    /* Define state parameters. */
-{% for sp in species %}
-{% if sp["is_state_parameter"] is true() %}
-    double {{ sp["id"] }} = this->mParameters[{{ sp["state_parameter_index"] }}]; // {{ sp["name"] }}
-{% endif %}
-{% endfor %}
-
-{% for param in parameters %}
-{% if param["is_state_parameter"] is true() %}
-    double {{ param["id"] }} = this->mParameters[{{ param["state_parameter_index"] }}]; // {{ param["name"] }}
-{% endif %}
-{% endfor %}
-
-    /* Define algebraic rules. */
-{% for rule in rules %}
-    {{ rule["id"] }} = {{ rule["formula"] }};
-{% endfor %}
-
-    /* Define the reactions in this model. */
-{% for reaction in reactions %}
-{% if reaction["name"] %}
-    // {{ reaction["name"] }}
-{% endif %}
-{% for param in reaction["parameters"] %}
-    double {{ param["id"] }} = {{ param["value"] }}; // {{ param["name"] }}
-{% endfor %}
-    double {{ reaction["varname"] }} = {{ reaction["rhs"] }};
-
-{% endfor %}
-
-{% for sp in species %}
-{% if sp["ode"] %}
-    {{ sp["ode"]["lhs"] }} = {{ sp["ode"]["rhs"] }}; // d{{ sp["name"] }}/dt
-{% endif %}
-{% endfor %}
-
-    /* Account for the differences in timescales. */
+    // TODO: Scale time appropriately
 }
 
-{% if events %}
-bool {{ ode_class_name }}::CalculateStoppingEvent(double time, const std::vector<double> & rY)
+bool {{ ode_class_name }}::HasEventOccurred(SbmlEventType eventType)
 {
-    // Return true if all events have been triggered.
-    return AreAllEventsSatisfied(time, rY);
+    for (unsigned i = 0; i < mEventTriggered.size(); ++i)
+    {
+        if (mEventTriggered[i] && mEventType[i] == eventType)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
-void {{ ode_class_name }}::CheckAndUpdateEvents(double time, const std::vector<double> & rY)
+double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<double> &rY)
 {
-    std::vector<double> dy(rY.size()); // Initialise derivatives vector
-    EvaluateYDerivatives(time, rY, dy);
+    std::fill(std::begin(mEventAdjustedParameters), std::end(mEventAdjustedParameters), false);
+    std::fill(std::begin(mEventAdjustedStateVars), std::end(mEventAdjustedStateVars), false);
+
+    double min_dist = std::numeric_limits<double>::max();
 
 {% for event in events %}
-    if ({{ event["trigger"] }})
+    //========================================
+    // EVENT: {{ event["label"] }}
+    //========================================
     {
+        double event_dist = {{ event["distance"] }};
+
+        // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
+        if (std::abs(event_dist) < 1.0)
+        {
+            event_dist = 1.0;
+        }
+
+        // Update min_dist
+        if (std::abs(event_dist) < std::abs(min_dist))
+        {
+            min_dist = event_dist;
+        }
+
+        // Process the event
+        if ({{ event["trigger"] }})
+        {
+            if (!mEventSatisfied[{{ event["index"] }}])
+            {
+                // The condition is transitioning from false -> true: trigger the event
+                mEventTriggered[{{ event["index"] }}] = true;
+                event_dist = 0.0;
+                min_dist = 0.0;
+
+                // Adjust relevant state variables and parameters
 {% for assignment in event["assignments"] %}
-        {{ assignment["lhs"] }} = double({{ assignment["rhs"] }});
-{% endfor %}
-        eventsSatisfied[{{ loop.index0 }}] = true;
+{% if ( assignment["type"] == VarType.STATE_VARIABLE ) %}
+                // {{ assignment["lhs"] }} = {{ assignment["rhs"] }}
+                mEventAdjustedStateVars[{{ assignment["index"] }}] = true;
+                mEventAdjustedStateValues[{{ assignment["index"] }}] = {{ assignment["rhs"] }};
+
+{% elif ( assignment["type"] == VarType.VARIABLE_PARAMETER ) %}
+                // {{ assignment["lhs"] }} = {{ assignment["rhs"] }}
+                mEventAdjustedParameters[{{ assignment["index"] }}] = true;
+                mEventAdjustedParameterValues[{{ assignment["index"] }}] = {{ assignment["rhs"] }};
+
+{% else %}
+                {{ assignment["lhs"] }} = {{ assignment["rhs"] }}; {# TODO: does this case exist? #}
+
+{% endif %}
+{% endfor %} {# 'for assignment in event["assignments"]' #}
+
+            }
+            mEventSatisfied[{{ event["index"] }}] = true;
+        }
+        else
+        {
+            mEventSatisfied[{{ event["index"] }}] = false;
+            mEventTriggered[{{ event["index"] }}] = false;
+        }
     }
+
+{% endfor %} {# 'for event in events' #}
+
+    return min_dist; // Distance to closest event
+}
+
+void {{ ode_class_name }}::ResetEventsOccurred()
+{
+    std::fill(mEventTriggered.begin(), mEventTriggered.end(), false);
+}
+
+void {{ ode_class_name }}::RunModelRules(double time, const std::vector<double>& rY)
+{
+    // STATE VARIABLES
+{% for var in state_variables %}
+    {{ var["id"] }} = rY[{{ var["index"] }}];
+{% endfor %}
+
+    // VARIABLE PARAMETERS
+{% for var in variable_parameters %}
+    {{ var["id"] }} = GetParameter({{ var['index'] }});
+{% endfor %}
+
+    // ASSIGNMENT RULES
+{% for rule in assignment_rules %}
+    {{ rule["lhs"] }} = {{ rule["rhs"] }};
+{% endfor %}
+
+    // REACTIONS
+{% for reaction in reactions %}
+  {% if reaction["label"] %}
+    // {{ reaction["label"] }}
+  {% endif %}
+  {% if reaction["parameters"] %}
+    {{ reaction["id"] }} = 0.0;
+    {
+  {% for param in reaction["parameters"] %}
+        double {{ param["id"] }} = {{ param["value"] }};
+  {% endfor %}
+        {{ reaction["id"] }} = {{ reaction["rhs"] }};
+    }
+  {% else %}
+    {{ reaction["id"] }} = {{ reaction["rhs"] }};
+  {% endif %}
+
 {% endfor %}
 }
 
-bool {{ ode_class_name }}::AreAllEventsSatisfied(double time, const std::vector<double>& rY)
+// MODEL FUNCTIONS
+{% for func in functions %}
+inline double {{ ode_class_name }}::{{ func["id"] }}({{ func["args"] }})
 {
-    CheckAndUpdateEvents(time, rY);
-    bool events_satisfied = true;
-    if (std::find(eventsSatisfied.begin(), eventsSatisfied.end(), false) != eventsSatisfied.end())
-    {
-        events_satisfied = false;
-    }
-    if (events_satisfied) // Reset events vector if cell division is triggered
-    {
-        std::fill(eventsSatisfied.begin(), eventsSatisfied.end(), false);
-    }
-    return events_satisfied;
+    return {{ func["body"] }};
 }
-{% endif %}
+
+{% endfor %}
 
 template <>
 void CellwiseOdeSystemInformation<{{ ode_class_name }}>::Initialise()
 {
-{% for sp in species %}
-{% if sp["is_state_variable"] is true() %}
-    this->mVariableNames.push_back("{{ sp['name'] }}");
-    this->mVariableUnits.push_back("{{ sp['units'] }}");
-    this->mInitialConditions.push_back({{ sp['concentration'] }});
+    // STATE VARIABLES
+{% for var in state_variables %}
+    this->mVariableNames.push_back("{{ var['id'] }}");
+    this->mVariableUnits.push_back("{{ var['units'] }}");
+    this->mInitialConditions.push_back({{ var['initial_value'] }});
 
-{% elif sp["is_state_parameter"] is true() %}
-    this->mParameterNames.push_back("{{ sp['name'] }}");
-    this->mParameterUnits.push_back("{{ sp['units'] }}");
-
-{% endif %}
 {% endfor %}
 
-    /* Define state parameters. */
-    // Parameters without set values must be externally defined
-{% for param in parameters %}
-{% if param["is_defined"] is false() %}
-    this->mParameterNames.push_back("{{ param['id'] }}");
-    this->mParameterUnits.push_back("{{ param['units'] }}");
+    // DERIVED QUANTITIES
+{% for dq in derived_quantities %}
+    this->mDerivedQuantityNames.push_back("{{ dq['id'] }}");
+    this->mDerivedQuantityUnits.push_back("{{ dq['units'] }}");
 
-{% endif %}
+{% endfor %}
+
+    // PARAMETERS
+{% for var in variable_parameters %}
+    this->mParameterNames.push_back("{{ var['id'] }}");
+    this->mParameterUnits.push_back("{{ var['units'] }}");
+
 {% endfor %}
     this->mInitialised = true;
 }
 
-/* Define SRN model using Wrappers. */
+// Define {{ wrapper_class_name }} using wrappers
 #include "{{ wrapper_class_name }}.hpp"
 #include "{{ wrapper_class_name }}.cpp"
 
-typedef {{ wrapper_class_name }}<{{ ode_class_name }}, {{ num_state_vars }}> {{ model_class_name }};
+typedef {{ wrapper_class_name }}<{{ ode_class_name }}, {{ state_variables|length }}> {{ model_class_name }};
 
 // Declare identifiers for the serializer
 #include "SerializationExportWrapperForCpp.hpp"
 CHASTE_CLASS_EXPORT({{ ode_class_name }})
-EXPORT_TEMPLATE_CLASS2({{ wrapper_class_name }}, {{ ode_class_name }}, {{ num_state_vars }})
+EXPORT_TEMPLATE_CLASS2({{ wrapper_class_name }}, {{ ode_class_name }}, {{ state_variables|length }})
 
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
 EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER({{ model_class_name }})

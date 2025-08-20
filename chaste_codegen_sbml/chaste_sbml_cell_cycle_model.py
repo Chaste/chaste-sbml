@@ -11,14 +11,14 @@ class ChasteSbmlCellCycleModel(ChasteSbmlModel):
 
     # -- PUBLIC ---------------------------------------
 
-    def __init__(self, sbml_file: str, model_name: str = None, **kwargs) -> None:
+    def __init__(self, sbml_file: str, model_name: str = "", **kwargs) -> None:
         """Initialise the ChasteSbmlCellCycleModel."""
         super().__init__(sbml_file, model_name, CCM_SUFFIX, **kwargs)
 
     @property
     def ccm_cpp_filename(self) -> str:
         """Get the output {cell_cycle_model}.cpp filename."""
-        return pathlib.Path(self.ccm_hpp_filename).with_suffix(".cpp")
+        return str(pathlib.Path(self.ccm_hpp_filename).with_suffix(".cpp"))
 
     @property
     def ccm_hpp_filename(self) -> str:
