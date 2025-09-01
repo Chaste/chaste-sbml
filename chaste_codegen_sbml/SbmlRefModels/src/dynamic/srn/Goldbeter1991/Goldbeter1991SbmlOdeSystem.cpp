@@ -6,12 +6,12 @@
 #include "SbmlEventType.hpp"
 #include "SbmlMath.hpp"
 
-#include "Goldbeter1991SbmlOdeSystemAndSrnModel.hpp"
+#include "Goldbeter1991SbmlOdeSystem.hpp"
 
 namespace sm = sbmlmath;
 
-Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem(std::vector<double> stateVariables)
-        : AbstractOdeSystem(3)
+Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem()
+        : AbstractSbmlOdeSystem(3, 1, 0)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Goldbeter1991SbmlOdeSystem>);
 
@@ -23,17 +23,6 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem(std::vector<double> state
     SetDefaultInitialCondition(0, C);
     SetDefaultInitialCondition(1, M);
     SetDefaultInitialCondition(2, X);
-
-    if (stateVariables.size() == 3)
-    {
-        C = stateVariables[0];
-        M = stateVariables[1];
-        X = stateVariables[2];
-    }
-    else if (stateVariables.size() != 0)
-    {
-        EXCEPTION("Goldbeter1991SbmlOdeSystem: Expected 3 state variables, got " + std::to_string(stateVariables.size()));
-    }
 
     mStateVariables.push_back(C);
     mStateVariables.push_back(M);
@@ -60,68 +49,19 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem(std::vector<double> state
     reaction7 = 0.0;
 
     // EVENTS
-    mEventType.resize(0, SbmlEventType::UNKNOWN);
-
     // Uncomment lines below for events that should trigger cell division
-
-    mEventSatisfied.resize(0, true); // Prevent events from triggering at the start
-    mEventTriggered.resize(0, false);
-
-    mEventAdjustedParameters.resize(1, false);
-    mEventAdjustedParameterValues.resize(1, 0.0);
-
-    mEventAdjustedStateVars.resize(3, false);
-    mEventAdjustedStateValues.resize(3, 0.0);
 
     // Run model rules to complete state initialisation
     RunModelRules(0.0, mStateVariables);
 }
 
-Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem(const Goldbeter1991SbmlOdeSystem& rOdeSystem)
-        : Goldbeter1991SbmlOdeSystem(rOdeSystem.mStateVariables)
-{
-    mEventSatisfied = rOdeSystem.mEventSatisfied;
-    mEventTriggered = rOdeSystem.mEventTriggered;
-
-    mEventAdjustedParameters = rOdeSystem.mEventAdjustedParameters;
-    mEventAdjustedParameterValues = rOdeSystem.mEventAdjustedParameterValues;
-
-    mEventAdjustedStateVars = rOdeSystem.mEventAdjustedStateVars;
-    mEventAdjustedStateValues = rOdeSystem.mEventAdjustedStateValues;
-}
+// Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem(const Goldbeter1991SbmlOdeSystem& rOdeSystem)
+//         : AbstractSbmlOdeSystem(rOdeSystem)
+// {
+// }
 
 Goldbeter1991SbmlOdeSystem::~Goldbeter1991SbmlOdeSystem()
 {
-}
-
-void Goldbeter1991SbmlOdeSystem::AdjustParameters(double time)
-{
-    for (unsigned i = 0; i < mEventAdjustedParameters.size(); ++i)
-    {
-        if (mEventAdjustedParameters[i])
-        {
-            SetParameter(i, mEventAdjustedParameterValues[i]);
-        }
-    }
-
-    for (unsigned i = 0; i < mEventAdjustedStateVars.size(); ++i)
-    {
-        if (mEventAdjustedStateVars[i])
-        {
-            SetStateVariable(i, mEventAdjustedStateValues[i]);
-            mEventAdjustedStateVars[i] = false;
-        }
-    }
-}
-
-double Goldbeter1991SbmlOdeSystem::CalculateRootFunction(double time, const std::vector<double>& rY)
-{
-    return ProcessModelEvents(time, rY);
-}
-
-bool Goldbeter1991SbmlOdeSystem::CalculateStoppingEvent(double time, const std::vector<double>& rY)
-{
-    return ProcessModelEvents(time, rY) == 0.0;
 }
 
 std::vector<double> Goldbeter1991SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
@@ -143,18 +83,6 @@ void Goldbeter1991SbmlOdeSystem::EvaluateYDerivatives(double time, const std::ve
     // TODO: Scale time appropriately
 }
 
-bool Goldbeter1991SbmlOdeSystem::HasEventOccurred(SbmlEventType eventType)
-{
-    for (unsigned i = 0; i < mEventTriggered.size(); ++i)
-    {
-        if (mEventTriggered[i] && mEventType[i] == eventType)
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
 double Goldbeter1991SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double>& rY)
 {
     std::fill(std::begin(mEventAdjustedParameters), std::end(mEventAdjustedParameters), false);
@@ -163,11 +91,6 @@ double Goldbeter1991SbmlOdeSystem::ProcessModelEvents(double time, const std::ve
     double min_dist = std::numeric_limits<double>::max();
 
     return min_dist; // Distance to closest event
-}
-
-void Goldbeter1991SbmlOdeSystem::ResetEventsOccurred()
-{
-    std::fill(mEventTriggered.begin(), mEventTriggered.end(), false);
 }
 
 void Goldbeter1991SbmlOdeSystem::RunModelRules(double time, const std::vector<double>& rY)
@@ -266,15 +189,15 @@ void CellwiseOdeSystemInformation<Goldbeter1991SbmlOdeSystem>::Initialise()
 }
 
 // Define SbmlSrnWrapperModel using wrappers
-#include "SbmlSrnWrapperModel.cpp"
-#include "SbmlSrnWrapperModel.hpp"
+// #include "SbmlSrnWrapperModel.cpp"
+// #include "SbmlSrnWrapperModel.hpp"
 
-typedef SbmlSrnWrapperModel<Goldbeter1991SbmlOdeSystem, 3> Goldbeter1991SbmlSrnModel;
+// typedef SbmlSrnWrapperModel<Goldbeter1991SbmlOdeSystem, 3> Goldbeter1991SbmlSrnModel;
 
 // Declare identifiers for the serializer
-#include "SerializationExportWrapperForCpp.hpp"
-CHASTE_CLASS_EXPORT(Goldbeter1991SbmlOdeSystem)
-EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, Goldbeter1991SbmlOdeSystem, 3)
+// #include "SerializationExportWrapperForCpp.hpp"
+// CHASTE_CLASS_EXPORT(Goldbeter1991SbmlOdeSystem)
+// EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, Goldbeter1991SbmlOdeSystem, 3)
 
-#include "CellCycleModelOdeSolverExportWrapper.hpp"
-EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Goldbeter1991SbmlSrnModel)
+// #include "CellCycleModelOdeSolverExportWrapper.hpp"
+// EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Goldbeter1991SbmlSrnModel)

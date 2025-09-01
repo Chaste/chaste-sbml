@@ -33,20 +33,20 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef SBMLSRNWRAPPERMODEL_HPP_
-#define SBMLSRNWRAPPERMODEL_HPP_
+#ifndef ABSTRACT_SBML_SRN_MODEL_HPP_
+#define ABSTRACT_SBML_SRN_MODEL_HPP_
 
 #include <boost/serialization/base_object.hpp>
 
 #include "AbstractOdeSrnModel.hpp"
+#include "AbstractSbmlOdeSystem.hpp"
 #include "ChasteSerialization.hpp"
 
 /**
- * A wrapper around AbstractOdeSrnModel that can be templated on the ODE system for
- * use with SBML generated models
+ * A base class for SRN models generated from SBML
  */
-template <typename SBMLODE, unsigned SIZE>
-class SbmlSrnWrapperModel : public AbstractOdeSrnModel
+
+class AbstractSbmlSrnModel : public AbstractOdeSrnModel
 {
 private:
     /** Needed for serialization. */
@@ -76,7 +76,7 @@ protected:
      *
      * @param rModel the SRN model to copy.
      */
-    SbmlSrnWrapperModel(const SbmlSrnWrapperModel& rModel);
+    AbstractSbmlSrnModel(const AbstractSbmlSrnModel& rModel) = default;
 
 public:
     /**
@@ -84,34 +84,20 @@ public:
      *
      * @param pOdeSolver An optional pointer to a cell-cycle model ODE solver object (allows the use of different ODE solvers)
      */
-    SbmlSrnWrapperModel(boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver = boost::shared_ptr<AbstractCellCycleModelOdeSolver>());
+    AbstractSbmlSrnModel(unsigned stateSize, boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver = boost::shared_ptr<AbstractCellCycleModelOdeSolver>());
 
+    using AbstractOdeSrnModel::Initialise;
     /**
-     * Overridden builder method to create new copies of
-     * this srn model.
+     * Overridden Initialise() method to set up the ODE system.
      *
-     * @return Returns a copy of the current srn model.
+     * @param pOdeSystem pointer to an ODE system
      */
-    AbstractSrnModel* CreateSrnModel();
-
-    /**
-     * Initialise the cell-cycle model at the start of a simulation.
-     *
-     * This overridden method sets up a new Ode system.
-     */
-    void Initialise(); // override
+    void Initialise(AbstractSbmlOdeSystem* pOdeSystem);
 
     /**
      * Overridden SimulateToTime() method for custom behaviour
      */
     void SimulateToCurrentTime();
-
-    /**
-     * Outputs cell-cycle model parameters to file.
-     *
-     * @param rParamsFile the file stream to which the parameters are output
-     */
-    void OutputSrnModelParameters(out_stream& rParamsFile);
 
     /**
      * @return the value of a given state variable.
@@ -121,4 +107,4 @@ public:
     double GetStateVariable(const std::string& rName);
 };
 
-#endif // SBMLSRNWRAPPERMODEL_HPP_
+#endif // ABSTRACT_SBML_SRN_MODEL_HPP_

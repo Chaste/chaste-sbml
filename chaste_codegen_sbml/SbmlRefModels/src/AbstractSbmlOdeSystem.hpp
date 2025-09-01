@@ -1,0 +1,188 @@
+/*
+
+Copyright (c) 2005-2025, University of Oxford.
+All rights reserved.
+
+University of Oxford means the Chancellor, Masters and Scholars of the
+University of Oxford, having an administrative office at Wellington
+Square, Oxford OX1 2JD, UK.
+
+This file is part of Chaste.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+ * Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+ * Neither the name of the University of Oxford nor the names of its
+   contributors may be used to endorse or promote products derived from this
+   software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*/
+
+#ifndef ABSTRACT_SBML_ODE_SYSTEM_HPP_
+#define ABSTRACT_SBML_ODE_SYSTEM_HPP_
+
+#include <boost/serialization/base_object.hpp>
+
+#include "AbstractOdeSystem.hpp"
+#include "ChasteSerialization.hpp"
+#include "SbmlEventType.hpp"
+
+/**
+ * Abstract SBML ODE System class.
+ *
+ * Sets up variables and functions for an ODE system imported from SBML.
+ *
+ * Instances can store event state internally in the mEvent* vectors - the
+ * vectors may be empty if the model does not have any events defined.
+ */
+class AbstractSbmlOdeSystem : public AbstractOdeSystem
+{
+private:
+    friend class boost::serialization::access;
+    /**
+     * Archive / unarchive AbstractSbmlOdeSystem.
+     *
+     * @param archive the archive
+     * @param version the current version of this class
+     */
+    template <class Archive>
+    void serialize(Archive& ar, const unsigned int version)
+    {
+        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractOdeSystem);
+    }
+
+protected:
+    /** The number of parameters in the model */
+    unsigned mNumberOfParameters;
+
+    /** The number of events in the model */
+    unsigned mNumberOfEvents;
+
+    // Event handling
+    std::vector<bool> mEventSatisfied;
+    std::vector<bool> mEventTriggered;
+    std::vector<SbmlEventType> mEventType;
+    std::vector<bool> mEventAdjustedStateVars;
+    std::vector<double> mEventAdjustedStateValues;
+    std::vector<bool> mEventAdjustedParameters;
+    std::vector<double> mEventAdjustedParameterValues;
+
+public:
+    /**
+     * Default constructor.
+     */
+    AbstractSbmlOdeSystem(unsigned numberOfStateVariables, unsigned numberOfParameters, unsigned numberOfEvents);
+
+    /**
+     * Copy constructor.
+     *
+     * @param rOdeSystem Reference to the original instance
+     */
+    // AbstractSbmlOdeSystem(const AbstractSbmlOdeSystem& rOdeSystem);
+
+    /**
+     * Virtual destructor since we have virtual methods.
+     */
+    virtual ~AbstractSbmlOdeSystem();
+
+    /**
+     * Adjust parameters and state variables after a stopping event
+     *
+     * @param time The current time
+     */
+    void AdjustParameters(double time);
+
+    /**
+     * Calculate whether the conditions to trigger an event have been met
+     * (Used by CVODE solver to find exact stopping position)
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     *
+     * @return How close we are to the root of the stopping condition
+     */
+    double CalculateRootFunction(double time, const std::vector<double>& rY) override;
+
+    /**
+     * Calculate whether the conditions to trigger an event have been met
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     *
+     * @return True if conditions for an event are met, false otherwise
+     */
+    bool CalculateStoppingEvent(double time, const std::vector<double>& rY) override;
+
+    /**
+     * Compute the derived quantities from the given system state.
+     *
+     * @param time  the time at which to compute the derived quantities
+     * @param rY a vector of values for the state variables
+     *
+     * @return a vector of derived quantities
+     */
+    virtual std::vector<double> ComputeDerivedQuantities(double time, const std::vector<double>& rY) = 0;
+
+    /**
+     * Compute the RHS of the ODE system.
+     *
+     * An ODE solver will call this function repeatedly to solve for y = [y1 ... yn].
+     *
+     * @param time the time used to evaluate the RHS.
+     * @param rY an input solution vector used to evaluate the RHS.
+     * @param rDY an output vector to be filled in with the resulting derivatives y' = [y1' ... yn'].
+     */
+    virtual void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY) = 0;
+
+    /**
+     * Check if a specific type of event has occurred.
+     *
+     * @param eventType The type of event to check
+     *
+     * @return True if the type of event has occurred, false otherwise
+     */
+    bool HasEventOccurred(SbmlEventType eventType);
+
+    /**
+     * Process the events in the model.
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     *
+     * @return How close we are to the time of the next event
+     */
+    virtual double ProcessModelEvents(double time, const std::vector<double>& rY) = 0;
+
+    /**
+     * Reset the flags that indicate which events have been triggered.
+     */
+    void ResetEventsOccurred();
+
+    /**
+     * Run the equations governing the model to update state.
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     */
+    virtual void RunModelRules(double time, const std::vector<double>& rY) = 0;
+};
+
+CLASS_IS_ABSTRACT(AbstractSbmlOdeSystem)
+BOOST_CLASS_VERSION(AbstractSbmlOdeSystem, 1u)
+
+#endif //ABSTRACT_SBML_ODE_SYSTEM_HPP_

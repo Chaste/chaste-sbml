@@ -33,8 +33,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef TESTGOLDBETER1991SBML_HPP_
-#define TESTGOLDBETER1991SBML_HPP_
+#ifndef TEST_GOLDBETER_1991_SBML_HPP_
+#define TEST_GOLDBETER_1991_SBML_HPP_
 
 #include <fstream>
 #include <iostream>
@@ -47,10 +47,12 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "AbstractCellBasedTestSuite.hpp"
 #include "Cell.hpp"
+#include "CvodeAdaptor.hpp"
 #include "DifferentiatedCellProliferativeType.hpp"
 #include "FileComparison.hpp"
 #include "FixedG1GenerationalCellCycleModel.hpp"
 #include "OutputFileHandler.hpp"
+#include "RungeKutta4IvpOdeSolver.hpp"
 #include "SmartPointers.hpp"
 #include "Timer.hpp"
 #include "TransitCellProliferativeType.hpp"
@@ -58,7 +60,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "UniformG1GenerationalCellCycleModel.hpp"
 #include "WildTypeCellMutationState.hpp"
 
-#include "Goldbeter1991SbmlOdeSystemAndSrnModel.hpp"
+#include "Goldbeter1991SbmlOdeSystem.hpp"
+#include "Goldbeter1991SbmlSrnModel.hpp"
 
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
@@ -77,7 +80,8 @@ public:
             state_variables.push_back(4.0);
             state_variables.push_back(5.0);
 
-            Goldbeter1991SbmlOdeSystem ode_system(state_variables);
+            Goldbeter1991SbmlOdeSystem ode_system;
+            ode_system.SetStateVariables(state_variables);
 
             ode_system.SetDefaultInitialCondition(2, 3.25);
 
@@ -175,9 +179,9 @@ public:
             unsigned end = solutions.rGetSolutions().size() - 1;
 
             //  Decent results - checked with numpy # [ 0.54706214  0.29369527  0.00678837]
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 0.5470, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 0.2936, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 0.0067, 1e-3);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 0.54706214, 1e-3);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 0.29369527, 1e-3);
+            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 0.00678837, 1e-5);
 
             // The following code provides nice output for gnuplot
             // use the command
@@ -364,7 +368,9 @@ public:
         state_variables.push_back(3.0);
         state_variables.push_back(4.0);
 
-        p_model->SetOdeSystem(new Goldbeter1991SbmlOdeSystem(state_variables));
+        Goldbeter1991SbmlOdeSystem* p_ode_system = new Goldbeter1991SbmlOdeSystem;
+        p_ode_system->SetStateVariables(state_variables);
+        p_model->SetOdeSystem(p_ode_system);
 
         // Create a copy
         Goldbeter1991SbmlSrnModel* p_model2 = static_cast<Goldbeter1991SbmlSrnModel*>(p_model->CreateSrnModel());
@@ -458,4 +464,4 @@ public:
     }
 };
 
-#endif // TESTGOLDBETER1991SBML_HPP_
+#endif // TEST_GOLDBETER_1991_SBML_HPP_
