@@ -107,45 +107,8 @@ public:
     // MODEL FUNCTIONS
 };
 
-// namespace
-// {
-// namespace serialization
-// {
-//     // Provide constructor for serializing Goldbeter1991SbmlOdeSystem
-//     template <class Archive>
-//     inline void save_construct_data(Archive& ar, const Goldbeter1991SbmlOdeSystem* t, const unsigned int version)
-//     {
-//         // Save data required to construct instance
-//         const std::vector<double> state_variables = t->rGetConstStateVariables();
-//         ar << state_variables;
-//     }
-
-//     // Provide constructor for de-serializing Goldbeter1991SbmlOdeSystem
-//     template <class Archive>
-//     inline void load_construct_data(Archive& ar, Goldbeter1991SbmlOdeSystem* t, const unsigned int version)
-//     {
-//         // Retrieve data from archive required to construct new instance
-//         std::vector<double> state_variables;
-//         ar >> state_variables;
-
-//         // Invoke inplace constructor to initialise instance
-//         ::new (t) Goldbeter1991SbmlOdeSystem(state_variables);
-//     }
-// } // namespace serialization
-// } // namespace
-
-// Define SbmlSrnWrapperModel using wrappers
-// #include "SbmlSrnWrapperModel.cpp"
-// #include "SbmlSrnWrapperModel.hpp"
-
-// typedef SbmlSrnWrapperModel<Goldbeter1991SbmlOdeSystem, 3> Goldbeter1991SbmlSrnModel;
-
-// Declare identifiers for the serializer
-// #include "SerializationExportWrapper.hpp"
-// CHASTE_CLASS_EXPORT(Goldbeter1991SbmlOdeSystem)
-// EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, Goldbeter1991SbmlOdeSystem, 3)
-
-// #include "CellCycleModelOdeSolverExportWrapper.hpp"
-// EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Goldbeter1991SbmlSrnModel)
+// Use `BOOST_CLASS_EXPORT_KEY` to provide a unique ID for serialization
+#include "SerializationExportWrapper.hpp"
+CHASTE_CLASS_EXPORT(Goldbeter1991SbmlOdeSystem)
 
 #endif // GOLDBETER_1991_SBML_ODE_SYSTEM_HPP_

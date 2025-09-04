@@ -84,19 +84,16 @@ protected:
 
 public:
     /**
-     * Default constructor.
+     * Constructor.
+     * 
+     * @param numberOfStateVariables The number of state variables in the model
+     * @param numberOfParameters The number of parameters in the model
+     * @param numberOfEvents The number of events in the model
      */
     AbstractSbmlOdeSystem(unsigned numberOfStateVariables, unsigned numberOfParameters, unsigned numberOfEvents);
 
     /**
-     * Copy constructor.
-     *
-     * @param rOdeSystem Reference to the original instance
-     */
-    // AbstractSbmlOdeSystem(const AbstractSbmlOdeSystem& rOdeSystem);
-
-    /**
-     * Virtual destructor since we have virtual methods.
+     * Destructor.
      */
     virtual ~AbstractSbmlOdeSystem();
 
@@ -127,27 +124,6 @@ public:
      * @return True if conditions for an event are met, false otherwise
      */
     bool CalculateStoppingEvent(double time, const std::vector<double>& rY) override;
-
-    /**
-     * Compute the derived quantities from the given system state.
-     *
-     * @param time  the time at which to compute the derived quantities
-     * @param rY a vector of values for the state variables
-     *
-     * @return a vector of derived quantities
-     */
-    virtual std::vector<double> ComputeDerivedQuantities(double time, const std::vector<double>& rY) = 0;
-
-    /**
-     * Compute the RHS of the ODE system.
-     *
-     * An ODE solver will call this function repeatedly to solve for y = [y1 ... yn].
-     *
-     * @param time the time used to evaluate the RHS.
-     * @param rY an input solution vector used to evaluate the RHS.
-     * @param rDY an output vector to be filled in with the resulting derivatives y' = [y1' ... yn'].
-     */
-    virtual void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY) = 0;
 
     /**
      * Check if a specific type of event has occurred.

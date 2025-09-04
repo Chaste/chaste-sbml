@@ -55,11 +55,6 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem()
     RunModelRules(0.0, mStateVariables);
 }
 
-// Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem(const Goldbeter1991SbmlOdeSystem& rOdeSystem)
-//         : AbstractSbmlOdeSystem(rOdeSystem)
-// {
-// }
-
 Goldbeter1991SbmlOdeSystem::~Goldbeter1991SbmlOdeSystem()
 {
 }
@@ -188,16 +183,6 @@ void CellwiseOdeSystemInformation<Goldbeter1991SbmlOdeSystem>::Initialise()
     this->mInitialised = true;
 }
 
-// Define SbmlSrnWrapperModel using wrappers
-// #include "SbmlSrnWrapperModel.cpp"
-// #include "SbmlSrnWrapperModel.hpp"
-
-// typedef SbmlSrnWrapperModel<Goldbeter1991SbmlOdeSystem, 3> Goldbeter1991SbmlSrnModel;
-
-// Declare identifiers for the serializer
-// #include "SerializationExportWrapperForCpp.hpp"
-// CHASTE_CLASS_EXPORT(Goldbeter1991SbmlOdeSystem)
-// EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, Goldbeter1991SbmlOdeSystem, 3)
-
-// #include "CellCycleModelOdeSolverExportWrapper.hpp"
-// EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Goldbeter1991SbmlSrnModel)
+// Use `BOOST_CLASS_EXPORT_IMPLEMENT` to provide a unique ID for serialization
+#include "SerializationExportWrapperForCpp.hpp"
+CHASTE_CLASS_EXPORT(Goldbeter1991SbmlOdeSystem)
