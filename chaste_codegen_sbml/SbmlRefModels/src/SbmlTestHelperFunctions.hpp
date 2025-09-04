@@ -6,8 +6,14 @@
 #include <stdexcept>
 #include <vector>
 
+#include "OdeSolution.hpp"
+
 namespace sbmltest
 {
+void export_csv(const std::string& filename,
+                    const std::vector<std::string>& var_names,
+                    const OdeSolution& solutions);
+
 /** Calculate the maximum of a vector of doubles.
  * @param vec The vector of doubles.
  * @return The maximum value.

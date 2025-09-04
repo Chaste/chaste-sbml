@@ -36,7 +36,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef TEST_GOLDBETER_1991_SBML_ODE_SYSTEM_HPP_
 #define TEST_GOLDBETER_1991_SBML_ODE_SYSTEM_HPP_
 
-#include <fstream>
 #include <iostream>
 #include <memory>
 
@@ -46,11 +45,11 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cxxtest/TestSuite.h>
 
 #include "AbstractCellBasedTestSuite.hpp"
+#include "AbstractIvpOdeSolver.hpp"
 #include "CvodeAdaptor.hpp"
-#include "DifferentiatedCellProliferativeType.hpp"
-#include "FixedG1GenerationalCellCycleModel.hpp"
 #include "OutputFileHandler.hpp"
 #include "RungeKutta4IvpOdeSolver.hpp"
+#include "SbmlTestHelperFunctions.hpp"
 #include "SmartPointers.hpp"
 #include "Timer.hpp"
 
@@ -59,38 +58,97 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
+namespace st = sbmltest;
+
 class TestGoldbeter1991SbmlOdeSystem : public AbstractCellBasedTestSuite
 {
+private:
+    const unsigned ODE_SIZE = 3u;
+
+    std::vector<double> default_initial_conditions = {
+        0.01, // C
+        0.01, // M
+        0.01, // X
+    };
+
+    void RunOdeWithSolver(AbstractIvpOdeSolver& rSolver, const std::string solverName)
+    {
+        try
+        {
+            // Solve system using solver
+            Goldbeter1991SbmlOdeSystem ode_system;
+
+            double start_time = 0.0;
+            double end_time = 100.0;
+            double max_step = 0.01;
+            double sampling_interval = 0.1;
+
+            std::vector<double> initial_conditions = ode_system.GetInitialConditions();
+            OdeSolution solutions;
+
+            Timer::Reset();
+            solutions = rSolver.Solve(&ode_system, initial_conditions, start_time, end_time, max_step, sampling_interval);
+            Timer::Print("Goldbeter 1991 (" + solverName + ")");
+
+            // No events, so ODE shouldn't have stopped
+            TS_ASSERT_EQUALS(rSolver.StoppingEventOccurred(), false);
+
+            // Check final solution values
+            // Decent results - checked with numpy # [ 0.54706214  0.29369527  0.00678837]
+            std::vector<double> end_solution = solutions.rGetSolutions().back();
+            TS_ASSERT_DELTA(end_solution[0], 0.54706214, 1e-3);
+            TS_ASSERT_DELTA(end_solution[1], 0.29369527, 1e-3);
+            TS_ASSERT_DELTA(end_solution[2], 0.00678837, 1e-3);
+
+            // Exports results to csv
+            st::export_csv("goldbeter_1991_" + solverName + ".csv", ode_system.rGetStateVariableNames(), solutions);
+        }
+        catch (Exception& e)
+        {
+            throw e;
+        }
+        catch (...)
+        {
+            exit(EXIT_FAILURE);
+        }
+    }
+
 public:
     void TestOdeArchiving()
     {
         OutputFileHandler handler("archive", false);
         std::string archive_filename = handler.GetOutputDirectoryFullPath() + "goldbeter_1991_ode.arch";
 
+        // Save archive
         {
-            std::vector<double> state_variables;
-            state_variables.push_back(3.0);
-            state_variables.push_back(4.0);
-            state_variables.push_back(5.0);
-
             Goldbeter1991SbmlOdeSystem ode_system;
+
+            // Set state variables to 0...ODE_SIZE-1
+            std::vector<double> state_variables;
+            for (unsigned i = 0; i < ODE_SIZE; i++)
+            {
+                state_variables.push_back(static_cast<double>(i));
+            }
             ode_system.SetStateVariables(state_variables);
 
-            ode_system.SetDefaultInitialCondition(2, 3.25);
-
+            // Check initial conditions and state variables
+            ode_system.SetDefaultInitialCondition(0, 3.141593);
             std::vector<double> initial_conditions = ode_system.GetInitialConditions();
-            TS_ASSERT_EQUALS(initial_conditions.size(), 3u);
-            TS_ASSERT_DELTA(initial_conditions[0], 0.01, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[1], 0.01, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[2], 3.2500, 1e-4);
+            TS_ASSERT_EQUALS(initial_conditions.size(), ODE_SIZE);
 
-            double var1 = ode_system.GetStateVariable(0);
-            double var2 = ode_system.GetStateVariable(1);
-            double var3 = ode_system.GetStateVariable(2);
+            std::vector<std::string> var_names = ode_system.rGetStateVariableNames();
+            TSM_ASSERT_DELTA(var_names[0].c_str(), initial_conditions[0], 3.141593, 1e-6);
+            for (unsigned i = 1; i < ODE_SIZE; i++)
+            {
+                const char* var_cname = var_names[i].c_str();
 
-            TS_ASSERT_DELTA(var1, 3.0, 1e-3);
-            TS_ASSERT_DELTA(var2, 4.0, 1e-3);
-            TS_ASSERT_DELTA(var3, 5.0, 1e-3);
+                // Check initial condition
+                TSM_ASSERT_DELTA(var_cname, initial_conditions[i], default_initial_conditions[i], 1e-6);
+
+                // Check state variable
+                double var = ode_system.GetStateVariable(i);
+                TSM_ASSERT_DELTA(var_cname, var, static_cast<double>(i), 1e-6);
+            }
 
             // Create an output archive
             std::ofstream ofs(archive_filename.c_str());
@@ -101,8 +159,9 @@ public:
             output_arch << p_const_ode_system;
         }
 
+        // Load archive
         {
-            AbstractOdeSystem* p_ode_system;
+            AbstractOdeSystem* p_ode_system = nullptr;
 
             // Create an input archive
             std::ifstream ifs(archive_filename.c_str(), std::ios::binary);
@@ -113,18 +172,20 @@ public:
 
             // Check that archiving worked correctly
             std::vector<double> initial_conditions = p_ode_system->GetInitialConditions();
-            TS_ASSERT_EQUALS(initial_conditions.size(), 3u);
-            TS_ASSERT_DELTA(initial_conditions[0], 0.01, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[1], 0.01, 1e-4);
-            TS_ASSERT_DELTA(initial_conditions[2], 0.01, 1e-4);
+            TS_ASSERT_EQUALS(initial_conditions.size(), ODE_SIZE);
 
-            double var1 = p_ode_system->GetStateVariable(0);
-            double var2 = p_ode_system->GetStateVariable(1);
-            double var3 = p_ode_system->GetStateVariable(2);
+            std::vector<std::string> var_names = p_ode_system->rGetStateVariableNames();
+            for (unsigned i = 0; i < ODE_SIZE; i++)
+            {
+                const char* var_cname = var_names[i].c_str();
 
-            TS_ASSERT_DELTA(var1, 3.0, 1e-3);
-            TS_ASSERT_DELTA(var2, 4.0, 1e-3);
-            TS_ASSERT_DELTA(var3, 5.0, 1e-3);
+                // Check initial condition
+                TSM_ASSERT_DELTA(var_cname, initial_conditions[i], default_initial_conditions[i], 1e-6);
+
+                // Check state variable
+                double var = p_ode_system->GetStateVariable(i);
+                TSM_ASSERT_DELTA(var_cname, var, static_cast<double>(i), 1e-6);
+            }
 
             // Tidy up
             delete p_ode_system;
@@ -136,110 +197,36 @@ public:
         Goldbeter1991SbmlOdeSystem ode_system;
 
         double time = 0.0;
-        std::vector<double> initial_conditions;
-        initial_conditions.push_back(0.01);
-        initial_conditions.push_back(0.01);
-        initial_conditions.push_back(0.01);
-
-        std::vector<double> derivs(initial_conditions.size());
-        ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
+        std::vector<double> derivs(ODE_SIZE);
+        ode_system.EvaluateYDerivatives(time, default_initial_conditions, derivs);
 
         // Test derivatives are correct
-        TS_ASSERT_DELTA(derivs[0], 0.0240, 1e-4);
-        TS_ASSERT_DELTA(derivs[1], -0.9414, 1e-4);
-        TS_ASSERT_DELTA(derivs[2], -0.3233, 1e-4);
+        std::vector<double> derivs_expected = {
+            0.0240,  // C
+            -0.9414, // M
+            -0.3233, // X
+        };
+
+        std::vector<std::string> var_names = ode_system.rGetStateVariableNames();
+        for (unsigned i = 0; i < ODE_SIZE; i++)
+        {
+            TSM_ASSERT_DELTA(var_names[i].c_str(), derivs[i], derivs_expected[i], 1e-6);
+        }
     }
 
     void TestOdeWithChasteSolver()
     {
-        try
-        {
-            Goldbeter1991SbmlOdeSystem ode_system;
-
-            // Solve system using RK4 solver
-
-            double dt = 0.0001;
-
-            // RK4 solver solution worked out
-            RungeKutta4IvpOdeSolver rk4_solver;
-
-            std::vector<double> state_variables = ode_system.GetInitialConditions();
-
-            Timer::Reset();
-            OdeSolution solutions = rk4_solver.Solve(&ode_system, state_variables, 0.0, 100.0, dt, dt);
-            Timer::Print("1. Goldbeter RK4");
-
-            unsigned end = solutions.rGetSolutions().size() - 1;
-
-            //  Decent results - checked with numpy # [ 0.54706214  0.29369527  0.00678837]
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 0.54706214, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 0.29369527, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 0.00678837, 1e-5);
-
-            // The following code provides nice output for gnuplot
-            // use the command
-            // plot "goldbeter_1991.dat" u 1:2
-            // or
-            // plot "goldbeter_1991.dat" u 1:3 etc. for the various species...
-            // or
-            // plot "goldbeter_1991.dat" u 1:2, "" u 1:3, "" u 1:4 ... for all species
-
-            // OutputFileHandler handler("");
-            // out_stream file = handler.OpenOutputFile("goldbeter_1991.dat");
-            // for (unsigned i = 0; i < solutions.rGetSolutions().size(); i++)
-            // {
-            //   (*file) << solutions.rGetTimes()[i];
-            //   for (unsigned j = 0; j < solutions.rGetSolutions()[i].size(); j++)
-            //   {
-            //     (*file) << "\t" << solutions.rGetSolutions()[i][j];
-            //   }
-            //   (*file) << "\n"
-            //           << std::flush;
-            // }
-            // file->close();
-        }
-        catch (Exception& e)
-        {
-            throw e;
-        }
-        catch (...)
-        {
-            exit(EXIT_FAILURE);
-        }
+        // Solve system using RK4 solver
+        RungeKutta4IvpOdeSolver rk4_solver;
+        RunOdeWithSolver(rk4_solver, "rk4");
     }
 
     void TestOdeWithCvodeSolver()
     {
-        try
-        {
-            Goldbeter1991SbmlOdeSystem ode_system;
-
-            double end_time = 100;
-            double h_value = 0.01;
-
-            CvodeAdaptor solver;
-            OdeSolution solutions;
-
-            std::vector<double> state_variables = ode_system.GetInitialConditions();
-
-            Timer::Reset();
-            solutions = solver.Solve(&ode_system, state_variables, 0.0, end_time, h_value, 0.1);
-            Timer::Print("1. Goldbeter CVODE");
-
-            unsigned end = solutions.rGetSolutions().size() - 1;
-
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][0], 0.5470, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][1], 0.2936, 1e-3);
-            TS_ASSERT_DELTA(solutions.rGetSolutions()[end][2], 0.0067, 1e-3);
-        }
-        catch (Exception& e)
-        {
-            throw e;
-        }
-        catch (...)
-        {
-            exit(EXIT_FAILURE);
-        }
+        // Solve system using CVODE solver
+        CvodeAdaptor cvode_solver;
+        cvode_solver.CheckForStoppingEvents();
+        RunOdeWithSolver(cvode_solver, "cvode");
     }
 };
 
