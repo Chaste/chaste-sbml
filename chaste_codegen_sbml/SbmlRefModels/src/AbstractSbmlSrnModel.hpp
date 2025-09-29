@@ -60,23 +60,8 @@ private:
     template <class Archive>
     void serialize(Archive& archive, const unsigned int version)
     {
-        archive& boost::serialization::base_object<AbstractOdeSrnModel>(*this);
+        archive& BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractOdeSrnModel);
     }
-
-protected:
-    /**
-     * Protected copy-constructor for use by CreateSrnModel.  The only way for external code to create a copy of a SRN model
-     * is by calling that method, to ensure that a model of the correct subclass is created.
-     * This copy-constructor helps subclasses to ensure that all member variables are correctly copied when this happens.
-     *
-     * This method is called by child classes to set member variables for a daughter cell upon cell division.
-     * Note that the parent SRN model will have had ResetForDivision() called just before CreateSrnModel() is called,
-     * so performing an exact copy of the parent is suitable behaviour. Any daughter-cell-specific initialisation
-     * can be done in InitialiseDaughterCell().
-     *
-     * @param rModel the SRN model to copy.
-     */
-    AbstractSbmlSrnModel(const AbstractSbmlSrnModel& rModel) = default;
 
 public:
     /**
@@ -86,16 +71,27 @@ public:
      */
     AbstractSbmlSrnModel(unsigned stateSize, boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver = boost::shared_ptr<AbstractCellCycleModelOdeSolver>());
 
+    virtual ~AbstractSbmlSrnModel() = default;
+
+    // void Initialise() override;
+
     using AbstractOdeSrnModel::Initialise;
-    /**
-     * Overridden Initialise() method to set up the ODE system.
-     *
-     * @param pOdeSystem pointer to an ODE system
-     */
+    // /**
+    //  * Overridden Initialise() method to set up the ODE system.
+    //  *
+    //  * @param pOdeSystem pointer to an ODE system
+    //  */
     void Initialise(AbstractSbmlOdeSystem* pOdeSystem);
 
     /**
-     * Overridden SimulateToTime() method for custom behaviour
+     * Outputs cell-cycle model parameters to file.
+     *
+     * @param rParamsFile the file stream to which the parameters are output
+     */
+    void OutputSrnModelParameters(out_stream& rParamsFile);
+
+    /**
+     * Overridden SimulateToCurrentTime() method for custom behaviour
      */
     void SimulateToCurrentTime();
 
@@ -106,5 +102,11 @@ public:
      */
     double GetStateVariable(const std::string& rName);
 };
+
+#include "SerializationExportWrapper.hpp"
+CHASTE_CLASS_EXPORT(AbstractSbmlSrnModel)
+
+// Provide a unique identifier for serialization
+CLASS_IS_ABSTRACT(AbstractSbmlSrnModel)
 
 #endif // ABSTRACT_SBML_SRN_MODEL_HPP_

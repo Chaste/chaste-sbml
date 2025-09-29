@@ -183,6 +183,6 @@ void CellwiseOdeSystemInformation<Goldbeter1991SbmlOdeSystem>::Initialise()
     this->mInitialised = true;
 }
 
-// Use `BOOST_CLASS_EXPORT_IMPLEMENT` to provide a unique ID for serialization
+// Provide a unique identifier for serialization
 #include "SerializationExportWrapperForCpp.hpp"
 CHASTE_CLASS_EXPORT(Goldbeter1991SbmlOdeSystem)

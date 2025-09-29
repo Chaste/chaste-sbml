@@ -27,3 +27,8 @@ class VarType(Enum):
 class EventType(Enum):
     CELL_DIVISION = 1
     UNKNOWN = 2
+
+class ModelType(Enum):
+    SRN = 1
+    CELL_CYCLE = 2
+    UNKNOWN = 3

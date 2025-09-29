@@ -61,9 +61,18 @@ private:
      * @param version the current version of this class
      */
     template <class Archive>
-    void serialize(Archive& ar, const unsigned int version)
+    void serialize(Archive& archive, const unsigned int version)
     {
-        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractOdeSystem);
+        archive& boost::serialization::base_object<AbstractOdeSystem>(*this);
+        archive & mNumberOfParameters;
+        archive & mNumberOfEvents;
+        archive & mEventSatisfied;
+        archive & mEventTriggered;
+        archive & mEventType;
+        archive & mEventAdjustedStateVars;
+        archive & mEventAdjustedStateValues;
+        archive & mEventAdjustedParameters;
+        archive & mEventAdjustedParameterValues;
     }
 
 protected:
@@ -85,7 +94,7 @@ protected:
 public:
     /**
      * Constructor.
-     * 
+     *
      * @param numberOfStateVariables The number of state variables in the model
      * @param numberOfParameters The number of parameters in the model
      * @param numberOfEvents The number of events in the model
@@ -161,4 +170,4 @@ public:
 CLASS_IS_ABSTRACT(AbstractSbmlOdeSystem)
 BOOST_CLASS_VERSION(AbstractSbmlOdeSystem, 1u)
 
-#endif //ABSTRACT_SBML_ODE_SYSTEM_HPP_
+#endif // ABSTRACT_SBML_ODE_SYSTEM_HPP_

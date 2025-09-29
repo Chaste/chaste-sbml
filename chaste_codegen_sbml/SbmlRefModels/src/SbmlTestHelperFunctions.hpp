@@ -6,13 +6,21 @@
 #include <stdexcept>
 #include <vector>
 
-#include "OdeSolution.hpp"
+class OdeSolution;
 
 namespace sbmltest
 {
+/** Export results to a CSV file.
+ * 
+ * The first column is time, and subsequent column names are given by var_names.
+ * 
+ * @param filename The name of the file to create.
+ * @param var_names The names of the variables (for the header row).
+ * @param solutions The OdeSolution containing the results.
+ */
 void export_csv(const std::string& filename,
-                    const std::vector<std::string>& var_names,
-                    const OdeSolution& solutions);
+                const std::vector<std::string>& var_names,
+                const OdeSolution& solutions);
 
 /** Calculate the maximum of a vector of doubles.
  * @param vec The vector of doubles.

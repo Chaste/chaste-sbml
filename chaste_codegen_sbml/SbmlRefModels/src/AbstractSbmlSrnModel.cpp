@@ -73,25 +73,11 @@ double AbstractSbmlSrnModel::GetStateVariable(const std::string& rName)
 void AbstractSbmlSrnModel::Initialise(AbstractSbmlOdeSystem* pOdeSystem)
 {
     AbstractOdeSrnModel::Initialise(pOdeSystem);
+}
 
-    // Initialise cell data
-    assert(mpOdeSystem != NULL);
-    assert(mpCell != NULL);
-
-    /* Custom behaviour: store the state variables as cell data and set any parameters
-     * using cell data, so that we can visualise different concentrations in Paraview.
-     */
-
-    std::vector<std::string> stateVariableNames = mpOdeSystem->rGetStateVariableNames();
-
-    for (unsigned i = 0; i < stateVariableNames.size(); i++)
-    {
-        std::string stateName = stateVariableNames[i];
-        double stateValue = mpOdeSystem->rGetStateVariables()[i];
-
-        // Set current state variable value as cell data
-        mpCell->GetCellData()->SetItem(stateName, stateValue);
-    }
+void AbstractSbmlSrnModel::OutputSrnModelParameters(out_stream& rParamsFile)
+{
+    AbstractOdeSrnModel::OutputSrnModelParameters(rParamsFile);
 }
 
 void AbstractSbmlSrnModel::SimulateToCurrentTime()
@@ -99,29 +85,10 @@ void AbstractSbmlSrnModel::SimulateToCurrentTime()
     assert(mpOdeSystem != NULL);
     assert(mpCell != NULL);
 
-    /* Custom behaviour: store the state variables and state parameters as
-     * cell data so that we can visualise different concentrations in Paraview.
-     */
-
-    // Set state parameters as cell data
-    std::vector<std::string> parameterNames = mpOdeSystem->rGetParameterNames();
-    for (unsigned i = 0; i < parameterNames.size(); i++)
-    {
-        std::string parameterName = parameterNames[i];
-        double parameterValue = mpOdeSystem->GetParameter(i);
-        mpCell->GetCellData()->SetItem(parameterName, parameterValue);
-    }
-
-    // Set state variables as cell data
-    std::vector<std::string> stateVariableNames = mpOdeSystem->rGetStateVariableNames();
-
-    for (unsigned i = 0; i < stateVariableNames.size(); i++)
-    {
-        std::string stateName = stateVariableNames[i];
-        double stateValue = mpOdeSystem->GetStateVariable(i);
-        mpCell->GetCellData()->SetItem(stateName, stateValue);
-    }
-
     // Run the ODE simulation as needed
     AbstractOdeSrnModel::SimulateToCurrentTime();
 }
+
+// Provide a unique identifier for serialization
+#include "SerializationExportWrapperForCpp.hpp"
+CHASTE_CLASS_EXPORT(AbstractSbmlSrnModel)

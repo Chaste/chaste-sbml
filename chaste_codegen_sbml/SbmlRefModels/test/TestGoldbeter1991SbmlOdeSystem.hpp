@@ -93,12 +93,11 @@ private:
             // No events, so ODE shouldn't have stopped
             TS_ASSERT_EQUALS(rSolver.StoppingEventOccurred(), false);
 
-            // Check final solution values
-            // Decent results - checked with numpy # [ 0.54706214  0.29369527  0.00678837]
+            // Check final solution with Tellurium values
             std::vector<double> end_solution = solutions.rGetSolutions().back();
-            TS_ASSERT_DELTA(end_solution[0], 0.54706214, 1e-3);
-            TS_ASSERT_DELTA(end_solution[1], 0.29369527, 1e-3);
-            TS_ASSERT_DELTA(end_solution[2], 0.00678837, 1e-3);
+            TS_ASSERT_DELTA(end_solution[0], 0.547050, 1e-3);
+            TS_ASSERT_DELTA(end_solution[1], 0.293640, 1e-3);
+            TS_ASSERT_DELTA(end_solution[2], 0.006785, 1e-3);
 
             // Exports results to csv
             st::export_csv("goldbeter_1991_" + solverName + ".csv", ode_system.rGetStateVariableNames(), solutions);
@@ -200,11 +199,11 @@ public:
         std::vector<double> derivs(ODE_SIZE);
         ode_system.EvaluateYDerivatives(time, default_initial_conditions, derivs);
 
-        // Test derivatives are correct
+        // Compare derivatives with values from Tellurium
         std::vector<double> derivs_expected = {
-            0.0240,  // C
-            -0.9414, // M
-            -0.3233, // X
+            0.02406667,  // C
+            -0.94147207, // M
+            -0.32338358, // X
         };
 
         std::vector<std::string> var_names = ode_system.rGetStateVariableNames();

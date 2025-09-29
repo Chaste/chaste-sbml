@@ -1,6 +1,7 @@
 
 #include <fstream>
 
+#include "OdeSolution.hpp"
 #include "OutputFileHandler.hpp"
 
 #include "SbmlTestHelperFunctions.hpp"
