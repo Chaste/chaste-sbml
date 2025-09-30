@@ -33,47 +33,31 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef TESTTYSONNOVAK2001SBML_HPP_
-#define TESTTYSONNOVAK2001SBML_HPP_
-
-#include <algorithm>
-#include <fstream>
-#include <iostream>
-#include <numeric>
-#include <vector>
+#ifndef TEST_TYSON_NOVAK_2001_SBML_ODE_SYSTEM_HPP_
+#define TEST_TYSON_NOVAK_2001_SBML_ODE_SYSTEM_HPP_
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-#include <boost/make_shared.hpp>
-#include <boost/serialization/export.hpp>
-#include <boost/shared_ptr.hpp>
 
 #include <cxxtest/TestSuite.h>
 
 #include "AbstractCellBasedTestSuite.hpp"
-#include "ApcOneHitCellMutationState.hpp"
+#include "AbstractIvpOdeSolver.hpp"
 #include "BackwardEulerIvpOdeSolver.hpp"
-#include "CellCycleModelOdeSolver.hpp"
-#include "ColumnDataWriter.hpp"
 #include "CvodeAdaptor.hpp"
-#include "EulerIvpOdeSolver.hpp"
 #include "OdeSolution.hpp"
 #include "OutputFileHandler.hpp"
 #include "SbmlTestHelperFunctions.hpp"
-#include "SimulationTime.hpp"
-#include "SmartPointers.hpp"
-#include "StemCellProliferativeType.hpp"
 #include "Timer.hpp"
-#include "WildTypeCellMutationState.hpp"
 
-#include "TysonNovak2001SbmlOdeSystemAndCellCycleModel.hpp"
+#include "TysonNovak2001SbmlOdeSystem.hpp"
 
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
 namespace st = sbmltest;
 
-class TestTysonNovak2001Sbml : public AbstractCellBasedTestSuite
+class TestTysonNovak2001SbmlOdeSystem : public AbstractCellBasedTestSuite
 {
 private:
     const unsigned ODE_SIZE = 8u;
@@ -259,151 +243,6 @@ private:
     }
 
 public:
-    void TestCellCycleModel()
-    {
-        // Setup time
-        SimulationTime* p_simulation_time = SimulationTime::Instance();
-        const unsigned num_timesteps = 10000;
-        p_simulation_time->SetEndTimeAndNumberOfTimeSteps(300.0, num_timesteps);
-
-        // Create a healthy cell
-        auto p_wild_state = boost::make_shared<WildTypeCellMutationState>();
-        auto p_stem_type = boost::make_shared<StemCellProliferativeType>();
-
-        auto p_cell_0 = boost::make_shared<Cell>(p_wild_state, new TysonNovak2001SbmlCellCycleModel);
-        p_cell_0->SetCellProliferativeType(p_stem_type);
-
-        // Set up the cell cycle model - this should use CVODE by default
-        auto p_ccm_0 = static_cast<TysonNovak2001SbmlCellCycleModel*>(p_cell_0->GetCellCycleModel());
-        p_ccm_0->SetBirthTime(p_simulation_time->GetTime());
-        TS_ASSERT_EQUALS(p_ccm_0->CanCellTerminallyDifferentiate(), false);
-
-        p_cell_0->InitialiseCellCycleModel();
-        p_ccm_0->SetDt(0.01);
-
-        // Create another cell with a cell-cycle model that uses a BackwardEulerIvpOdeSolver
-        auto solver = CellCycleModelOdeSolver<TysonNovak2001SbmlCellCycleModel, BackwardEulerIvpOdeSolver>::Instance();
-        boost::shared_ptr<CellCycleModelOdeSolver<TysonNovak2001SbmlCellCycleModel, BackwardEulerIvpOdeSolver> > p_solver(solver);
-        p_solver->SetSizeOfOdeSystem(ODE_SIZE);
-        p_solver->Initialise();
-
-        auto p_cell_1 = boost::make_shared<Cell>(p_wild_state, new TysonNovak2001SbmlCellCycleModel(p_solver));
-        p_cell_1->SetCellProliferativeType(p_stem_type);
-
-        auto p_ccm_1 = static_cast<TysonNovak2001SbmlCellCycleModel*>(p_cell_1->GetCellCycleModel());
-        p_ccm_1->SetBirthTime(p_simulation_time->GetTime());
-        TS_ASSERT_EQUALS(p_ccm_1->CanCellTerminallyDifferentiate(), false);
-        TS_ASSERT_EQUALS(p_ccm_1->GetOdeSolver()->GetSizeOfOdeSystem(), ODE_SIZE);
-
-        p_cell_1->InitialiseCellCycleModel();
-        TS_ASSERT_EQUALS(p_ccm_1->GetDt(), 0.0001); // Timestep for non-adaptive solvers defaults to 0.0001
-        p_ccm_1->SetDt(0.01);
-
-        // Test the cell is ready to divide at the right time
-        double standard_divide_time = 103.80;
-        double tolerance = 0.05;
-        for (unsigned i = 0; i < num_timesteps / 2; i++)
-        {
-            p_simulation_time->IncrementTimeOneStep();
-            double time = p_simulation_time->GetTime();
-
-            bool division_ready_0 = p_ccm_0->ReadyToDivide();
-            bool division_ready_1 = p_ccm_1->ReadyToDivide();
-
-            if (time > standard_divide_time + tolerance)
-            {
-                TS_ASSERT_EQUALS(division_ready_0, true);
-                TS_ASSERT_EQUALS(division_ready_1, true);
-            }
-            else if (time < standard_divide_time - tolerance)
-            {
-                TS_ASSERT_EQUALS(division_ready_0, false);
-                TS_ASSERT_EQUALS(division_ready_1, false);
-            }
-        }
-
-        // Check CVODE vs BackwardEuler solution
-        std::vector<double> proteins_0 = p_ccm_0->GetProteinConcentrations();
-        TS_ASSERT_EQUALS(proteins_0.size(), ODE_SIZE);
-        TS_ASSERT_DELTA(proteins_0[0], 0.1789, 1e-4); // CycBt
-        TS_ASSERT_DELTA(proteins_0[1], 0.3039, 1e-4); // Cdc20a
-        TS_ASSERT_DELTA(proteins_0[2], 0.4455, 1e-4); // Cdh1
-        TS_ASSERT_DELTA(proteins_0[3], 0.8125, 1e-4); // m
-        TS_ASSERT_DELTA(proteins_0[4], 1.1626, 1e-4); // Cdc20t
-        TS_ASSERT_DELTA(proteins_0[5], 0.5465, 1e-4); // IEP
-        TS_ASSERT_DELTA(proteins_0[6], 0.0800, 1e-4); // CKIt
-        TS_ASSERT_DELTA(proteins_0[7], 0.0816, 1e-4); // SK
-
-        std::vector<double> proteins_1 = p_ccm_1->GetProteinConcentrations();
-        TS_ASSERT_EQUALS(proteins_1.size(), ODE_SIZE);
-        TS_ASSERT_DELTA(proteins_1[0], proteins_0[0], 1e-2); // CycBt
-        TS_ASSERT_DELTA(proteins_1[1], proteins_0[1], 1e-2); // Cdc20a
-        TS_ASSERT_DELTA(proteins_1[2], proteins_0[2], 1e-2); // Cdh1
-        TS_ASSERT_DELTA(proteins_1[3], proteins_0[3], 1e-2); // m
-        TS_ASSERT_DELTA(proteins_1[4], proteins_0[4], 1e-2); // Cdc20t
-        TS_ASSERT_DELTA(proteins_1[5], proteins_0[5], 1e-2); // IEP
-        TS_ASSERT_DELTA(proteins_1[6], proteins_0[6], 1e-2); // CKIt
-        TS_ASSERT_DELTA(proteins_1[7], proteins_0[7], 1e-2); // SK
-
-        // Test for a mutant cell
-        TS_ASSERT_EQUALS(p_ccm_0->ReadyToDivide(), true);
-        p_ccm_0->ResetForDivision();
-        TS_ASSERT_EQUALS(p_ccm_0->ReadyToDivide(), false);
-
-        auto p_mutation = boost::make_shared<ApcOneHitCellMutationState>();
-        auto p_ccm_2 = static_cast<TysonNovak2001SbmlCellCycleModel*>(p_ccm_0->CreateCellCycleModel());
-        auto p_cell_2 = boost::make_shared<Cell>(p_mutation, p_ccm_2);
-        p_cell_2->SetCellProliferativeType(p_stem_type);
-
-        TS_ASSERT_EQUALS(p_cell_2->ReadyToDivide(), false);
-        TS_ASSERT_EQUALS(p_ccm_2->ReadyToDivide(), false);
-
-        // Test the cell is ready to divide at the right time
-        standard_divide_time = 250.32;
-        for (unsigned i = 0; i < num_timesteps / 2; i++)
-        {
-            p_simulation_time->IncrementTimeOneStep();
-            double time = p_simulation_time->GetTime();
-
-            bool division_ready_0 = p_ccm_0->ReadyToDivide();
-            bool division_ready_2 = p_ccm_2->ReadyToDivide();
-
-            if (time > standard_divide_time)
-            {
-                TS_ASSERT_EQUALS(division_ready_0, true);
-                TS_ASSERT_EQUALS(division_ready_2, true);
-            }
-            else if (time < standard_divide_time)
-            {
-                TS_ASSERT_EQUALS(division_ready_0, false);
-                TS_ASSERT_EQUALS(division_ready_2, false);
-            }
-        }
-
-        // Check ODE solution
-        proteins_0 = p_ccm_0->GetProteinConcentrations();
-        TS_ASSERT_EQUALS(proteins_0.size(), ODE_SIZE);
-        TS_ASSERT_DELTA(proteins_0[0], 0.1794, 1e-4); // CycBt
-        TS_ASSERT_DELTA(proteins_0[1], 0.2977, 1e-4); // Cdc20a
-        TS_ASSERT_DELTA(proteins_0[2], 0.4349, 1e-4); // Cdh1
-        TS_ASSERT_DELTA(proteins_0[3], 0.8096, 1e-4); // m
-        TS_ASSERT_DELTA(proteins_0[4], 1.1307, 1e-4); // Cdc20t
-        TS_ASSERT_DELTA(proteins_0[5], 0.5447, 1e-4); // IEP
-        TS_ASSERT_DELTA(proteins_0[6], 0.0806, 1e-4); // CKIt
-        TS_ASSERT_DELTA(proteins_0[7], 0.0799, 1e-4); // SK
-
-        std::vector<double> proteins_2 = p_ccm_2->GetProteinConcentrations();
-        TS_ASSERT_EQUALS(proteins_2.size(), ODE_SIZE);
-        TS_ASSERT_DELTA(proteins_2[0], proteins_0[0], 1e-4); // CycBt
-        TS_ASSERT_DELTA(proteins_2[1], proteins_0[1], 1e-4); // Cdc20a
-        TS_ASSERT_DELTA(proteins_2[2], proteins_0[2], 1e-4); // Cdh1
-        TS_ASSERT_DELTA(proteins_2[3], proteins_0[3], 1e-4); // m
-        TS_ASSERT_DELTA(proteins_2[4], proteins_0[4], 1e-4); // Cdc20t
-        TS_ASSERT_DELTA(proteins_2[5], proteins_0[5], 1e-4); // IEP
-        TS_ASSERT_DELTA(proteins_2[6], proteins_0[6], 1e-4); // CKIt
-        TS_ASSERT_DELTA(proteins_2[7], proteins_0[7], 1e-4); // SK
-    }
-
     void TestOdeArchiving()
     {
         OutputFileHandler handler("archive", false);
@@ -412,22 +251,24 @@ public:
 
         // Save archive
         {
+            TysonNovak2001SbmlOdeSystem ode_system;
+
             // Set state variables to 0...ODE_SIZE-1
             std::vector<double> state_variables;
             for (unsigned i = 0; i < ODE_SIZE; i++)
             {
                 state_variables.push_back(static_cast<double>(i));
             }
+            ode_system.SetStateVariables(state_variables);
 
-            // Check initial conditions
-            TysonNovak2001SbmlOdeSystem ode_system(state_variables);
-            ode_system.SetDefaultInitialCondition(0, 3.25);
+            // Check initial conditions and state variables
+            ode_system.SetDefaultInitialCondition(0, 3.141593);
 
             std::vector<double> initial_conditions = ode_system.GetInitialConditions();
             TS_ASSERT_EQUALS(initial_conditions.size(), ODE_SIZE);
 
             var_names = ode_system.rGetStateVariableNames();
-            TSM_ASSERT_DELTA(var_names[0].c_str(), initial_conditions[0], 3.25, 1e-6);
+            TSM_ASSERT_DELTA(var_names[0].c_str(), initial_conditions[0], 3.141593, 1e-6);
             for (unsigned i = 1; i < ODE_SIZE; i++)
             {
                 TSM_ASSERT_DELTA(var_names[i].c_str(), initial_conditions[i], default_initial_conditions[i], 1e-6);
@@ -527,4 +368,4 @@ public:
     }
 };
 
-#endif // TESTTYSONNOVAK2001SBML_HPP_
+#endif // TEST_TYSON_NOVAK_2001_SBML_ODE_SYSTEM_HPP_

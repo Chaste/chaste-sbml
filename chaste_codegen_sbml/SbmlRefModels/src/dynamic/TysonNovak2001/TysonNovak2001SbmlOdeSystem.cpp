@@ -6,12 +6,12 @@
 #include "SbmlEventType.hpp"
 #include "SbmlMath.hpp"
 
-#include "TysonNovak2001SbmlOdeSystemAndCellCycleModel.hpp"
+#include "TysonNovak2001SbmlOdeSystem.hpp"
 
 namespace sm = sbmlmath;
 
-TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem(std::vector<double> stateVariables)
-        : AbstractOdeSystem(8)
+TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem()
+        : AbstractSbmlOdeSystem(8, 1, 1)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>);
 
@@ -33,22 +33,6 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem(std::vector<double> sta
     SetDefaultInitialCondition(5, IEP);
     SetDefaultInitialCondition(6, CKIt);
     SetDefaultInitialCondition(7, SK);
-
-    if (stateVariables.size() == 8)
-    {
-        CycBt = stateVariables[0];
-        Cdc20a = stateVariables[1];
-        Cdh1 = stateVariables[2];
-        m = stateVariables[3];
-        Cdc20t = stateVariables[4];
-        IEP = stateVariables[5];
-        CKIt = stateVariables[6];
-        SK = stateVariables[7];
-    }
-    else if (stateVariables.size() != 0)
-    {
-        EXCEPTION("TysonNovak2001SbmlOdeSystem: Expected 8 state variables, got " + std::to_string(stateVariables.size()));
-    }
 
     mStateVariables.push_back(CycBt);
     mStateVariables.push_back(Cdc20a);
@@ -114,51 +98,8 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem(std::vector<double> sta
     RunModelRules(0.0, mStateVariables);
 }
 
-TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem(const TysonNovak2001SbmlOdeSystem& rOdeSystem)
-        : TysonNovak2001SbmlOdeSystem(rOdeSystem.mStateVariables)
-{
-    mEventSatisfied = rOdeSystem.mEventSatisfied;
-    mEventTriggered = rOdeSystem.mEventTriggered;
-
-    mEventAdjustedParameters = rOdeSystem.mEventAdjustedParameters;
-    mEventAdjustedParameterValues = rOdeSystem.mEventAdjustedParameterValues;
-
-    mEventAdjustedStateVars = rOdeSystem.mEventAdjustedStateVars;
-    mEventAdjustedStateValues = rOdeSystem.mEventAdjustedStateValues;
-}
-
 TysonNovak2001SbmlOdeSystem::~TysonNovak2001SbmlOdeSystem()
 {
-}
-
-void TysonNovak2001SbmlOdeSystem::AdjustParameters(double time)
-{
-    for (unsigned i = 0; i < mEventAdjustedParameters.size(); ++i)
-    {
-        if (mEventAdjustedParameters[i])
-        {
-            SetParameter(i, mEventAdjustedParameterValues[i]);
-        }
-    }
-
-    for (unsigned i = 0; i < mEventAdjustedStateVars.size(); ++i)
-    {
-        if (mEventAdjustedStateVars[i])
-        {
-            SetStateVariable(i, mEventAdjustedStateValues[i]);
-            mEventAdjustedStateVars[i] = false;
-        }
-    }
-}
-
-double TysonNovak2001SbmlOdeSystem::CalculateRootFunction(double time, const std::vector<double>& rY)
-{
-    return ProcessModelEvents(time, rY);
-}
-
-bool TysonNovak2001SbmlOdeSystem::CalculateStoppingEvent(double time, const std::vector<double>& rY)
-{
-    return ProcessModelEvents(time, rY) == 0.0;
 }
 
 std::vector<double> TysonNovak2001SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
@@ -186,18 +127,6 @@ void TysonNovak2001SbmlOdeSystem::EvaluateYDerivatives(double time, const std::v
     rDY[7] = (SKsynthesis - SKdegradation) / cell;                                                            // d[SK]/dt
 
     // TODO: Scale time appropriately
-}
-
-bool TysonNovak2001SbmlOdeSystem::HasEventOccurred(SbmlEventType eventType)
-{
-    for (unsigned i = 0; i < mEventTriggered.size(); ++i)
-    {
-        if (mEventTriggered[i] && mEventType[i] == eventType)
-        {
-            return true;
-        }
-    }
-    return false;
 }
 
 double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double>& rY)
@@ -250,11 +179,6 @@ double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::v
     }
 
     return min_dist; // Distance to closest event
-}
-
-void TysonNovak2001SbmlOdeSystem::ResetEventsOccurred()
-{
-    std::fill(mEventTriggered.begin(), mEventTriggered.end(), false);
 }
 
 void TysonNovak2001SbmlOdeSystem::RunModelRules(double time, const std::vector<double>& rY)
@@ -399,16 +323,6 @@ void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
     this->mInitialised = true;
 }
 
-// Define SbmlCellCycleWrapperModel using wrappers
-#include "SbmlCellCycleWrapperModel.cpp"
-#include "SbmlCellCycleWrapperModel.hpp"
-
-typedef SbmlCellCycleWrapperModel<TysonNovak2001SbmlOdeSystem, 8> TysonNovak2001SbmlCellCycleModel;
-
-// Declare identifiers for the serializer
+// Register the ODE system with Boost serialization
 #include "SerializationExportWrapperForCpp.hpp"
 CHASTE_CLASS_EXPORT(TysonNovak2001SbmlOdeSystem)
-EXPORT_TEMPLATE_CLASS2(SbmlCellCycleWrapperModel, TysonNovak2001SbmlOdeSystem, 8)
-
-#include "CellCycleModelOdeSolverExportWrapper.hpp"
-EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(TysonNovak2001SbmlCellCycleModel)

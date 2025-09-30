@@ -33,8 +33,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include <iostream>
-
 #include "AbstractOdeBasedCellCycleModel.hpp"
 #include "BackwardEulerIvpOdeSolver.hpp"
 #include "CellCycleModelOdeSolver.hpp"
@@ -162,7 +160,7 @@ bool AbstractSbmlCellCycleModel::ReadyToDivide()
         double previous_divide_time = mDivideTime;
 
         // Solves ODE to current time and update cell division flag and time
-        bool stopping_event_occurred = AbstractSbmlCellCycleModel::ReadyToDivide();
+        bool stopping_event_occurred = AbstractOdeBasedCellCycleModel::ReadyToDivide();
 
         if (stopping_event_occurred)
         {
@@ -180,7 +178,7 @@ bool AbstractSbmlCellCycleModel::ReadyToDivide()
 void AbstractSbmlCellCycleModel::ResetForDivision()
 {
     assert(mReadyToDivide);
-    AbstractSbmlCellCycleModel::ResetForDivision();
+    AbstractOdeBasedCellCycleModel::ResetForDivision();
 
     assert(mpOdeSystem != nullptr);
     static_cast<AbstractSbmlOdeSystem*>(mpOdeSystem)->ResetEventsOccurred();
