@@ -33,8 +33,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef TESTVANLEEUWEN2007NONDIMSBML_HPP_
-#define TESTVANLEEUWEN2007NONDIMSBML_HPP_
+#ifndef TESTVANLEEUWEN2007NONDIMSBMLODESYSTEM_HPP_
+#define TESTVANLEEUWEN2007NONDIMSBMLODESYSTEM_HPP_
 
 #include <iostream>
 #include <vector>
@@ -47,17 +47,18 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AbstractCellBasedTestSuite.hpp"
 #include "BackwardEulerIvpOdeSolver.hpp"
 #include "ColumnDataWriter.hpp"
+#include "CvodeAdaptor.hpp"
 #include "Debug.hpp"
 #include "EulerIvpOdeSolver.hpp"
 #include "RungeKutta4IvpOdeSolver.hpp"
 #include "Timer.hpp"
 
-#include "VanLeeuwen2007NonDimSbmlOdeSystemAndSrnModel.hpp"
+#include "VanLeeuwen2007NonDimSbmlOdeSystem.hpp"
 
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
-class TestVanLeeuwen2007NonDimSbml : public AbstractCellBasedTestSuite
+class TestVanLeeuwen2007NonDimSbmlOdeSystem : public AbstractCellBasedTestSuite
 {
 private:
     const unsigned ODE_SIZE = 11u;
@@ -131,7 +132,11 @@ public:
         OutputFileHandler handler("archive", false);
         std::string archive_filename = handler.GetOutputDirectoryFullPath() + "van_leeuwen_2007_nondim_ode.arch";
 
+        // Save archive
         {
+            VanLeeuwen2007NonDimSbmlOdeSystem ode_system;
+
+            // Set state variables to 0...ODE_SIZE-1
             std::vector<double> state_variables;
             state_variables.push_back(0.0);  // X
             state_variables.push_back(1.0);  // D
@@ -144,16 +149,15 @@ public:
             state_variables.push_back(8.0);  // C_oT
             state_variables.push_back(9.0);  // C_cT
             state_variables.push_back(10.0); // Y
+            ode_system.SetStateVariables(state_variables);
 
-            VanLeeuwen2007NonDimSbmlOdeSystem ode_system(state_variables);
-
-            ode_system.SetDefaultInitialCondition(2, 3.25);
-
+            // Check initial conditions and state variables
+            ode_system.SetDefaultInitialCondition(0, 3.141593);
             std::vector<double> initial_conditions = ode_system.GetInitialConditions();
             TS_ASSERT_EQUALS(initial_conditions.size(), ODE_SIZE);
-            TS_ASSERT_DELTA(initial_conditions[0], 0.268, 1e-3);  // X
+            TS_ASSERT_DELTA(initial_conditions[0], 3.141593, 1e-3);  // X
             TS_ASSERT_DELTA(initial_conditions[1], 2.68, 1e-3);   // D
-            TS_ASSERT_DELTA(initial_conditions[2], 3.2500, 1e-3); // C_o
+            TS_ASSERT_DELTA(initial_conditions[2], 76.2, 1e-3); // C_o
             TS_ASSERT_DELTA(initial_conditions[3], 13.5, 1e-3);   // C_u
             TS_ASSERT_DELTA(initial_conditions[4], 0.0, 1e-3);    // C_c
             TS_ASSERT_DELTA(initial_conditions[5], 300.0, 1e-3);  // A
@@ -196,6 +200,7 @@ public:
             output_arch << p_const_ode_system;
         }
 
+        // Load archive
         {
             AbstractOdeSystem* p_ode_system;
 
@@ -320,4 +325,4 @@ public:
     }
 };
 
-#endif // TESTVANLEEUWEN2007NONDIMSBML_HPP_
+#endif // TESTVANLEEUWEN2007NONDIMSBMLODESYSTEM_HPP_

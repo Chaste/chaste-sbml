@@ -6,12 +6,12 @@
 #include "SbmlEventType.hpp"
 #include "SbmlMath.hpp"
 
-#include "VanLeeuwen2007NonDimSbmlOdeSystemAndSrnModel.hpp"
+#include "VanLeeuwen2007NonDimSbmlOdeSystem.hpp"
 
 namespace sm = sbmlmath;
 
-VanLeeuwen2007NonDimSbmlOdeSystem::VanLeeuwen2007NonDimSbmlOdeSystem(std::vector<double> stateVariables)
-        : AbstractOdeSystem(11)
+VanLeeuwen2007NonDimSbmlOdeSystem::VanLeeuwen2007NonDimSbmlOdeSystem()
+        : AbstractSbmlOdeSystem(11, 5, 0)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<VanLeeuwen2007NonDimSbmlOdeSystem>);
 
@@ -39,25 +39,6 @@ VanLeeuwen2007NonDimSbmlOdeSystem::VanLeeuwen2007NonDimSbmlOdeSystem(std::vector
     SetDefaultInitialCondition(8, C_oT);
     SetDefaultInitialCondition(9, C_cT);
     SetDefaultInitialCondition(10, Y);
-
-    if (stateVariables.size() == 11)
-    {
-        X = stateVariables[0];
-        D = stateVariables[1];
-        C_o = stateVariables[2];
-        C_u = stateVariables[3];
-        C_c = stateVariables[4];
-        A = stateVariables[5];
-        C_A = stateVariables[6];
-        T = stateVariables[7];
-        C_oT = stateVariables[8];
-        C_cT = stateVariables[9];
-        Y = stateVariables[10];
-    }
-    else if (stateVariables.size() != 0)
-    {
-        EXCEPTION("VanLeeuwen2007NonDimSbmlOdeSystem: Expected 11 state variables, got " + std::to_string(stateVariables.size()));
-    }
 
     mStateVariables.push_back(X);
     mStateVariables.push_back(D);
@@ -118,68 +99,13 @@ VanLeeuwen2007NonDimSbmlOdeSystem::VanLeeuwen2007NonDimSbmlOdeSystem(std::vector
     mw321b3e5e_f6ed_4345_9346_55ffb1ff2137 = 0.0;
 
     // EVENTS
-    mEventType.resize(0, SbmlEventType::UNKNOWN);
-
-    // Uncomment lines below for events that should trigger cell division
-
-    mEventSatisfied.resize(0, true); // Prevent events from triggering at the start
-    mEventTriggered.resize(0, false);
-
-    mEventAdjustedParameters.resize(5, false);
-    mEventAdjustedParameterValues.resize(5, 0.0);
-
-    mEventAdjustedStateVars.resize(11, false);
-    mEventAdjustedStateValues.resize(11, 0.0);
 
     // Run model rules to complete state initialisation
     RunModelRules(0.0, mStateVariables);
 }
 
-VanLeeuwen2007NonDimSbmlOdeSystem::VanLeeuwen2007NonDimSbmlOdeSystem(const VanLeeuwen2007NonDimSbmlOdeSystem& rOdeSystem)
-        : VanLeeuwen2007NonDimSbmlOdeSystem(rOdeSystem.mStateVariables)
-{
-    mEventSatisfied = rOdeSystem.mEventSatisfied;
-    mEventTriggered = rOdeSystem.mEventTriggered;
-
-    mEventAdjustedParameters = rOdeSystem.mEventAdjustedParameters;
-    mEventAdjustedParameterValues = rOdeSystem.mEventAdjustedParameterValues;
-
-    mEventAdjustedStateVars = rOdeSystem.mEventAdjustedStateVars;
-    mEventAdjustedStateValues = rOdeSystem.mEventAdjustedStateValues;
-}
-
 VanLeeuwen2007NonDimSbmlOdeSystem::~VanLeeuwen2007NonDimSbmlOdeSystem()
 {
-}
-
-void VanLeeuwen2007NonDimSbmlOdeSystem::AdjustParameters(double time)
-{
-    for (unsigned i = 0; i < mEventAdjustedParameters.size(); ++i)
-    {
-        if (mEventAdjustedParameters[i])
-        {
-            SetParameter(i, mEventAdjustedParameterValues[i]);
-        }
-    }
-
-    for (unsigned i = 0; i < mEventAdjustedStateVars.size(); ++i)
-    {
-        if (mEventAdjustedStateVars[i])
-        {
-            SetStateVariable(i, mEventAdjustedStateValues[i]);
-            mEventAdjustedStateVars[i] = false;
-        }
-    }
-}
-
-double VanLeeuwen2007NonDimSbmlOdeSystem::CalculateRootFunction(double time, const std::vector<double>& rY)
-{
-    return ProcessModelEvents(time, rY);
-}
-
-bool VanLeeuwen2007NonDimSbmlOdeSystem::CalculateStoppingEvent(double time, const std::vector<double>& rY)
-{
-    return ProcessModelEvents(time, rY) == 0.0;
 }
 
 std::vector<double> VanLeeuwen2007NonDimSbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
@@ -212,18 +138,6 @@ void VanLeeuwen2007NonDimSbmlOdeSystem::EvaluateYDerivatives(double time, const 
     // TODO: Scale time appropriately
 }
 
-bool VanLeeuwen2007NonDimSbmlOdeSystem::HasEventOccurred(SbmlEventType eventType)
-{
-    for (unsigned i = 0; i < mEventTriggered.size(); ++i)
-    {
-        if (mEventTriggered[i] && mEventType[i] == eventType)
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
 double VanLeeuwen2007NonDimSbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double>& rY)
 {
     std::fill(std::begin(mEventAdjustedParameters), std::end(mEventAdjustedParameters), false);
@@ -232,11 +146,6 @@ double VanLeeuwen2007NonDimSbmlOdeSystem::ProcessModelEvents(double time, const 
     double min_dist = std::numeric_limits<double>::max();
 
     return min_dist; // Distance to closest event
-}
-
-void VanLeeuwen2007NonDimSbmlOdeSystem::ResetEventsOccurred()
-{
-    std::fill(mEventTriggered.begin(), mEventTriggered.end(), false);
 }
 
 void VanLeeuwen2007NonDimSbmlOdeSystem::RunModelRules(double time, const std::vector<double>& rY)
@@ -419,16 +328,6 @@ void CellwiseOdeSystemInformation<VanLeeuwen2007NonDimSbmlOdeSystem>::Initialise
     this->mInitialised = true;
 }
 
-// Define SbmlSrnWrapperModel using wrappers
-#include "SbmlSrnWrapperModel.cpp"
-#include "SbmlSrnWrapperModel.hpp"
-
-typedef SbmlSrnWrapperModel<VanLeeuwen2007NonDimSbmlOdeSystem, 11> VanLeeuwen2007NonDimSbmlSrnModel;
-
-// Declare identifiers for the serializer
+// Register the ODE system with Boost serialization
 #include "SerializationExportWrapperForCpp.hpp"
 CHASTE_CLASS_EXPORT(VanLeeuwen2007NonDimSbmlOdeSystem)
-EXPORT_TEMPLATE_CLASS2(SbmlSrnWrapperModel, VanLeeuwen2007NonDimSbmlOdeSystem, 11)
-
-#include "CellCycleModelOdeSolverExportWrapper.hpp"
-EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(VanLeeuwen2007NonDimSbmlSrnModel)
