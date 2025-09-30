@@ -33,8 +33,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef TESTCHEN2000SBML_HPP_
-#define TESTCHEN2000SBML_HPP_
+#ifndef TESTCHEN2000SBMLODESYSTEM_HPP_
+#define TESTCHEN2000SBMLODESYSTEM_HPP_
 
 #include <algorithm>
 #include <fstream>
@@ -66,14 +66,14 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Timer.hpp"
 #include "WildTypeCellMutationState.hpp"
 
-#include "Chen2000SbmlOdeSystemAndCellCycleModel.hpp"
+#include "Chen2000SbmlOdeSystem.hpp"
 
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
 namespace st = sbmltest;
 
-class TestChen2000Sbml : public AbstractCellBasedTestSuite
+class TestChen2000SbmlOdeSystem : public AbstractCellBasedTestSuite
 {
 private:
     const unsigned ODE_SIZE = 13u;
@@ -253,22 +253,24 @@ public:
 
         // Save archive
         {
+            Chen2000SbmlOdeSystem ode_system;
+
             // Set state variables to 0...ODE_SIZE-1
             std::vector<double> state_variables;
             for (unsigned i = 0; i < ODE_SIZE; i++)
             {
                 state_variables.push_back(static_cast<double>(i));
             }
+            ode_system.SetStateVariables(state_variables);
 
-            // Check initial conditions
-            Chen2000SbmlOdeSystem ode_system(state_variables);
-            ode_system.SetDefaultInitialCondition(0, 3.25);
+            // Check initial conditions and state variables
+            ode_system.SetDefaultInitialCondition(0, 3.141593);
 
             std::vector<double> initial_conditions = ode_system.GetInitialConditions();
             TS_ASSERT_EQUALS(initial_conditions.size(), ODE_SIZE);
 
             var_names = ode_system.rGetStateVariableNames();
-            TSM_ASSERT_DELTA(var_names[0].c_str(), initial_conditions[0], 3.25, 1e-6);
+            TSM_ASSERT_DELTA(var_names[0].c_str(), initial_conditions[0], 3.141593, 1e-6);
             for (unsigned i = 1; i < ODE_SIZE; i++)
             {
                 TSM_ASSERT_DELTA(var_names[i].c_str(), initial_conditions[i], default_initial_conditions[i], 1e-6);
@@ -361,4 +363,4 @@ public:
     }
 };
 
-#endif // TESTCHEN2000SBML_HPP_
+#endif // TESTCHEN2000SBMLODESYSTEM_HPP_
