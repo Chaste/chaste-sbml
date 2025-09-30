@@ -33,8 +33,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef TESTGARDNER1998SBML_HPP_
-#define TESTGARDNER1998SBML_HPP_
+#ifndef TESTGARDNER1998SBMLODESYSTEM_HPP_
+#define TESTGARDNER1998SBMLODESYSTEM_HPP_
 
 #include <algorithm>
 #include <fstream>
@@ -65,14 +65,14 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Timer.hpp"
 #include "WildTypeCellMutationState.hpp"
 
-#include "Gardner1998SbmlOdeSystemAndCellCycleModel.hpp"
+#include "Gardner1998SbmlOdeSystem.hpp"
 
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
 namespace st = sbmltest;
 
-class TestGardner1998Sbml : public AbstractCellBasedTestSuite
+class TestGardner1998SbmlOdeSystem : public AbstractCellBasedTestSuite
 {
 private:
     const unsigned ODE_SIZE = 5u;
@@ -141,17 +141,20 @@ public:
         std::string archive_filename = handler.GetOutputDirectoryFullPath() + "gardner_1998_ode.arch";
 
         {
+            Gardner1998SbmlOdeSystem ode_system;
+
+            // Set state variables to 0...ODE_SIZE-1
             std::vector<double> state_variables = { 0.0, 1.0, 2.0, 3.0, 4.0 };
+            ode_system.SetStateVariables(state_variables);
 
-            Gardner1998SbmlOdeSystem ode_system(state_variables);
-
-            ode_system.SetDefaultInitialCondition(2, 3.25);
+            // Check initial conditions and state variables
+            ode_system.SetDefaultInitialCondition(0, 3.141593);
 
             std::vector<double> initial_conditions = ode_system.GetInitialConditions();
             TS_ASSERT_EQUALS(initial_conditions.size(), ODE_SIZE);
-            TS_ASSERT_DELTA(initial_conditions[0], 0.0, 1e-6);  // C
+            TS_ASSERT_DELTA(initial_conditions[0], 3.141593, 1e-6);  // C
             TS_ASSERT_DELTA(initial_conditions[1], 0.0, 1e-6);  // X
-            TS_ASSERT_DELTA(initial_conditions[2], 3.25, 1e-6); // M
+            TS_ASSERT_DELTA(initial_conditions[2], 0.0, 1e-6); // M
             TS_ASSERT_DELTA(initial_conditions[3], 1.0, 1e-6);  // Y
             TS_ASSERT_DELTA(initial_conditions[4], 1.0, 1e-6);  // Z
 
@@ -239,4 +242,4 @@ public:
     }
 };
 
-#endif // TESTGARDNER1998SBML_HPP_
+#endif // TESTGARDNER1998SBMLODESYSTEM_HPP_

@@ -33,6 +33,7 @@
 
 void {{ srn_class_name }}::Initialise()
 {
+    assert(mpOdeSystem == nullptr);
     AbstractSbmlSrnModel::Initialise(new {{ ode_class_name }});
 }
 

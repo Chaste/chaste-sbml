@@ -52,7 +52,7 @@ private:
     /** Needed for serialization. */
     friend class boost::serialization::access;
     /**
-     * Archive the cell-cycle model and member variables.
+     * Archive the SRN model and member variables.
      *
      * @param archive the archive
      * @param version the current version of this class
@@ -63,28 +63,50 @@ private:
         archive& BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractOdeSrnModel);
     }
 
+protected:
+    /**
+     * Protected copy-constructor for use by CreateSrnModel().
+     *
+     * The only way to copy an instance of a subclass of AbstractCellCycleModel is
+     * by calling CreateSrnModel(), which ensures that the instance is copied
+     * correctly.
+     *
+     * This copy-constructor helps subclasses of AbstractSrnModel to
+     * ensure that all their members are copied over correctly. It is primarily
+     * used during cell division to set member variables for a daughter cell.
+     * Note that the SRN model of the parent cell will have run ResetForDivision()
+     * just before calling CreateSrnModel(), so performing an exact copy of the
+     * parent cell's SRN model is suitable behaviour. Any further initialisation
+     * specific to the daughter cell can be completed via InitialiseDaughterCell().
+     *
+     * @param rModel the SRN model to copy.
+     */
+    AbstractSbmlSrnModel(const AbstractSbmlSrnModel& rModel);
+
 public:
     /**
      * Default constructor calls base class.
      *
+     * @param stateSize The number of state variables in the ODE system.
      * @param pOdeSolver An optional pointer to a cell-cycle model ODE solver object (allows the use of different ODE solvers)
      */
     AbstractSbmlSrnModel(unsigned stateSize, boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver = boost::shared_ptr<AbstractCellCycleModelOdeSolver>());
 
-    virtual ~AbstractSbmlSrnModel() = default;
-
-    // void Initialise() override;
+    /**
+     * Destructor.
+     */
+    virtual ~AbstractSbmlSrnModel();
 
     using AbstractOdeSrnModel::Initialise;
-    // /**
-    //  * Overridden Initialise() method to set up the ODE system.
-    //  *
-    //  * @param pOdeSystem pointer to an ODE system
-    //  */
+    /**
+     * Overridden Initialise() method to set up the ODE system.
+     *
+     * @param pOdeSystem pointer to an ODE system
+     */
     void Initialise(AbstractSbmlOdeSystem* pOdeSystem);
 
     /**
-     * Outputs cell-cycle model parameters to file.
+     * Outputs SRN model parameters to file.
      *
      * @param rParamsFile the file stream to which the parameters are output
      */
