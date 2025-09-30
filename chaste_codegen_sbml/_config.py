@@ -5,10 +5,6 @@ from enum import Enum
 
 ROOT_DIR = pathlib.Path(__file__).parent.absolute()
 
-CCM_SUFFIX = "CellCycle"
-ODE_SUFFIX = "OdeSystem"
-SRN_SUFFIX = "Srn"
-
 NON_DIM_UNITS = "non-dim"
 
 
@@ -27,6 +23,7 @@ class VarType(Enum):
 class EventType(Enum):
     CELL_DIVISION = 1
     UNKNOWN = 2
+
 
 class ModelType(Enum):
     SRN = 1

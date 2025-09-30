@@ -23,7 +23,7 @@ from libsbml import (
     formulaToString,
 )
 
-from ._config import NON_DIM_UNITS, ODE_SUFFIX, ROOT_DIR, EventType, ModelType, VarType
+from ._config import NON_DIM_UNITS, ROOT_DIR, EventType, ModelType, VarType
 from ._utils import (
     get_function_definition_arguments,
     get_species_concentration,
@@ -794,7 +794,7 @@ class ChasteSbmlModel:
                 cell_cycle_header_guard=self._format_header_guard(self._model_hpp_filename),
                 cell_cycle_hpp_file=self._model_hpp_filename,
             )
-            
+
         return template_vars
 
     def _get_timescale_multiplier(self) -> float:
