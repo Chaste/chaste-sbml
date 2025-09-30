@@ -33,8 +33,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef TESTTAN2014SBML_HPP_
-#define TESTTAN2014SBML_HPP_
+#ifndef TESTTAN2014SBMLODESYSTEM_HPP_
+#define TESTTAN2014SBMLODESYSTEM_HPP_
 
 #include <iostream>
 #include <vector>
@@ -47,20 +47,21 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AbstractCellBasedTestSuite.hpp"
 #include "BackwardEulerIvpOdeSolver.hpp"
 #include "ColumnDataWriter.hpp"
+#include "CvodeAdaptor.hpp"
 #include "Debug.hpp"
 #include "EulerIvpOdeSolver.hpp"
 #include "RungeKutta4IvpOdeSolver.hpp"
 #include "SbmlTestHelperFunctions.hpp"
 #include "Timer.hpp"
 
-#include "Tan2014SbmlOdeSystemAndSrnModel.hpp"
+#include "Tan2014SbmlOdeSystem.hpp"
 
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
 namespace st = sbmltest;
 
-class TestTan2014Sbml : public AbstractCellBasedTestSuite
+class TestTan2014SbmlOdeSystem : public AbstractCellBasedTestSuite
 {
 private:
     const unsigned ODE_SIZE = 6u;
@@ -71,13 +72,15 @@ private:
         {
             Tan2014SbmlOdeSystem ode_system;
 
-            double dt = 0.01;
+            double start_time = 0.0;
             double end_time = 5000.0;
+            double max_step = 0.01;
+            double sampling_interval = 0.01;
 
-            std::vector<double> state_variables = ode_system.GetInitialConditions();
+            std::vector<double> initial_conditions = ode_system.GetInitialConditions();
 
             Timer::Reset();
-            OdeSolution ode_solution = rSolver.Solve(&ode_system, state_variables, 0.0, end_time, dt, dt);
+            OdeSolution ode_solution = rSolver.Solve(&ode_system, initial_conditions, start_time, end_time, max_step, sampling_interval);
             Timer::Print("Tan 2014 (" + solverName + ")");
 
             // Compare end solutions with Tellurium values
@@ -230,24 +233,25 @@ public:
         OutputFileHandler handler("archive", false);
         std::string archive_filename = handler.GetOutputDirectoryFullPath() + "tan_2014_ode.arch";
 
+        // Save archive
         {
+            Tan2014SbmlOdeSystem ode_system;
+
+            // Set state variables to 0...ODE_SIZE-1
             std::vector<double> state_variables;
-            state_variables.push_back(0.0);
-            state_variables.push_back(1.0);
-            state_variables.push_back(2.0);
-            state_variables.push_back(3.0);
-            state_variables.push_back(4.0);
-            state_variables.push_back(5.0);
+            for (unsigned i = 0; i < ODE_SIZE; ++i)
+            {
+                state_variables.push_back(static_cast<double>(i));
+            }
+            ode_system.SetStateVariables(state_variables);
 
-            Tan2014SbmlOdeSystem ode_system(state_variables);
-
-            ode_system.SetDefaultInitialCondition(2, 3.25);
-
+            // Check initial conditions and state variables
+            ode_system.SetDefaultInitialCondition(0, 3.141593);
             std::vector<double> initial_conditions = ode_system.GetInitialConditions();
             TS_ASSERT_EQUALS(initial_conditions.size(), ODE_SIZE);
-            TS_ASSERT_DELTA(initial_conditions[0], 46.60, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[0], 3.141593, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[1], 581.10, 1e-3);
-            TS_ASSERT_DELTA(initial_conditions[2], 3.25, 1e-3);
+            TS_ASSERT_DELTA(initial_conditions[2], 418.90, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[3], 32.60, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[4], 516.80, 1e-3);
             TS_ASSERT_DELTA(initial_conditions[5], 483.20, 1e-3);
@@ -275,6 +279,7 @@ public:
             output_arch << p_const_ode_system;
         }
 
+        // Load archive
         {
             AbstractOdeSystem* p_ode_system;
 
@@ -370,4 +375,4 @@ public:
     }
 };
 
-#endif // TESTTAN2014SBML_HPP_
+#endif // TESTTAN2014SBMLODESYSTEM_HPP_
