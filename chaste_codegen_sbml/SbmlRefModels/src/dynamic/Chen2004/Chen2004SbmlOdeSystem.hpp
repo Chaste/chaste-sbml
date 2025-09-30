@@ -1,24 +1,28 @@
-#ifndef CHEN2004SBMLODESYSTEMANDCELLCYCLEMODEL_HPP_
-#define CHEN2004SBMLODESYSTEMANDCELLCYCLEMODEL_HPP_
+#ifndef CHEN2004SBMLODESYSTEM_HPP_
+#define CHEN2004SBMLODESYSTEM_HPP_
 
 #include <vector>
 
 #include <boost/serialization/base_object.hpp>
 
-#include "AbstractOdeSystem.hpp"
+#include "AbstractSbmlOdeSystem.hpp"
 #include "ChasteSerialization.hpp"
 #include "SbmlEventType.hpp"
 
-class Chen2004SbmlOdeSystem : public AbstractOdeSystem
+class Chen2004SbmlOdeSystem : public AbstractSbmlOdeSystem
 {
 private:
-    // (De-)Serialize Chen2004SbmlOdeSystem
     friend class boost::serialization::access;
-
+    /**
+     * Save / load Chen2004SbmlOdeSystem archive
+     *
+     * @param archive the archive
+     * @param version the current version of this class
+     */
     template <class Archive>
-    void serialize(Archive& ar, const unsigned int version)
+    void serialize(Archive& archive, const unsigned int version)
     {
-        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractOdeSystem);
+        archive& BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractSbmlOdeSystem);
     }
 
     // CONSTANT PARAMETERS
@@ -345,62 +349,16 @@ private:
     double Spindle_formation;                    // Spindle formation
     double Spindle_disassembly;                  // Spindle disassembly
 
-    // EVENTS
-    std::vector<bool> mEventSatisfied;
-    std::vector<bool> mEventTriggered;
-    std::vector<SbmlEventType> mEventType;
-    std::vector<bool> mEventAdjustedStateVars;
-    std::vector<double> mEventAdjustedStateValues;
-    std::vector<bool> mEventAdjustedParameters;
-    std::vector<double> mEventAdjustedParameterValues;
-
 public:
     /**
      * Default constructor
-     *
-     * @param stateVariables Initial state variables (optional)
      */
-    Chen2004SbmlOdeSystem(std::vector<double> stateVariables = std::vector<double>());
-
-    /**
-     * Copy constructor
-     *
-     * @param rOdeSystem Reference to the original instance
-     */
-    Chen2004SbmlOdeSystem(const Chen2004SbmlOdeSystem& rOdeSystem);
+    Chen2004SbmlOdeSystem();
 
     /**
      * Destructor
      */
     ~Chen2004SbmlOdeSystem();
-
-    /**
-     * Adjust parameters and state variables after a stopping event
-     *
-     * @param time The current time
-     */
-    void AdjustParameters(double time);
-
-    /**
-     * Calculate whether the conditions to trigger an event have been met
-     * (Used by CVODE solver to find exact stopping position)
-     *
-     * @param time The current time
-     * @param rY The current state variables
-     *
-     * @return How close we are to the root of the stopping condition
-     */
-    double CalculateRootFunction(double time, const std::vector<double>& rY) override;
-
-    /**
-     * Calculate whether the conditions to trigger an event have been met
-     *
-     * @param time The current time
-     * @param rY The current state variables
-     *
-     * @return True if conditions for an event are met, false otherwise
-     */
-    bool CalculateStoppingEvent(double time, const std::vector<double>& rY) override;
 
     /**
      * Compute the derived quantities from the given system state.
@@ -410,7 +368,7 @@ public:
      *
      * @return a vector of derived quantities
      */
-    std::vector<double> ComputeDerivedQuantities(double time, const std::vector<double>& rY);
+    std::vector<double> ComputeDerivedQuantities(double time, const std::vector<double>& rY) override;
 
     /**
      * Compute the RHS of the ODE system.
@@ -424,15 +382,6 @@ public:
     void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY) override;
 
     /**
-     * Check if a specific type of event has occurred.
-     *
-     * @param eventType The type of event to check
-     *
-     * @return True if the type of event has occurred, false otherwise
-     */
-    bool HasEventOccurred(SbmlEventType eventType);
-
-    /**
      * Process the events in the model.
      *
      * @param time The current time
@@ -440,12 +389,7 @@ public:
      *
      * @return How close we are to the time of the next event
      */
-    double ProcessModelEvents(double time, const std::vector<double>& rY);
-
-    /**
-     * Reset the flags that indicate which events have been triggered.
-     */
-    void ResetEventsOccurred();
+    double ProcessModelEvents(double time, const std::vector<double>& rY) override;
 
     /**
      * Run the equations governing the model to update state.
@@ -453,7 +397,7 @@ public:
      * @param time The current time
      * @param rY The current state variables
      */
-    void RunModelRules(double time, const std::vector<double>& rY);
+    void RunModelRules(double time, const std::vector<double>& rY) override;
 
     // MODEL FUNCTIONS
     inline double BB_218(double A1, double A2, double A3, double A4);
@@ -463,45 +407,8 @@ public:
     inline double Mass_Action_1_222(double k1, double S1);
 };
 
-namespace
-{
-namespace serialization
-{
-    // Provide constructor for serializing Chen2004SbmlOdeSystem
-    template <class Archive>
-    inline void save_construct_data(Archive& ar, const Chen2004SbmlOdeSystem* t, const unsigned int version)
-    {
-        // Save data required to construct instance
-        const std::vector<double> state_variables = t->rGetConstStateVariables();
-        ar << state_variables;
-    }
-
-    // Provide constructor for de-serializing Chen2004SbmlOdeSystem
-    template <class Archive>
-    inline void load_construct_data(Archive& ar, Chen2004SbmlOdeSystem* t, const unsigned int version)
-    {
-        // Retrieve data from archive required to construct new instance
-        std::vector<double> state_variables;
-        ar >> state_variables;
-
-        // Invoke inplace constructor to initialise instance
-        ::new (t) Chen2004SbmlOdeSystem(state_variables);
-    }
-} // namespace serialization
-} // namespace
-
-// Define SbmlCellCycleWrapperModel using wrappers
-#include "SbmlCellCycleWrapperModel.cpp"
-#include "SbmlCellCycleWrapperModel.hpp"
-
-typedef SbmlCellCycleWrapperModel<Chen2004SbmlOdeSystem, 36> Chen2004SbmlCellCycleModel;
-
-// Declare identifiers for the serializer
+// Register the ODE system with Boost serialization
 #include "SerializationExportWrapper.hpp"
 CHASTE_CLASS_EXPORT(Chen2004SbmlOdeSystem)
-EXPORT_TEMPLATE_CLASS2(SbmlCellCycleWrapperModel, Chen2004SbmlOdeSystem, 36)
 
-#include "CellCycleModelOdeSolverExportWrapper.hpp"
-EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Chen2004SbmlCellCycleModel)
-
-#endif // CHEN2004SBMLODESYSTEMANDCELLCYCLEMODEL_HPP_
+#endif // CHEN2004SBMLODESYSTEM_HPP_

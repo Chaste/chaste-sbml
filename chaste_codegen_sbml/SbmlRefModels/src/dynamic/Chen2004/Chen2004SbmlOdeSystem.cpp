@@ -6,12 +6,12 @@
 #include "SbmlEventType.hpp"
 #include "SbmlMath.hpp"
 
-#include "Chen2004SbmlOdeSystemAndCellCycleModel.hpp"
+#include "Chen2004SbmlOdeSystem.hpp"
 
 namespace sm = sbmlmath;
 
-Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
-        : AbstractOdeSystem(36)
+Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
+        : AbstractSbmlOdeSystem(36, 14, 4)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>);
 
@@ -89,50 +89,6 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
     SetDefaultInitialCondition(33, SWI5);
     SetDefaultInitialCondition(34, SWI5P);
     SetDefaultInitialCondition(35, TEM1GTP);
-
-    if (stateVariables.size() == 36)
-    {
-        BUD = stateVariables[0];
-        C2 = stateVariables[1];
-        C2P = stateVariables[2];
-        C5 = stateVariables[3];
-        C5P = stateVariables[4];
-        CDC14 = stateVariables[5];
-        CDC15 = stateVariables[6];
-        CDC20 = stateVariables[7];
-        CDC20i = stateVariables[8];
-        CDC6 = stateVariables[9];
-        CDC6P = stateVariables[10];
-        CDH1 = stateVariables[11];
-        CDH1i = stateVariables[12];
-        CLB2 = stateVariables[13];
-        CLB5 = stateVariables[14];
-        CLN2 = stateVariables[15];
-        ESP1 = stateVariables[16];
-        F2 = stateVariables[17];
-        F2P = stateVariables[18];
-        F5 = stateVariables[19];
-        F5P = stateVariables[20];
-        IEP = stateVariables[21];
-        MASS = stateVariables[22];
-        NET1 = stateVariables[23];
-        NET1P = stateVariables[24];
-        ORI = stateVariables[25];
-        PDS1 = stateVariables[26];
-        PPX = stateVariables[27];
-        RENT = stateVariables[28];
-        RENTP = stateVariables[29];
-        SIC1 = stateVariables[30];
-        SIC1P = stateVariables[31];
-        SPN = stateVariables[32];
-        SWI5 = stateVariables[33];
-        SWI5P = stateVariables[34];
-        TEM1GTP = stateVariables[35];
-    }
-    else if (stateVariables.size() != 0)
-    {
-        EXCEPTION("Chen2004SbmlOdeSystem: Expected 36 state variables, got " + std::to_string(stateVariables.size()));
-    }
 
     mStateVariables.push_back(BUD);
     mStateVariables.push_back(C2);
@@ -360,51 +316,8 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(std::vector<double> stateVariables)
     RunModelRules(0.0, mStateVariables);
 }
 
-Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem(const Chen2004SbmlOdeSystem& rOdeSystem)
-        : Chen2004SbmlOdeSystem(rOdeSystem.mStateVariables)
-{
-    mEventSatisfied = rOdeSystem.mEventSatisfied;
-    mEventTriggered = rOdeSystem.mEventTriggered;
-
-    mEventAdjustedParameters = rOdeSystem.mEventAdjustedParameters;
-    mEventAdjustedParameterValues = rOdeSystem.mEventAdjustedParameterValues;
-
-    mEventAdjustedStateVars = rOdeSystem.mEventAdjustedStateVars;
-    mEventAdjustedStateValues = rOdeSystem.mEventAdjustedStateValues;
-}
-
 Chen2004SbmlOdeSystem::~Chen2004SbmlOdeSystem()
 {
-}
-
-void Chen2004SbmlOdeSystem::AdjustParameters(double time)
-{
-    for (unsigned i = 0; i < mEventAdjustedParameters.size(); ++i)
-    {
-        if (mEventAdjustedParameters[i])
-        {
-            SetParameter(i, mEventAdjustedParameterValues[i]);
-        }
-    }
-
-    for (unsigned i = 0; i < mEventAdjustedStateVars.size(); ++i)
-    {
-        if (mEventAdjustedStateVars[i])
-        {
-            SetStateVariable(i, mEventAdjustedStateValues[i]);
-            mEventAdjustedStateVars[i] = false;
-        }
-    }
-}
-
-double Chen2004SbmlOdeSystem::CalculateRootFunction(double time, const std::vector<double>& rY)
-{
-    return ProcessModelEvents(time, rY);
-}
-
-bool Chen2004SbmlOdeSystem::CalculateStoppingEvent(double time, const std::vector<double>& rY)
-{
-    return ProcessModelEvents(time, rY) == 0.0;
 }
 
 std::vector<double> Chen2004SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
@@ -472,18 +385,6 @@ void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     rDY[35] = (TEM1_activation - inactivation_1) / cell;                                                                                                                                                                                                    // d[TEM1GTP]/dt
 
     // TODO: Scale time appropriately
-}
-
-bool Chen2004SbmlOdeSystem::HasEventOccurred(SbmlEventType eventType)
-{
-    for (unsigned i = 0; i < mEventTriggered.size(); ++i)
-    {
-        if (mEventTriggered[i] && mEventType[i] == eventType)
-        {
-            return true;
-        }
-    }
-    return false;
 }
 
 double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double>& rY)
@@ -686,11 +587,6 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     }
 
     return min_dist; // Distance to closest event
-}
-
-void Chen2004SbmlOdeSystem::ResetEventsOccurred()
-{
-    std::fill(mEventTriggered.begin(), mEventTriggered.end(), false);
 }
 
 void Chen2004SbmlOdeSystem::RunModelRules(double time, const std::vector<double>& rY)
@@ -1340,16 +1236,6 @@ void CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>::Initialise()
     this->mInitialised = true;
 }
 
-// Define SbmlCellCycleWrapperModel using wrappers
-#include "SbmlCellCycleWrapperModel.cpp"
-#include "SbmlCellCycleWrapperModel.hpp"
-
-typedef SbmlCellCycleWrapperModel<Chen2004SbmlOdeSystem, 36> Chen2004SbmlCellCycleModel;
-
-// Declare identifiers for the serializer
+// Register the ODE system with Boost serialization
 #include "SerializationExportWrapperForCpp.hpp"
 CHASTE_CLASS_EXPORT(Chen2004SbmlOdeSystem)
-EXPORT_TEMPLATE_CLASS2(SbmlCellCycleWrapperModel, Chen2004SbmlOdeSystem, 36)
-
-#include "CellCycleModelOdeSolverExportWrapper.hpp"
-EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Chen2004SbmlCellCycleModel)

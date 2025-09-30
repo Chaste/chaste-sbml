@@ -33,6 +33,7 @@ Tan2014SbmlSrnModel* Tan2014SbmlSrnModel::CreateSrnModel()
 
 void Tan2014SbmlSrnModel::Initialise()
 {
+    assert(mpOdeSystem == nullptr);
     AbstractSbmlSrnModel::Initialise(new Tan2014SbmlOdeSystem);
 }
 

@@ -4,8 +4,8 @@ from difflib import Differ
 
 import pytest
 
-from chaste_codegen_sbml import ChasteSbmlCellCycleModel, ChasteSbmlSrnModel
-from chaste_codegen_sbml._config import ROOT_DIR
+from chaste_codegen_sbml import ChasteSbmlModel
+from chaste_codegen_sbml._config import ROOT_DIR, ModelType
 
 logger = logging.getLogger(__name__)
 
@@ -66,64 +66,57 @@ def code_diff(file_a: str, file_b: str) -> str:
 
 
 @pytest.mark.parametrize(
-    ("model_name",),
+    ("model_name", "model_type"),
     [
-        ("Goldbeter1991",),
-        ("Tan2014",),
-        ("VanLeeuwen2007",),
-        ("VanLeeuwen2007NonDim",),
+        ("Goldbeter1991", ModelType.SRN),
+        ("Tan2014", ModelType.SRN),
+        ("VanLeeuwen2007", ModelType.SRN),
+        ("VanLeeuwen2007NonDim", ModelType.SRN),
+        ("Chen2000", ModelType.CELL_CYCLE),
+        ("Chen2004", ModelType.CELL_CYCLE),
+        ("Gardner1998", ModelType.CELL_CYCLE),
+        ("TysonNovak2001", ModelType.CELL_CYCLE),
     ],
 )
-def test_srn_generation(tmp_path, model_name):
+def test_generation(tmp_path, model_name, model_type):
     """
     Check generated model against reference.
     """
-    ref_dir = ROOT_DIR / "SbmlRefModels" / "src" / "srn" / "models" / model_name
-    ref_sbml = ref_dir / f"{model_name}.xml"
-    ref_cpp = ref_dir / f"{model_name}SbmlOdeSystemAndSrnModel.cpp"
-    ref_hpp = ref_dir / f"{model_name}SbmlOdeSystemAndSrnModel.hpp"
+    type_string = ""
+    if model_type == ModelType.SRN:
+        type_string = "Srn"
+    elif model_type == ModelType.CELL_CYCLE:
+        type_string = "CellCycle"
 
-    logger.info(f"Converting: {ref_sbml}")
-    chaste_model = ChasteSbmlSrnModel(ref_sbml)
-    chaste_model.write(output_directory=tmp_path)
+    ref_dir = ROOT_DIR / "SbmlRefModels" / "src" / "dynamic" / model_name
+    # gen_dir = pathlib.Path(".").absolute()
+    gen_dir = tmp_path
 
-    gen_hpp = tmp_path / chaste_model.srn_hpp_filename
-    gen_cpp = tmp_path / chaste_model.srn_cpp_filename
+    gen_ode_hpp = gen_dir / f"{model_name}SbmlOdeSystem.hpp"
+    gen_ode_cpp = gen_dir / f"{model_name}SbmlOdeSystem.cpp"
 
-    hpp_diff = code_diff(ref_hpp, gen_hpp)
-    assert hpp_diff == "", hpp_diff
+    gen_type_hpp = gen_dir / f"{model_name}Sbml{type_string}Model.hpp"
+    gen_type_cpp = gen_dir / f"{model_name}Sbml{type_string}Model.cpp"
 
-    cpp_diff = code_diff(ref_cpp, gen_cpp)
-    assert cpp_diff == "", cpp_diff
+    ref_ode_hpp = ref_dir / f"{model_name}SbmlOdeSystem.hpp"
+    ref_ode_cpp = ref_dir / f"{model_name}SbmlOdeSystem.cpp"
 
+    ref_type_hpp = ref_dir / f"{model_name}Sbml{type_string}Model.hpp"
+    ref_type_cpp = ref_dir / f"{model_name}Sbml{type_string}Model.cpp"
 
-@pytest.mark.parametrize(
-    ("model_name",),
-    [
-        ("Chen2000",),
-        ("Chen2004",),
-        ("Gardner1998",),
-        ("TysonNovak2001",),
-    ],
-)
-def test_ccm_generation(tmp_path, model_name):
-    """
-    Check generated model against reference.
-    """
-    ref_dir = ROOT_DIR / "SbmlRefModels" / "src" / "ccm" / "models" / model_name
-    ref_sbml = ref_dir / f"{model_name}.xml"
-    ref_cpp = ref_dir / f"{model_name}SbmlOdeSystemAndCellCycleModel.cpp"
-    ref_hpp = ref_dir / f"{model_name}SbmlOdeSystemAndCellCycleModel.hpp"
+    sbml_file = ref_dir / f"{model_name}.xml"
+    logger.info(f"Converting: {sbml_file}")
+    chaste_model = ChasteSbmlModel(sbml_file, model_type=model_type)
+    chaste_model.write(gen_dir)
 
-    logger.info(f"Converting: {ref_sbml}")
-    chaste_model = ChasteSbmlCellCycleModel(ref_sbml)
-    chaste_model.write(output_directory=tmp_path)
+    ode_hpp_diff = code_diff(ref_ode_hpp, gen_ode_hpp)
+    assert ode_hpp_diff == "", ode_hpp_diff
 
-    gen_hpp = tmp_path / chaste_model.ccm_hpp_filename
-    gen_cpp = tmp_path / chaste_model.ccm_cpp_filename
+    ode_cpp_diff = code_diff(ref_ode_cpp, gen_ode_cpp)
+    assert ode_cpp_diff == "", ode_cpp_diff
 
-    hpp_diff = code_diff(ref_hpp, gen_hpp)
-    assert hpp_diff == "", hpp_diff
+    type_hpp_diff = code_diff(ref_type_hpp, gen_type_hpp)
+    assert type_hpp_diff == "", type_hpp_diff
 
-    cpp_diff = code_diff(ref_cpp, gen_cpp)
-    assert cpp_diff == "", cpp_diff
+    type_cpp_diff = code_diff(ref_type_cpp, gen_type_cpp)
+    assert type_cpp_diff == "", type_cpp_diff

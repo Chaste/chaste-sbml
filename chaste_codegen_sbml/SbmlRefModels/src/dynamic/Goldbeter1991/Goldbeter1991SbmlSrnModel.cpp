@@ -35,6 +35,7 @@ Goldbeter1991SbmlSrnModel* Goldbeter1991SbmlSrnModel::CreateSrnModel()
 
 void Goldbeter1991SbmlSrnModel::Initialise()
 {
+    assert(mpOdeSystem == nullptr);
     AbstractSbmlSrnModel::Initialise(new Goldbeter1991SbmlOdeSystem);
 }
 

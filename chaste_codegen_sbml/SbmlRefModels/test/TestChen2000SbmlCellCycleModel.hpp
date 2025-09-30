@@ -47,7 +47,7 @@ class TestChen2000SbmlCellCycleModel : public AbstractCellBasedTestSuite
 {
     // TODO: Add tests
 public:
-    void TestSrnCorrectBehaviour()
+    void TestCellCycleModel()
     {
         TS_ASSERT_THROWS_NOTHING(Chen2000SbmlCellCycleModel cell_cycle_model);
     }

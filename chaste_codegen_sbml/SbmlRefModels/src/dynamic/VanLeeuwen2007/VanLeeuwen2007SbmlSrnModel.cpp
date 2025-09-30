@@ -33,6 +33,7 @@ VanLeeuwen2007SbmlSrnModel* VanLeeuwen2007SbmlSrnModel::CreateSrnModel()
 
 void VanLeeuwen2007SbmlSrnModel::Initialise()
 {
+    assert(mpOdeSystem == nullptr);
     AbstractSbmlSrnModel::Initialise(new VanLeeuwen2007SbmlOdeSystem);
 }
 

@@ -33,6 +33,7 @@ VanLeeuwen2007NonDimSbmlSrnModel* VanLeeuwen2007NonDimSbmlSrnModel::CreateSrnMod
 
 void VanLeeuwen2007NonDimSbmlSrnModel::Initialise()
 {
+    assert(mpOdeSystem == nullptr);
     AbstractSbmlSrnModel::Initialise(new VanLeeuwen2007NonDimSbmlOdeSystem);
 }
 
