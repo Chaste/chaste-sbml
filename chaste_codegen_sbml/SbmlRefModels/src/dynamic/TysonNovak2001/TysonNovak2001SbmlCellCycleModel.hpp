@@ -57,12 +57,7 @@ public:
      *
      * @return Returns a copy of the current SRN model.
      */
-    TysonNovak2001SbmlCellCycleModel* CreateCellCycleModel();
-
-    /**
-     * @return #mpOdeSystem.
-     */
-    TysonNovak2001SbmlOdeSystem* GetOdeSystem() const;
+    TysonNovak2001SbmlCellCycleModel* CreateCellCycleModel() override;
 
     /**
      * Initialise the SRN model at the start of a simulation.

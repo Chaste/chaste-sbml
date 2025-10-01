@@ -22,8 +22,9 @@ Gardner1998SbmlCellCycleModel::Gardner1998SbmlCellCycleModel(const Gardner1998Sb
      * Note 3: Only set the variables defined in this class. Variables defined
      * in parent classes will be defined there.
      */
-    assert(rModel.GetOdeSystem());
-    SetOdeSystem(new Gardner1998SbmlOdeSystem(*rModel.GetOdeSystem()));
+    Gardner1998SbmlOdeSystem* p_ode_system = static_cast<Gardner1998SbmlOdeSystem*>(rModel.GetOdeSystem());
+    assert(p_ode_system != nullptr);
+    this->SetOdeSystem(new Gardner1998SbmlOdeSystem(*p_ode_system));
 }
 
 Gardner1998SbmlCellCycleModel* Gardner1998SbmlCellCycleModel::CreateCellCycleModel()
@@ -36,11 +37,6 @@ void Gardner1998SbmlCellCycleModel::Initialise()
     assert(mpOdeSystem == nullptr);
     mpOdeSystem = new Gardner1998SbmlOdeSystem;
     AbstractSbmlCellCycleModel::Initialise();
-}
-
-Gardner1998SbmlOdeSystem* Gardner1998SbmlCellCycleModel::GetOdeSystem() const
-{
-    return static_cast<Gardner1998SbmlOdeSystem*>(mpOdeSystem);
 }
 
 void Gardner1998SbmlCellCycleModel::OutputCellCycleModelParameters(out_stream& rParamsFile)

@@ -33,6 +33,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
+#include "ChasteSerialization.hpp"
 #include "SbmlEventType.hpp"
 
 #include "AbstractSbmlOdeSystem.hpp"
@@ -113,7 +114,3 @@ void AbstractSbmlOdeSystem::ResetEventsOccurred()
 {
     std::fill(mEventTriggered.begin(), mEventTriggered.end(), false);
 }
-
-// Register class with Boost serialization
-#include "SerializationExportWrapperForCpp.hpp"
-CHASTE_CLASS_EXPORT(AbstractSbmlOdeSystem)

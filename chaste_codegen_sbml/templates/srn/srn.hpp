@@ -57,7 +57,7 @@ public:
      *
      * @return Returns a copy of the current SRN model.
      */
-    {{ srn_class_name }}* CreateSrnModel();
+    {{ srn_class_name }}* CreateSrnModel() override;
 
     /**
      * Initialise the SRN model at the start of a simulation.

@@ -57,12 +57,7 @@ public:
      *
      * @return Returns a copy of the current SRN model.
      */
-    Gardner1998SbmlCellCycleModel* CreateCellCycleModel();
-
-    /**
-     * @return #mpOdeSystem.
-     */
-    Gardner1998SbmlOdeSystem* GetOdeSystem() const;
+    Gardner1998SbmlCellCycleModel* CreateCellCycleModel() override;
 
     /**
      * Initialise the SRN model at the start of a simulation.

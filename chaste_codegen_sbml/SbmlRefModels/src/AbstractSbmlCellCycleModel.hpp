@@ -37,11 +37,11 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ABSTRACT_SBML_CELL_CYCLE_MODEL_HPP_
 
 #include <boost/serialization/base_object.hpp>
+#include "ChasteSerialization.hpp"
 
 #include "AbstractCellCycleModelOdeSolver.hpp"
 #include "AbstractOdeBasedCellCycleModel.hpp"
 #include "AbstractSbmlOdeSystem.hpp"
-#include "ChasteSerialization.hpp"
 #include "ClassIsAbstract.hpp"
 
 /**

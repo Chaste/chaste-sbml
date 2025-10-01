@@ -22,8 +22,9 @@
      * Note 3: Only set the variables defined in this class. Variables defined
      * in parent classes will be defined there.
      */
-    assert(rModel.GetOdeSystem());
-    SetOdeSystem(new {{ ode_class_name }}(*rModel.GetOdeSystem()));
+    {{ ode_class_name }}* p_ode_system = static_cast<{{ ode_class_name }}*>(rModel.GetOdeSystem());
+    assert(p_ode_system != nullptr);
+    this->SetOdeSystem(new {{ ode_class_name }}(*p_ode_system));
 }
 
 {{ cell_cycle_class_name }}* {{ cell_cycle_class_name }}::CreateCellCycleModel()
@@ -36,11 +37,6 @@ void {{ cell_cycle_class_name }}::Initialise()
     assert(mpOdeSystem == nullptr);
     mpOdeSystem = new {{ ode_class_name }};
     AbstractSbmlCellCycleModel::Initialise();
-}
-
-{{ ode_class_name }}* {{ cell_cycle_class_name }}::GetOdeSystem() const
-{
-    return static_cast<{{ ode_class_name }}*>(mpOdeSystem);
 }
 
 void {{ cell_cycle_class_name }}::OutputCellCycleModelParameters(out_stream& rParamsFile)

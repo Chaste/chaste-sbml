@@ -57,7 +57,7 @@ public:
      *
      * @return Returns a copy of the current SRN model.
      */
-    Tan2014SbmlSrnModel* CreateSrnModel();
+    Tan2014SbmlSrnModel* CreateSrnModel() override;
 
     /**
      * Initialise the SRN model at the start of a simulation.

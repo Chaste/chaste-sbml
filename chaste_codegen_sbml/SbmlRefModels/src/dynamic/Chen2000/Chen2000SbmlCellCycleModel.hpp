@@ -57,12 +57,7 @@ public:
      *
      * @return Returns a copy of the current SRN model.
      */
-    Chen2000SbmlCellCycleModel* CreateCellCycleModel();
-
-    /**
-     * @return #mpOdeSystem.
-     */
-    Chen2000SbmlOdeSystem* GetOdeSystem() const;
+    Chen2000SbmlCellCycleModel* CreateCellCycleModel() override;
 
     /**
      * Initialise the SRN model at the start of a simulation.

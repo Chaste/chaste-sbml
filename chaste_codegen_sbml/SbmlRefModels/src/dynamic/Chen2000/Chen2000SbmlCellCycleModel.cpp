@@ -22,8 +22,9 @@ Chen2000SbmlCellCycleModel::Chen2000SbmlCellCycleModel(const Chen2000SbmlCellCyc
      * Note 3: Only set the variables defined in this class. Variables defined
      * in parent classes will be defined there.
      */
-    assert(rModel.GetOdeSystem());
-    SetOdeSystem(new Chen2000SbmlOdeSystem(*rModel.GetOdeSystem()));
+    Chen2000SbmlOdeSystem* p_ode_system = static_cast<Chen2000SbmlOdeSystem*>(rModel.GetOdeSystem());
+    assert(p_ode_system != nullptr);
+    this->SetOdeSystem(new Chen2000SbmlOdeSystem(*p_ode_system));
 }
 
 Chen2000SbmlCellCycleModel* Chen2000SbmlCellCycleModel::CreateCellCycleModel()
@@ -36,11 +37,6 @@ void Chen2000SbmlCellCycleModel::Initialise()
     assert(mpOdeSystem == nullptr);
     mpOdeSystem = new Chen2000SbmlOdeSystem;
     AbstractSbmlCellCycleModel::Initialise();
-}
-
-Chen2000SbmlOdeSystem* Chen2000SbmlCellCycleModel::GetOdeSystem() const
-{
-    return static_cast<Chen2000SbmlOdeSystem*>(mpOdeSystem);
 }
 
 void Chen2000SbmlCellCycleModel::OutputCellCycleModelParameters(out_stream& rParamsFile)

@@ -22,8 +22,9 @@ TysonNovak2001SbmlCellCycleModel::TysonNovak2001SbmlCellCycleModel(const TysonNo
      * Note 3: Only set the variables defined in this class. Variables defined
      * in parent classes will be defined there.
      */
-    assert(rModel.GetOdeSystem());
-    SetOdeSystem(new TysonNovak2001SbmlOdeSystem(*rModel.GetOdeSystem()));
+    TysonNovak2001SbmlOdeSystem* p_ode_system = static_cast<TysonNovak2001SbmlOdeSystem*>(rModel.GetOdeSystem());
+    assert(p_ode_system != nullptr);
+    this->SetOdeSystem(new TysonNovak2001SbmlOdeSystem(*p_ode_system));
 }
 
 TysonNovak2001SbmlCellCycleModel* TysonNovak2001SbmlCellCycleModel::CreateCellCycleModel()
@@ -36,11 +37,6 @@ void TysonNovak2001SbmlCellCycleModel::Initialise()
     assert(mpOdeSystem == nullptr);
     mpOdeSystem = new TysonNovak2001SbmlOdeSystem;
     AbstractSbmlCellCycleModel::Initialise();
-}
-
-TysonNovak2001SbmlOdeSystem* TysonNovak2001SbmlCellCycleModel::GetOdeSystem() const
-{
-    return static_cast<TysonNovak2001SbmlOdeSystem*>(mpOdeSystem);
 }
 
 void TysonNovak2001SbmlCellCycleModel::OutputCellCycleModelParameters(out_stream& rParamsFile)

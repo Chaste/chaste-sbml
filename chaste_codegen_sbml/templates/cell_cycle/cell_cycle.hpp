@@ -57,12 +57,7 @@ public:
      *
      * @return Returns a copy of the current SRN model.
      */
-    {{ cell_cycle_class_name }}* CreateCellCycleModel();
-
-    /**
-     * @return #mpOdeSystem.
-     */
-    {{ ode_class_name }}* GetOdeSystem() const;
+    {{ cell_cycle_class_name }}* CreateCellCycleModel() override;
 
     /**
      * Initialise the SRN model at the start of a simulation.
