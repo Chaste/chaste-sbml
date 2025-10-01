@@ -22,7 +22,7 @@ private:
     template <class Archive>
     void serialize(Archive& archive, const unsigned int version)
     {
-        archive& BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractSbmlOdeSystem);
+        archive& boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
     }
 
     // CONSTANT PARAMETERS

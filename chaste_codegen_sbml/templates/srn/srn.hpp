@@ -21,7 +21,7 @@ private:
     template <class Archive>
     void serialize(Archive &archive, const unsigned int version)
     {
-        archive & BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractSbmlSrnModel);
+        archive & boost::serialization::base_object<AbstractSbmlSrnModel>(*this);
     }
 
 protected:
@@ -58,11 +58,6 @@ public:
      * @return Returns a copy of the current SRN model.
      */
     {{ srn_class_name }}* CreateSrnModel();
-
-    /**
-     * @return #mpOdeSystem.
-     */
-    {{ ode_class_name }}* GetOdeSystem() const;
 
     /**
      * Initialise the SRN model at the start of a simulation.

@@ -22,8 +22,9 @@ VanLeeuwen2007NonDimSbmlSrnModel::VanLeeuwen2007NonDimSbmlSrnModel(const VanLeeu
      * Note 3: Only set the variables defined in this class. Variables defined
      * in parent classes will be defined there.
      */
-    assert(rModel.GetOdeSystem());
-    SetOdeSystem(new VanLeeuwen2007NonDimSbmlOdeSystem(*rModel.GetOdeSystem()));
+    VanLeeuwen2007NonDimSbmlOdeSystem* p_ode_system = static_cast<VanLeeuwen2007NonDimSbmlOdeSystem*>(rModel.GetOdeSystem());
+    assert(p_ode_system != nullptr);
+    this->SetOdeSystem(new VanLeeuwen2007NonDimSbmlOdeSystem(*p_ode_system));
 }
 
 VanLeeuwen2007NonDimSbmlSrnModel* VanLeeuwen2007NonDimSbmlSrnModel::CreateSrnModel()
@@ -35,11 +36,6 @@ void VanLeeuwen2007NonDimSbmlSrnModel::Initialise()
 {
     assert(mpOdeSystem == nullptr);
     AbstractSbmlSrnModel::Initialise(new VanLeeuwen2007NonDimSbmlOdeSystem);
-}
-
-VanLeeuwen2007NonDimSbmlOdeSystem* VanLeeuwen2007NonDimSbmlSrnModel::GetOdeSystem() const
-{
-    return static_cast<VanLeeuwen2007NonDimSbmlOdeSystem*>(mpOdeSystem);
 }
 
 void VanLeeuwen2007NonDimSbmlSrnModel::OutputSrnModelParameters(out_stream& rParamsFile)

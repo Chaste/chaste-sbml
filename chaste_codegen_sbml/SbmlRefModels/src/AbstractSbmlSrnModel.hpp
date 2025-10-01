@@ -41,6 +41,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AbstractOdeSrnModel.hpp"
 #include "AbstractSbmlOdeSystem.hpp"
 #include "ChasteSerialization.hpp"
+#include "ClassIsAbstract.hpp"
 
 /**
  * A base class for SRN models generated from SBML
@@ -60,7 +61,7 @@ private:
     template <class Archive>
     void serialize(Archive& archive, const unsigned int version)
     {
-        archive& BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractOdeSrnModel);
+        archive& boost::serialization::base_object<AbstractOdeSrnModel>(*this);
     }
 
 protected:
@@ -83,20 +84,6 @@ protected:
      */
     AbstractSbmlSrnModel(const AbstractSbmlSrnModel& rModel);
 
-public:
-    /**
-     * Default constructor calls base class.
-     *
-     * @param stateSize The number of state variables in the ODE system.
-     * @param pOdeSolver An optional pointer to a cell-cycle model ODE solver object (allows the use of different ODE solvers)
-     */
-    AbstractSbmlSrnModel(unsigned stateSize, boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver = boost::shared_ptr<AbstractCellCycleModelOdeSolver>());
-
-    /**
-     * Destructor.
-     */
-    virtual ~AbstractSbmlSrnModel();
-
     using AbstractOdeSrnModel::Initialise;
     /**
      * Overridden Initialise() method to set up the ODE system.
@@ -104,6 +91,22 @@ public:
      * @param pOdeSystem pointer to an ODE system
      */
     void Initialise(AbstractSbmlOdeSystem* pOdeSystem);
+
+public:
+    /**
+     * Default constructor.
+     *
+     * @param stateSize The number of state variables in the ODE system.
+     * @param pOdeSolver An optional pointer to a cell-cycle model ODE solver
+     *                   object (allows the use of different ODE solvers)
+     */
+    AbstractSbmlSrnModel(unsigned stateSize,
+                         boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver = boost::shared_ptr<AbstractCellCycleModelOdeSolver>());
+
+    /**
+     * Destructor.
+     */
+    virtual ~AbstractSbmlSrnModel();
 
     /**
      * Outputs SRN model parameters to file.
@@ -125,10 +128,7 @@ public:
     double GetStateVariable(const std::string& rName);
 };
 
-#include "SerializationExportWrapper.hpp"
-CHASTE_CLASS_EXPORT(AbstractSbmlSrnModel)
-
-// Provide a unique identifier for serialization
+// Register abstract class with Boost serialization
 CLASS_IS_ABSTRACT(AbstractSbmlSrnModel)
 
 #endif // ABSTRACT_SBML_SRN_MODEL_HPP_

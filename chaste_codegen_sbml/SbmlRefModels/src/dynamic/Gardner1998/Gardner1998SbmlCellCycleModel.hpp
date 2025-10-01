@@ -21,13 +21,12 @@ private:
     template <class Archive>
     void serialize(Archive& archive, const unsigned int version)
     {
-        archive& BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractSbmlCellCycleModel);
+        archive& boost::serialization::base_object<AbstractSbmlCellCycleModel>(*this);
     }
 
 protected:
     /**
      * Protected copy-constructor for use by CreateCellCycleModel().
-     * 
      * The only way to copy an instance of a subclass of AbstractCellCycleModel is
      * by calling CreateCellCycleModel(), which ensures that the instance is copied
      * correctly.
@@ -80,7 +79,7 @@ public:
     void OutputCellCycleModelParameters(out_stream& rParamsFile) override;
 };
 
-// Register the SRN model with Boost serialization
+// Register the cell-cycle model with Boost serialization
 #include "SerializationExportWrapper.hpp"
 CHASTE_CLASS_EXPORT(Gardner1998SbmlCellCycleModel)
 

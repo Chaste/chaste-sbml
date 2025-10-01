@@ -22,8 +22,9 @@ Tan2014SbmlSrnModel::Tan2014SbmlSrnModel(const Tan2014SbmlSrnModel& rModel)
      * Note 3: Only set the variables defined in this class. Variables defined
      * in parent classes will be defined there.
      */
-    assert(rModel.GetOdeSystem());
-    SetOdeSystem(new Tan2014SbmlOdeSystem(*rModel.GetOdeSystem()));
+    Tan2014SbmlOdeSystem* p_ode_system = static_cast<Tan2014SbmlOdeSystem*>(rModel.GetOdeSystem());
+    assert(p_ode_system != nullptr);
+    this->SetOdeSystem(new Tan2014SbmlOdeSystem(*p_ode_system));
 }
 
 Tan2014SbmlSrnModel* Tan2014SbmlSrnModel::CreateSrnModel()
@@ -35,11 +36,6 @@ void Tan2014SbmlSrnModel::Initialise()
 {
     assert(mpOdeSystem == nullptr);
     AbstractSbmlSrnModel::Initialise(new Tan2014SbmlOdeSystem);
-}
-
-Tan2014SbmlOdeSystem* Tan2014SbmlSrnModel::GetOdeSystem() const
-{
-    return static_cast<Tan2014SbmlOdeSystem*>(mpOdeSystem);
 }
 
 void Tan2014SbmlSrnModel::OutputSrnModelParameters(out_stream& rParamsFile)

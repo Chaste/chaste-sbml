@@ -113,3 +113,7 @@ void AbstractSbmlOdeSystem::ResetEventsOccurred()
 {
     std::fill(mEventTriggered.begin(), mEventTriggered.end(), false);
 }
+
+// Register class with Boost serialization
+#include "SerializationExportWrapperForCpp.hpp"
+CHASTE_CLASS_EXPORT(AbstractSbmlOdeSystem)

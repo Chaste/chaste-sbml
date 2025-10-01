@@ -42,6 +42,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AbstractOdeBasedCellCycleModel.hpp"
 #include "AbstractSbmlOdeSystem.hpp"
 #include "ChasteSerialization.hpp"
+#include "ClassIsAbstract.hpp"
 
 /**
  * A base class for cell cycle models generated from SBML
@@ -61,7 +62,7 @@ private:
     template <class Archive>
     void serialize(Archive& archive, const unsigned int version)
     {
-        archive& BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractOdeBasedCellCycleModel);
+        archive& boost::serialization::base_object<AbstractOdeBasedCellCycleModel>(*this);
     }
 
 protected:
@@ -181,5 +182,8 @@ public:
      */
     void ResetForDivision() override;
 };
+
+// Register abstract class with Boost serialization
+CLASS_IS_ABSTRACT(AbstractSbmlCellCycleModel)
 
 #endif // ABSTRACT_SBML_CELL_CYCLE_MODEL_HPP_

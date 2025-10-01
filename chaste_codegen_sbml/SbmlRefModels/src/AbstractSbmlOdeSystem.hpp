@@ -167,7 +167,7 @@ public:
     virtual void RunModelRules(double time, const std::vector<double>& rY) = 0;
 };
 
+// Register class with Boost serialization
 CLASS_IS_ABSTRACT(AbstractSbmlOdeSystem)
-BOOST_CLASS_VERSION(AbstractSbmlOdeSystem, 1u)
 
 #endif // ABSTRACT_SBML_ODE_SYSTEM_HPP_

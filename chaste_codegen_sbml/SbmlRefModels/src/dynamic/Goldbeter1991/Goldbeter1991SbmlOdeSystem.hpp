@@ -14,16 +14,15 @@ class Goldbeter1991SbmlOdeSystem : public AbstractSbmlOdeSystem
 private:
     friend class boost::serialization::access;
     /**
-     * Archive / unarchive Goldbeter1991SbmlOdeSystem.
+     * Save / load Goldbeter1991SbmlOdeSystem archive
      *
      * @param archive the archive
      * @param version the current version of this class
      */
-
     template <class Archive>
     void serialize(Archive& archive, const unsigned int version)
     {
-        archive& BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractSbmlOdeSystem);
+        archive& boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
     }
 
     // CONSTANT PARAMETERS
@@ -107,7 +106,7 @@ public:
     // MODEL FUNCTIONS
 };
 
-// Provide a unique identifier for serialization
+// Register the ODE system with Boost serialization
 #include "SerializationExportWrapper.hpp"
 CHASTE_CLASS_EXPORT(Goldbeter1991SbmlOdeSystem)
 

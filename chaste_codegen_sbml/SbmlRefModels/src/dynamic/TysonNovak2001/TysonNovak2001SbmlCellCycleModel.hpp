@@ -21,7 +21,7 @@ private:
     template <class Archive>
     void serialize(Archive& archive, const unsigned int version)
     {
-        archive& BOOST_SERIALIZATION_BASE_OBJECT_NVP(AbstractSbmlCellCycleModel);
+        archive& boost::serialization::base_object<AbstractSbmlCellCycleModel>(*this);
     }
 
 protected:

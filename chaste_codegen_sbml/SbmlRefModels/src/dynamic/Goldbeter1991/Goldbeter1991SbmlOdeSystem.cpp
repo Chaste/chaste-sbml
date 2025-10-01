@@ -49,7 +49,6 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem()
     reaction7 = 0.0;
 
     // EVENTS
-    // Uncomment lines below for events that should trigger cell division
 
     // Run model rules to complete state initialisation
     RunModelRules(0.0, mStateVariables);
@@ -183,6 +182,6 @@ void CellwiseOdeSystemInformation<Goldbeter1991SbmlOdeSystem>::Initialise()
     this->mInitialised = true;
 }
 
-// Provide a unique identifier for serialization
+// Register the ODE system with Boost serialization
 #include "SerializationExportWrapperForCpp.hpp"
 CHASTE_CLASS_EXPORT(Goldbeter1991SbmlOdeSystem)

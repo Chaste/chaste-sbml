@@ -113,6 +113,6 @@ void AbstractSbmlSrnModel::SimulateToCurrentTime()
     AbstractOdeSrnModel::SimulateToCurrentTime();
 }
 
-// Provide a unique identifier for serialization
+// Register class with Boost serialization
 #include "SerializationExportWrapperForCpp.hpp"
 CHASTE_CLASS_EXPORT(AbstractSbmlSrnModel)

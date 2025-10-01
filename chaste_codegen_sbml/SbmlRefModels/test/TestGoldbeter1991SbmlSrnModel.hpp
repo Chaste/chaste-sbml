@@ -54,6 +54,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "FixedG1GenerationalCellCycleModel.hpp"
 #include "OutputFileHandler.hpp"
 #include "RungeKutta4IvpOdeSolver.hpp"
+#include "SimulationTime.hpp"
 #include "SmartPointers.hpp"
 #include "Timer.hpp"
 #include "TransitCellProliferativeType.hpp"
@@ -70,6 +71,30 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class TestGoldbeter1991SbmlSrnModel : public AbstractCellBasedTestSuite
 {
 public:
+    void TestArchiving()
+    {
+        OutputFileHandler handler("archive", false);
+        const char* filename = (handler.GetOutputDirectoryFullPath() + "test.arch").c_str();
+
+        // Save archive
+        {
+            Goldbeter1991SbmlSrnModel* p_srn_model = new Goldbeter1991SbmlSrnModel;
+            std::ofstream ofs(filename);
+            boost::archive::text_oarchive oarchive(ofs);
+            oarchive << p_srn_model;
+            delete p_srn_model;
+        }
+
+        // Load archive
+        {
+            Goldbeter1991SbmlSrnModel* p_srn_model;
+            std::ifstream ifs(filename, std::ios::binary);
+            boost::archive::text_iarchive iarchive(ifs);
+            iarchive >> p_srn_model;
+            delete p_srn_model;
+        }
+    }
+
     // TODO: "Error: Test failed: unregistered class - derived class not registered or exported"
     void TestSrnArchiving()
     {
@@ -113,7 +138,7 @@ public:
             M0 = dynamic_cast<AbstractSbmlSrnModel*>(p_srn_model)->GetStateVariable("M");
             X0 = dynamic_cast<AbstractSbmlSrnModel*>(p_srn_model)->GetStateVariable("X");
 
-            output_arch << p_srn_model;  // TODO: Fix archiving error thrown by this line
+            output_arch << p_srn_model; // TODO: Fix archiving error thrown by this line
 
             // Note that here, deletion of the cell-cycle model and SRN is handled by the cell destructor
             SimulationTime::Destroy();
