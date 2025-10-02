@@ -1,46 +1,78 @@
 [![build_and_test](https://github.com/Chaste/chaste-codegen-sbml/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/Chaste/chaste-codegen-sbml/workflows/build_and_test.yml)
 
-# SBML → Chaste
+# Import SBML models into Chaste
 
-`chaste_codegen_sbml` converts [SBML](https://synonym.caltech.edu/) models to C++ Chaste code. It relies on [libSBML](https://synonym.caltech.edu/software/libsbml/) for parsing SBML.
+The `chaste_codegen_sbml` tool converts [SBML](https://sbml.org) models into C++
+Chaste code using [libSBML](https://github.com/sbmlteam/libsbml).
 
 ## Installation
-Installation via [`pipx`](https://pipx.pypa.io/) is recommended
-```
+
+### Install using `pipx` (recommended)
+
+```sh
 pipx install git+https://github.com/Chaste/chaste-codegen-sbml@develop
 ```
 
-Alternatively, install via `pip`
-```
-# Create and activate a virtual environment (optional)
-python -m venv sbml-venv
-source sbml-venv/bin/activate
+### Install using `pip`
 
-# Install
+Create and activate a virtual environment (optional)
+
+```sh
+python -m venv .venv
+source .venv/bin/activate
+```
+
+Install
+
+```sh
 pip install git+https://github.com/Chaste/chaste-codegen-sbml@develop
 ```
 
-## Usage
-```
-chaste_codegen_sbml [-h]
-```
-
 ## Development
+
 ### Getting the code
-```
-# Clone the repository
+
+Clone the repository
+
+```sh
 git clone https://github.com/Chaste/chaste-codegen-sbml
 cd chaste-codegen-sbml
+```
 
-# Create and activate a virtual environment
-python -m venv venv
-source venv/bin/activate
+Create and activate a virtual environment
 
-# Install in editable mode along with dev dependencies
+```sh
+python -m .venv .venv
+source .venv/bin/activate
+```
+
+Install in editable mode with development dependencies
+
+```sh
 pip install -e ."[dev]"
 ```
 
-### Running tests
+Run tests
+
 ```
 python -m pytest
+```
+
+## Usage
+
+```
+usage: chaste_codegen_sbml [-h] [--version] [--output-dir OUTPUT_DIR] [--model-type [{generic,srn,cell-cycle}]] sbml_file
+
+Convert SBML models to Chaste C++ code
+
+positional arguments:
+  sbml_file             The SBML file to convert
+
+options:
+  -h, --help            show this help message and exit
+  --version             show program's version number and exit
+  --output-dir OUTPUT_DIR
+                        The directory to place output files in
+  --model-type [{generic,srn,cell-cycle}]
+                        The type of model to generate
 ```

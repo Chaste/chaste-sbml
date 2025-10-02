@@ -1,3 +1,5 @@
+"""Tests for utility functions."""
+
 import logging
 
 from chaste_codegen_sbml._utils import varname_sanitize, varname_staggercase
@@ -6,10 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def test_varname_staggercase():
-    """
-    Test variable name case staggering.
-    """
-
+    """Test variable name case staggering."""
     test_cases = [
         ("", ""),
         (" ", ""),
@@ -28,10 +27,7 @@ def test_varname_staggercase():
 
 
 def test_varname_sanitize():
-    """
-    Test variable name sanitization.
-    """
-
+    """Test variable name sanitization."""
     test_cases = [
         ("", ""),
         (" ", ""),

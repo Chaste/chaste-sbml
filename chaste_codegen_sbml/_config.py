@@ -5,14 +5,12 @@ from enum import Enum
 
 ROOT_DIR = pathlib.Path(__file__).parent.absolute()
 
-CCM_SUFFIX = "CellCycle"
-ODE_SUFFIX = "OdeSystem"
-SRN_SUFFIX = "Srn"
-
 NON_DIM_UNITS = "non-dim"
 
 
 class VarType(Enum):
+    """Enumeration of variable types in SBML models."""
+
     STATE_VARIABLE = 1
     DERIVED_QUANTITY = 2
     VARIABLE_PARAMETER = 3
@@ -25,5 +23,15 @@ class VarType(Enum):
 
 
 class EventType(Enum):
+    """Enumeration of event types in SBML models."""
+
     CELL_DIVISION = 1
     UNKNOWN = 2
+
+
+class ModelType(Enum):
+    """Enumeration of model types for code generation."""
+
+    GENERIC = 0
+    SRN = 1
+    CELL_CYCLE = 2
