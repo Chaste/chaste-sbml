@@ -12,6 +12,7 @@
 class {{ ode_class_name }} : public AbstractSbmlOdeSystem
 {
 private:
+    /** Needed for serialization. */
     friend class boost::serialization::access;
     /**
      * Save / load {{ ode_class_name }} archive

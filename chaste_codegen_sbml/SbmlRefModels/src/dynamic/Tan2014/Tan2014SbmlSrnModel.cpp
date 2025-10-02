@@ -27,7 +27,7 @@ Tan2014SbmlSrnModel::Tan2014SbmlSrnModel(const Tan2014SbmlSrnModel& rModel)
     this->SetOdeSystem(new Tan2014SbmlOdeSystem(*p_ode_system));
 }
 
-Tan2014SbmlSrnModel* Tan2014SbmlSrnModel::CreateSrnModel()
+AbstractSrnModel* Tan2014SbmlSrnModel::CreateSrnModel()
 {
     return new Tan2014SbmlSrnModel(*this);
 }

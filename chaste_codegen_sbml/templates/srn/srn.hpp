@@ -11,6 +11,7 @@
 class {{ srn_class_name }} : public AbstractSbmlSrnModel
 {
 private:
+    /** Needed for serialization. */
     friend class boost::serialization::access;
     /**
      * Save / load {{ srn_class_name }} archive
@@ -57,7 +58,7 @@ public:
      *
      * @return Returns a copy of the current SRN model.
      */
-    {{ srn_class_name }}* CreateSrnModel() override;
+    AbstractSrnModel* CreateSrnModel() override;
 
     /**
      * Initialise the SRN model at the start of a simulation.

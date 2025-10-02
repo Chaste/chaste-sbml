@@ -27,7 +27,7 @@ VanLeeuwen2007SbmlSrnModel::VanLeeuwen2007SbmlSrnModel(const VanLeeuwen2007SbmlS
     this->SetOdeSystem(new VanLeeuwen2007SbmlOdeSystem(*p_ode_system));
 }
 
-VanLeeuwen2007SbmlSrnModel* VanLeeuwen2007SbmlSrnModel::CreateSrnModel()
+AbstractSrnModel* VanLeeuwen2007SbmlSrnModel::CreateSrnModel()
 {
     return new VanLeeuwen2007SbmlSrnModel(*this);
 }

@@ -12,6 +12,7 @@
 class Tan2014SbmlOdeSystem : public AbstractSbmlOdeSystem
 {
 private:
+    /** Needed for serialization. */
     friend class boost::serialization::access;
     /**
      * Save / load Tan2014SbmlOdeSystem archive

@@ -11,6 +11,7 @@
 class VanLeeuwen2007NonDimSbmlSrnModel : public AbstractSbmlSrnModel
 {
 private:
+    /** Needed for serialization. */
     friend class boost::serialization::access;
     /**
      * Save / load VanLeeuwen2007NonDimSbmlSrnModel archive
@@ -57,7 +58,7 @@ public:
      *
      * @return Returns a copy of the current SRN model.
      */
-    VanLeeuwen2007NonDimSbmlSrnModel* CreateSrnModel() override;
+    AbstractSrnModel* CreateSrnModel() override;
 
     /**
      * Initialise the SRN model at the start of a simulation.

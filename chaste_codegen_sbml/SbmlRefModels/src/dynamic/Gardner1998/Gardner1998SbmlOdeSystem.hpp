@@ -12,6 +12,7 @@
 class Gardner1998SbmlOdeSystem : public AbstractSbmlOdeSystem
 {
 private:
+    /** Needed for serialization. */
     friend class boost::serialization::access;
     /**
      * Save / load Gardner1998SbmlOdeSystem archive

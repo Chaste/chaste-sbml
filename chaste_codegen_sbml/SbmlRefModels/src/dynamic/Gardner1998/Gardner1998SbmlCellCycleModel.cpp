@@ -27,7 +27,7 @@ Gardner1998SbmlCellCycleModel::Gardner1998SbmlCellCycleModel(const Gardner1998Sb
     this->SetOdeSystem(new Gardner1998SbmlOdeSystem(*p_ode_system));
 }
 
-Gardner1998SbmlCellCycleModel* Gardner1998SbmlCellCycleModel::CreateCellCycleModel()
+AbstractCellCycleModel* Gardner1998SbmlCellCycleModel::CreateCellCycleModel()
 {
     return new Gardner1998SbmlCellCycleModel(*this);
 }

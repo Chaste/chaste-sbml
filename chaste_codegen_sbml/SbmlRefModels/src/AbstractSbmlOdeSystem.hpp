@@ -54,9 +54,10 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class AbstractSbmlOdeSystem : public AbstractOdeSystem
 {
 private:
+    /** Needed for serialization. */
     friend class boost::serialization::access;
     /**
-     * Archive / unarchive AbstractSbmlOdeSystem.
+     * Archive / unarchive the AbstractSbmlOdeSystem.
      *
      * @param archive the archive
      * @param version the current version of this class
@@ -64,7 +65,7 @@ private:
     template <class Archive>
     void serialize(Archive& archive, const unsigned int version)
     {
-        archive& boost::serialization::base_object<AbstractOdeSystem>(*this);
+        archive & boost::serialization::base_object<AbstractOdeSystem>(*this);
         archive & mNumberOfParameters;
         archive & mNumberOfEvents;
         archive & mEventSatisfied;
@@ -168,7 +169,7 @@ public:
     virtual void RunModelRules(double time, const std::vector<double>& rY) = 0;
 };
 
-// Register class with Boost serialization
+// Register abstract class with Boost serialization
 CLASS_IS_ABSTRACT(AbstractSbmlOdeSystem)
 
 #endif // ABSTRACT_SBML_ODE_SYSTEM_HPP_

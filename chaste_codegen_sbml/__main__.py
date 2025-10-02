@@ -43,11 +43,9 @@ def parse_args():
 def process_command_line(args: "argparse.Namespace"):
     """Run the command line interface.
 
-    Args:
-        args: The parsed command line arguments.
+    :args: The parsed command line arguments.
     """
-
-    model_type = ModelType.UNKNOWN
+    model_type = ModelType.GENERIC
     if args.model_type == "srn":
         model_type = ModelType.SRN
     elif args.model_type == "cell-cycle":
@@ -58,6 +56,6 @@ def process_command_line(args: "argparse.Namespace"):
 
 
 def main():
-    """Main entrypoint."""
+    """Run the command line interface."""
     args = parse_args()
     process_command_line(args)

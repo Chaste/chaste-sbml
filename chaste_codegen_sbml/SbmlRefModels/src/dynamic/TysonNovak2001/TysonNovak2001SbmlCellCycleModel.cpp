@@ -27,7 +27,7 @@ TysonNovak2001SbmlCellCycleModel::TysonNovak2001SbmlCellCycleModel(const TysonNo
     this->SetOdeSystem(new TysonNovak2001SbmlOdeSystem(*p_ode_system));
 }
 
-TysonNovak2001SbmlCellCycleModel* TysonNovak2001SbmlCellCycleModel::CreateCellCycleModel()
+AbstractCellCycleModel* TysonNovak2001SbmlCellCycleModel::CreateCellCycleModel()
 {
     return new TysonNovak2001SbmlCellCycleModel(*this);
 }

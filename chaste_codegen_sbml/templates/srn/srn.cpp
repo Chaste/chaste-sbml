@@ -27,7 +27,7 @@
     this->SetOdeSystem(new {{ ode_class_name }}(*p_ode_system));
 }
 
-{{ srn_class_name }}* {{ srn_class_name }}::CreateSrnModel()
+AbstractSrnModel* {{ srn_class_name }}::CreateSrnModel()
 {
     return new {{ srn_class_name }}(*this);
 }

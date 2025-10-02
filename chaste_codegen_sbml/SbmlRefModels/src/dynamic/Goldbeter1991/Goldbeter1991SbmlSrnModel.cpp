@@ -27,7 +27,7 @@ Goldbeter1991SbmlSrnModel::Goldbeter1991SbmlSrnModel(const Goldbeter1991SbmlSrnM
     this->SetOdeSystem(new Goldbeter1991SbmlOdeSystem(*p_ode_system));
 }
 
-Goldbeter1991SbmlSrnModel* Goldbeter1991SbmlSrnModel::CreateSrnModel()
+AbstractSrnModel* Goldbeter1991SbmlSrnModel::CreateSrnModel()
 {
     return new Goldbeter1991SbmlSrnModel(*this);
 }

@@ -54,7 +54,7 @@ class ChasteSbmlModel:
     # -- PUBLIC --------------------------------------
 
     def __init__(
-        self, sbml_file: str, model_name: str = "", model_type: ModelType = ModelType.UNKNOWN
+        self, sbml_file: str, model_name: str = "", model_type: ModelType = ModelType.GENERIC
     ) -> None:
         """Initialise the ChasteSbmlModel.
 
@@ -314,7 +314,6 @@ class ChasteSbmlModel:
         :param ast: The string formula.
         :return: The equivalent C++ string.
         """
-
         # Convert all integers to doubles
         # TODO: Instead of regex, traverse AST and convert AST_INTEGER nodes to AST_REAL
         formula = re.sub(r"(?<!\.)\b[0-9]+\b(?!\.)", lambda x: f"{x[0]}.0", formula)
@@ -486,7 +485,6 @@ class ChasteSbmlModel:
 
     def _format_events(self) -> None:
         """Add events to template variables."""
-
         # TODO: Add priority
 
         for event in self._sbml_events:
@@ -612,7 +610,6 @@ class ChasteSbmlModel:
 
     def _format_parameters(self) -> None:
         """Add parameters to template variables."""
-
         # Note: rules must be processed before parameters
         if not self._assignment_rules:
             if any(r.getTypeCode() == SBML_ASSIGNMENT_RULE for r in self._sbml_rules):
@@ -642,7 +639,6 @@ class ChasteSbmlModel:
 
     def _format_reactions(self) -> None:
         """Add reactions to template variables."""
-
         for reaction in self._sbml_reactions:
             reaction_id = reaction.getId()
             label = reaction.getName().strip()
@@ -687,7 +683,6 @@ class ChasteSbmlModel:
 
     def _format_species(self) -> None:
         """Add species to template variables."""
-
         # Note: rules must be processed before species
         if not self._assignment_rules:
             if any(r.getTypeCode() == SBML_ASSIGNMENT_RULE for r in self._sbml_rules):
@@ -815,7 +810,7 @@ class ChasteSbmlModel:
         return 3600.0
 
     def _get_variable_index(self, id_: str) -> int:
-        """Get the index of a variable"""
+        """Get the index of a variable."""
         var_type = self._get_variable_type(id_)
 
         if var_type == VarType.STATE_VARIABLE:
@@ -866,7 +861,6 @@ class ChasteSbmlModel:
 
     def _process_model(self) -> None:
         """Process the SBML model to set up the formatted variables for templates."""
-
         self._variable_types = {}
         self._odes = {}
 
@@ -894,6 +888,7 @@ class ChasteSbmlModel:
 
     def _sort_rules(self, rules: list["Rule"]) -> list["Rule"]:
         """Sort rules based on their dependency.
+
         Rules are sorted such that if rule A depends on B (A -> B), then B comes
         before A. It is assumed that the input rules are acyclic. This function
         can't sort cyclic dependencies such as A -> B -> A, or A -> B -> C -> A.
@@ -928,7 +923,6 @@ class ChasteSbmlModel:
                 1 if A > B (A comes after B)
                 0 if the order doesn't matter
             """
-
             id_a = rule_a.getId()
             id_b = rule_b.getId()
 

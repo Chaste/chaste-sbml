@@ -1,3 +1,5 @@
+"""Tests for code generation."""
+
 import logging
 import re
 from difflib import Differ
@@ -17,7 +19,6 @@ def load_source_lines(source_file: str) -> list[str]:
     :param source_file: Path to source file.
     :return: Source code as string.
     """
-
     with open(source_file, "r") as sf:
         source = sf.read()
 
@@ -45,7 +46,6 @@ def code_diff(file_a: str, file_b: str) -> str:
     :param file_b: Path to second source file.
     :return: First differing line.
     """
-
     lines_a = load_source_lines(file_a)
     lines_b = load_source_lines(file_b)
 
@@ -79,9 +79,7 @@ def code_diff(file_a: str, file_b: str) -> str:
     ],
 )
 def test_generation(tmp_path, model_name, model_type):
-    """
-    Check generated model against reference.
-    """
+    """Check generated model against reference."""
     type_string = ""
     if model_type == ModelType.SRN:
         type_string = "Srn"

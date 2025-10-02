@@ -12,6 +12,7 @@
 class TysonNovak2001SbmlOdeSystem : public AbstractSbmlOdeSystem
 {
 private:
+    /** Needed for serialization. */
     friend class boost::serialization::access;
     /**
      * Save / load TysonNovak2001SbmlOdeSystem archive

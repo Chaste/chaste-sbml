@@ -11,6 +11,7 @@
 class Chen2004SbmlCellCycleModel : public AbstractSbmlCellCycleModel
 {
 private:
+    /** Needed for serialization. */
     friend class boost::serialization::access;
     /**
      * Save / load Chen2004SbmlCellCycleModel archive
@@ -57,14 +58,14 @@ public:
      *
      * @return Returns a copy of the current SRN model.
      */
-    Chen2004SbmlCellCycleModel* CreateCellCycleModel() override;
+    AbstractCellCycleModel* CreateCellCycleModel() override;
 
     /**
      * Initialise the SRN model at the start of a simulation.
      *
      * This overridden method sets up a new ODE system.
      */
-    void Initialise() override; // override
+    void Initialise() override;
 
     /**
      * Output SRN model parameters to file.

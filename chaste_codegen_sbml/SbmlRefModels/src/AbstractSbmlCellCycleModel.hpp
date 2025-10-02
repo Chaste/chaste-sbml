@@ -37,11 +37,11 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ABSTRACT_SBML_CELL_CYCLE_MODEL_HPP_
 
 #include <boost/serialization/base_object.hpp>
-#include "ChasteSerialization.hpp"
 
 #include "AbstractCellCycleModelOdeSolver.hpp"
 #include "AbstractOdeBasedCellCycleModel.hpp"
 #include "AbstractSbmlOdeSystem.hpp"
+#include "ChasteSerialization.hpp"
 #include "ClassIsAbstract.hpp"
 
 /**
@@ -54,7 +54,7 @@ private:
     /** Needed for serialization. */
     friend class boost::serialization::access;
     /**
-     * Archive the cell-cycle model and member variables.
+     * Archive / unarchive the AbstractSbmlCellCycleModel.
      *
      * @param archive the archive
      * @param version the current version of this class
@@ -112,13 +112,6 @@ public:
     bool CanCellTerminallyDifferentiate();
 
     /**
-     * Overridden builder method to create new copies of this Cell Cycle model.
-     *
-     * @return Returns a copy of the current cell-cycle model.
-     */
-    AbstractCellCycleModel* CreateCellCycleModel();
-
-    /**
      * Overridden GetAverageStemCellCycleTime() method.
      * @return time
      */
@@ -136,27 +129,6 @@ public:
      * @param rName the name of the state variable
      */
     double GetStateVariable(const std::string& rName);
-
-    /**
-     * Initialise the cell-cycle model at the start of a simulation.
-     *
-     * This overridden method sets up a new Ode system.
-     */
-    void Initialise() override;
-
-    /**
-     * Initialise the new daughter cell's cycle model after a cell division.
-     *
-     * This is called by Cell::Divide once the new cell object
-     * has been fully created, to perform any initialisation of the
-     * cell cycle which requires access to the cell.
-     *
-     * Note that much initialisation can be performed using the
-     * combination of ResetForDivision() (called on the parent prior to
-     * division) and CreateCellCycleModel() (called on the reset
-     * parent to create the new cell-cycle model object).
-     */
-    void InitialiseDaughterCell();
 
     /**
      * Outputs cell-cycle model parameters to file.
@@ -185,5 +157,9 @@ public:
 
 // Register abstract class with Boost serialization
 CLASS_IS_ABSTRACT(AbstractSbmlCellCycleModel)
+
+// Register the CellCycleModel<OdeSolver> classes with Boost serialization
+#include "CellCycleModelOdeSolverExportWrapper.hpp"
+EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(AbstractSbmlCellCycleModel)
 
 #endif // ABSTRACT_SBML_CELL_CYCLE_MODEL_HPP_

@@ -27,7 +27,7 @@ Chen2000SbmlCellCycleModel::Chen2000SbmlCellCycleModel(const Chen2000SbmlCellCyc
     this->SetOdeSystem(new Chen2000SbmlOdeSystem(*p_ode_system));
 }
 
-Chen2000SbmlCellCycleModel* Chen2000SbmlCellCycleModel::CreateCellCycleModel()
+AbstractCellCycleModel* Chen2000SbmlCellCycleModel::CreateCellCycleModel()
 {
     return new Chen2000SbmlCellCycleModel(*this);
 }

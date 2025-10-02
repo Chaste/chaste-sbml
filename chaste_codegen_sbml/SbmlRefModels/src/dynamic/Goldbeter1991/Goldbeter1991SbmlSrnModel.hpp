@@ -11,6 +11,7 @@
 class Goldbeter1991SbmlSrnModel : public AbstractSbmlSrnModel
 {
 private:
+    /** Needed for serialization. */
     friend class boost::serialization::access;
     /**
      * Save / load Goldbeter1991SbmlSrnModel archive
@@ -57,7 +58,7 @@ public:
      *
      * @return Returns a copy of the current SRN model.
      */
-    Goldbeter1991SbmlSrnModel* CreateSrnModel() override;
+    AbstractSrnModel* CreateSrnModel() override;
 
     /**
      * Initialise the SRN model at the start of a simulation.

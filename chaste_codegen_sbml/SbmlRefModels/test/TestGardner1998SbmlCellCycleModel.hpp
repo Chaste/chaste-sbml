@@ -110,7 +110,7 @@ public:
 
             std::ofstream ofs(archive_filename.c_str());
             boost::archive::text_oarchive output_arch(ofs);
-            output_arch << p_cc_arch; // TODO: Fix archiving error thrown by this line
+            output_arch << p_cc_arch;
 
             // Deletion of the cell-cycle model is handled by the cell destructor
             SimulationTime::Destroy();

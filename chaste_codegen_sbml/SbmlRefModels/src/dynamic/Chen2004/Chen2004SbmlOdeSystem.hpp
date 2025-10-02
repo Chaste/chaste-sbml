@@ -12,6 +12,7 @@
 class Chen2004SbmlOdeSystem : public AbstractSbmlOdeSystem
 {
 private:
+    /** Needed for serialization. */
     friend class boost::serialization::access;
     /**
      * Save / load Chen2004SbmlOdeSystem archive

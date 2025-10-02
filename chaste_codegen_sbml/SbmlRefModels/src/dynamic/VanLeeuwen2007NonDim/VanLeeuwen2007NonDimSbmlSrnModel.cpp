@@ -27,7 +27,7 @@ VanLeeuwen2007NonDimSbmlSrnModel::VanLeeuwen2007NonDimSbmlSrnModel(const VanLeeu
     this->SetOdeSystem(new VanLeeuwen2007NonDimSbmlOdeSystem(*p_ode_system));
 }
 
-VanLeeuwen2007NonDimSbmlSrnModel* VanLeeuwen2007NonDimSbmlSrnModel::CreateSrnModel()
+AbstractSrnModel* VanLeeuwen2007NonDimSbmlSrnModel::CreateSrnModel()
 {
     return new VanLeeuwen2007NonDimSbmlSrnModel(*this);
 }

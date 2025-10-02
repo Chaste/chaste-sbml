@@ -27,7 +27,7 @@
     this->SetOdeSystem(new {{ ode_class_name }}(*p_ode_system));
 }
 
-{{ cell_cycle_class_name }}* {{ cell_cycle_class_name }}::CreateCellCycleModel()
+AbstractCellCycleModel* {{ cell_cycle_class_name }}::CreateCellCycleModel()
 {
     return new {{ cell_cycle_class_name }}(*this);
 }

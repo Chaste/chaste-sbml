@@ -100,11 +100,6 @@ bool AbstractSbmlCellCycleModel::CanCellTerminallyDifferentiate()
     return false;
 }
 
-AbstractCellCycleModel* AbstractSbmlCellCycleModel::CreateCellCycleModel()
-{
-    return new AbstractSbmlCellCycleModel(*this);
-}
-
 double AbstractSbmlCellCycleModel::GetAverageTransitCellCycleTime()
 {
     // A default value, should be overridden in subclasses
@@ -123,33 +118,10 @@ double AbstractSbmlCellCycleModel::GetStateVariable(const std::string& rName)
     return mpOdeSystem->GetStateVariable(rName);
 }
 
-void AbstractSbmlCellCycleModel::Initialise()
-{
-    AbstractOdeBasedCellCycleModel::Initialise();
-}
-
-void AbstractSbmlCellCycleModel::InitialiseDaughterCell()
-{
-    // if (mpCell->GetCellProliferativeType()->IsType<StemCellProliferativeType>())
-    // {
-    //     /*
-    //      * This method is usually called within a CellBasedSimulation, after the CellPopulation
-    //      * has called CellPropertyRegistry::TakeOwnership(). This means that were we to call
-    //      * CellPropertyRegistry::Instance() here when setting the CellProliferativeType, we
-    //      * would be creating a new CellPropertyRegistry. In this case the cell proliferative
-    //      * type counts, as returned by AbstractCellPopulation::GetCellProliferativeTypeCount(),
-    //      * would be incorrect. We must therefore access the CellProliferativeType via the cell's
-    //      * CellPropertyCollection.
-    //      */
-    //     boost::shared_ptr<AbstractCellProperty> p_transit_type = mpCell->rGetCellPropertyCollection().GetCellPropertyRegistry()->Get<TransitCellProliferativeType>();
-    //     mpCell->SetCellProliferativeType(p_transit_type);
-    // }
-}
-
 void AbstractSbmlCellCycleModel::OutputCellCycleModelParameters(out_stream& rParamsFile)
 {
-    // No new parameters to output.
-    AbstractSbmlCellCycleModel::OutputCellCycleModelParameters(rParamsFile);
+    // No new parameters to output, so just call method on direct parent class
+    AbstractOdeBasedCellCycleModel::OutputCellCycleModelParameters(rParamsFile);
 }
 
 bool AbstractSbmlCellCycleModel::ReadyToDivide()
@@ -183,3 +155,11 @@ void AbstractSbmlCellCycleModel::ResetForDivision()
     assert(mpOdeSystem != nullptr);
     static_cast<AbstractSbmlOdeSystem*>(mpOdeSystem)->ResetEventsOccurred();
 }
+
+// Register class with Boost serialization
+#include "SerializationExportWrapperForCpp.hpp"
+CHASTE_CLASS_EXPORT(AbstractSbmlCellCycleModel)
+
+// Register the CellCycleModel<OdeSolver> classes with Boost serialization
+#include "CellCycleModelOdeSolverExportWrapper.hpp"
+EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(AbstractSbmlCellCycleModel)

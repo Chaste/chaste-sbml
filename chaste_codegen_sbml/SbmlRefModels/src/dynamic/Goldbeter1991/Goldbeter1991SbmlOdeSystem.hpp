@@ -12,6 +12,7 @@
 class Goldbeter1991SbmlOdeSystem : public AbstractSbmlOdeSystem
 {
 private:
+    /** Needed for serialization. */
     friend class boost::serialization::access;
     /**
      * Save / load Goldbeter1991SbmlOdeSystem archive

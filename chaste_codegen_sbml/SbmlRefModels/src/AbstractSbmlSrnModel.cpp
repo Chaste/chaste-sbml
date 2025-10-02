@@ -36,6 +36,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AbstractOdeSrnModel.hpp"
 #include "AbstractSbmlOdeSystem.hpp"
 #include "CellCycleModelOdeSolver.hpp"
+#include "ChasteSerialization.hpp"
 #include "CvodeAdaptor.hpp"
 #include "RungeKutta4IvpOdeSolver.hpp"
 
@@ -101,6 +102,7 @@ void AbstractSbmlSrnModel::Initialise(AbstractSbmlOdeSystem* pOdeSystem)
 
 void AbstractSbmlSrnModel::OutputSrnModelParameters(out_stream& rParamsFile)
 {
+    // No new parameters to output, so just call method on direct parent class
     AbstractOdeSrnModel::OutputSrnModelParameters(rParamsFile);
 }
 
@@ -116,3 +118,7 @@ void AbstractSbmlSrnModel::SimulateToCurrentTime()
 // Register class with Boost serialization
 #include "SerializationExportWrapperForCpp.hpp"
 CHASTE_CLASS_EXPORT(AbstractSbmlSrnModel)
+
+// Register the CellCycleModel<OdeSolver> classes with Boost serialization
+#include "CellCycleModelOdeSolverExportWrapper.hpp"
+EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(AbstractSbmlSrnModel)

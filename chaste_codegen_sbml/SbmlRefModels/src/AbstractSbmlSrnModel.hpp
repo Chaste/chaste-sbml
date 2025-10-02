@@ -37,10 +37,10 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ABSTRACT_SBML_SRN_MODEL_HPP_
 
 #include <boost/serialization/base_object.hpp>
-#include "ChasteSerialization.hpp"
 
 #include "AbstractOdeSrnModel.hpp"
 #include "AbstractSbmlOdeSystem.hpp"
+#include "ChasteSerialization.hpp"
 #include "ClassIsAbstract.hpp"
 
 /**
@@ -53,7 +53,7 @@ private:
     /** Needed for serialization. */
     friend class boost::serialization::access;
     /**
-     * Archive the SRN model and member variables.
+     * Archive / unarchive the AbstractSbmlSrnModel.
      *
      * @param archive the archive
      * @param version the current version of this class
@@ -61,7 +61,7 @@ private:
     template <class Archive>
     void serialize(Archive& archive, const unsigned int version)
     {
-        archive& boost::serialization::base_object<AbstractOdeSrnModel>(*this);
+        archive & boost::serialization::base_object<AbstractOdeSrnModel>(*this);
     }
 
 protected:
@@ -94,7 +94,7 @@ protected:
 
 public:
     /**
-     * Default constructor.
+     * Constructor.
      *
      * @param stateSize The number of state variables in the ODE system.
      * @param pOdeSolver An optional pointer to a cell-cycle model ODE solver
@@ -109,6 +109,13 @@ public:
     virtual ~AbstractSbmlSrnModel();
 
     /**
+     * @return the value of a given state variable.
+     *
+     * @param rName the name of the state variable
+     */
+    double GetStateVariable(const std::string& rName);
+
+    /**
      * Outputs SRN model parameters to file.
      *
      * @param rParamsFile the file stream to which the parameters are output
@@ -119,16 +126,13 @@ public:
      * Overridden SimulateToCurrentTime() method for custom behaviour
      */
     void SimulateToCurrentTime();
-
-    /**
-     * @return the value of a given state variable.
-     *
-     * @param rName the name of the state variable
-     */
-    double GetStateVariable(const std::string& rName);
 };
 
 // Register abstract class with Boost serialization
 CLASS_IS_ABSTRACT(AbstractSbmlSrnModel)
+
+// Register the CellCycleModel<OdeSolver> classes with Boost serialization
+#include "CellCycleModelOdeSolverExportWrapper.hpp"
+EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(AbstractSbmlSrnModel)
 
 #endif // ABSTRACT_SBML_SRN_MODEL_HPP_

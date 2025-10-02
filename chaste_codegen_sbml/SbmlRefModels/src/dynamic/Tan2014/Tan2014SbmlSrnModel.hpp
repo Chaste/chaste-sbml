@@ -11,6 +11,7 @@
 class Tan2014SbmlSrnModel : public AbstractSbmlSrnModel
 {
 private:
+    /** Needed for serialization. */
     friend class boost::serialization::access;
     /**
      * Save / load Tan2014SbmlSrnModel archive
@@ -57,7 +58,7 @@ public:
      *
      * @return Returns a copy of the current SRN model.
      */
-    Tan2014SbmlSrnModel* CreateSrnModel() override;
+    AbstractSrnModel* CreateSrnModel() override;
 
     /**
      * Initialise the SRN model at the start of a simulation.

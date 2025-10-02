@@ -12,6 +12,7 @@
 class VanLeeuwen2007NonDimSbmlOdeSystem : public AbstractSbmlOdeSystem
 {
 private:
+    /** Needed for serialization. */
     friend class boost::serialization::access;
     /**
      * Save / load VanLeeuwen2007NonDimSbmlOdeSystem archive
