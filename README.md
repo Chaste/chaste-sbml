@@ -7,13 +7,13 @@ Chaste code using [libSBML](https://github.com/sbmlteam/libsbml).
 
 ## Installation
 
-### Recommended: install using `pipx`
+### Install using `pipx` (recommended)
 
 ```sh
 pipx install git+https://github.com/Chaste/chaste-codegen-sbml@develop
 ```
 
-### Alternative: install using `pip`
+### Install using `pip`
 
 Create and activate a virtual environment (optional)
 
