@@ -1,4 +1,5 @@
-[![build_and_test](https://github.com/Chaste/chaste-codegen-sbml/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/Chaste/chaste-codegen-sbml/workflows/build_and_test.yml)
+![build_and_test]
+(https://github.com/Chaste/chaste-codegen-sbml/actions/workflows/build_and_test.yml/badge.svg?branch=develop)
 
 # Import SBML models into Chaste
 
@@ -7,13 +8,13 @@ Chaste code using [libSBML](https://github.com/sbmlteam/libsbml).
 
 ## Installation
 
-### Install using `pipx` (recommended)
+### Install with `pipx` (recommended)
 
 ```sh
 pipx install git+https://github.com/Chaste/chaste-codegen-sbml@develop
 ```
 
-### Install using `pip`
+### Install with `pip`
 
 Create and activate a virtual environment (optional)
 
@@ -22,7 +23,7 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
-Install
+Install the package
 
 ```sh
 pip install git+https://github.com/Chaste/chaste-codegen-sbml@develop
