@@ -51,7 +51,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Debug.hpp"
 #include "EulerIvpOdeSolver.hpp"
 #include "RungeKutta4IvpOdeSolver.hpp"
-#include "SbmlTestHelperFunctions.hpp"
+#include "SbmlTestHelpers.hpp"
 #include "Timer.hpp"
 
 #include "Tan2014SbmlOdeSystem.hpp"
@@ -59,7 +59,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
-namespace st = sbmltest;
+namespace sth = sbmltesthelpers;
 
 class TestTan2014SbmlOdeSystem : public AbstractCellBasedTestSuite
 {
@@ -104,13 +104,13 @@ private:
                 {
                     values.push_back(ode_solution.rGetSolutions()[j][i]);
                 }
-                double min_val = st::min(values);
-                double max_val = st::max(values);
-                double mean_val = st::mean(values);
-                double std_val = st::stdev(values);
-                double q1_val = st::quantile(values, 0.25);
-                double q2_val = st::quantile(values, 0.5);
-                double q3_val = st::quantile(values, 0.75);
+                double min_val = sth::min(values);
+                double max_val = sth::max(values);
+                double mean_val = sth::mean(values);
+                double std_val = sth::stdev(values);
+                double q1_val = sth::quantile(values, 0.25);
+                double q2_val = sth::quantile(values, 0.5);
+                double q3_val = sth::quantile(values, 0.75);
 
                 if (i == 0) // bcat_cm
                 {
@@ -176,13 +176,13 @@ private:
 
             // Compare derived quantity stats with Tellurium values
             {
-                double min_val = st::min(drag);
-                double max_val = st::max(drag);
-                double mean_val = st::mean(drag);
-                double std_val = st::stdev(drag);
-                double q1_val = st::quantile(drag, 0.25);
-                double q2_val = st::quantile(drag, 0.5);
-                double q3_val = st::quantile(drag, 0.75);
+                double min_val = sth::min(drag);
+                double max_val = sth::max(drag);
+                double mean_val = sth::mean(drag);
+                double std_val = sth::stdev(drag);
+                double q1_val = sth::quantile(drag, 0.25);
+                double q2_val = sth::quantile(drag, 0.5);
+                double q3_val = sth::quantile(drag, 0.75);
 
                 TS_ASSERT_DELTA(min_val, 1.0, 1e-3);
                 TS_ASSERT_DELTA(max_val, 1.0, 1e-3);

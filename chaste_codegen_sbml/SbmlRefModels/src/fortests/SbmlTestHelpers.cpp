@@ -4,9 +4,9 @@
 #include "OdeSolution.hpp"
 #include "OutputFileHandler.hpp"
 
-#include "SbmlTestHelperFunctions.hpp"
+#include "SbmlTestHelpers.hpp"
 
-void sbmltest::export_csv(const std::string& filename,
+void sbmltesthelpers::export_csv(const std::string& filename,
                           const std::vector<std::string>& var_names,
                           const OdeSolution& solutions)
 {

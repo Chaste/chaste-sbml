@@ -58,7 +58,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OdeSolution.hpp"
 #include "OutputFileHandler.hpp"
 #include "RungeKutta4IvpOdeSolver.hpp"
-#include "SbmlTestHelperFunctions.hpp"
+#include "SbmlTestHelpers.hpp"
 #include "SimulationTime.hpp"
 #include "SmartPointers.hpp"
 #include "StemCellProliferativeType.hpp"
@@ -70,7 +70,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
-namespace st = sbmltest;
+namespace sth = sbmltesthelpers;
 
 class TestGardner1998SbmlOdeSystem : public AbstractCellBasedTestSuite
 {

@@ -49,7 +49,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "CvodeAdaptor.hpp"
 #include "OutputFileHandler.hpp"
 #include "RungeKutta4IvpOdeSolver.hpp"
-#include "SbmlTestHelperFunctions.hpp"
+#include "SbmlTestHelpers.hpp"
 #include "SmartPointers.hpp"
 #include "Timer.hpp"
 
@@ -58,7 +58,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
-namespace st = sbmltest;
+namespace sth = sbmltesthelpers;
 
 class TestGoldbeter1991SbmlOdeSystem : public AbstractCellBasedTestSuite
 {
@@ -100,7 +100,7 @@ private:
             TS_ASSERT_DELTA(end_solution[2], 0.006785, 1e-3);
 
             // Exports results to csv
-            st::export_csv("goldbeter_1991_" + solverName + ".csv", ode_system.rGetStateVariableNames(), solutions);
+            sth::export_csv("goldbeter_1991_" + solverName + ".csv", ode_system.rGetStateVariableNames(), solutions);
         }
         catch (Exception& e)
         {

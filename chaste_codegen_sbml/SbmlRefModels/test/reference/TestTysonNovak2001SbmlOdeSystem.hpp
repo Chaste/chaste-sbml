@@ -47,7 +47,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "CvodeAdaptor.hpp"
 #include "OdeSolution.hpp"
 #include "OutputFileHandler.hpp"
-#include "SbmlTestHelperFunctions.hpp"
+#include "SbmlTestHelpers.hpp"
 #include "Timer.hpp"
 
 #include "TysonNovak2001SbmlOdeSystem.hpp"
@@ -55,7 +55,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
-namespace st = sbmltest;
+namespace sth = sbmltesthelpers;
 
 class TestTysonNovak2001SbmlOdeSystem : public AbstractCellBasedTestSuite
 {
@@ -177,37 +177,37 @@ private:
                 double exp_val;
                 double tol;
 
-                double min_val = st::min(values);
+                double min_val = sth::min(values);
                 exp_val = expected_stats[i][0][0];
                 tol = expected_stats[i][1][0];
                 TSM_ASSERT_DELTA(var_cname, min_val, exp_val, tol);
 
-                double max_val = st::max(values);
+                double max_val = sth::max(values);
                 exp_val = expected_stats[i][0][1];
                 tol = expected_stats[i][1][1];
                 TSM_ASSERT_DELTA(var_cname, max_val, exp_val, tol);
 
-                double mean_val = st::mean(values);
+                double mean_val = sth::mean(values);
                 exp_val = expected_stats[i][0][2];
                 tol = expected_stats[i][1][2];
                 TSM_ASSERT_DELTA(var_cname, mean_val, exp_val, tol);
 
-                double std_val = st::stdev(values);
+                double std_val = sth::stdev(values);
                 exp_val = expected_stats[i][0][3];
                 tol = expected_stats[i][1][3];
                 TSM_ASSERT_DELTA(var_cname, std_val, exp_val, tol);
 
-                double q1_val = st::quantile(values, 0.25);
+                double q1_val = sth::quantile(values, 0.25);
                 exp_val = expected_stats[i][0][4];
                 tol = expected_stats[i][1][4];
                 TSM_ASSERT_DELTA(var_cname, q1_val, exp_val, tol);
 
-                double q2_val = st::quantile(values, 0.5);
+                double q2_val = sth::quantile(values, 0.5);
                 exp_val = expected_stats[i][0][5];
                 tol = expected_stats[i][1][5];
                 TSM_ASSERT_DELTA(var_cname, q2_val, exp_val, tol);
 
-                double q3_val = st::quantile(values, 0.75);
+                double q3_val = sth::quantile(values, 0.75);
                 exp_val = expected_stats[i][0][6];
                 tol = expected_stats[i][1][6];
                 TSM_ASSERT_DELTA(var_cname, q3_val, exp_val, tol);

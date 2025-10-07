@@ -8,7 +8,7 @@
 
 class OdeSolution;
 
-namespace sbmltest
+namespace sbmltesthelpers
 {
 /** Export results to a CSV file.
  * 
@@ -58,10 +58,10 @@ inline double quantile(const std::vector<double>& vec, double q);
  * @return The variance value.
  */
 inline double variance(const std::vector<double>& vec);
-} // namespace sbmltest
+} // namespace sbmltesthelpers
 
 // max
-inline double sbmltest::max(const std::vector<double>& vec)
+inline double sbmltesthelpers::max(const std::vector<double>& vec)
 {
     if (vec.empty())
     {
@@ -71,7 +71,7 @@ inline double sbmltest::max(const std::vector<double>& vec)
 }
 
 // mean
-inline double sbmltest::mean(const std::vector<double>& vec)
+inline double sbmltesthelpers::mean(const std::vector<double>& vec)
 {
     if (vec.empty())
     {
@@ -81,7 +81,7 @@ inline double sbmltest::mean(const std::vector<double>& vec)
 }
 
 // min
-inline double sbmltest::min(const std::vector<double>& vec)
+inline double sbmltesthelpers::min(const std::vector<double>& vec)
 {
     if (vec.empty())
     {
@@ -91,13 +91,13 @@ inline double sbmltest::min(const std::vector<double>& vec)
 }
 
 // stdev
-inline double sbmltest::stdev(const std::vector<double>& vec)
+inline double sbmltesthelpers::stdev(const std::vector<double>& vec)
 {
-    return std::sqrt(sbmltest::variance(vec));
+    return std::sqrt(sbmltesthelpers::variance(vec));
 }
 
 // quantile
-inline double sbmltest::quantile(const std::vector<double>& vec, double q)
+inline double sbmltesthelpers::quantile(const std::vector<double>& vec, double q)
 {
     if (vec.empty())
     {
@@ -126,13 +126,13 @@ inline double sbmltest::quantile(const std::vector<double>& vec, double q)
 }
 
 // variance
-inline double sbmltest::variance(const std::vector<double>& vec)
+inline double sbmltesthelpers::variance(const std::vector<double>& vec)
 {
     if (vec.size() < 2)
     {
         throw std::invalid_argument("Variance requires at least two data points.");
     }
-    double mean_val = sbmltest::mean(vec);
+    double mean_val = sbmltesthelpers::mean(vec);
     double accum = 0.0;
     for (double val : vec)
     {
