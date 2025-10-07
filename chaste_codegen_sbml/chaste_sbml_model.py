@@ -79,13 +79,21 @@ class ChasteSbmlModel:
         self._ode_hpp_filename = f"{self._ode_class_name}.hpp"
         self._ode_cpp_filename = f"{self._ode_class_name}.cpp"
 
-        self._model_class_name = None
+        self._srn_class_name = None
+        self._srn_hpp_filename = None
+        self._srn_cpp_filename = None
         if self._model_type == ModelType.SRN:
-            self._model_class_name = self._model_name + "SrnModel"
-        elif self._model_type == ModelType.CELL_CYCLE:
-            self._model_class_name = self._model_name + "CellCycleModel"
-        self._model_hpp_filename = f"{self._model_class_name}.hpp"
-        self._model_cpp_filename = f"{self._model_class_name}.cpp"
+            self._srn_class_name = self._model_name + "SrnModel"
+            self._srn_hpp_filename = f"{self._srn_class_name}.hpp"
+            self._srn_cpp_filename = f"{self._srn_class_name}.cpp"
+
+        self._cell_cycle_class_name = None
+        self._cell_cycle_hpp_filename = None
+        self._cell_cycle_cpp_filename = None
+        if self._model_type == ModelType.CELL_CYCLE:
+            self._cell_cycle_class_name = self._model_name + "CellCycleModel"
+            self._cell_cycle_hpp_filename = f"{self._cell_cycle_class_name}.hpp"
+            self._cell_cycle_cpp_filename = f"{self._cell_cycle_class_name}.cpp"
 
         self._sbml_model = SBMLReader().readSBMLFromFile(self._sbml_file).getModel()
         self._sbml_compartments = self._sbml_model.getListOfCompartments()
@@ -110,14 +118,20 @@ class ChasteSbmlModel:
         self._events = []  # [ { name: str, trigger: str, ... } ]
         self._functions = []  # [ { name: str, args: [str], body: str } ]
 
+        self._template_vars = {}  # type: dict[str, Any]
+
         self._outputs = {}  # { filename: code }
 
         self._process_model()
 
+    @property
+    def outputs(self) -> dict[str, str]:
+        return self._outputs
+
     def write(self, output_directory=None):
         """Generate Chaste code and write to file."""
         # Generate the code
-        self._generate()
+        self._generate_outputs()
 
         # Write the code to file
         if output_directory:
@@ -719,35 +733,32 @@ class ChasteSbmlModel:
                 # Variable parameter
                 self._add_variable_parameter(species_id, label, initial_value, units)
 
-    def _generate(self) -> None:
-        """Generate Chaste code for the model."""
-        # Get the template variables
-
-        # Generate code for the OdeSystem
-        self._generate_single("ode/ode.hpp", self._ode_hpp_filename)
-        self._generate_single("ode/ode.cpp", self._ode_cpp_filename)
-
-        # Generate code for the SRN or Cell-Cycle model
-        if self._model_type == ModelType.SRN:
-            self._generate_single("srn/srn.hpp", self._model_hpp_filename)
-            self._generate_single("srn/srn.cpp", self._model_cpp_filename)
-
-        elif self._model_type == ModelType.CELL_CYCLE:
-            self._generate_single("cell_cycle/cell_cycle.hpp", self._model_hpp_filename)
-            self._generate_single("cell_cycle/cell_cycle.cpp", self._model_cpp_filename)
-
-    def _generate_single(self, template_path, filename) -> None:
-        """Generate a single code file from a template.
+    def _generate_output(self, template_path, filename) -> None:
+        """Generate a single output file from a template.
 
         Generated code is stored in the outputs list.
 
         :param template_path: The path to the template.
         :param filename: The output filename.
         """
-        template_vars = self._get_template_vars()
         template = self._get_template(template_path)
-        code = template.render(template_vars)
+        code = template.render(self._template_vars)
         self._add_output(filename, code)
+
+    def _generate_outputs(self) -> None:
+        """Generate Chaste code for the model."""
+        # Generate code for the OdeSystem
+        self._generate_output("ode/ode.hpp", self._ode_hpp_filename)
+        self._generate_output("ode/ode.cpp", self._ode_cpp_filename)
+
+        # Generate code for the SRN or Cell-Cycle model
+        if self._model_type == ModelType.SRN:
+            self._generate_output("srn/srn.hpp", self._srn_hpp_filename)
+            self._generate_output("srn/srn.cpp", self._srn_cpp_filename)
+
+        elif self._model_type == ModelType.CELL_CYCLE:
+            self._generate_output("cell_cycle/cell_cycle.hpp", self._cell_cycle_hpp_filename)
+            self._generate_output("cell_cycle/cell_cycle.cpp", self._cell_cycle_cpp_filename)
 
     def _get_template(self, name: str) -> "Template":
         """Get a Jinja2 template.
@@ -756,41 +767,6 @@ class ChasteSbmlModel:
         :return: The template object.
         """
         return self._jinja_env.get_template(name)
-
-    def _get_template_vars(self) -> dict[str, "Any"]:
-        """Generate the template variables for the model C++ files.
-
-        :return: The template variables for the model C++ files.
-        """
-        template_vars = dict(
-            assignment_rules=self._assignment_rules,
-            constant_parameters=self._constant_parameters,
-            derived_quantities=self._derived_quantities,
-            events=self._events,
-            functions=self._functions,
-            ode_class_name=self._ode_class_name,
-            ode_header_guard=self._format_header_guard(self._ode_hpp_filename),
-            ode_hpp_file=self._ode_hpp_filename,
-            reactions=self._reactions,
-            rule_based_parameters=self._rule_based_parameters,
-            state_variables=self._state_variables,
-            variable_parameters=self._variable_parameters,
-        )
-
-        if self._model_type == ModelType.SRN:
-            template_vars.update(
-                srn_class_name=self._model_class_name,
-                srn_header_guard=self._format_header_guard(self._model_hpp_filename),
-                srn_hpp_file=self._model_hpp_filename,
-            )
-        elif self._model_type == ModelType.CELL_CYCLE:
-            template_vars.update(
-                cell_cycle_class_name=self._model_class_name,
-                cell_cycle_header_guard=self._format_header_guard(self._model_hpp_filename),
-                cell_cycle_hpp_file=self._model_hpp_filename,
-            )
-
-        return template_vars
 
     def _get_timescale_multiplier(self) -> float:
         """Get the timescale multiplier.
@@ -859,6 +835,43 @@ class ChasteSbmlModel:
         """Get the type of a variable based on its ID."""
         return self._variable_types.get(var_id, VarType.UNKNOWN)
 
+    def _populate_template_vars(self) -> None:
+        """Populate the template variables for generating C++ code."""
+        template_vars = dict(
+            assignment_rules=self._assignment_rules,
+            constant_parameters=self._constant_parameters,
+            derived_quantities=self._derived_quantities,
+            events=self._events,
+            functions=self._functions,
+            ode_class_name=self._ode_class_name,
+            ode_header_guard=self._format_header_guard(self._ode_hpp_filename),
+            ode_hpp_file=self._ode_hpp_filename,
+            reactions=self._reactions,
+            rule_based_parameters=self._rule_based_parameters,
+            state_variables=self._state_variables,
+            variable_parameters=self._variable_parameters,
+        )
+
+        if self._model_type == ModelType.SRN:
+            template_vars.update(
+                dict(
+                    srn_class_name=self._srn_class_name,
+                    srn_header_guard=self._format_header_guard(self._srn_hpp_filename),
+                    srn_hpp_file=self._srn_hpp_filename,
+                )
+            )
+        elif self._model_type == ModelType.CELL_CYCLE:
+            template_vars.update(
+                dict(
+                    cell_cycle_class_name=self._cell_cycle_class_name,
+                    cell_cycle_header_guard=self._format_header_guard(
+                        self._cell_cycle_hpp_filename
+                    ),
+                    cell_cycle_hpp_file=self._cell_cycle_hpp_filename,
+                )
+            )
+        self._template_vars = template_vars
+
     def _process_model(self) -> None:
         """Process the SBML model to set up the formatted variables for templates."""
         self._variable_types = {}
@@ -885,6 +898,8 @@ class ChasteSbmlModel:
         self._format_reactions()
         self._format_events()
         self._format_function_definitions()
+
+        self._populate_template_vars()
 
     def _sort_rules(self, rules: list["Rule"]) -> list["Rule"]:
         """Sort rules based on their dependency.
