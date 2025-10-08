@@ -2,7 +2,7 @@
 
 import logging
 
-from chaste_codegen_sbml._utils import generate_header_guard, varname_sanitize, varname_staggercase
+from chaste_codegen_sbml._utils import generate_header_guard, to_camel_case, to_cpp_name
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ def test_generate_header_guard():
         assert generate_header_guard(test_input) == expected_output
 
 
-def test_varname_staggercase():
+def test_to_camel_case():
     """Test variable name case staggering."""
     test_cases = [
         ("", ""),
@@ -44,10 +44,10 @@ def test_varname_staggercase():
     ]
 
     for test_input, expected_output in test_cases:
-        assert varname_staggercase(test_input) == expected_output
+        assert to_camel_case(test_input) == expected_output
 
 
-def test_varname_sanitize():
+def test_to_cpp_name():
     """Test variable name sanitization."""
     test_cases = [
         ("", ""),
@@ -57,11 +57,11 @@ def test_varname_sanitize():
         ("foo___bar", "foo___bar"),
         ("foo bar", "foo_bar"),
         ("foo_ _bar", "foo___bar"),
-        ("foo_ . _bar", "foo___bar"),
+        ("foo_ . _bar", "foo_____bar"),
         ("foo1bar", "foo1bar"),
         ("1foo", "_1foo"),
         ("foo100bar", "foo100bar"),
     ]
 
     for test_input, expected_output in test_cases:
-        assert varname_sanitize(test_input) == expected_output
+        assert to_cpp_name(test_input) == expected_output

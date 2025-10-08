@@ -15,5 +15,3 @@ reference/TestGardner1998SbmlOdeSystem.hpp
 reference/TestGardner1998SbmlCellCycleModel.hpp
 reference/TestTysonNovak2001SbmlOdeSystem.hpp
 reference/TestTysonNovak2001SbmlCellCycleModel.hpp
-
-cases/semantic/TestSemantic00001L2V5Sbml.hpp

@@ -28,7 +28,8 @@ from ._utils import (
     generate_header_guard,
     get_function_definition_arguments,
     get_species_concentration,
-    varname_staggercase,
+    to_camel_case,
+    to_cpp_name,
 )
 
 if TYPE_CHECKING:
@@ -71,7 +72,7 @@ class ChasteSbmlModel:
             self._model_name = model_name
         else:
             filename = os.path.splitext(os.path.basename(self._sbml_file))[0]
-            model_name = varname_staggercase(filename) + "Sbml"
+            model_name = to_camel_case(to_cpp_name(filename)) + "Sbml"
             self._model_name = model_name[0].upper() + model_name[1:]
 
         self._model_type = model_type

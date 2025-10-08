@@ -14,25 +14,16 @@ def generate_header_guard(filename: str) -> str:
     :param filename: The filename.
     :return: The header guard.
     """
-    name = filename.strip()
+    name = to_cpp_name(filename)
     if not name:
         return ""
 
-    guard = []
-
     prev = name[0]
-    if prev.isalpha():
-        guard.append(prev.upper())
-    elif prev.isdigit():
-        # Prefix with "_" if name starts with a number
-        guard.append("_")
-        guard.append(prev)
-    else:
-        guard.append("_")
+    guard = [prev.upper()]
 
     for char in name[1:]:
         if char.isupper():
-            # Add _ before uppercase chars except sequence of uppercase chars
+            # Add _ before uppercase chars if not sequence of uppercase chars
             if not prev.isupper():
                 guard.append("_")
             guard.append(char)
@@ -118,54 +109,54 @@ def sort_nodes(node: "ASTNode", node_list: list["ASTNode"] = None) -> list["ASTN
     return node_list
 
 
-def varname_staggercase(name: str) -> str:
-    """Convert an input string to a C++ compatible alphanumeric string in staggered case.
+def to_camel_case(name: str) -> str:
+    """Convert an input name to an alphanumeric name in camel case.
 
     :param name: The variable name.
-    :return: The variable name in staggered case.
+    :return: The variable name in camel case.
     """
-    staggered_name = []
+    camel = []
 
-    next_caps = False
-    for char in name:
+    caps = False  # True: capitalize next letter
+    for char in name.strip():
         if char.isalpha():
-            if next_caps:
-                staggered_name.append(char.upper())
-                next_caps = False
+            if caps:
+                camel.append(char.upper())
+                caps = False
             else:
-                staggered_name.append(char)
+                camel.append(char)
         elif char.isdigit():
-            staggered_name.append(char)
-            next_caps = True
+            camel.append(char)
+            caps = True
         else:
-            next_caps = True
+            # Skip other chars
+            caps = True
 
-    return "".join(staggered_name)
+    return "".join(camel)
 
 
-def varname_sanitize(name: str) -> str:
-    """Convert an input string to a C++ compatible alphanumeric string.
+def to_cpp_name(name: str) -> str:
+    """Sanitize an input name to a C++ compatible alphanumeric name.
 
     :param name: The variable name.
-    :return: The variable name in C++ alphanumeric.
+    :return: The sanitized variable name.
     """
-    var_name = []
+    name_ = name.strip()
+    if not name_:
+        return ""
 
-    name = name.strip()
+    cpp_name = []
+    # Prefix with "_" if name doesn't start with a letter or "_"
+    if name_[0] != "_" and not name_[0].isalpha():
+        cpp_name.append("_")
 
-    # Prefix with "_" if name starts with a number
-    if name and name[0].isdigit():
-        var_name.append("_")
-
-    skip_underscores = False
-    for char in name:
+    for char in name_:
         if char.isalpha() or char.isdigit() or char == "_":
-            var_name.append(char)
-            skip_underscores = False
+            cpp_name.append(char)
         else:
-            # Replace non-alphanumeric chars with "_"; merging successive "_"s
-            if not skip_underscores:
-                var_name.append("_")
-                skip_underscores = True
+            # Replace other chars with "_"
+            cpp_name.append("_")
 
-    return "".join(var_name)
+    # TODO: Check for C++ keywords
+
+    return "".join(cpp_name)

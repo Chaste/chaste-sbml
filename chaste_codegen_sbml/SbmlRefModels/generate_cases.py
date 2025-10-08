@@ -91,20 +91,20 @@ def generate_semantic_cases(suite_path: str) -> None:
     """
     semantic_path = os.path.join(suite_path, "cases", "semantic")
 
-    for case in sorted(os.listdir(semantic_path))[1538:]:
-        case_path = os.path.join(semantic_path, case)
+    for case_ in sorted(os.listdir(semantic_path)):
+        case_path = os.path.join(semantic_path, case_)
         if not os.path.isdir(case_path):
             continue
 
         test_params = {
             "type": TestType.SEMANTIC,
-            "case": case,
+            "case": case_,
         }
 
         # Load settings from settings file
-        settings_file = os.path.join(case_path, f"{case}-settings.txt")
+        settings_file = os.path.join(case_path, f"{case_}-settings.txt")
         if not os.path.isfile(settings_file):
-            logger.warning(f"Settings not found for semantic {case}: '{settings_file}'")
+            logger.warning(f"Settings not found for semantic {case_}: '{settings_file}'")
             continue
 
         settings = {}
@@ -117,9 +117,9 @@ def generate_semantic_cases(suite_path: str) -> None:
         test_params["settings"] = settings
 
         # Load results from results file
-        results_file = os.path.join(case_path, f"{case}-results.csv")
+        results_file = os.path.join(case_path, f"{case_}-results.csv")
         if not os.path.isfile(results_file):
-            logger.warning(f"Results not found for semantic {case}: '{results_file}'")
+            logger.warning(f"Results not found for semantic {case_}: '{results_file}'")
             continue
 
         with open(results_file, "r") as csvfile:
@@ -127,21 +127,21 @@ def generate_semantic_cases(suite_path: str) -> None:
             test_params["results"] = list(reader)
 
         # Make output directories
-        model_dir = ROOT_DIR / "SbmlRefModels" / "src" / "cases" / "semantic" / case
+        model_dir = ROOT_DIR / "SbmlRefModels" / "src" / "cases" / "semantic" / case_
         if not os.path.exists(model_dir):
             os.makedirs(model_dir)
 
-        test_dir = ROOT_DIR / "SbmlRefModels" / "test" / "cases" / "semantic" / case
+        test_dir = ROOT_DIR / "SbmlRefModels" / "test" / "cases" / "semantic" / case_
         if not os.path.exists(test_dir):
             os.makedirs(test_dir)
 
         # Generate code for models and tests
         for sbml_version in sbml_versions:
-            sbml_file = os.path.join(case_path, f"{case}-sbml-{sbml_version}.xml")
+            sbml_file = os.path.join(case_path, f"{case_}-sbml-{sbml_version}.xml")
             if not os.path.isfile(sbml_file):
                 continue
 
-            logger.info(f"Converting semantic {case} {sbml_version}")
+            logger.info(f"Converting semantic {case_} {sbml_version}")
 
             try:
                 chaste_model = ChasteSbmlTestSuiteModel(sbml_file, sbml_version, test_params)
@@ -154,7 +154,7 @@ def generate_semantic_cases(suite_path: str) -> None:
                     dst_file = os.path.join(dst_dir, src_file)
                     os.replace(src_file, dst_file)
             except NotImplementedError as e:
-                logger.warning(f"Skipping semantic {case} {sbml_version}: {e}")
+                logger.warning(f"Skipping semantic {case_} {sbml_version}: {e}")
 
 
 def generate_stochastic_cases(suite_path: str) -> None:
