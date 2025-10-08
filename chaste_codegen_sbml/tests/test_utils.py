@@ -2,9 +2,30 @@
 
 import logging
 
-from chaste_codegen_sbml._utils import varname_sanitize, varname_staggercase
+from chaste_codegen_sbml._utils import generate_header_guard, varname_sanitize, varname_staggercase
 
 logger = logging.getLogger(__name__)
+
+
+def test_generate_header_guard():
+    """Test header guard generation."""
+    test_cases = [
+        ("", ""),
+        (" ", ""),
+        ("foo.hpp", "FOO_HPP_"),
+        ("foo_bar.hpp", "FOO_BAR_HPP_"),
+        ("fooBar.hpp", "FOO_BAR_HPP_"),
+        ("FooBar.hpp", "FOO_BAR_HPP_"),
+        ("Foo100bar.hpp", "FOO_100BAR_HPP_"),
+        ("Foo200Bar.hpp", "FOO_200_BAR_HPP_"),
+        ("FooB300ar.hpp", "FOO_B300AR_HPP_"),
+        ("400FooBar.hpp", "_400_FOO_BAR_HPP_"),
+        ("TysonNovak2001.hpp", "TYSON_NOVAK_2001_HPP_"),
+        ("TestSemantic00001L2V5Sbml.hpp", "TEST_SEMANTIC_00001_L2_V5_SBML_HPP_"),
+    ]
+
+    for test_input, expected_output in test_cases:
+        assert generate_header_guard(test_input) == expected_output
 
 
 def test_varname_staggercase():

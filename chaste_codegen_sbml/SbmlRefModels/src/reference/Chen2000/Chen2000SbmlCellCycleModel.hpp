@@ -1,5 +1,5 @@
-#ifndef CHEN2000SBMLCELLCYCLEMODEL_HPP_
-#define CHEN2000SBMLCELLCYCLEMODEL_HPP_
+#ifndef CHEN_2000_SBML_CELL_CYCLE_MODEL_HPP_
+#define CHEN_2000_SBML_CELL_CYCLE_MODEL_HPP_
 
 #include <boost/serialization/base_object.hpp>
 
@@ -83,4 +83,4 @@ CHASTE_CLASS_EXPORT(Chen2000SbmlCellCycleModel)
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
 EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Chen2000SbmlCellCycleModel)
 
-#endif // CHEN2000SBMLCELLCYCLEMODEL_HPP_
+#endif // CHEN_2000_SBML_CELL_CYCLE_MODEL_HPP_

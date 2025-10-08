@@ -1,5 +1,5 @@
-#ifndef TAN2014SBMLODESYSTEM_HPP_
-#define TAN2014SBMLODESYSTEM_HPP_
+#ifndef TAN_2014_SBML_ODE_SYSTEM_HPP_
+#define TAN_2014_SBML_ODE_SYSTEM_HPP_
 
 #include <vector>
 
@@ -124,4 +124,4 @@ public:
 #include "SerializationExportWrapper.hpp"
 CHASTE_CLASS_EXPORT(Tan2014SbmlOdeSystem)
 
-#endif // TAN2014SBMLODESYSTEM_HPP_
+#endif // TAN_2014_SBML_ODE_SYSTEM_HPP_

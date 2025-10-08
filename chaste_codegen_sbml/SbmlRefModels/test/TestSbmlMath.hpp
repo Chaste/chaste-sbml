@@ -33,8 +33,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef TESTSBMLMATH_HPP_
-#define TESTSBMLMATH_HPP_
+#ifndef TEST_SBML_MATH_HPP_
+#define TEST_SBML_MATH_HPP_
 
 #include <cmath>
 
@@ -407,4 +407,4 @@ public:
     }
 };
 
-#endif // TESTSBMLMATH_HPP_
+#endif // TEST_SBML_MATH_HPP_

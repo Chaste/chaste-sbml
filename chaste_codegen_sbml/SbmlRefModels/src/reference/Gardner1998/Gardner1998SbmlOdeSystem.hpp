@@ -1,5 +1,5 @@
-#ifndef GARDNER1998SBMLODESYSTEM_HPP_
-#define GARDNER1998SBMLODESYSTEM_HPP_
+#ifndef GARDNER_1998_SBML_ODE_SYSTEM_HPP_
+#define GARDNER_1998_SBML_ODE_SYSTEM_HPP_
 
 #include <vector>
 
@@ -119,4 +119,4 @@ public:
 #include "SerializationExportWrapper.hpp"
 CHASTE_CLASS_EXPORT(Gardner1998SbmlOdeSystem)
 
-#endif // GARDNER1998SBMLODESYSTEM_HPP_
+#endif // GARDNER_1998_SBML_ODE_SYSTEM_HPP_

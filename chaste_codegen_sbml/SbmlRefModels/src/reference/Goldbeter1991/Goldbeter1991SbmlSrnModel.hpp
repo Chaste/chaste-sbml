@@ -1,5 +1,5 @@
-#ifndef GOLDBETER1991SBMLSRNMODEL_HPP_
-#define GOLDBETER1991SBMLSRNMODEL_HPP_
+#ifndef GOLDBETER_1991_SBML_SRN_MODEL_HPP_
+#define GOLDBETER_1991_SBML_SRN_MODEL_HPP_
 
 #include <boost/serialization/base_object.hpp>
 
@@ -83,4 +83,4 @@ CHASTE_CLASS_EXPORT(Goldbeter1991SbmlSrnModel)
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
 EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Goldbeter1991SbmlSrnModel)
 
-#endif // GOLDBETER1991SBMLSRNMODEL_HPP_
+#endif // GOLDBETER_1991_SBML_SRN_MODEL_HPP_

@@ -1,5 +1,5 @@
-#ifndef CHEN2004SBMLODESYSTEM_HPP_
-#define CHEN2004SBMLODESYSTEM_HPP_
+#ifndef CHEN_2004_SBML_ODE_SYSTEM_HPP_
+#define CHEN_2004_SBML_ODE_SYSTEM_HPP_
 
 #include <vector>
 
@@ -412,4 +412,4 @@ public:
 #include "SerializationExportWrapper.hpp"
 CHASTE_CLASS_EXPORT(Chen2004SbmlOdeSystem)
 
-#endif // CHEN2004SBMLODESYSTEM_HPP_
+#endif // CHEN_2004_SBML_ODE_SYSTEM_HPP_

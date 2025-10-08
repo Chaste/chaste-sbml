@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 from chaste_codegen_sbml import ChasteSbmlModel
 from chaste_codegen_sbml._config import ROOT_DIR, ModelType
+from chaste_codegen_sbml._utils import generate_header_guard
 
 if TYPE_CHECKING:
     from typing import Any
@@ -57,7 +58,7 @@ class ChasteSbmlTestSuiteModel(ChasteSbmlModel):
 
         self._template_vars.update(
             {
-                "test_header_guard": self._format_header_guard(self._test_hpp_filename),
+                "test_header_guard": generate_header_guard(self._test_hpp_filename),
                 "test_results": self._test_results,
                 "test_settings": self._test_settings,
             }

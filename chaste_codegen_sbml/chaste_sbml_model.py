@@ -25,6 +25,7 @@ from libsbml import (
 
 from ._config import NON_DIM_UNITS, ROOT_DIR, EventType, ModelType, VarType
 from ._utils import (
+    generate_header_guard,
     get_function_definition_arguments,
     get_species_concentration,
     varname_staggercase,
@@ -614,14 +615,6 @@ class ChasteSbmlModel:
                 body,
             )
 
-    def _format_header_guard(self, filename: str) -> str:
-        """Get the header guard for a file.
-
-        :param filename: The filename.
-        :return: The header guard.
-        """
-        return filename.upper().replace(".", "_") + "_"
-
     def _format_parameters(self) -> None:
         """Add parameters to template variables."""
         # Note: rules must be processed before parameters
@@ -720,7 +713,8 @@ class ChasteSbmlModel:
 
             elif species_id in self._odes:
                 # State variable
-                rhs = f"({self._odes[species_id]}) / {compartment_id}"  # Normalised ODE
+                # Normalised ODE
+                rhs = f"({self._odes[species_id]}) / {compartment_id}"
                 self._add_state_variable(species_id, label, initial_value, units, rhs)
 
                 # TODO: Handle time scaling
@@ -837,14 +831,14 @@ class ChasteSbmlModel:
 
     def _populate_template_vars(self) -> None:
         """Populate the template variables for generating C++ code."""
-        template_vars = dict(
+        template_vars: dict[str, "Any"] = dict(
             assignment_rules=self._assignment_rules,
             constant_parameters=self._constant_parameters,
             derived_quantities=self._derived_quantities,
             events=self._events,
             functions=self._functions,
             ode_class_name=self._ode_class_name,
-            ode_header_guard=self._format_header_guard(self._ode_hpp_filename),
+            ode_header_guard=generate_header_guard(self._ode_hpp_filename),
             ode_hpp_file=self._ode_hpp_filename,
             reactions=self._reactions,
             rule_based_parameters=self._rule_based_parameters,
@@ -856,7 +850,7 @@ class ChasteSbmlModel:
             template_vars.update(
                 dict(
                     srn_class_name=self._srn_class_name,
-                    srn_header_guard=self._format_header_guard(self._srn_hpp_filename),
+                    srn_header_guard=generate_header_guard(self._srn_hpp_filename),
                     srn_hpp_file=self._srn_hpp_filename,
                 )
             )
@@ -864,9 +858,7 @@ class ChasteSbmlModel:
             template_vars.update(
                 dict(
                     cell_cycle_class_name=self._cell_cycle_class_name,
-                    cell_cycle_header_guard=self._format_header_guard(
-                        self._cell_cycle_hpp_filename
-                    ),
+                    cell_cycle_header_guard=generate_header_guard(self._cell_cycle_hpp_filename),
                     cell_cycle_hpp_file=self._cell_cycle_hpp_filename,
                 )
             )

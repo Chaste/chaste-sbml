@@ -19,14 +19,14 @@ pipx install git+https://github.com/Chaste/chaste-codegen-sbml@develop
 Create and activate a virtual environment (optional)
 
 ```sh
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 ```
 
 Install the package
 
 ```sh
-pip install git+https://github.com/Chaste/chaste-codegen-sbml@develop
+python3 -m pip install git+https://github.com/Chaste/chaste-codegen-sbml@develop
 ```
 
 ## Development
@@ -43,20 +43,20 @@ cd chaste-codegen-sbml
 Create and activate a virtual environment
 
 ```sh
-python -m .venv .venv
+python3 -m .venv .venv
 source .venv/bin/activate
 ```
 
 Install in editable mode with development dependencies
 
 ```sh
-pip install -e ."[dev]"
+python3 -m pip install -e ."[dev]"
 ```
 
 Run tests
 
-```
-python -m pytest
+```sh
+python3 -m pytest
 ```
 
 ## Usage

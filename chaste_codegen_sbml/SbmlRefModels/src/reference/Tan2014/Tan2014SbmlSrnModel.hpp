@@ -1,5 +1,5 @@
-#ifndef TAN2014SBMLSRNMODEL_HPP_
-#define TAN2014SBMLSRNMODEL_HPP_
+#ifndef TAN_2014_SBML_SRN_MODEL_HPP_
+#define TAN_2014_SBML_SRN_MODEL_HPP_
 
 #include <boost/serialization/base_object.hpp>
 
@@ -83,4 +83,4 @@ CHASTE_CLASS_EXPORT(Tan2014SbmlSrnModel)
 #include "CellCycleModelOdeSolverExportWrapper.hpp"
 EXPORT_CELL_CYCLE_MODEL_ODE_SOLVER(Tan2014SbmlSrnModel)
 
-#endif // TAN2014SBMLSRNMODEL_HPP_
+#endif // TAN_2014_SBML_SRN_MODEL_HPP_

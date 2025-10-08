@@ -8,6 +8,49 @@ if TYPE_CHECKING:
     from libsbml import ASTNode, FunctionDefinition, ListOf, SBase, Species
 
 
+def generate_header_guard(filename: str) -> str:
+    """Generate a C++ header guard from a filename.
+
+    :param filename: The filename.
+    :return: The header guard.
+    """
+    name = filename.strip()
+    if not name:
+        return ""
+
+    guard = []
+
+    prev = name[0]
+    if prev.isalpha():
+        guard.append(prev.upper())
+    elif prev.isdigit():
+        # Prefix with "_" if name starts with a number
+        guard.append("_")
+        guard.append(prev)
+    else:
+        guard.append("_")
+
+    for char in name[1:]:
+        if char.isupper():
+            # Add _ before uppercase chars except sequence of uppercase chars
+            if not prev.isupper():
+                guard.append("_")
+            guard.append(char)
+        elif char.islower():
+            guard.append(char.upper())
+        elif char.isdigit():
+            # Add _ between lowercase char and digit
+            if prev.islower():
+                guard.append("_")
+            guard.append(char)
+        elif guard[-1] != "_":
+            # Replace non-alphanumeric chars with "_"; merging successive "_"s
+            guard.append("_")
+        prev = char
+
+    return "".join(guard) + "_"
+
+
 def get_function_definition_arguments(fn_def: "FunctionDefinition") -> list[str]:
     """Get the list of arguments in a given function definition.
 
