@@ -53,9 +53,9 @@ VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem()
     mStateVariables.push_back(Y);
 
     // DERIVED QUANTITIES
-    C_F = 0.0;
-    C_T = 0.0;
-    drag = 0.0;
+    C_F = 2.54;
+    C_T = 2.54;
+    drag = 1.0;
 
     // VARIABLE PARAMETERS
     cytosolmembraneandnucleus = 1.0;

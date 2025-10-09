@@ -38,7 +38,7 @@ Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem()
     mStateVariables.push_back(complex_nu);
 
     // DERIVED QUANTITIES
-    drag = 0.0;
+    drag = 1.0;
 
     // VARIABLE PARAMETERS
     compartment = 1.0;

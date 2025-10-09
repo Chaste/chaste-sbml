@@ -187,13 +187,14 @@ class ChasteSbmlModel:
         )
         self._variable_types[id_] = VarType.CONSTANT_PARAMETER
 
-    def _add_derived_quantity(self, id_: str, label: str, units: str, rhs: str) -> None:
+    def _add_derived_quantity(self, id_: str, label: str, initial_value: float, units: str, rhs: str) -> None:
         """Add a derived quantity to the template variables."""
         self._derived_quantities.append(
             {
                 "id": id_,
                 "label": label,
                 "index": len(self._derived_quantities),
+                "initial_value": initial_value,
                 "rhs": rhs,
                 "units": units,
             }
@@ -713,6 +714,7 @@ class ChasteSbmlModel:
             species_id = species.getId()
             label = species.getName().strip()
             initial_value = get_species_concentration(species)
+            boundary_condition = species.getBoundaryCondition()
 
             # If there's a compartment we'll normalise the ODEs, so declare it as non-dimensional
             compartment_id = species.getCompartment()
@@ -720,9 +722,14 @@ class ChasteSbmlModel:
             units = NON_DIM_UNITS if compartment else species.getSubstanceUnits()
 
             if species_id in assignment_rules:
-                # Derived quantity (includes boundary conditions)
+                # Derived quantity (includes boundary conditions with assignment rules)
                 rhs = assignment_rules[species_id]
-                self._add_derived_quantity(species_id, label, units, rhs)
+                self._add_derived_quantity(species_id, label, initial_value, units, rhs)
+
+            elif boundary_condition:
+                # Derived quantity (boundary condition with no assignment rule)
+                rhs = str(initial_value)
+                self._add_derived_quantity(species_id, label, initial_value, units, rhs)
 
             elif species_id in self._odes:
                 # State variable

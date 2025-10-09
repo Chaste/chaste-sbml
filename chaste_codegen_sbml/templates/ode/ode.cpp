@@ -30,7 +30,7 @@ namespace sm = sbmlmath;
 
     // DERIVED QUANTITIES
 {% for dq in derived_quantities %}
-    {{ dq["id"] }} = 0.0;
+    {{ dq["id"] }} = {{ dq["initial_value"] }};
 {% endfor %}
 
     // VARIABLE PARAMETERS

@@ -129,16 +129,16 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
 
     // DERIVED QUANTITIES
     BCK2 = 0.0;
-    CDC14T = 0.0;
+    CDC14T = 2.0;
     CDC15i = 0.0;
     CDC6T = 0.0;
     CKIT = 0.0;
-    CLB2T = 0.0;
-    CLB5T = 0.0;
+    CLB2T = 0.17;
+    CLB5T = 0.12;
     CLN3 = 0.0;
     IE = 0.0;
     MCM1 = 0.0;
-    NET1T = 0.0;
+    NET1T = 2.8;
     PE = 0.0;
     SBF = 0.0;
     SIC1T = 0.0;
