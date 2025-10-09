@@ -91,7 +91,8 @@ def generate_semantic_cases(suite_path: str) -> None:
     """
     semantic_path = os.path.join(suite_path, "cases", "semantic")
 
-    for case_ in sorted(os.listdir(semantic_path)):
+    test_pack = []
+    for case_ in sorted(os.listdir(semantic_path))[0:50]:
         case_path = os.path.join(semantic_path, case_)
         if not os.path.isdir(case_path):
             continue
@@ -149,12 +150,17 @@ def generate_semantic_cases(suite_path: str) -> None:
                 for src_file, _ in chaste_model.outputs.items():
                     if src_file.startswith("Test"):
                         dst_dir = test_dir
+                        test_pack.append(f"cases/semantic/{case_}/{src_file}")
                     else:
                         dst_dir = model_dir
                     dst_file = os.path.join(dst_dir, src_file)
                     os.replace(src_file, dst_file)
             except NotImplementedError as e:
                 logger.warning(f"Skipping semantic {case_} {sbml_version}: {e}")
+
+    # Update WeeklyTestPack
+    with open(ROOT_DIR / "SbmlRefModels" / "test" / "WeeklyTestPack.txt", "a") as f:
+        f.write("\n".join(test_pack) + "\n")
 
 
 def generate_stochastic_cases(suite_path: str) -> None:

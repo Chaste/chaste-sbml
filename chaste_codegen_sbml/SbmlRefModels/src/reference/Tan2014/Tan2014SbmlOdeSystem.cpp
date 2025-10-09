@@ -88,11 +88,11 @@ void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<d
     RunModelRules(time, rY);
 
     rDY[0] = (Bsynthesis - kDegradation - kC - kdiffusion - K_c_active + K_n_active) / CytosolMembrane; // d[bcat_cm]/dt
-    rDY[1] = (-kC) / CytosolMembrane;                                                                   // d[ligand_cm]/dt
-    rDY[2] = (kC) / CytosolMembrane;                                                                    // d[complex_cm]/dt
+    rDY[1] = -kC / CytosolMembrane;                                                                   // d[ligand_cm]/dt
+    rDY[2] = kC / CytosolMembrane;                                                                    // d[complex_cm]/dt
     rDY[3] = (-kN + kdiffusion + K_c_active - K_n_active) / nucleus;                                    // d[bcat_nu]/dt
-    rDY[4] = (-kN) / nucleus;                                                                           // d[ligand_nu]/dt
-    rDY[5] = (kN) / nucleus;                                                                            // d[complex_nu]/dt
+    rDY[4] = -kN / nucleus;                                                                           // d[ligand_nu]/dt
+    rDY[5] = kN / nucleus;                                                                            // d[complex_nu]/dt
 
     // TODO: Scale time appropriately
 }

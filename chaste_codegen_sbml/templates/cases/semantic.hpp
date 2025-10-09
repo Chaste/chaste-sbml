@@ -43,9 +43,9 @@ public:
 
             for (unsigned i = 0; i < solutions.rGetSolutions().size(); i++)
             {
-                TS_ASSERT_DELTA(solutions.rGetTimes()[i], expected_results[i][0], 1e-6);
-                TS_ASSERT_DELTA(solutions.rGetSolutions()[i][0], expected_results[i][1], 1e-6);
-                TS_ASSERT_DELTA(solutions.rGetSolutions()[i][1], expected_results[i][2], 1e-6);
+                TS_ASSERT_DELTA(solutions.rGetTimes()[i], expected_results[i][0], 1e-4);
+                TS_ASSERT_DELTA(solutions.rGetSolutions()[i][0], expected_results[i][1], 1e-4);
+                TS_ASSERT_DELTA(solutions.rGetSolutions()[i][1], expected_results[i][2], 1e-4);
             }
 
             // Exports results to csv

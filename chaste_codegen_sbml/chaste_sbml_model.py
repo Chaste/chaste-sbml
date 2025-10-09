@@ -467,19 +467,31 @@ class ChasteSbmlModel:
             for product in products:
                 species_id = product.getSpecies()
 
-                if species_id in self._odes:
-                    self._odes[species_id] += " + " + reaction_id
+                stoichiometry = product.getStoichiometry()
+                if float(stoichiometry) == 1.0:
+                    rhs = f"{reaction_id}"
                 else:
-                    self._odes[species_id] = reaction_id
+                    rhs = f"({stoichiometry} * {reaction_id})"
+
+                if species_id in self._odes:
+                    self._odes[species_id] += f" + {rhs}"
+                else:
+                    self._odes[species_id] = f"{rhs}"
 
             reactants = reaction.getListOfReactants()
             for reactant in reactants:
                 species_id = reactant.getSpecies()
 
-                if species_id in self._odes:
-                    self._odes[species_id] += " - " + reaction_id
+                stoichiometry = reactant.getStoichiometry()
+                if float(stoichiometry) == 1.0:
+                    rhs = f"{reaction_id}"
                 else:
-                    self._odes[species_id] = "-" + reaction_id
+                    rhs = f"({stoichiometry} * {reaction_id})"
+
+                if species_id in self._odes:
+                    self._odes[species_id] += f" - {rhs}"
+                else:
+                    self._odes[species_id] = f"-{rhs}"
 
         # Extract ODEs from rate rules
         rate_rules = [r for r in self._sbml_rules if r.getTypeCode() == SBML_RATE_RULE]
@@ -715,7 +727,11 @@ class ChasteSbmlModel:
             elif species_id in self._odes:
                 # State variable
                 # Normalised ODE
-                rhs = f"({self._odes[species_id]}) / {compartment_id}"
+                rhs = self._odes[species_id]
+                if len(rhs[1:].replace('+', '\t').replace('-', '\t').split("\t")) > 1:
+                    # Add parentheses if there are multiple terms
+                    rhs = f"({rhs})"
+                rhs = f"{rhs} / {compartment_id}"
                 self._add_state_variable(species_id, label, initial_value, units, rhs)
 
                 # TODO: Handle time scaling
