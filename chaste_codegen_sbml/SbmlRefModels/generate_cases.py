@@ -49,18 +49,18 @@ class ChasteSbmlTestSuiteModel(ChasteSbmlModel):
         super().__init__(sbml_file, model_name=model_name, model_type=ModelType.GENERIC, **kwargs)
 
         self._test_type = test_type
-        self._test_settings = test_params["settings"]
-
-        test_results = ["{ " + ", ".join(result) + " }" for result in test_params["results"][1:]]
-        self._test_results = ",\n".join(test_results)
-
         self._test_hpp_filename = f"Test{self._model_name}.hpp"
+
+        test_result_columns = ", ".join(f'"{col}"' for col in test_params["results"][0])
+        test_result_data = ["{ " + ", ".join(row) + " }" for row in test_params["results"][1:]]
+        test_result_data = ",\n".join(test_result_data)
 
         self._template_vars.update(
             {
                 "test_header_guard": generate_header_guard(self._test_hpp_filename),
-                "test_results": self._test_results,
-                "test_settings": self._test_settings,
+                "test_result_columns": test_result_columns,
+                "test_result_data": test_result_data,
+                "test_settings": test_params["settings"],
             }
         )
 

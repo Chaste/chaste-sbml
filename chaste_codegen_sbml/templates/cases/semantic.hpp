@@ -1,6 +1,9 @@
 #ifndef {{ test_header_guard }}
 #define {{ test_header_guard }}
 
+#include <string>
+#include <vector>
+
 #include <cxxtest/TestSuite.h>
 
 #include "CvodeAdaptor.hpp"
@@ -23,8 +26,9 @@ public:
         {
             {{ ode_class_name }} ode_system;
             CvodeAdaptor solver;
-            OdeSolution solutions;
+            OdeSolution ode_solution;
 
+            // Settings
             double start = {{ test_settings["start"] }};
             double duration = {{ test_settings["duration"] }};
             double steps = {{ test_settings["steps"] }};
@@ -33,23 +37,41 @@ public:
             double timestep = duration / steps;
             double sampling = timestep;
 
+            // Solve
             std::vector<double> initial_conditions = ode_system.GetInitialConditions();
-            solutions = solver.Solve(&ode_system, initial_conditions, start, end, timestep, sampling);
+            ode_solution = solver.Solve(&ode_system, initial_conditions, start, end, timestep, sampling);
+            ode_solution.CalculateDerivedQuantitiesAndParameters(&ode_system);
 
-            // Check results against expected values
-            std::vector<std::vector<double> > expected_results = {
-                {{ test_results }}
+            // Expected results
+            std::vector<std::string> expected_result_columns = { {{ test_result_columns }} };
+
+            std::vector<std::vector<double> > expected_result_data = {
+                {{ test_result_data }}
             };
 
-            for (unsigned i = 0; i < solutions.rGetSolutions().size(); i++)
+            // Check sampling times
+            TS_ASSERT_EQUALS(ode_solution.rGetTimes().size(), expected_result_data.size());
+            for (unsigned i = 0; i < ode_solution.rGetTimes().size(); i++)
             {
-                TS_ASSERT_DELTA(solutions.rGetTimes()[i], expected_results[i][0], 1e-4);
-                TS_ASSERT_DELTA(solutions.rGetSolutions()[i][0], expected_results[i][1], 1e-4);
-                TS_ASSERT_DELTA(solutions.rGetSolutions()[i][1], expected_results[i][2], 1e-4);
+                TS_ASSERT_DELTA(ode_solution.rGetTimes()[i], expected_result_data[i][0], 1e-6);
+            }
+
+            // Check variable values
+            for (unsigned j = 1; j < expected_result_columns.size(); j++)
+            {
+                const std::string& var_name = expected_result_columns[j];
+                TSM_ASSERT_EQUALS(var_name.c_str(), ode_system.HasAnyVariable(var_name), true);
+
+                std::vector<double> values = ode_solution.GetAnyVariable(var_name);
+                TS_ASSERT_EQUALS(values.size(), expected_result_data.size());
+                for (unsigned i = 0; i < values.size(); i++)
+                {
+                    TSM_ASSERT_DELTA(var_name.c_str(), values[i], expected_result_data[i][j], 1e-4);
+                }
             }
 
             // Exports results to csv
-            // sth::export_csv("{{ ode_class_name }}.csv", ode_system.rGetStateVariableNames(), solutions);
+            // sth::export_csv("{{ ode_class_name }}.csv", ode_system.rGetStateVariableNames(), ode_solution);
         }
         catch (Exception& e)
         {

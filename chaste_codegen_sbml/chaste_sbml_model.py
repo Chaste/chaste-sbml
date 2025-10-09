@@ -187,7 +187,9 @@ class ChasteSbmlModel:
         )
         self._variable_types[id_] = VarType.CONSTANT_PARAMETER
 
-    def _add_derived_quantity(self, id_: str, label: str, initial_value: float, units: str, rhs: str) -> None:
+    def _add_derived_quantity(
+        self, id_: str, label: str, initial_value: float, units: str, rhs: str
+    ) -> None:
         """Add a derived quantity to the template variables."""
         self._derived_quantities.append(
             {
@@ -333,6 +335,7 @@ class ChasteSbmlModel:
         """
         # Convert all integers to doubles
         # TODO: Instead of regex, traverse AST and convert AST_INTEGER nodes to AST_REAL
+        # This has an adverse effect on literals like 4e-6 i.e. 4e-6.0 is invalid
         formula = re.sub(r"(?<!\.)\b[0-9]+\b(?!\.)", lambda x: f"{x[0]}.0", formula)
 
         # TODO: implies, lambda, delay
@@ -735,7 +738,7 @@ class ChasteSbmlModel:
                 # State variable
                 # Normalised ODE
                 rhs = self._odes[species_id]
-                if len(rhs[1:].replace('+', '\t').replace('-', '\t').split("\t")) > 1:
+                if len(rhs[1:].replace("+", "\t").replace("-", "\t").split("\t")) > 1:
                     # Add parentheses if there are multiple terms
                     rhs = f"({rhs})"
                 rhs = f"{rhs} / {compartment_id}"
