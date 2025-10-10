@@ -92,7 +92,7 @@ def generate_semantic_cases(suite_path: str) -> None:
     semantic_path = os.path.join(suite_path, "cases", "semantic")
 
     test_pack = []
-    for case_ in sorted(os.listdir(semantic_path))[0:50]:
+    for case_ in sorted(os.listdir(semantic_path)):
         case_path = os.path.join(semantic_path, case_)
         if not os.path.isdir(case_path):
             continue

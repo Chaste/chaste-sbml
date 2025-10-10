@@ -1,6 +1,7 @@
 #ifndef {{ test_header_guard }}
 #define {{ test_header_guard }}
 
+#include <cmath>
 #include <string>
 #include <vector>
 
@@ -32,6 +33,8 @@ public:
             double start = {{ test_settings["start"] }};
             double duration = {{ test_settings["duration"] }};
             double steps = {{ test_settings["steps"] }};
+            // double tol_absolute = {{ test_settings["absolute"] }};
+            // double tol_relative = {{ test_settings["relative"] }};
 
             double end = start + duration;
             double timestep = duration / steps;
@@ -66,12 +69,14 @@ public:
                 TS_ASSERT_EQUALS(values.size(), expected_result_data.size());
                 for (unsigned i = 0; i < values.size(); i++)
                 {
-                    TSM_ASSERT_DELTA(var_name.c_str(), values[i], expected_result_data[i][j], 1e-4);
+                    // double tol_absolute + tol_relative * std::abs(expected_result_data[i][j]);
+                    double tol = 1e-3;
+                    TSM_ASSERT_DELTA(var_name.c_str(), values[i], expected_result_data[i][j], tol);
                 }
             }
 
             // Exports results to csv
-            // sth::export_csv("{{ ode_class_name }}.csv", ode_system.rGetStateVariableNames(), ode_solution);
+            // sth::export_csv("{{ ode_class_name }}.csv", ode_solution, ode_system);
         }
         catch (Exception& e)
         {

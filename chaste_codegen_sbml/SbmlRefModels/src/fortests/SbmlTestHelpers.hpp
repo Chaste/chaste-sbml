@@ -44,7 +44,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdexcept>
 #include <vector>
 
-class OdeSolution;
+#include "AbstractOdeSystem.hpp"
+#include "OdeSolution.hpp"
 
 namespace sbmltesthelpers
 {
@@ -57,8 +58,8 @@ namespace sbmltesthelpers
  * @param solutions The OdeSolution containing the results.
  */
 void export_csv(const std::string& filename,
-                const std::vector<std::string>& var_names,
-                const OdeSolution& solutions);
+                OdeSolution& ode_solution,
+                AbstractOdeSystem& ode_system);
 
 /** Calculate the maximum of a vector of doubles.
  * @param vec The vector of doubles.

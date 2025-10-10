@@ -100,7 +100,7 @@ private:
             TS_ASSERT_DELTA(end_solution[2], 0.006785, 1e-3);
 
             // Exports results to csv
-            sth::export_csv("goldbeter_1991_" + solverName + ".csv", ode_system.rGetStateVariableNames(), solutions);
+            sth::export_csv("goldbeter_1991_" + solverName + ".csv", solutions, ode_system);
         }
         catch (Exception& e)
         {
