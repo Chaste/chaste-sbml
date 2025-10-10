@@ -104,13 +104,13 @@ private:
                 {
                     values.push_back(ode_solution.rGetSolutions()[j][i]);
                 }
-                double min_val = sth::min(values);
-                double max_val = sth::max(values);
-                double mean_val = sth::mean(values);
-                double std_val = sth::stdev(values);
-                double q1_val = sth::quantile(values, 0.25);
-                double q2_val = sth::quantile(values, 0.5);
-                double q3_val = sth::quantile(values, 0.75);
+                double min_val = sth::Min(values);
+                double max_val = sth::Max(values);
+                double mean_val = sth::Mean(values);
+                double std_val = sth::Stdev(values);
+                double q1_val = sth::Quantile(values, 0.25);
+                double q2_val = sth::Quantile(values, 0.5);
+                double q3_val = sth::Quantile(values, 0.75);
 
                 if (i == 0) // bcat_cm
                 {
@@ -176,13 +176,13 @@ private:
 
             // Compare derived quantity stats with Tellurium values
             {
-                double min_val = sth::min(drag);
-                double max_val = sth::max(drag);
-                double mean_val = sth::mean(drag);
-                double std_val = sth::stdev(drag);
-                double q1_val = sth::quantile(drag, 0.25);
-                double q2_val = sth::quantile(drag, 0.5);
-                double q3_val = sth::quantile(drag, 0.75);
+                double min_val = sth::Min(drag);
+                double max_val = sth::Max(drag);
+                double mean_val = sth::Mean(drag);
+                double std_val = sth::Stdev(drag);
+                double q1_val = sth::Quantile(drag, 0.25);
+                double q2_val = sth::Quantile(drag, 0.5);
+                double q3_val = sth::Quantile(drag, 0.75);
 
                 TS_ASSERT_DELTA(min_val, 1.0, 1e-3);
                 TS_ASSERT_DELTA(max_val, 1.0, 1e-3);

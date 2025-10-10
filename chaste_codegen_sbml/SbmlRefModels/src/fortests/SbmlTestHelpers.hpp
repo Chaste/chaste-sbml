@@ -49,6 +49,13 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace sbmltesthelpers
 {
+/** Append one OdeSolution to another.
+ *
+ * @param existing_solution The OdeSolution to append to.
+ * @param new_solution The OdeSolution to append from.
+ */
+void AppendOdeSolution(OdeSolution* existing_solution, OdeSolution* new_solution);
+
 /** Export results to a CSV file.
  *
  * The first column is time, and subsequent column names are given by var_names.
@@ -57,50 +64,50 @@ namespace sbmltesthelpers
  * @param var_names The names of the variables (for the header row).
  * @param solutions The OdeSolution containing the results.
  */
-void export_csv(const std::string& filename,
-                OdeSolution& ode_solution,
-                AbstractOdeSystem& ode_system);
+void ExportCsv(const std::string& filename,
+               OdeSolution& ode_solution,
+               AbstractOdeSystem& ode_system);
 
 /** Calculate the maximum of a vector of doubles.
  * @param vec The vector of doubles.
  * @return The maximum value.
  */
-inline double max(const std::vector<double>& vec);
+inline double Max(const std::vector<double>& vec);
 
 /** Calculate the mean of a vector of doubles.
  * @param vec The vector of doubles.
  * @return The mean value.
  */
-inline double mean(const std::vector<double>& vec);
+inline double Mean(const std::vector<double>& vec);
 
 /** Calculate the minimum of a vector of doubles.
  * @param vec The vector of doubles.
  * @return The minimum value.
  */
-inline double min(const std::vector<double>& vec);
+inline double Min(const std::vector<double>& vec);
 
 /** Calculate the standard deviation of a vector of doubles.
  * @param vec The vector of doubles.
  * @return The standard deviation value.
  */
-inline double stdev(const std::vector<double>& vec);
+inline double Stdev(const std::vector<double>& vec);
 
 /** Calculate the qth quantile of a vector of doubles.
  * @param vec The vector of doubles, assumed to be sorted.
  * @param q The quantile to calculate (between 0 and 1).
  * @return The qth quantile value.
  */
-inline double quantile(const std::vector<double>& vec, double q);
+inline double Quantile(const std::vector<double>& vec, double q);
 
 /** Calculate the variance of a vector of doubles.
  * @param vec The vector of doubles.
  * @return The variance value.
  */
-inline double variance(const std::vector<double>& vec);
+inline double Variance(const std::vector<double>& vec);
 } // namespace sbmltesthelpers
 
 // max
-inline double sbmltesthelpers::max(const std::vector<double>& vec)
+inline double sbmltesthelpers::Max(const std::vector<double>& vec)
 {
     if (vec.empty())
     {
@@ -110,7 +117,7 @@ inline double sbmltesthelpers::max(const std::vector<double>& vec)
 }
 
 // mean
-inline double sbmltesthelpers::mean(const std::vector<double>& vec)
+inline double sbmltesthelpers::Mean(const std::vector<double>& vec)
 {
     if (vec.empty())
     {
@@ -120,7 +127,7 @@ inline double sbmltesthelpers::mean(const std::vector<double>& vec)
 }
 
 // min
-inline double sbmltesthelpers::min(const std::vector<double>& vec)
+inline double sbmltesthelpers::Min(const std::vector<double>& vec)
 {
     if (vec.empty())
     {
@@ -130,13 +137,13 @@ inline double sbmltesthelpers::min(const std::vector<double>& vec)
 }
 
 // stdev
-inline double sbmltesthelpers::stdev(const std::vector<double>& vec)
+inline double sbmltesthelpers::Stdev(const std::vector<double>& vec)
 {
-    return std::sqrt(sbmltesthelpers::variance(vec));
+    return std::sqrt(sbmltesthelpers::Variance(vec));
 }
 
 // quantile
-inline double sbmltesthelpers::quantile(const std::vector<double>& vec, double q)
+inline double sbmltesthelpers::Quantile(const std::vector<double>& vec, double q)
 {
     if (vec.empty())
     {
@@ -165,13 +172,13 @@ inline double sbmltesthelpers::quantile(const std::vector<double>& vec, double q
 }
 
 // variance
-inline double sbmltesthelpers::variance(const std::vector<double>& vec)
+inline double sbmltesthelpers::Variance(const std::vector<double>& vec)
 {
     if (vec.size() < 2)
     {
         throw std::invalid_argument("Variance requires at least two data points.");
     }
-    double mean_val = sbmltesthelpers::mean(vec);
+    double mean_val = sbmltesthelpers::Mean(vec);
     double accum = 0.0;
     for (double val : vec)
     {

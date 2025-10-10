@@ -8,9 +8,27 @@
 
 #include "SbmlTestHelpers.hpp"
 
-void sbmltesthelpers::export_csv(const std::string& filename,
-                                 OdeSolution& ode_solution,
-                                 AbstractOdeSystem& ode_system)
+void sbmltesthelpers::AppendOdeSolution(OdeSolution* existing_solution, OdeSolution* new_solution)
+{
+    if (!existing_solution || !new_solution)
+    {
+        throw std::invalid_argument("Null OdeSolution pointer provided.");
+    }
+
+    existing_solution->rGetSolutions().insert(existing_solution->rGetSolutions().end(),
+                                              new_solution->rGetSolutions().begin() + 1,
+                                              new_solution->rGetSolutions().end());
+
+    existing_solution->rGetTimes().insert(existing_solution->rGetTimes().end(),
+                                          new_solution->rGetTimes().begin() + 1,
+                                          new_solution->rGetTimes().end());
+
+    existing_solution->SetNumberOfTimeSteps(existing_solution->rGetTimes().size());
+}
+
+void sbmltesthelpers::ExportCsv(const std::string& filename,
+                                OdeSolution& ode_solution,
+                                AbstractOdeSystem& ode_system)
 {
     OutputFileHandler handler("");
     out_stream file = handler.OpenOutputFile(filename);

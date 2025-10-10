@@ -178,37 +178,37 @@ private:
                     values.push_back(solutions[j][i]);
                 }
 
-                double min_val = sth::min(values);
+                double min_val = sth::Min(values);
                 exp_val = expected_stats[i][0][0];
                 tol = expected_stats[i][1][0];
                 TSM_ASSERT_DELTA(var_name, min_val, exp_val, tol);
 
-                double max_val = sth::max(values);
+                double max_val = sth::Max(values);
                 exp_val = expected_stats[i][0][1];
                 tol = expected_stats[i][1][1];
                 TSM_ASSERT_DELTA(var_name, max_val, exp_val, tol);
 
-                double mean_val = sth::mean(values);
+                double mean_val = sth::Mean(values);
                 exp_val = expected_stats[i][0][2];
                 tol = expected_stats[i][1][2];
                 TSM_ASSERT_DELTA(var_name, mean_val, exp_val, tol);
 
-                double std_val = sth::stdev(values);
+                double std_val = sth::Stdev(values);
                 exp_val = expected_stats[i][0][3];
                 tol = expected_stats[i][1][3];
                 TSM_ASSERT_DELTA(var_name, std_val, exp_val, tol);
 
-                double q1_val = sth::quantile(values, 0.25);
+                double q1_val = sth::Quantile(values, 0.25);
                 exp_val = expected_stats[i][0][4];
                 tol = expected_stats[i][1][4];
                 TSM_ASSERT_DELTA(var_name, q1_val, exp_val, tol);
 
-                double q2_val = sth::quantile(values, 0.5);
+                double q2_val = sth::Quantile(values, 0.5);
                 exp_val = expected_stats[i][0][5];
                 tol = expected_stats[i][1][5];
                 TSM_ASSERT_DELTA(var_name, q2_val, exp_val, tol);
 
-                double q3_val = sth::quantile(values, 0.75);
+                double q3_val = sth::Quantile(values, 0.75);
                 exp_val = expected_stats[i][0][6];
                 tol = expected_stats[i][1][6];
                 TSM_ASSERT_DELTA(var_name, q3_val, exp_val, tol);
