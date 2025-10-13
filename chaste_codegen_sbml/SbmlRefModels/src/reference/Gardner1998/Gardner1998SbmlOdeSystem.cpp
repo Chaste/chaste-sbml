@@ -22,6 +22,18 @@ Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem()
     Y = 1.0;
     Z = 1.0;
 
+    // DERIVED QUANTITIES
+
+    // VARIABLE PARAMETERS
+    Cell = 1.0;
+
+    // RULE-BASED PARAMETERS
+    V1 = 0.0;
+    V3 = 0.0;
+
+    // INITIAL ASSIGNMENTS
+
+    // ODE SYSTEM INFORMATION
     SetDefaultInitialCondition(0, C);
     SetDefaultInitialCondition(1, X);
     SetDefaultInitialCondition(2, M);
@@ -34,16 +46,7 @@ Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem()
     mStateVariables.push_back(Y);
     mStateVariables.push_back(Z);
 
-    // DERIVED QUANTITIES
-
-    // VARIABLE PARAMETERS
-    Cell = 1.0;
-
     mParameters.push_back(Cell);
-
-    // RULE-BASED PARAMETERS
-    V1 = 0.0;
-    V3 = 0.0;
 
     // REACTIONS
     reaction1 = 0.0;

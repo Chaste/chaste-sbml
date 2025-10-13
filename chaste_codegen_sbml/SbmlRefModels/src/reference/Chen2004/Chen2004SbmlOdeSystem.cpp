@@ -53,6 +53,64 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
     SWI5P = 0.02;
     TEM1GTP = 0.9;
 
+    // DERIVED QUANTITIES
+    BCK2 = 0.0;
+    CDC14T = 2.0;
+    CDC15i = 0.0;
+    CDC6T = 0.0;
+    CKIT = 0.0;
+    CLB2T = 0.17;
+    CLB5T = 0.12;
+    CLN3 = 0.0;
+    IE = 0.0;
+    MCM1 = 0.0;
+    NET1T = 2.8;
+    PE = 0.0;
+    SBF = 0.0;
+    SIC1T = 0.0;
+    TEM1GDP = 0.0;
+
+    // VARIABLE PARAMETERS
+    cell = 1.0;
+    BUB2 = 0.2;
+    LTE1 = 0.1;
+    MAD2 = 0.01;
+    bub2l = 0.2;
+    CDC15T = 1.0;
+    ESP1T = 1.0;
+    IET = 1.0;
+    KEZ = 0.3;
+    KEZ2 = 0.2;
+    lte1h = 1.0;
+    lte1l = 0.1;
+    mad2l = 0.01;
+    TEM1T = 1.0;
+
+    // RULE-BASED PARAMETERS
+    D = 0.0;
+    mu = 0.0;
+    Vdb5 = 0.0;
+    Vdb2 = 0.0;
+    Vasbf = 0.0;
+    Visbf = 0.0;
+    Vkpc1 = 0.0;
+    Vkpf6 = 0.0;
+    Vacdh = 0.0;
+    Vicdh = 0.0;
+    Vppnet = 0.0;
+    Vkpnet = 0.0;
+    Vdppx = 0.0;
+    Vdpds = 0.0;
+    Vaiep = 0.0;
+    Vd2c1 = 0.0;
+    Vd2f6 = 0.0;
+    Vppc1 = 0.0;
+    Vppf6 = 0.0;
+    F = 0.0;
+
+    // INITIAL ASSIGNMENTS
+
+    // ODE SYSTEM INFORMATION
     SetDefaultInitialCondition(0, BUD);
     SetDefaultInitialCondition(1, C2);
     SetDefaultInitialCondition(2, C2P);
@@ -127,39 +185,6 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
     mStateVariables.push_back(SWI5P);
     mStateVariables.push_back(TEM1GTP);
 
-    // DERIVED QUANTITIES
-    BCK2 = 0.0;
-    CDC14T = 2.0;
-    CDC15i = 0.0;
-    CDC6T = 0.0;
-    CKIT = 0.0;
-    CLB2T = 0.17;
-    CLB5T = 0.12;
-    CLN3 = 0.0;
-    IE = 0.0;
-    MCM1 = 0.0;
-    NET1T = 2.8;
-    PE = 0.0;
-    SBF = 0.0;
-    SIC1T = 0.0;
-    TEM1GDP = 0.0;
-
-    // VARIABLE PARAMETERS
-    cell = 1.0;
-    BUB2 = 0.2;
-    LTE1 = 0.1;
-    MAD2 = 0.01;
-    bub2l = 0.2;
-    CDC15T = 1.0;
-    ESP1T = 1.0;
-    IET = 1.0;
-    KEZ = 0.3;
-    KEZ2 = 0.2;
-    lte1h = 1.0;
-    lte1l = 0.1;
-    mad2l = 0.01;
-    TEM1T = 1.0;
-
     mParameters.push_back(cell);
     mParameters.push_back(BUB2);
     mParameters.push_back(LTE1);
@@ -174,28 +199,6 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
     mParameters.push_back(lte1l);
     mParameters.push_back(mad2l);
     mParameters.push_back(TEM1T);
-
-    // RULE-BASED PARAMETERS
-    D = 0.0;
-    mu = 0.0;
-    Vdb5 = 0.0;
-    Vdb2 = 0.0;
-    Vasbf = 0.0;
-    Visbf = 0.0;
-    Vkpc1 = 0.0;
-    Vkpf6 = 0.0;
-    Vacdh = 0.0;
-    Vicdh = 0.0;
-    Vppnet = 0.0;
-    Vkpnet = 0.0;
-    Vdppx = 0.0;
-    Vdpds = 0.0;
-    Vaiep = 0.0;
-    Vd2c1 = 0.0;
-    Vd2f6 = 0.0;
-    Vppc1 = 0.0;
-    Vppf6 = 0.0;
-    F = 0.0;
 
     // REACTIONS
     Growth = 0.0;
@@ -369,7 +372,7 @@ void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
     rDY[19] = (CLB5CDC6_complex_formation - CLB5CDC6_dissociation - F5_phosphorylation + F5P_dephosphorylation - CLB5_degradation_in_F5) / cell;                                                                                                            // d[F5]/dt
     rDY[20] = (F5_phosphorylation - F5P_dephosphorylation - CDC6_degradation_in_F5P - CLB5_degradation_in_F5P) / cell;                                                                                                                                      // d[F5P]/dt
     rDY[21] = (Activation_of_IEP - Inactivation_1) / cell;                                                                                                                                                                                                  // d[IEP]/dt
-    rDY[22] = Growth / cell;                                                                                                                                                                                                                              // d[MASS]/dt
+    rDY[22] = Growth / cell;                                                                                                                                                                                                                                // d[MASS]/dt
     rDY[23] = (-Assoc_with_NET1_to_form_RENT + Dissoc_from_RENT + Net1_synthesis - Net1_degradation - NET1_phosphorylation + dephosphorylation_1 + Degradation_of_CDC14_in_RENT) / cell;                                                                    // d[NET1]/dt
     rDY[24] = (-Assoc_with_NET1P_to_form_RENTP + Dissoc_from_RENP - Net1P_degradation + NET1_phosphorylation - dephosphorylation_1 + Degradation_of_CDC14_in_RENTP) / cell;                                                                                 // d[NET1P]/dt
     rDY[25] = (DNA_synthesis - Negative_regulation_of_DNA_synthesis) / cell;                                                                                                                                                                                // d[ORI]/dt

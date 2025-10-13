@@ -25,6 +25,20 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem()
     CKIt = 0.001;
     SK = 0.001;
 
+    // DERIVED QUANTITIES
+    CycB = 0.0;
+    Trimer = 0.0;
+    Mad = 0.0;
+
+    // VARIABLE PARAMETERS
+    cell = 1.0;
+
+    // RULE-BASED PARAMETERS
+    TF = 0.0;
+
+    // INITIAL ASSIGNMENTS
+
+    // ODE SYSTEM INFORMATION
     SetDefaultInitialCondition(0, CycBt);
     SetDefaultInitialCondition(1, Cdc20a);
     SetDefaultInitialCondition(2, Cdh1);
@@ -43,18 +57,7 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem()
     mStateVariables.push_back(CKIt);
     mStateVariables.push_back(SK);
 
-    // DERIVED QUANTITIES
-    CycB = 0.0;
-    Trimer = 0.0;
-    Mad = 0.0;
-
-    // VARIABLE PARAMETERS
-    cell = 1.0;
-
     mParameters.push_back(cell);
-
-    // RULE-BASED PARAMETERS
-    TF = 0.0;
 
     // REACTIONS
     CycBt_synthesis = 0.0;
@@ -120,7 +123,7 @@ void TysonNovak2001SbmlOdeSystem::EvaluateYDerivatives(double time, const std::v
     rDY[0] = (CycBt_synthesis - CycBdegradation - CycBdegradationviaCdh1 - CycBtdegradationviaCdc20a) / cell; // d[CycBt]/dt
     rDY[1] = (Cdc20activation - Cdc20ainhibition - Cdc20adegradation) / cell;                                 // d[Cdc20a]/dt
     rDY[2] = (Cdh1synthesis - Cdh1degradation) / cell;                                                        // d[Cdh1]/dt
-    rDY[3] = growth / cell;                                                                                 // d[m]/dt
+    rDY[3] = growth / cell;                                                                                   // d[m]/dt
     rDY[4] = (Cdc20tsynthesis - Cdc20t_deg) / cell;                                                           // d[Cdc20t]/dt
     rDY[5] = (IEPsynthesis - IEPdegradation) / cell;                                                          // d[IEP]/dt
     rDY[6] = (CKItsynthesis - CKIdegradation - CKItphosphorilationviaSK - eq_7) / cell;                       // d[CKIt]/dt

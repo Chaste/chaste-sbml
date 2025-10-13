@@ -20,6 +20,18 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem()
     M = 0.01;
     X = 0.01;
 
+    // DERIVED QUANTITIES
+
+    // VARIABLE PARAMETERS
+    cell = 1.0;
+
+    // RULE-BASED PARAMETERS
+    V1 = 0.0;
+    V3 = 0.0;
+
+    // INITIAL ASSIGNMENTS
+
+    // ODE SYSTEM INFORMATION
     SetDefaultInitialCondition(0, C);
     SetDefaultInitialCondition(1, M);
     SetDefaultInitialCondition(2, X);
@@ -28,16 +40,7 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem()
     mStateVariables.push_back(M);
     mStateVariables.push_back(X);
 
-    // DERIVED QUANTITIES
-
-    // VARIABLE PARAMETERS
-    cell = 1.0;
-
     mParameters.push_back(cell);
-
-    // RULE-BASED PARAMETERS
-    V1 = 0.0;
-    V3 = 0.0;
 
     // REACTIONS
     reaction1 = 0.0;

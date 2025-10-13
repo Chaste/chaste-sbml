@@ -17,9 +17,10 @@ class VarType(Enum):
     CONSTANT_PARAMETER = 4
     RULE_BASED_PARAMETER = 5
     ASSIGNMENT_RULE = 6
-    FUNCTION = 7
-    REACTION = 8
-    UNKNOWN = 9
+    INITIAL_ASSIGNMENT = 7
+    FUNCTION = 8
+    REACTION = 9
+    UNKNOWN = 10
 
 
 class EventType(Enum):

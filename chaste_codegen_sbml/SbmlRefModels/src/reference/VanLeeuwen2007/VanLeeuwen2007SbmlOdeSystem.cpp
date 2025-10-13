@@ -28,6 +28,23 @@ VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem()
     C_cT = 0.0;
     Y = 0.48;
 
+    // DERIVED QUANTITIES
+    C_F = 2.54;
+    C_T = 2.54;
+    drag = 1.0;
+
+    // VARIABLE PARAMETERS
+    cytosolmembraneandnucleus = 1.0;
+    wnt_level = 0.0;
+    gamma1 = 1.0;
+    gamma2 = 1.0;
+    ComplexTransitThreshold = 1.0;
+
+    // RULE-BASED PARAMETERS
+
+    // INITIAL ASSIGNMENTS
+
+    // ODE SYSTEM INFORMATION
     SetDefaultInitialCondition(0, X);
     SetDefaultInitialCondition(1, D);
     SetDefaultInitialCondition(2, C_o);
@@ -52,25 +69,11 @@ VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem()
     mStateVariables.push_back(C_cT);
     mStateVariables.push_back(Y);
 
-    // DERIVED QUANTITIES
-    C_F = 2.54;
-    C_T = 2.54;
-    drag = 1.0;
-
-    // VARIABLE PARAMETERS
-    cytosolmembraneandnucleus = 1.0;
-    wnt_level = 0.0;
-    gamma1 = 1.0;
-    gamma2 = 1.0;
-    ComplexTransitThreshold = 1.0;
-
     mParameters.push_back(cytosolmembraneandnucleus);
     mParameters.push_back(wnt_level);
     mParameters.push_back(gamma1);
     mParameters.push_back(gamma2);
     mParameters.push_back(ComplexTransitThreshold);
-
-    // RULE-BASED PARAMETERS
 
     // REACTIONS
     mwd6b35759_f098_484c_9c65_e84e7e4b61e4 = 0.0;

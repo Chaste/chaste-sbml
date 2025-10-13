@@ -3,7 +3,6 @@
 import abc
 import os
 import pathlib
-import re
 import subprocess
 from typing import TYPE_CHECKING
 
@@ -20,11 +19,12 @@ from libsbml import (
     SBML_ASSIGNMENT_RULE,
     SBML_RATE_RULE,
     SBMLReader,
-    formulaToString,
 )
 
 from ._config import NON_DIM_UNITS, ROOT_DIR, EventType, ModelType, VarType
 from ._utils import (
+    convert_ast_formula,
+    convert_str_formula,
     generate_header_guard,
     get_function_definition_arguments,
     get_species_concentration,
@@ -36,7 +36,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from jinja2.environment import Template
-    from libsbml import ASTNode, Rule
+    from libsbml import ASTNode
 
 
 class ChasteSbmlModel:
@@ -101,6 +101,7 @@ class ChasteSbmlModel:
         self._sbml_compartments = self._sbml_model.getListOfCompartments()
         self._sbml_events = self._sbml_model.getListOfEvents()
         self._sbml_function_definitions = self._sbml_model.getListOfFunctionDefinitions()
+        self._sbml_initial_assignments = self._sbml_model.getListOfInitialAssignments()
         self._sbml_parameters = self._sbml_model.getListOfParameters()
         self._sbml_reactions = self._sbml_model.getListOfReactions()
         self._sbml_rules = self._sbml_model.getListOfRules()
@@ -116,6 +117,7 @@ class ChasteSbmlModel:
         self._variable_parameters = []  # [ { id: str, label: str, ... } ]
         self._constant_parameters = []  # [ { id: str, label: str, ... } ]
         self._rule_based_parameters = []  # [ { id: str, label: str, ... } ]
+        self._initial_assignments = []  # [ { id: str, label: str, ... } ]
         self._reactions = []  # [ { id: str, label: str, ... } ]
         self._events = []  # [ { name: str, trigger: str, ... } ]
         self._functions = []  # [ { name: str, args: [str], body: str } ]
@@ -131,7 +133,10 @@ class ChasteSbmlModel:
         return self._outputs
 
     def write(self, output_directory=None):
-        """Generate Chaste code and write to file."""
+        """Generate Chaste code and write to file.
+
+        :param output_directory: The output directory. Defaults to the current directory.
+        """
         # Generate the code
         self._generate_outputs()
 
@@ -162,7 +167,13 @@ class ChasteSbmlModel:
     # -- PRIVATE ---------------------------------------
 
     def _add_assignment_rule(self, id_: str, label: str, lhs: str, rhs: str) -> None:
-        """Add an assignment rule to the template variables."""
+        """Add an assignment rule to the template variables.
+
+        :param id_: The rule ID.
+        :param label: The rule description.
+        :param lhs: The left-hand side of the rule.
+        :param rhs: The right-hand side of the rule.
+        """
         self._assignment_rules.append(
             {
                 "id": id_,
@@ -175,7 +186,13 @@ class ChasteSbmlModel:
         self._variable_types[id_] = VarType.ASSIGNMENT_RULE
 
     def _add_constant_parameter(self, id_: str, label: str, value: float, units: str) -> None:
-        """Add a constant parameter to the template variables."""
+        """Add a constant parameter to the template variables.
+
+        :param id_: The parameter ID.
+        :param label: The parameter description.
+        :param value: The parameter value.
+        :param units: The parameter units.
+        """
         self._constant_parameters.append(
             {
                 "id": id_,
@@ -190,7 +207,13 @@ class ChasteSbmlModel:
     def _add_derived_quantity(
         self, id_: str, label: str, initial_value: float, units: str, rhs: str
     ) -> None:
-        """Add a derived quantity to the template variables."""
+        """Add a derived quantity to the template variables.
+        :param id_: The variable ID.
+        :param label: The variable description.
+        :param initial_value: The variable initial value.
+        :param units: The variable units.
+        :param rhs: The variable formula.
+        """
         self._derived_quantities.append(
             {
                 "id": id_,
@@ -249,6 +272,25 @@ class ChasteSbmlModel:
         )
         self._variable_types[id_] = VarType.FUNCTION
 
+    def _add_initial_assignment(self, id_: str, label: str, lhs: str, rhs: str) -> None:
+        """Add an initial assignment to the template variables.
+
+        :param id_: The rule ID.
+        :param label: The rule description.
+        :param lhs: The left-hand side of the rule.
+        :param rhs: The right-hand side of the rule.
+        """
+        self._initial_assignments.append(
+            {
+                "id": id_,
+                "label": label,
+                "index": len(self._initial_assignments),
+                "lhs": lhs,
+                "rhs": rhs,
+            }
+        )
+        self._variable_types[id_] = VarType.INITIAL_ASSIGNMENT
+
     def _add_output(self, filename: str, code: str) -> None:
         """Add generated code to the outputs dictionary.
 
@@ -260,7 +302,13 @@ class ChasteSbmlModel:
     def _add_reaction(
         self, id_: str, label: str, rhs: str, parameters: list[dict[str, "Any"]]
     ) -> None:
-        """Add a reaction to the template variables."""
+        """Add a reaction to the template variables.
+
+        :param id_: The reaction ID.
+        :param label: The reaction description.
+        :param rhs: The reaction formula.
+        :param parameters: The reaction parameters.
+        """
         self._reactions.append(
             {
                 "id": id_,
@@ -275,7 +323,13 @@ class ChasteSbmlModel:
     def _add_rule_based_parameter(
         self, id_: str, label: str, initial_value: float, units: str = NON_DIM_UNITS
     ) -> None:
-        """Add a rule parameter to the template variables."""
+        """Add a rule parameter to the template variables.
+
+        :param id_: The parameter ID.
+        :param label: The parameter description.
+        :param initial_value: The parameter initial value.
+        :param units: The parameter units.
+        """
         self._rule_based_parameters.append(
             {
                 "id": id_,
@@ -290,7 +344,14 @@ class ChasteSbmlModel:
     def _add_state_variable(
         self, id_: str, label: str, initial_value: float, units: str, rhs: str
     ) -> None:
-        """Add a state variable to the template variables."""
+        """Add a state variable to the template variables.
+
+        :param id_: The variable ID.
+        :param label: The variable description.
+        :param initial_value: The variable initial value.
+        :param units: The variable units.
+        :param rhs: The variable formula.
+        """
         self._state_variables.append(
             {
                 "id": id_,
@@ -306,7 +367,13 @@ class ChasteSbmlModel:
     def _add_variable_parameter(
         self, id_: str, label: str, initial_value: float, units: str = NON_DIM_UNITS
     ) -> None:
-        """Add a variable parameter to the template variables."""
+        """Add a variable parameter to the template variables.
+
+        :param id_: The parameter ID.
+        :param label: The parameter description.
+        :param initial_value: The parameter initial value.
+        :param units: The parameter units.
+        """
         self._variable_parameters.append(
             {
                 "id": id_,
@@ -317,145 +384,6 @@ class ChasteSbmlModel:
             }
         )
         self._variable_types[id_] = VarType.VARIABLE_PARAMETER
-
-    def _convert_ast_formula(self, ast_formula: "ASTNode") -> str:
-        """Convert SBML AST formula to equivalent C++ string.
-
-        :param ast: The AST formula.
-        :param convert_names: Whether to convert state variable and parameter names.
-        :return: The equivalent C++ string.
-        """
-        return self._convert_str_formula(formulaToString(ast_formula))
-
-    def _convert_str_formula(self, formula: str) -> str:
-        """Convert SBML string formula to equivalent C++ string.
-
-        :param ast: The string formula.
-        :return: The equivalent C++ string.
-        """
-        # Convert all integers to doubles
-        # TODO: Instead of regex, traverse AST and convert AST_INTEGER nodes to AST_REAL
-        # This has an adverse effect on literals like 4e-6 i.e. 4e-6.0 is invalid
-        # Also, this shouldn't apply to numbers encoded as <cn type="integer">.
-        formula = re.sub(r"(?<!\.)\b[0-9]+\b(?!\.)", lambda x: f"{x[0]}.0", formula)
-
-        # TODO: implies, lambda, delay
-
-        # SBML contants to be replaced with C++ equivalents
-        constants = {
-            "avogadro": "sm::AVOGADRO",
-            "exponentiale": "M_E",
-            "inf": "std::numeric_limits<double>::infinity()",
-            "infinity": "std::numeric_limits<double>::infinity()",
-            "nan": "NAN",
-            "notanumber": "NAN",
-            "pi": "M_PI",
-            "time": "SimulationTime::Instance()->GetTimeStep()",
-        }
-        # skip: "true", "false"
-
-        # SBML functions with same name as C++ equivalents
-        unchanged_functions = {
-            "acos",
-            "acosh",
-            "asin",
-            "asinh",
-            "atan",
-            "atanh",
-            "ceil",
-            "cos",
-            "cosh",
-            "exp",
-            "floor",
-            "pow",
-            "sin",
-            "sinh",
-            "sqrt",
-            "tan",
-            "tanh",
-        }
-
-        # SBML functions with different names in C++
-        renamed_functions = {
-            "abs": "fabs",
-            "arccos": "acos",
-            "arccosh": "acosh",
-            "arcsin": "asin",
-            "arcsinh": "asinh",
-            "arctan": "atan",
-            "arctanh": "atanh",
-            "ceiling": "ceil",
-            "ln": "log",
-            "power": "pow",
-            "rem": "fmod",
-        }
-
-        # SBML functions with custom implementations
-        custom_functions = {
-            "and": "and_",
-            "acot": "acot",
-            "acoth": "acoth",
-            "acsc": "acsc",
-            "acsch": "acsch",
-            "asec": "asec",
-            "asech": "asech",
-            "arccot": "acot",
-            "arccoth": "acoth",
-            "arccsc": "acsc",
-            "arccsch": "acsch",
-            "arcsec": "asec",
-            "arcsech": "asech",
-            "cot": "cot",
-            "coth": "coth",
-            "csc": "csc",
-            "csch": "csch",
-            "eq": "eq",
-            "factorial": "factorial",
-            "geq": "geq",
-            "gt": "gt",
-            "leq": "leq",
-            "log": "log",
-            "lt": "lt",
-            "max": "max",
-            "min": "min",
-            "neq": "neq",
-            "not": "not_",
-            "or": "or_",
-            "piecewise": "piecewise",
-            "quotient": "quotient",
-            "root": "root",
-            "sec": "sec",
-            "sech": "sech",
-            "sqr": "sqr",
-            "xor": "xor_",
-        }
-
-        # TODO: From SBML Level 3 upwards, log defaults to base 10.
-        # SBML versions lower than 3 default to base e.
-        # See https://sbml.org/software/libsbml/5.18.0/docs/formatted/python-api/namespacelibsbml.html#a8e96a5a70569ae32655c6302638f6dc3  # noqa: B950
-
-        tokens = re.findall(r"\w+|\W+", formula)
-
-        cpp_tokens = []
-        for token in tokens:
-            cpp_token = token
-
-            # Replace function names and constants.
-            if token in constants:
-                cpp_token = f"{constants[token]}"
-
-            elif token in unchanged_functions:
-                cpp_token = f"std::{token}"
-
-            elif token in renamed_functions:
-                cpp_token = f"std::{renamed_functions[token]}"
-
-            elif token in custom_functions:
-                cpp_token = f"sm::{custom_functions[token]}"
-
-            cpp_tokens.append(cpp_token)
-        cpp_formula = "".join(cpp_tokens)
-        return cpp_formula
 
     def _extract_odes(self) -> None:
         """Extract the ODEs equations for each species."""
@@ -505,7 +433,7 @@ class ChasteSbmlModel:
             if lhs in self._odes:
                 raise ValueError(f"{lhs} has both a rate rule and a reaction.")
 
-            rhs = self._convert_str_formula(rule.getFormula())
+            rhs = convert_str_formula(rule.getFormula())
             self._odes[lhs] = rhs
 
     def _format_compartments(self) -> None:
@@ -533,7 +461,7 @@ class ChasteSbmlModel:
                     break
 
             trigger_math = event.getTrigger().getMath()
-            trigger_formula = self._convert_ast_formula(trigger_math)
+            trigger_formula = convert_ast_formula(trigger_math)
 
             trigger_distance = "1.0"
             node_type = trigger_math.getType()
@@ -545,8 +473,8 @@ class ChasteSbmlModel:
                 AST_RELATIONAL_GEQ,
                 AST_RELATIONAL_NEQ,
             ]:
-                lc = self._convert_ast_formula(trigger_math.getLeftChild())
-                rc = self._convert_ast_formula(trigger_math.getRightChild())
+                lc = convert_ast_formula(trigger_math.getLeftChild())
+                rc = convert_ast_formula(trigger_math.getRightChild())
 
                 # Distance is negative when the condition is false,
                 # zero at the point where the condition switches from false to true,
@@ -604,7 +532,7 @@ class ChasteSbmlModel:
                 lhs = assignment.getVariable()
                 type_ = self._get_variable_type(lhs)
                 index = self._get_variable_index(lhs)
-                rhs = self._convert_ast_formula(assignment.getMath())
+                rhs = convert_ast_formula(assignment.getMath())
 
                 assignments.append(
                     {
@@ -624,7 +552,7 @@ class ChasteSbmlModel:
             label = fd.getName().strip()
             arg_list = get_function_definition_arguments(fd)
             args = ", ".join(map(lambda x: f"double {x}", arg_list))
-            body = self._convert_ast_formula(fd.getBody())
+            body = convert_ast_formula(fd.getBody())
 
             self._add_function(
                 fd_id,
@@ -632,6 +560,20 @@ class ChasteSbmlModel:
                 args,
                 body,
             )
+
+    def _format_initial_assignments(self) -> None:
+        """Add initial assignments to template variables."""
+        # Sort initial assignments - variables on rhs must be defined before they are used
+        formulas = [(ia.getSymbol(), ia.getMath()) for ia in self._sbml_initial_assignments]
+        sort_index = self._sort_formulas(formulas)
+        sorted_assignments = [self._sbml_initial_assignments.get(i) for i in sort_index]
+
+        for ia in sorted_assignments:
+            ia_id = ia.getId()
+            label = ia.getName().strip()
+            lhs = ia.getSymbol()
+            rhs = convert_ast_formula(ia.getMath())
+            self._add_initial_assignment(ia_id, label, lhs, rhs)
 
     def _format_parameters(self) -> None:
         """Add parameters to template variables."""
@@ -669,7 +611,7 @@ class ChasteSbmlModel:
             label = reaction.getName().strip()
 
             kinetic_law = reaction.getKineticLaw()
-            rhs = self._convert_str_formula(kinetic_law.getFormula())
+            rhs = convert_str_formula(kinetic_law.getFormula())
 
             reaction_parameters = []
             sbml_parameters = kinetic_law.getListOfParameters()
@@ -691,13 +633,15 @@ class ChasteSbmlModel:
         """Add rules to template variables."""
         # Sort assignment rules - variables on rhs must be defined before they are used
         assignment_rules = [r for r in self._sbml_rules if r.getTypeCode() == SBML_ASSIGNMENT_RULE]
-        assignment_rules = self._sort_rules(assignment_rules)
+        formulas = [(r.getVariable(), r.getMath()) for r in assignment_rules]
+        sort_index = self._sort_formulas(formulas)
+        sorted_rules = [assignment_rules[i] for i in sort_index]
 
-        for rule in assignment_rules:
+        for rule in sorted_rules:
             rule_id = rule.getId()
             label = rule.getName().strip()
             lhs = rule.getVariable()
-            rhs = self._convert_str_formula(rule.getFormula())
+            rhs = convert_str_formula(rule.getFormula())
             self._add_assignment_rule(rule_id, label, lhs, rhs)
 
         # Algebraic rules are not implemented
@@ -808,7 +752,11 @@ class ChasteSbmlModel:
         return 3600.0
 
     def _get_variable_index(self, id_: str) -> int:
-        """Get the index of a variable."""
+        """Get the index of a variable.
+
+        :param id_: The variable ID.
+        :return: The variable index.
+        """
         var_type = self._get_variable_type(id_)
 
         if var_type == VarType.STATE_VARIABLE:
@@ -854,7 +802,10 @@ class ChasteSbmlModel:
         raise ValueError(f"ID '{id_}' is not a recognized variable.")
 
     def _get_variable_type(self, var_id: str) -> bool:
-        """Get the type of a variable based on its ID."""
+        """Get the type of a variable based on its ID.
+
+        :param var_id: The variable ID.
+        """
         return self._variable_types.get(var_id, VarType.UNKNOWN)
 
     def _populate_template_vars(self) -> None:
@@ -865,6 +816,7 @@ class ChasteSbmlModel:
             derived_quantities=self._derived_quantities,
             events=self._events,
             functions=self._functions,
+            initial_assignments=self._initial_assignments,
             ode_class_name=self._ode_class_name,
             ode_header_guard=generate_header_guard(self._ode_hpp_filename),
             ode_hpp_file=self._ode_hpp_filename,
@@ -903,6 +855,7 @@ class ChasteSbmlModel:
         self._variable_parameters = []
         self._constant_parameters = []
         self._rule_based_parameters = []
+        self._initial_assignments = []
 
         self._reactions = []
         self._events = []
@@ -914,6 +867,8 @@ class ChasteSbmlModel:
         self._format_compartments()
         self._format_species()
         self._format_parameters()
+        print("Formatting initial assignments...")
+        self._format_initial_assignments()
 
         self._format_reactions()
         self._format_events()
@@ -921,15 +876,15 @@ class ChasteSbmlModel:
 
         self._populate_template_vars()
 
-    def _sort_rules(self, rules: list["Rule"]) -> list["Rule"]:
-        """Sort rules based on their dependency.
+    def _sort_formulas(self, formulas: list[tuple[str, "ASTNode"]]) -> list[int]:
+        """Sort formulas based on their dependency.
 
-        Rules are sorted such that if rule A depends on B (A -> B), then B comes
-        before A. It is assumed that the input rules are acyclic. This function
-        can't sort cyclic dependencies such as A -> B -> A, or A -> B -> C -> A.
+        Formulas are sorted such that if formula A depends on B (i.e. A -> B),
+        then B comes before A. It is assumed that the input formulas are acyclic.
+        This function can't sort cyclic dependencies such as A -> B -> C -> A.
 
-        :param rules: The list of rules to sort.
-        :return: The sorted list of rules.
+        :param formulas: A dictionary of (id, lhs, rhs) tuples.
+        :return: A list of sorted formula IDs.
         """
 
         def _search_formula(node: "ASTNode", name: str) -> bool:
@@ -947,52 +902,52 @@ class ChasteSbmlModel:
 
         _compare_cache = dict()
 
-        def _compare_rules(rule_a: "Rule", rule_b: "Rule") -> int:
-            """Compare two rules based on their dependency.
+        def _compare_formulas(
+            formulas: list[tuple[str, "ASTNode"]], index_a: int, index_b: int
+        ) -> int:
+            """Compare two formulas based on their dependency.
 
-            :param rule_a: The first rule (A).
-            :param rule_b: The second rule (B).
+            :param formulas: A list of (lhs, rhs) tuples.
+            :param index_a: The index of the first formula (A).
+            :param index_b: The index of the second formula (B).
 
-            :return: An integer indicating the order of the rules.
+            :return: An integer indicating the order of the formulas.
                 -1 if A < B (A comes before B)
                 1 if A > B (A comes after B)
                 0 if the order doesn't matter
             """
-            id_a = rule_a.getId()
-            id_b = rule_b.getId()
-
-            order = _compare_cache.get((id_a, id_b), None)
+            order = _compare_cache.get((index_a, index_b), None)
             if order is not None:
                 return order
 
-            var_a = rule_a.getVariable()
-            var_b = rule_b.getVariable()
+            var_a = formulas[index_a][0]
+            var_b = formulas[index_b][0]
 
-            rhs_a = rule_a.getMath()
-            rhs_b = rule_b.getMath()
+            rhs_a = formulas[index_a][1]
+            rhs_b = formulas[index_b][1]
 
             # Check if var_a is in rhs_b
             if _search_formula(rhs_b, var_a):
                 # var_a is used in rhs_b: rule_a comes before rule_b
-                _compare_cache[(id_a, id_b)] = -1
-                _compare_cache[(id_b, id_a)] = 1
+                _compare_cache[(index_a, index_b)] = -1
+                _compare_cache[(index_b, index_a)] = 1
                 return -1
 
             # Check if var_b is in rhs_a
             if _search_formula(rhs_a, var_b):
                 # var_b is used in rhs_a: rule_b comes before rule_a
-                _compare_cache[(id_a, id_b)] = 1
-                _compare_cache[(id_b, id_a)] = -1
+                _compare_cache[(index_a, index_b)] = 1
+                _compare_cache[(index_b, index_a)] = -1
                 return 1
 
             # Order doesn't matter
-            _compare_cache[(id_a, id_b)] = 0
-            _compare_cache[(id_b, id_a)] = 0
+            _compare_cache[(index_a, index_b)] = 0
+            _compare_cache[(index_b, index_a)] = 0
             return 0
 
-        def _insertion_sort(rules: list["Rule"]) -> list["Rule"]:
-            """Sort rules using insertion sort based on their dependency."""
-            # We need to compare each rule to all the others until we find a
+        def _insertion_sort(formulas: list[tuple[str, "ASTNode"]]) -> list[int]:
+            """Sort formulas using insertion sort."""
+            # We need to compare each formula to all the others until we find a
             # non-zero comparison i.e. a +1 or -1 match (or until we exhaust
             # all options) because of cases such as:
             # Initial order: (a, b, c)
@@ -1000,17 +955,17 @@ class ChasteSbmlModel:
             # b == c (order doesn't matter, comparison is 0);
             # a > c (a should come after c, comparison is 1);
             # If we only compare (a, b) and (b, c), no changes will be made.
-            sorted_rules = []
+            sorted_indices = []
 
-            for rule_a in rules:
-                for i, rule_b in enumerate(sorted_rules):
-                    if _compare_rules(rule_a, rule_b) < 0:  # rule_a < rule_b
-                        sorted_rules.insert(i, rule_a)
+            for index_a in range(len(formulas)):
+                for i, index_b in enumerate(sorted_indices):
+                    if _compare_formulas(formulas, index_a, index_b) < 0:  # rule_a < rule_b
+                        sorted_indices.insert(i, index_a)
                         break
                 else:
                     # rule_a comes after everything already in sorted_rules
-                    sorted_rules.append(rule_a)
+                    sorted_indices.append(index_a)
 
-            return sorted_rules
+            return sorted_indices
 
-        return _insertion_sort(rules)
+        return _insertion_sort(formulas)

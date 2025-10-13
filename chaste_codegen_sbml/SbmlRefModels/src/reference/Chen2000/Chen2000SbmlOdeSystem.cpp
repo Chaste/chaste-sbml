@@ -30,6 +30,31 @@ Chen2000SbmlOdeSystem::Chen2000SbmlOdeSystem()
     BUD = 0.0;
     SPN = 0.0;
 
+    // DERIVED QUANTITIES
+
+    // VARIABLE PARAMETERS
+    COMpartment = 1.0;
+
+    // RULE-BASED PARAMETERS
+    Vd_b2 = 0.0;
+    Clb2 = 0.0;
+    Clb5 = 0.0;
+    Sic1 = 0.0;
+    Vd_b5 = 0.0;
+    Bck2 = 0.0;
+    Cln3 = 0.0;
+    Vd2_c1 = 0.0;
+    Vi_20 = 0.0;
+    Vi_t1 = 0.0;
+    SBF = 0.0;
+    Va_sbf = 0.0;
+    MBF = 0.0;
+    Mcm1 = 0.0;
+    Swi5 = 0.0;
+
+    // INITIAL ASSIGNMENTS
+
+    // ODE SYSTEM INFORMATION
     SetDefaultInitialCondition(0, Cln2);
     SetDefaultInitialCondition(1, Clb2_T);
     SetDefaultInitialCondition(2, Clb5_T);
@@ -58,29 +83,7 @@ Chen2000SbmlOdeSystem::Chen2000SbmlOdeSystem()
     mStateVariables.push_back(BUD);
     mStateVariables.push_back(SPN);
 
-    // DERIVED QUANTITIES
-
-    // VARIABLE PARAMETERS
-    COMpartment = 1.0;
-
     mParameters.push_back(COMpartment);
-
-    // RULE-BASED PARAMETERS
-    Vd_b2 = 0.0;
-    Clb2 = 0.0;
-    Clb5 = 0.0;
-    Sic1 = 0.0;
-    Vd_b5 = 0.0;
-    Bck2 = 0.0;
-    Cln3 = 0.0;
-    Vd2_c1 = 0.0;
-    Vi_20 = 0.0;
-    Vi_t1 = 0.0;
-    SBF = 0.0;
-    Va_sbf = 0.0;
-    MBF = 0.0;
-    Mcm1 = 0.0;
-    Swi5 = 0.0;
 
     // REACTIONS
 

@@ -20,14 +20,6 @@ namespace sm = sbmlmath;
     {{ var["id"] }} = {{ var["initial_value"] }};
 {% endfor %}
 
-{% for var in state_variables %}
-    SetDefaultInitialCondition({{ var["index"] }}, {{ var["id"] }});
-{% endfor %}
-
-{% for var in state_variables %}
-    mStateVariables.push_back({{ var["id"] }});
-{% endfor %}
-
     // DERIVED QUANTITIES
 {% for dq in derived_quantities %}
     {{ dq["id"] }} = {{ dq["initial_value"] }};
@@ -38,13 +30,27 @@ namespace sm = sbmlmath;
     {{ param["id"] }} = {{ param["initial_value"] }};
 {% endfor %}
 
-{% for param in variable_parameters %}
-    mParameters.push_back({{ param["id"] }});
-{% endfor %}
-
     // RULE-BASED PARAMETERS
 {% for var in rule_based_parameters %}
     {{ var['id'] }} = 0.0;
+{% endfor %}
+
+    // INITIAL ASSIGNMENTS
+{% for ia in initial_assignments %}
+    {{ ia["lhs"] }} = {{ ia["rhs"] }};
+{% endfor %}
+
+    // ODE SYSTEM INFORMATION
+{% for var in state_variables %}
+    SetDefaultInitialCondition({{ var["index"] }}, {{ var["id"] }});
+{% endfor %}
+
+{% for var in state_variables %}
+    mStateVariables.push_back({{ var["id"] }});
+{% endfor %}
+
+{% for param in variable_parameters %}
+    mParameters.push_back({{ param["id"] }});
 {% endfor %}
 
     // REACTIONS

@@ -1,11 +1,153 @@
 """Utility functions for code generation."""
 
+import re
 from typing import TYPE_CHECKING
 
 from libsbml import formulaToString
 
 if TYPE_CHECKING:
     from libsbml import ASTNode, FunctionDefinition, ListOf, SBase, Species
+
+
+def convert_ast_formula(ast_formula: "ASTNode") -> str:
+    """Convert SBML AST formula to equivalent C++ string.
+
+    :param ast: The AST formula.
+    :param convert_names: Whether to convert state variable and parameter names.
+    :return: The equivalent C++ string.
+    """
+    return convert_str_formula(formulaToString(ast_formula))
+
+
+def convert_str_formula(formula: str) -> str:
+    """Convert SBML string formula to equivalent C++ string.
+
+    :param ast: The string formula.
+    :return: The equivalent C++ string.
+    """
+    # Convert all integers to doubles
+    # TODO: Instead of regex, traverse AST and convert AST_INTEGER nodes to AST_REAL
+    # This has an adverse effect on literals like 4e-6 i.e. 4e-6.0 is invalid
+    # Also, this shouldn't apply to numbers encoded as <cn type="integer">.
+    formula = re.sub(r"(?<!\.)\b[0-9]+\b(?!\.)", lambda x: f"{x[0]}.0", formula)
+
+    # TODO: implies, lambda, delay
+
+    # SBML contants to be replaced with C++ equivalents
+    constants = {
+        "avogadro": "sm::AVOGADRO",
+        "exponentiale": "M_E",
+        "inf": "std::numeric_limits<double>::infinity()",
+        "infinity": "std::numeric_limits<double>::infinity()",
+        "nan": "NAN",
+        "notanumber": "NAN",
+        "pi": "M_PI",
+        "time": "SimulationTime::Instance()->GetTimeStep()",
+    }
+    # skip: "true", "false"
+
+    # SBML functions with same name as C++ equivalents
+    unchanged_functions = {
+        "acos",
+        "acosh",
+        "asin",
+        "asinh",
+        "atan",
+        "atanh",
+        "ceil",
+        "cos",
+        "cosh",
+        "exp",
+        "floor",
+        "pow",
+        "sin",
+        "sinh",
+        "sqrt",
+        "tan",
+        "tanh",
+    }
+
+    # SBML functions with different names in C++
+    renamed_functions = {
+        "abs": "fabs",
+        "arccos": "acos",
+        "arccosh": "acosh",
+        "arcsin": "asin",
+        "arcsinh": "asinh",
+        "arctan": "atan",
+        "arctanh": "atanh",
+        "ceiling": "ceil",
+        "ln": "log",
+        "power": "pow",
+        "rem": "fmod",
+    }
+
+    # SBML functions with custom implementations
+    custom_functions = {
+        "and": "and_",
+        "acot": "acot",
+        "acoth": "acoth",
+        "acsc": "acsc",
+        "acsch": "acsch",
+        "asec": "asec",
+        "asech": "asech",
+        "arccot": "acot",
+        "arccoth": "acoth",
+        "arccsc": "acsc",
+        "arccsch": "acsch",
+        "arcsec": "asec",
+        "arcsech": "asech",
+        "cot": "cot",
+        "coth": "coth",
+        "csc": "csc",
+        "csch": "csch",
+        "eq": "eq",
+        "factorial": "factorial",
+        "geq": "geq",
+        "gt": "gt",
+        "leq": "leq",
+        "log": "log",
+        "lt": "lt",
+        "max": "max",
+        "min": "min",
+        "neq": "neq",
+        "not": "not_",
+        "or": "or_",
+        "piecewise": "piecewise",
+        "quotient": "quotient",
+        "root": "root",
+        "sec": "sec",
+        "sech": "sech",
+        "sqr": "sqr",
+        "xor": "xor_",
+    }
+
+    # TODO: From SBML Level 3 upwards, log defaults to base 10.
+    # SBML versions lower than 3 default to base e.
+    # See https://sbml.org/software/libsbml/5.18.0/docs/formatted/python-api/namespacelibsbml.html#a8e96a5a70569ae32655c6302638f6dc3  # noqa: B950
+
+    tokens = re.findall(r"\w+|\W+", formula)
+
+    cpp_tokens = []
+    for token in tokens:
+        cpp_token = token
+
+        # Replace function names and constants.
+        if token in constants:
+            cpp_token = f"{constants[token]}"
+
+        elif token in unchanged_functions:
+            cpp_token = f"std::{token}"
+
+        elif token in renamed_functions:
+            cpp_token = f"std::{renamed_functions[token]}"
+
+        elif token in custom_functions:
+            cpp_token = f"sm::{custom_functions[token]}"
+
+        cpp_tokens.append(cpp_token)
+    cpp_formula = "".join(cpp_tokens)
+    return cpp_formula
 
 
 def generate_header_guard(filename: str) -> str:
