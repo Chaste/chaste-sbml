@@ -15,12 +15,19 @@ void sbmltesthelpers::AppendOdeSolution(OdeSolution* existing_solution, OdeSolut
         throw std::invalid_argument("Null OdeSolution pointer provided.");
     }
 
+    if (existing_solution->rGetTimes().back() == new_solution->rGetTimes().front())
+    {
+        // Remove duplicate last entry
+        existing_solution->rGetTimes().pop_back();
+        existing_solution->rGetSolutions().pop_back();
+    }
+
     existing_solution->rGetSolutions().insert(existing_solution->rGetSolutions().end(),
-                                              new_solution->rGetSolutions().begin() + 1,
+                                              new_solution->rGetSolutions().begin(),
                                               new_solution->rGetSolutions().end());
 
     existing_solution->rGetTimes().insert(existing_solution->rGetTimes().end(),
-                                          new_solution->rGetTimes().begin() + 1,
+                                          new_solution->rGetTimes().begin(),
                                           new_solution->rGetTimes().end());
 
     existing_solution->SetNumberOfTimeSteps(existing_solution->rGetTimes().size());

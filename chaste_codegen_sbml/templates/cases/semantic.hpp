@@ -26,8 +26,10 @@ public:
         try
         {
             {{ ode_class_name }} ode_system;
-            CvodeAdaptor solver;
             OdeSolution ode_solution;
+
+            CvodeAdaptor solver;
+            solver.CheckForStoppingEvents();
 
             // Settings
             double start = {{ test_settings["start"] }};
@@ -43,6 +45,28 @@ public:
             // Solve
             std::vector<double> initial_conditions = ode_system.GetInitialConditions();
             ode_solution = solver.Solve(&ode_system, initial_conditions, start, end, timestep, sampling);
+
+            while (solver.StoppingEventOccurred() && ode_solution.rGetTimes().back() < end)
+            {
+                // Get state at stopping time
+                std::vector<double> state_at_event = ode_solution.rGetSolutions().back();
+                double time_at_event = ode_solution.rGetTimes().back();
+
+                // Update ODE system
+                ode_system.SetStateVariables(state_at_event);
+                ode_system.AdjustParameters(time_at_event);
+
+                // Continue solve
+                start = time_at_event;
+                end = start + (duration - (time_at_event - 0));
+                initial_conditions = ode_system.GetStateVariables();
+
+                OdeSolution next_solution = solver.Solve(&ode_system, initial_conditions, start, end, timestep, sampling);
+
+                // Append new solution to existing solution
+                sth::AppendOdeSolution(&ode_solution, &next_solution);
+            }
+
             ode_solution.CalculateDerivedQuantitiesAndParameters(&ode_system);
 
             // Expected results
@@ -76,7 +100,7 @@ public:
             }
 
             // Exports results to csv
-            // sth::export_csv("{{ ode_class_name }}.csv", ode_solution, ode_system);
+            // sth::ExportCsv("{{ ode_class_name }}.csv", ode_solution, ode_system);
         }
         catch (Exception& e)
         {
