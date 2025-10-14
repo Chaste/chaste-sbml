@@ -453,7 +453,15 @@ class ChasteSbmlModel:
 
         for event in self._sbml_events:
             if event.isSetDelay():
-                raise NotImplementedError("Events with delays are not supported.")
+                math = convert_ast_formula(event.getDelay().getMath())
+                try:
+                    delay = float(math)
+                except ValueError:
+                    delay = 9999
+
+                if delay != 0.0:
+                    # Delay of zero is equivalent to no delay
+                    raise NotImplementedError("Events with delays are not supported.")
 
             label = event.getName().strip()
 
