@@ -436,6 +436,9 @@ class ChasteSbmlModel:
             rhs = convert_str_formula(rule.getFormula())
             self._odes[lhs] = rhs
 
+        if not self._odes:
+            raise NotImplementedError("Models with no ODEs are not supported.")
+
     def _format_compartments(self) -> None:
         """Add compartments to template variables."""
         for compartment in self._sbml_compartments:
@@ -449,6 +452,9 @@ class ChasteSbmlModel:
         # TODO: Add priority
 
         for event in self._sbml_events:
+            if event.isSetDelay():
+                raise NotImplementedError("Events with delays are not supported.")
+
             label = event.getName().strip()
 
             # Try to guess the event type
@@ -646,7 +652,7 @@ class ChasteSbmlModel:
 
         # Algebraic rules are not implemented
         if any(r.getTypeCode() == SBML_ALGEBRAIC_RULE for r in self._sbml_rules):
-            raise NotImplementedError("Algebraic rules are not yet supported.")
+            raise NotImplementedError("Algebraic rules are not supported.")
 
         # Note: Rate rules are handled during ODE extraction
 
@@ -867,12 +873,14 @@ class ChasteSbmlModel:
         self._format_compartments()
         self._format_species()
         self._format_parameters()
-        print("Formatting initial assignments...")
         self._format_initial_assignments()
 
         self._format_reactions()
         self._format_events()
         self._format_function_definitions()
+
+        if not self._state_variables:
+            raise NotImplementedError("Models with no state variables are not supported.")
 
         self._populate_template_vars()
 
@@ -883,12 +891,18 @@ class ChasteSbmlModel:
         then B comes before A. It is assumed that the input formulas are acyclic.
         This function can't sort cyclic dependencies such as A -> B -> C -> A.
 
-        :param formulas: A dictionary of (id, lhs, rhs) tuples.
-        :return: A list of sorted formula IDs.
+        :param formulas: A dictionary of (lhs, rhs) tuples.
+        :return: A list of sorted formula indices.
         """
 
         def _search_formula(node: "ASTNode", name: str) -> bool:
-            """Recursively search for a variable name in the AST formula."""
+            """Recursively search for a variable name in an AST formula.
+
+            :param node: The AST node to search.
+            :param name: The variable name to search for.
+
+            :return: True if the variable name is found, False otherwise.
+            """
             if node is None:
                 return False
             if node.getType() == AST_NAME and node.getName() == name:
@@ -902,12 +916,9 @@ class ChasteSbmlModel:
 
         _compare_cache = dict()
 
-        def _compare_formulas(
-            formulas: list[tuple[str, "ASTNode"]], index_a: int, index_b: int
-        ) -> int:
+        def _compare_formulas(index_a: int, index_b: int) -> int:
             """Compare two formulas based on their dependency.
 
-            :param formulas: A list of (lhs, rhs) tuples.
             :param index_a: The index of the first formula (A).
             :param index_b: The index of the second formula (B).
 
@@ -945,8 +956,11 @@ class ChasteSbmlModel:
             _compare_cache[(index_b, index_a)] = 0
             return 0
 
-        def _insertion_sort(formulas: list[tuple[str, "ASTNode"]]) -> list[int]:
-            """Sort formulas using insertion sort."""
+        def _insertion_sort() -> list[int]:
+            """Sort formulas using insertion sort.
+
+            :return: A list of sorted formula indices.
+            """
             # We need to compare each formula to all the others until we find a
             # non-zero comparison i.e. a +1 or -1 match (or until we exhaust
             # all options) because of cases such as:
@@ -959,7 +973,7 @@ class ChasteSbmlModel:
 
             for index_a in range(len(formulas)):
                 for i, index_b in enumerate(sorted_indices):
-                    if _compare_formulas(formulas, index_a, index_b) < 0:  # rule_a < rule_b
+                    if _compare_formulas(index_a, index_b) < 0:  # rule_a < rule_b
                         sorted_indices.insert(i, index_a)
                         break
                 else:
@@ -968,4 +982,4 @@ class ChasteSbmlModel:
 
             return sorted_indices
 
-        return _insertion_sort(formulas)
+        return _insertion_sort()
