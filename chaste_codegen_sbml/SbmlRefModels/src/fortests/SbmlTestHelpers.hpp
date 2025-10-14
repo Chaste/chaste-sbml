@@ -42,6 +42,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <limits>
 #include <numeric>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 #include "AbstractOdeSystem.hpp"
@@ -91,6 +92,12 @@ inline double Min(const std::vector<double>& vec);
  * @return The standard deviation value.
  */
 inline double Stdev(const std::vector<double>& vec);
+
+/** Convert a double to a string.
+ * @param value The double value.
+ * @return The string representation.
+ */
+std::string ToString(double value, unsigned precision = 9);
 
 /** Calculate the qth quantile of a vector of doubles.
  * @param vec The vector of doubles, assumed to be sorted.

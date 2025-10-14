@@ -1,5 +1,7 @@
 
 #include <fstream>
+#include <iomanip>
+#include <sstream>
 #include <stdexcept>
 
 #include "AbstractOdeSystem.hpp"
@@ -124,4 +126,11 @@ void sbmltesthelpers::ExportCsv(const std::string& filename,
                 << std::flush;
     }
     file->close();
+}
+
+std::string sbmltesthelpers::ToString(double value, unsigned precision)
+{
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(precision) << value;
+    return oss.str();
 }

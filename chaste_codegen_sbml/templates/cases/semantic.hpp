@@ -93,8 +93,11 @@ public:
                 TS_ASSERT_EQUALS(values.size(), expected_result_data.size());
                 for (unsigned i = 0; i < values.size(); i++)
                 {
+                    double delta = std::abs(expected_result_data[i][j] - values[i]);
                     double tol = tol_absolute + tol_relative * std::abs(expected_result_data[i][j]);
-                    TSM_ASSERT_DELTA(var_name.c_str(), values[i], expected_result_data[i][j], tol);
+                    std::string msg(sth::ToString(values[i]) + " vs " + sth::ToString(expected_result_data[i][j])
+                                    + " at " + sth::ToString(ode_solution.rGetTimes()[i], 3) + " for " + var_name);
+                    TSM_ASSERT_LESS_THAN_EQUALS(msg.c_str(), delta, tol);
                 }
             }
 
