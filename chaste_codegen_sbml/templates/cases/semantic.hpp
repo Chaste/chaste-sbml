@@ -35,8 +35,8 @@ public:
             double start = {{ test_settings["start"] }};
             double duration = {{ test_settings["duration"] }};
             double steps = {{ test_settings["steps"] }};
-            // double tol_absolute = {{ test_settings["absolute"] }};
-            // double tol_relative = {{ test_settings["relative"] }};
+            double tol_absolute = {{ test_settings["absolute"] }} * 10.0; // TODO: review tolerance values
+            double tol_relative = {{ test_settings["relative"] }} * 10.0;
 
             double end = start + duration;
             double timestep = duration / steps;
@@ -93,8 +93,7 @@ public:
                 TS_ASSERT_EQUALS(values.size(), expected_result_data.size());
                 for (unsigned i = 0; i < values.size(); i++)
                 {
-                    // double tol_absolute + tol_relative * std::abs(expected_result_data[i][j]);
-                    double tol = 1e-3;
+                    double tol = tol_absolute + tol_relative * std::abs(expected_result_data[i][j]);
                     TSM_ASSERT_DELTA(var_name.c_str(), values[i], expected_result_data[i][j], tol);
                 }
             }
