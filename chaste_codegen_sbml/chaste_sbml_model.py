@@ -36,7 +36,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from jinja2.environment import Template
-    from libsbml import ASTNode
+    from libsbml import ASTNode, SpeciesReference
 
 
 class ChasteSbmlModel:
@@ -130,6 +130,10 @@ class ChasteSbmlModel:
 
     @property
     def outputs(self) -> dict[str, str]:
+        """Get the generated code outputs.
+
+        :return: A dictionary of filename and code pairs.
+        """
         return self._outputs
 
     def write(self, output_directory=None):
@@ -208,6 +212,7 @@ class ChasteSbmlModel:
         self, id_: str, label: str, initial_value: float, units: str, rhs: str
     ) -> None:
         """Add a derived quantity to the template variables.
+
         :param id_: The variable ID.
         :param label: The variable description.
         :param initial_value: The variable initial value.
@@ -389,6 +394,38 @@ class ChasteSbmlModel:
         """Extract the ODEs equations for each species."""
         self._odes = {}
 
+        def _update_species_ode(
+            reaction_id: str, species_reference: "SpeciesReference", is_product: bool
+        ) -> None:
+            """Update the ODE for a species based on a species reference in a reaction.
+
+            :param species_reference: The species reference.
+            :param reaction_id: The ID of the reaction.
+            :param is_product: True if the species reference is a product, False if a reactant.
+            """
+            species_id = species_reference.getSpecies()
+
+            rhs = reaction_id
+            if species_reference.isSetStoichiometry():
+                stoich_value = float(species_reference.getStoichiometry())
+                if stoich_value != 1.0:
+                    rhs = f"({stoich_value} * {rhs})"
+
+            elif species_reference.isSetStoichiometryMath():
+                stoich_math = species_reference.getStoichiometryMath().getMath()
+                rhs = f"(({convert_ast_formula(stoich_math)}) * {rhs})"
+
+            if species_id in self._odes:
+                if is_product:
+                    self._odes[species_id] += f" + {rhs}"
+                else:
+                    self._odes[species_id] += f" - {rhs}"
+            else:
+                if is_product:
+                    self._odes[species_id] = rhs
+                else:
+                    self._odes[species_id] = f"-{rhs}"
+
         # Extract ODEs from reactions:
         # each ODE will essentially be the sum of the products minus the
         # sum of the reactants divided by the compartment volume
@@ -396,35 +433,11 @@ class ChasteSbmlModel:
             reaction_id = reaction.getId()
 
             # Decompose reaction into sum of products minus sum of reactants
-            products = reaction.getListOfProducts()
-            for product in products:
-                species_id = product.getSpecies()
+            for product in reaction.getListOfProducts():
+                _update_species_ode(reaction_id, product, is_product=True)
 
-                stoichiometry = product.getStoichiometry()
-                if float(stoichiometry) == 1.0:
-                    rhs = f"{reaction_id}"
-                else:
-                    rhs = f"({stoichiometry} * {reaction_id})"
-
-                if species_id in self._odes:
-                    self._odes[species_id] += f" + {rhs}"
-                else:
-                    self._odes[species_id] = f"{rhs}"
-
-            reactants = reaction.getListOfReactants()
-            for reactant in reactants:
-                species_id = reactant.getSpecies()
-
-                stoichiometry = reactant.getStoichiometry()
-                if float(stoichiometry) == 1.0:
-                    rhs = f"{reaction_id}"
-                else:
-                    rhs = f"({stoichiometry} * {reaction_id})"
-
-                if species_id in self._odes:
-                    self._odes[species_id] += f" - {rhs}"
-                else:
-                    self._odes[species_id] = f"-{rhs}"
+            for reactant in reaction.getListOfReactants():
+                _update_species_ode(reaction_id, reactant, is_product=False)
 
         # Extract ODEs from rate rules
         rate_rules = [r for r in self._sbml_rules if r.getTypeCode() == SBML_RATE_RULE]
