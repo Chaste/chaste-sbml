@@ -26,7 +26,7 @@ private:
         archive& boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
     }
 
-    // CONSTANT PARAMETERS
+    // FIXED PARAMETERS
     const double b0 = 0.054;         // b0
     const double bub2h = 1.0;        // bub2h
     const double C0 = 0.4;           // C0
@@ -215,6 +215,26 @@ private:
     double SBF;     // SBF
     double SIC1T;   // SIC1T
     double TEM1GDP; // TEM1GDP
+    double D;       // D
+    double mu;      // mu
+    double Vdb5;    // Vdb5
+    double Vdb2;    // Vdb2
+    double Vasbf;   // Vasbf
+    double Visbf;   // Visbf
+    double Vkpc1;   // Vkpc1
+    double Vkpf6;   // Vkpf6
+    double Vacdh;   // Vacdh
+    double Vicdh;   // Vicdh
+    double Vppnet;  // Vppnet
+    double Vkpnet;  // Vkpnet
+    double Vdppx;   // Vdppx
+    double Vdpds;   // Vdpds
+    double Vaiep;   // Vaiep
+    double Vd2c1;   // Vd2c1
+    double Vd2f6;   // Vd2f6
+    double Vppc1;   // Vppc1
+    double Vppf6;   // Vppf6
+    double F;       // F
 
     // VARIABLE PARAMETERS
     double cell;   // cell
@@ -231,28 +251,6 @@ private:
     double lte1l;  // lte1l
     double mad2l;  // mad2l
     double TEM1T;  // TEM1T
-
-    // RULE-BASED PARAMETERS
-    double D;      // D
-    double mu;     // mu
-    double Vdb5;   // Vdb5
-    double Vdb2;   // Vdb2
-    double Vasbf;  // Vasbf
-    double Visbf;  // Visbf
-    double Vkpc1;  // Vkpc1
-    double Vkpf6;  // Vkpf6
-    double Vacdh;  // Vacdh
-    double Vicdh;  // Vicdh
-    double Vppnet; // Vppnet
-    double Vkpnet; // Vkpnet
-    double Vdppx;  // Vdppx
-    double Vdpds;  // Vdpds
-    double Vaiep;  // Vaiep
-    double Vd2c1;  // Vd2c1
-    double Vd2f6;  // Vd2f6
-    double Vppc1;  // Vppc1
-    double Vppf6;  // Vppf6
-    double F;      // F
 
     // REACTIONS
     double Growth;                               // Growth

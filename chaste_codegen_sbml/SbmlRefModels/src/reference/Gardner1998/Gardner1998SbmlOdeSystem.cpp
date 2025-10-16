@@ -23,13 +23,11 @@ Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem()
     Z = 1.0;
 
     // DERIVED QUANTITIES
+    V1 = 0.0;
+    V3 = 0.0;
 
     // VARIABLE PARAMETERS
     Cell = 1.0;
-
-    // RULE-BASED PARAMETERS
-    V1 = 0.0;
-    V3 = 0.0;
 
     // INITIAL ASSIGNMENTS
 
@@ -78,6 +76,8 @@ std::vector<double> Gardner1998SbmlOdeSystem::ComputeDerivedQuantities(double ti
     RunModelRules(time, rY);
 
     std::vector<double> dqs;
+    dqs.push_back(V1);
+    dqs.push_back(V3);
     return dqs;
 }
 
@@ -245,10 +245,15 @@ void CellwiseOdeSystemInformation<Gardner1998SbmlOdeSystem>::Initialise()
     this->mInitialConditions.push_back(1.0);
 
     // DERIVED QUANTITIES
+    this->mDerivedQuantityNames.push_back("V1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("V3");
+    this->mDerivedQuantityUnits.push_back("non-dim");
 
     // PARAMETERS
     this->mParameterNames.push_back("Cell");
-    this->mParameterUnits.push_back("non-dim");
+    this->mParameterUnits.push_back("volume");
 
     this->mInitialised = true;
 }

@@ -33,8 +33,6 @@ Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem()
     wnt_level = 0.0;
     gamma = 1.0;
 
-    // RULE-BASED PARAMETERS
-
     // INITIAL ASSIGNMENTS
 
     // ODE SYSTEM INFORMATION

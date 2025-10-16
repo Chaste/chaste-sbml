@@ -61,7 +61,7 @@ class TestTysonNovak2001SbmlOdeSystem : public AbstractCellBasedTestSuite
 {
 private:
     const unsigned ODE_SIZE = 8u;
-    const unsigned NUM_DERIVED_QUANTITIES = 3u;
+    const unsigned NUM_DERIVED_QUANTITIES = 4u;
 
     std::vector<double> default_initial_conditions = {
         0.001, // CycBt
@@ -129,6 +129,9 @@ private:
                 std::vector<double> dq_mad = ode_solution.GetAnyVariable("Mad");
                 derived_quantities[2].insert(derived_quantities[2].end(), dq_mad.begin(), dq_mad.end());
 
+                std::vector<double> dq_tf = ode_solution.GetAnyVariable("TF");
+                derived_quantities[3].insert(derived_quantities[3].end(), dq_tf.begin(), dq_tf.end());
+
                 // Update initial conditions and time for next run
                 start_time = ode_solution.rGetTimes().back();
                 end_time = start_time + run_length;
@@ -152,6 +155,7 @@ private:
                 { { 0.000033, 0.629050, 0.127871, 0.212146, 0.000081, 0.000225, 0.222942 }, { 1e-6, 1e-2, 1e-2, 1e-2, 1e-6, 1e-5, 1e-2 } }, // CycB
                 { { 0.000382, 0.139442, 0.039220, 0.013253, 0.037456, 0.038483, 0.038573 }, { 1e-5, 1e-2, 1e-3, 1e-3, 1e-3, 1e-3, 1e-3 } }, // Trimer
                 { { 1.000000, 1.000000, 1.000000, 0.000000, 1.000000, 1.000000, 1.000000 }, { 1e-2, 1e-2, 1e-2, 1e-6, 1e-2, 1e-2, 1e-2 } }, // Mad
+                { { 0.008768, 0.465541, 0.071366, 0.095678, 0.017268, 0.033871, 0.074606 }, { 1e-4, 1e-2, 1e-3, 1e-3, 1e-3, 1e-3, 1e-3 } }, // TF
             };
 
             for (unsigned i = 0; i < ODE_SIZE + NUM_DERIVED_QUANTITIES; i++)
@@ -344,12 +348,14 @@ public:
         TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("CycB"), 0u);
         TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("Trimer"), 1u);
         TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("Mad"), 2u);
+        TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("TF"), 3u);
 
         std::vector<double> derived_quantities = ode_system.ComputeDerivedQuantities(0.0, default_initial_conditions);
         TS_ASSERT_EQUALS(derived_quantities.size(), NUM_DERIVED_QUANTITIES);
-        TS_ASSERT_DELTA(derived_quantities[0], 0.001, 1e-3); // CycB
-        TS_ASSERT_DELTA(derived_quantities[1], 0.001, 1e-3); // Trimer
-        TS_ASSERT_DELTA(derived_quantities[2], 1.0, 1e-3);   // Mad
+        TS_ASSERT_DELTA(derived_quantities[0], 0.001, 1e-3);          // CycB
+        TS_ASSERT_DELTA(derived_quantities[1], 0.001, 1e-3);          // Trimer
+        TS_ASSERT_DELTA(derived_quantities[2], 1.0, 1e-3);            // Mad
+        TS_ASSERT_DELTA(derived_quantities[3], 2.87174939e-02, 1e-3); // TF
     }
 
     void TestOdeWithChasteSolver()

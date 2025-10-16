@@ -69,24 +69,6 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
     SBF = 0.0;
     SIC1T = 0.0;
     TEM1GDP = 0.0;
-
-    // VARIABLE PARAMETERS
-    cell = 1.0;
-    BUB2 = 0.2;
-    LTE1 = 0.1;
-    MAD2 = 0.01;
-    bub2l = 0.2;
-    CDC15T = 1.0;
-    ESP1T = 1.0;
-    IET = 1.0;
-    KEZ = 0.3;
-    KEZ2 = 0.2;
-    lte1h = 1.0;
-    lte1l = 0.1;
-    mad2l = 0.01;
-    TEM1T = 1.0;
-
-    // RULE-BASED PARAMETERS
     D = 0.0;
     mu = 0.0;
     Vdb5 = 0.0;
@@ -107,6 +89,22 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
     Vppc1 = 0.0;
     Vppf6 = 0.0;
     F = 0.0;
+
+    // VARIABLE PARAMETERS
+    cell = 1.0;
+    BUB2 = 0.2;
+    LTE1 = 0.1;
+    MAD2 = 0.01;
+    bub2l = 0.2;
+    CDC15T = 1.0;
+    ESP1T = 1.0;
+    IET = 1.0;
+    KEZ = 0.3;
+    KEZ2 = 0.2;
+    lte1h = 1.0;
+    lte1l = 0.1;
+    mad2l = 0.01;
+    TEM1T = 1.0;
 
     // INITIAL ASSIGNMENTS
 
@@ -343,6 +341,26 @@ std::vector<double> Chen2004SbmlOdeSystem::ComputeDerivedQuantities(double time,
     dqs.push_back(SBF);
     dqs.push_back(SIC1T);
     dqs.push_back(TEM1GDP);
+    dqs.push_back(D);
+    dqs.push_back(mu);
+    dqs.push_back(Vdb5);
+    dqs.push_back(Vdb2);
+    dqs.push_back(Vasbf);
+    dqs.push_back(Visbf);
+    dqs.push_back(Vkpc1);
+    dqs.push_back(Vkpf6);
+    dqs.push_back(Vacdh);
+    dqs.push_back(Vicdh);
+    dqs.push_back(Vppnet);
+    dqs.push_back(Vkpnet);
+    dqs.push_back(Vdppx);
+    dqs.push_back(Vdpds);
+    dqs.push_back(Vaiep);
+    dqs.push_back(Vd2c1);
+    dqs.push_back(Vd2f6);
+    dqs.push_back(Vppc1);
+    dqs.push_back(Vppf6);
+    dqs.push_back(F);
     return dqs;
 }
 
@@ -1191,6 +1209,66 @@ void CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("TEM1GDP");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("D");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mu");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Vdb5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Vdb2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Vasbf");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Visbf");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Vkpc1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Vkpf6");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Vacdh");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Vicdh");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Vppnet");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Vkpnet");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Vdppx");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Vdpds");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Vaiep");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Vd2c1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Vd2f6");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Vppc1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Vppf6");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("F");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     // PARAMETERS

@@ -40,8 +40,6 @@ VanLeeuwen2007NonDimSbmlOdeSystem::VanLeeuwen2007NonDimSbmlOdeSystem()
     gamma2 = 1.0;
     ComplexTransitThreshold = 1.0;
 
-    // RULE-BASED PARAMETERS
-
     // INITIAL ASSIGNMENTS
 
     // ODE SYSTEM INFORMATION

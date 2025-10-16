@@ -26,7 +26,7 @@ private:
         archive& boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
     }
 
-    // CONSTANT PARAMETERS
+    // FIXED PARAMETERS
     const double ks_n2 = 0.0;          // ks_n2
     const double ks_n2_ = 0.05;        // ks_n2_
     const double kd_n2 = 0.1;          // kd_n2
@@ -115,11 +115,6 @@ private:
     double SPN;       // SPN
 
     // DERIVED QUANTITIES
-
-    // VARIABLE PARAMETERS
-    double COMpartment; //
-
-    // RULE-BASED PARAMETERS
     double Vd_b2;  // Vd_b2
     double Clb2;   // Clb2
     double Clb5;   // Clb5
@@ -135,6 +130,9 @@ private:
     double MBF;    // MBF
     double Mcm1;   // Mcm1
     double Swi5;   // Swi5
+
+    // VARIABLE PARAMETERS
+    double COMpartment; //
 
     // REACTIONS
 

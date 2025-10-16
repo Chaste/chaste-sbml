@@ -26,7 +26,7 @@ private:
         archive& boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
     }
 
-    // CONSTANT PARAMETERS
+    // FIXED PARAMETERS
     const double k1 = 0.04;      // k1
     const double k2p = 0.04;     // k2p
     const double k2pp = 1.0;     // k2pp
@@ -78,12 +78,10 @@ private:
     double CycB;   // CycB
     double Trimer; // Trimer
     double Mad;    // Mad
+    double TF;     // TF
 
     // VARIABLE PARAMETERS
     double cell; // cell
-
-    // RULE-BASED PARAMETERS
-    double TF; // TF
 
     // REACTIONS
     double CycBt_synthesis;           // CycBt synthesis

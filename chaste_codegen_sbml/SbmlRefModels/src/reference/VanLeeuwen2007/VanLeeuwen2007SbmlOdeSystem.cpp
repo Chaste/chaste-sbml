@@ -40,8 +40,6 @@ VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem()
     gamma2 = 1.0;
     ComplexTransitThreshold = 1.0;
 
-    // RULE-BASED PARAMETERS
-
     // INITIAL ASSIGNMENTS
 
     // ODE SYSTEM INFORMATION
@@ -314,7 +312,7 @@ void CellwiseOdeSystemInformation<VanLeeuwen2007SbmlOdeSystem>::Initialise()
 
     // PARAMETERS
     this->mParameterNames.push_back("cytosolmembraneandnucleus");
-    this->mParameterUnits.push_back("non-dim");
+    this->mParameterUnits.push_back("MWDERIVEDUNIT_meter___3");
 
     this->mParameterNames.push_back("wnt_level");
     this->mParameterUnits.push_back("non-dim");

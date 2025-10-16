@@ -26,7 +26,7 @@ private:
         archive& boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
     }
 
-    // CONSTANT PARAMETERS
+    // FIXED PARAMETERS
     const double kdegradation = 0.0163;         //
     const double Bsyn = 1.306;                  //
     const double K_n_active_k = 17.16;          //
@@ -55,8 +55,6 @@ private:
     double nucleus;         //
     double wnt_level;       // wnt_level
     double gamma;           // gamma
-
-    // RULE-BASED PARAMETERS
 
     // REACTIONS
     double Bsynthesis;   //

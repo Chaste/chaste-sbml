@@ -26,7 +26,7 @@ private:
         archive& boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
     }
 
-    // CONSTANT PARAMETERS
+    // FIXED PARAMETERS
     const double K_T = 1500.0;                // K_T
     const double K_C = 6000.0;                // K_C
     const double K_D = 150.0;                 // K_D
@@ -79,8 +79,6 @@ private:
     double gamma1;                    // gamma1
     double gamma2;                    // gamma2
     double ComplexTransitThreshold;   // ComplexTransitThreshold
-
-    // RULE-BASED PARAMETERS
 
     // REACTIONS
     double mwcfbf7716_cc13_473c_979a_033c57a28857; // r1

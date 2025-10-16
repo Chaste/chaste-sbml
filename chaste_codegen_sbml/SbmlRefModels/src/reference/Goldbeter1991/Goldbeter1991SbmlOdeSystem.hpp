@@ -26,7 +26,7 @@ private:
         archive& boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
     }
 
-    // CONSTANT PARAMETERS
+    // FIXED PARAMETERS
     const double VM1 = 3.0; // VM1
     const double VM3 = 1.0; // VM3
     const double Kc = 0.5;  // Kc
@@ -37,13 +37,11 @@ private:
     double X; // Cyclin Protease
 
     // DERIVED QUANTITIES
+    double V1; // V1
+    double V3; // V3
 
     // VARIABLE PARAMETERS
     double cell; // cell
-
-    // RULE-BASED PARAMETERS
-    double V1; // V1
-    double V3; // V3
 
     // REACTIONS
     double reaction1; // creation of cyclin

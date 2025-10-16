@@ -66,6 +66,7 @@ class TestChen2004SbmlOdeSystem : public AbstractCellBasedTestSuite
 {
 private:
     const unsigned ODE_SIZE = 36u;
+    const unsigned NUM_DERIVED_QUANTITIES = 35u;
 
     std::vector<double> default_initial_conditions = {
         0.008473,  // BUD
@@ -452,6 +453,8 @@ public:
         // This is slightly odd, but the difference in results is negligible.
         // Also, Chaste results for BUD are slightly closer to Matlab's results.
 
+        TS_ASSERT_EQUALS(ode_system.GetNumberOfStateVariables(), ODE_SIZE);
+
         std::vector<std::string> var_names = ode_system.rGetStateVariableNames();
         for (unsigned i = 0; i < ODE_SIZE; i++)
         {
@@ -459,11 +462,14 @@ public:
         }
 
         // Check derived quantity indices
-        TS_ASSERT_EQUALS(ode_system.GetNumberOfDerivedQuantities(), 15u);
+        TS_ASSERT_EQUALS(ode_system.GetNumberOfDerivedQuantities(), NUM_DERIVED_QUANTITIES);
 
         std::vector<std::string> dq_names = {
             "BCK2", "CDC14T", "CDC15i", "CDC6T", "CKIT", "CLB2T", "CLB5T",
-            "CLN3", "IE", "MCM1", "NET1T", "PE", "SBF", "SIC1T", "TEM1GDP"
+            "CLN3", "IE", "MCM1", "NET1T", "PE", "SBF", "SIC1T", "TEM1GDP",
+            "D", "mu", "Vdb5", "Vdb2", "Vasbf", "Visbf", "Vkpc1", "Vkpf6",
+            "Vacdh", "Vicdh", "Vppnet", "Vkpnet", "Vdppx", "Vdpds",
+            "Vaiep", "Vd2c1", "Vd2f6", "Vppc1", "Vppf6", "F"
         };
 
         for (unsigned i = 0; i < ode_system.GetNumberOfDerivedQuantities(); i++)
@@ -476,21 +482,41 @@ public:
         TS_ASSERT_EQUALS(dqs.size(), ode_system.GetNumberOfDerivedQuantities());
 
         std::vector<double> dqs_expected = {
-            0.06512503101569224,  // BCK2
-            2.1178838821160673,   // CDC14T
+            0.065125026,          // BCK2
+            2.117884,             // CDC14T
             0.34346699999999997,  // CDC15i
-            0.3866702506092299,   // CDC6T
-            0.7553557373906259,   // CKIT
-            0.6728097655277132,   // CLB2T
-            0.12891180541328642,  // CLB5T
-            0.06694509561176591,  // CLN3
+            0.3866693,            // CDC6T
+            0.7553539,            // CKIT
+            0.6728125,            // CLB2T
+            0.1289119,            // CLB5T
+            0.06694509131879892,  // CLN3
             0.8985,               // IE
-            0.4689808390666083,   // MCM1
-            2.6384560484631914,   // NET1T
+            0.4690076182110798,   // MCM1
+            2.638456,             // NET1T
             0.6986870000000001,   // PE
-            0.004913821158365375, // SBF
-            0.36868548678139595,  // SIC1T
-            0.09999999999999998   // TEM1GDP
+            0.004913738759040801, // SBF
+            0.36868460000000003,  // SIC1T
+            0.09999999999999998,  // TEM1GDP
+            101.21846007568689,   // D
+            0.007701635339554948, // mu
+            0.08108736,           // Vdb5
+            0.441844,             // Vdb2
+            0.5908263458114359,   // Vasbf
+            1.7753815999999998,   // Visbf
+            0.24226958712032795,  // Vkpc1
+            0.2663495285233921,   // Vkpf6
+            0.3846752,            // Vacdh
+            0.05168441222637597,  // Vicdh
+            0.419537,             // Vppnet
+            0.4871349532762,      // Vkpnet
+            0.8946186673169543,   // Vdppx
+            0.13607916,           // Vdpds
+            0.01469227,           // Vaiep
+            0.09724769917563966,  // Vd2c1
+            0.11193996917563967,  // Vd2f6
+            1.873376,             // Vppc1
+            1.873376,             // Vppf6
+            0.4586134093959288,   // F
         };
 
         for (unsigned i = 0; i < dqs.size(); i++)

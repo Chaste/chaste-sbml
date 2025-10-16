@@ -31,11 +31,6 @@ Chen2000SbmlOdeSystem::Chen2000SbmlOdeSystem()
     SPN = 0.0;
 
     // DERIVED QUANTITIES
-
-    // VARIABLE PARAMETERS
-    COMpartment = 1.0;
-
-    // RULE-BASED PARAMETERS
     Vd_b2 = 0.0;
     Clb2 = 0.0;
     Clb5 = 0.0;
@@ -51,6 +46,9 @@ Chen2000SbmlOdeSystem::Chen2000SbmlOdeSystem()
     MBF = 0.0;
     Mcm1 = 0.0;
     Swi5 = 0.0;
+
+    // VARIABLE PARAMETERS
+    COMpartment = 1.0;
 
     // INITIAL ASSIGNMENTS
 
@@ -102,6 +100,21 @@ std::vector<double> Chen2000SbmlOdeSystem::ComputeDerivedQuantities(double time,
     RunModelRules(time, rY);
 
     std::vector<double> dqs;
+    dqs.push_back(Vd_b2);
+    dqs.push_back(Clb2);
+    dqs.push_back(Clb5);
+    dqs.push_back(Sic1);
+    dqs.push_back(Vd_b5);
+    dqs.push_back(Bck2);
+    dqs.push_back(Cln3);
+    dqs.push_back(Vd2_c1);
+    dqs.push_back(Vi_20);
+    dqs.push_back(Vi_t1);
+    dqs.push_back(SBF);
+    dqs.push_back(Va_sbf);
+    dqs.push_back(MBF);
+    dqs.push_back(Mcm1);
+    dqs.push_back(Swi5);
     return dqs;
 }
 
@@ -235,10 +248,54 @@ void CellwiseOdeSystemInformation<Chen2000SbmlOdeSystem>::Initialise()
     this->mInitialConditions.push_back(0.0);
 
     // DERIVED QUANTITIES
+    this->mDerivedQuantityNames.push_back("Vd_b2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Clb2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Clb5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Sic1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Vd_b5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Bck2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Cln3");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Vd2_c1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Vi_20");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Vi_t1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("SBF");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Va_sbf");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("MBF");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Mcm1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Swi5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
 
     // PARAMETERS
     this->mParameterNames.push_back("COMpartment");
-    this->mParameterUnits.push_back("non-dim");
+    this->mParameterUnits.push_back("litre");
 
     this->mInitialised = true;
 }

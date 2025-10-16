@@ -29,12 +29,10 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem()
     CycB = 0.0;
     Trimer = 0.0;
     Mad = 0.0;
+    TF = 0.0;
 
     // VARIABLE PARAMETERS
     cell = 1.0;
-
-    // RULE-BASED PARAMETERS
-    TF = 0.0;
 
     // INITIAL ASSIGNMENTS
 
@@ -113,6 +111,7 @@ std::vector<double> TysonNovak2001SbmlOdeSystem::ComputeDerivedQuantities(double
     dqs.push_back(CycB);
     dqs.push_back(Trimer);
     dqs.push_back(Mad);
+    dqs.push_back(TF);
     return dqs;
 }
 
@@ -317,6 +316,9 @@ void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("Mad");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("TF");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     // PARAMETERS

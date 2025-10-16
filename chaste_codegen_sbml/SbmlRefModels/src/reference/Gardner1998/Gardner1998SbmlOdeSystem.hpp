@@ -26,7 +26,7 @@ private:
         archive& boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
     }
 
-    // CONSTANT PARAMETERS
+    // FIXED PARAMETERS
     const double K6 = 0.3;   // K6
     const double V1p = 0.75; // V1p
     const double V3p = 0.3;  // V3p
@@ -39,13 +39,11 @@ private:
     double Z; // complex inhibitor-cyclin
 
     // DERIVED QUANTITIES
+    double V1; // V1
+    double V3; // V3
 
     // VARIABLE PARAMETERS
     double Cell; // Cell
-
-    // RULE-BASED PARAMETERS
-    double V1; // V1
-    double V3; // V3
 
     // REACTIONS
     double reaction1;  // creation of cyclin
