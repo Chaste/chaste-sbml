@@ -444,21 +444,40 @@ class ChasteSbmlModel:
         for rule in rate_rules:
             lhs = rule.getVariable()
             if lhs in self._odes:
-                raise ValueError(f"{lhs} has both a rate rule and a reaction.")
+                raise ValueError(f"{lhs} has more than one rate rule and/or reaction.")
 
             rhs = convert_str_formula(rule.getFormula())
             self._odes[lhs] = rhs
 
         if not self._odes:
-            raise NotImplementedError("Models with no ODEs are not supported.")
+            raise NotImplementedError("Models without ODEs are not supported.")
 
     def _format_compartments(self) -> None:
         """Add compartments to template variables."""
+        # Note: rules must be processed before compartments
+        if not self._assignment_rules:
+            if any(r.getTypeCode() == SBML_ASSIGNMENT_RULE for r in self._sbml_rules):
+                raise RuntimeError("Please process rules before compartments.")
+
+        vars_with_rules = set([r["lhs"] for r in self._assignment_rules])
+
         for compartment in self._sbml_compartments:
-            id_ = compartment.getId()
+            compartment_id = compartment.getId()
             label = compartment.getName().strip()
-            value = compartment.getSize()
-            self._add_variable_parameter(id_, label, value)
+
+            value = compartment.getSize() if compartment.isSetSize() else 1.0
+            units = compartment.getUnits() if compartment.isSetUnits() else NON_DIM_UNITS
+
+            if compartment_id in self._odes:
+                # State variable
+                rhs = self._odes[compartment_id]
+                self._add_state_variable(compartment_id, label, value, units, rhs)
+            elif compartment_id in vars_with_rules:
+                # Rule-based parameter
+                self._add_rule_based_parameter(compartment_id, label, value, units)
+            else:
+                # Variable parameter
+                self._add_variable_parameter(compartment_id, label, value, units)
 
     def _format_events(self) -> None:
         """Add events to template variables."""
@@ -910,7 +929,7 @@ class ChasteSbmlModel:
         self._format_function_definitions()
 
         if not self._state_variables:
-            raise NotImplementedError("Models with no state variables are not supported.")
+            raise NotImplementedError("Models without state variables are not supported.")
 
         self._populate_template_vars()
 

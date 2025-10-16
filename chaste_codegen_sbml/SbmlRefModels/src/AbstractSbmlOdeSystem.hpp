@@ -37,9 +37,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ABSTRACT_SBML_ODE_SYSTEM_HPP_
 
 #include <boost/serialization/base_object.hpp>
-#include "ChasteSerialization.hpp"
 
 #include "AbstractOdeSystem.hpp"
+#include "ChasteSerialization.hpp"
 #include "ClassIsAbstract.hpp"
 #include "SbmlEventType.hpp"
 
