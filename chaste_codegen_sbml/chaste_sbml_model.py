@@ -608,7 +608,10 @@ class ChasteSbmlModel:
         if not self._assignment_rules:
             if any(r.getTypeCode() == SBML_ASSIGNMENT_RULE for r in self._sbml_rules):
                 raise RuntimeError("Please process rules before parameters.")
-        assignment_rules = {r["lhs"]: r["rhs"] for r in self._assignment_rules}
+
+        vars_with_rules = set([r["lhs"] for r in self._assignment_rules])
+
+        vars_with_assignments = set([ia["lhs"] for ia in self._initial_assignments])
 
         for param in self._sbml_parameters:
             param_id = param.getId()
@@ -621,15 +624,19 @@ class ChasteSbmlModel:
                 # State variable
                 rhs = self._odes[param_id]
                 self._add_state_variable(param_id, label, value, units, rhs)
-            elif param_id in assignment_rules:
+            elif param_id in vars_with_rules:
                 # Rule-based parameter
                 self._add_rule_based_parameter(param_id, label, value, units)
-            elif param.isSetConstant() and not param.getConstant():
+            elif param.isSetConstant() and param.getConstant():
+                if param_id in vars_with_assignments:
+                    # Treat const parameter with initial assignment as rule-based parameter
+                    self._add_rule_based_parameter(param_id, label, value, units)
+                else:
+                    # Constant parameter
+                    self._add_constant_parameter(param_id, label, value, units)
+            else:
                 # Variable parameter
                 self._add_variable_parameter(param_id, label, value, units)
-            else:
-                # Constant parameter
-                self._add_constant_parameter(param_id, label, value, units)
 
     def _format_reactions(self) -> None:
         """Add reactions to template variables."""
@@ -877,12 +884,13 @@ class ChasteSbmlModel:
         self._odes = {}
 
         self._assignment_rules = []
+        self._initial_assignments = []
+
         self._state_variables = []
         self._derived_quantities = []
         self._variable_parameters = []
         self._constant_parameters = []
         self._rule_based_parameters = []
-        self._initial_assignments = []
 
         self._reactions = []
         self._events = []
@@ -891,10 +899,11 @@ class ChasteSbmlModel:
         self._extract_odes()
 
         self._format_rules()
+        self._format_initial_assignments()
+
         self._format_compartments()
         self._format_species()
         self._format_parameters()
-        self._format_initial_assignments()
 
         self._format_reactions()
         self._format_events()

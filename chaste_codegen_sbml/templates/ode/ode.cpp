@@ -31,8 +31,8 @@ namespace sm = sbmlmath;
 {% endfor %}
 
     // RULE-BASED PARAMETERS
-{% for var in rule_based_parameters %}
-    {{ var['id'] }} = 0.0;
+{% for param in rule_based_parameters %}
+    {{ param['id'] }} = {{ param["initial_value"] }};
 {% endfor %}
 
     // INITIAL ASSIGNMENTS
