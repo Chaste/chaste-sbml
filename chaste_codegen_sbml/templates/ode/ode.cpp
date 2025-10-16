@@ -30,11 +30,6 @@ namespace sm = sbmlmath;
     {{ param["id"] }} = {{ param["initial_value"] }};
 {% endfor %}
 
-    // RULE-BASED PARAMETERS
-{% for param in rule_based_parameters %}
-    {{ param['id'] }} = {{ param["initial_value"] }};
-{% endfor %}
-
     // INITIAL ASSIGNMENTS
 {% for ia in initial_assignments %}
     {{ ia["lhs"] }} = {{ ia["rhs"] }};

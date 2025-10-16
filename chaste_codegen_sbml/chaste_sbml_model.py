@@ -116,7 +116,6 @@ class ChasteSbmlModel:
         self._derived_quantities = []  # [ { id: str, label: str, ... } ]
         self._variable_parameters = []  # [ { id: str, label: str, ... } ]
         self._constant_parameters = []  # [ { id: str, label: str, ... } ]
-        self._rule_based_parameters = []  # [ { id: str, label: str, ... } ]
         self._initial_assignments = []  # [ { id: str, label: str, ... } ]
         self._reactions = []  # [ { id: str, label: str, ... } ]
         self._events = []  # [ { name: str, trigger: str, ... } ]
@@ -189,7 +188,9 @@ class ChasteSbmlModel:
         )
         self._variable_types[id_] = VarType.ASSIGNMENT_RULE
 
-    def _add_constant_parameter(self, id_: str, label: str, value: float, units: str) -> None:
+    def _add_constant_parameter(
+        self, id_: str, label: str, value: float, units: str, rhs: str
+    ) -> None:
         """Add a constant parameter to the template variables.
 
         :param id_: The parameter ID.
@@ -202,6 +203,7 @@ class ChasteSbmlModel:
                 "id": id_,
                 "label": label,
                 "index": len(self._constant_parameters),
+                "rhs": rhs,
                 "value": value,
                 "units": units,
             }
@@ -325,27 +327,6 @@ class ChasteSbmlModel:
         )
         self._variable_types[id_] = VarType.REACTION
 
-    def _add_rule_based_parameter(
-        self, id_: str, label: str, initial_value: float, units: str = NON_DIM_UNITS
-    ) -> None:
-        """Add a rule parameter to the template variables.
-
-        :param id_: The parameter ID.
-        :param label: The parameter description.
-        :param initial_value: The parameter initial value.
-        :param units: The parameter units.
-        """
-        self._rule_based_parameters.append(
-            {
-                "id": id_,
-                "label": label,
-                "index": len(self._rule_based_parameters),
-                "initial_value": initial_value,
-                "units": units,
-            }
-        )
-        self._variable_types[id_] = VarType.RULE_BASED_PARAMETER
-
     def _add_state_variable(
         self, id_: str, label: str, initial_value: float, units: str, rhs: str
     ) -> None:
@@ -459,7 +440,7 @@ class ChasteSbmlModel:
             if any(r.getTypeCode() == SBML_ASSIGNMENT_RULE for r in self._sbml_rules):
                 raise RuntimeError("Please process rules before compartments.")
 
-        vars_with_rules = set([r["lhs"] for r in self._assignment_rules])
+        assignment_rules = {rule["lhs"]: rule["rhs"] for rule in self._assignment_rules}
 
         for compartment in self._sbml_compartments:
             compartment_id = compartment.getId()
@@ -472,9 +453,10 @@ class ChasteSbmlModel:
                 # State variable
                 rhs = self._odes[compartment_id]
                 self._add_state_variable(compartment_id, label, value, units, rhs)
-            elif compartment_id in vars_with_rules:
-                # Rule-based parameter
-                self._add_rule_based_parameter(compartment_id, label, value, units)
+            elif compartment_id in assignment_rules:
+                # Derived quantity
+                rhs = assignment_rules[compartment_id]
+                self._add_derived_quantity(compartment_id, label, value, units, rhs)
             else:
                 # Variable parameter
                 self._add_variable_parameter(compartment_id, label, value, units)
@@ -628,9 +610,8 @@ class ChasteSbmlModel:
             if any(r.getTypeCode() == SBML_ASSIGNMENT_RULE for r in self._sbml_rules):
                 raise RuntimeError("Please process rules before parameters.")
 
-        vars_with_rules = set([r["lhs"] for r in self._assignment_rules])
-
-        vars_with_assignments = set([ia["lhs"] for ia in self._initial_assignments])
+        assignment_rules = {rule["lhs"]: rule["rhs"] for rule in self._assignment_rules}
+        initial_assignments = {ia["lhs"]: ia["rhs"] for ia in self._initial_assignments}
 
         for param in self._sbml_parameters:
             param_id = param.getId()
@@ -643,16 +624,17 @@ class ChasteSbmlModel:
                 # State variable
                 rhs = self._odes[param_id]
                 self._add_state_variable(param_id, label, value, units, rhs)
-            elif param_id in vars_with_rules:
-                # Rule-based parameter
-                self._add_rule_based_parameter(param_id, label, value, units)
+            elif param_id in assignment_rules:
+                # Derived quantity
+                rhs = assignment_rules[param_id]
+                self._add_derived_quantity(param_id, label, value, units, rhs)
             elif param.isSetConstant() and param.getConstant():
-                if param_id in vars_with_assignments:
-                    # Treat const parameter with initial assignment as rule-based parameter
-                    self._add_rule_based_parameter(param_id, label, value, units)
+                # Constant parameter
+                if param_id in initial_assignments:
+                    rhs = initial_assignments[param_id]
                 else:
-                    # Constant parameter
-                    self._add_constant_parameter(param_id, label, value, units)
+                    rhs = None
+                self._add_constant_parameter(param_id, label, value, units, rhs)
             else:
                 # Variable parameter
                 self._add_variable_parameter(param_id, label, value, units)
@@ -832,11 +814,6 @@ class ChasteSbmlModel:
                 if param["id"] == id_:
                     return param["index"]
 
-        elif var_type == VarType.RULE_BASED_PARAMETER:
-            for param in self._rule_based_parameters:
-                if param["id"] == id_:
-                    return param["index"]
-
         elif var_type == VarType.ASSIGNMENT_RULE:
             for rule in self._assignment_rules:
                 if rule["id"] == id_:
@@ -874,7 +851,6 @@ class ChasteSbmlModel:
             ode_header_guard=generate_header_guard(self._ode_hpp_filename),
             ode_hpp_file=self._ode_hpp_filename,
             reactions=self._reactions,
-            rule_based_parameters=self._rule_based_parameters,
             state_variables=self._state_variables,
             variable_parameters=self._variable_parameters,
         )
@@ -909,7 +885,6 @@ class ChasteSbmlModel:
         self._derived_quantities = []
         self._variable_parameters = []
         self._constant_parameters = []
-        self._rule_based_parameters = []
 
         self._reactions = []
         self._events = []

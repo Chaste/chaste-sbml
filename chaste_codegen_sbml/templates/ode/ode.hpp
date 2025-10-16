@@ -26,9 +26,17 @@ private:
         archive & boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
     }
 
-    // CONSTANT PARAMETERS
+    // FIXED PARAMETERS
 {% for param in constant_parameters %}
+{% if param["rhs"] is none %}
     const double {{ param["id"] }} = {{ param["value"] }}; // {{ param["label"] }}
+{% endif %}
+{% endfor %}
+
+{% for param in constant_parameters %}
+{% if param["rhs"] is not none %}
+    double {{ param["id"] }} = {{ param["value"] }}; // {{ param["label"] }}
+{% endif %}
 {% endfor %}
 
     // STATE VARIABLES
@@ -43,11 +51,6 @@ private:
 
     // VARIABLE PARAMETERS
 {% for param in variable_parameters %}
-    double {{ param["id"] }}; // {{ param["label"] }}
-{% endfor %}
-
-    // RULE-BASED PARAMETERS
-{% for param in rule_based_parameters %}
     double {{ param["id"] }}; // {{ param["label"] }}
 {% endfor %}
 
