@@ -3,7 +3,7 @@
 import re
 from typing import TYPE_CHECKING
 
-from libsbml import formulaToString
+from libsbml import AST_NAME, formulaToString
 
 if TYPE_CHECKING:
     from libsbml import ASTNode, FunctionDefinition, ListOf, SBase, Species
@@ -25,11 +25,11 @@ def convert_str_formula(formula: str) -> str:
     :param ast: The string formula.
     :return: The equivalent C++ string.
     """
-    # Convert all integers to doubles
+    # Convert all integer literals to doubles
     # TODO: Instead of regex, traverse AST and convert AST_INTEGER nodes to AST_REAL
-    # This has an adverse effect on literals like 4e-6 i.e. 4e-6.0 is invalid
-    # Also, this shouldn't apply to numbers encoded as <cn type="integer">.
-    formula = re.sub(r"(?<!\.)\b[0-9]+\b(?!\.)", lambda x: f"{x[0]}.0", formula)
+    # This shouldn't apply to numbers encoded as <cn type="integer">.
+    # Fix integer division directly in the AST instead.
+    formula = re.sub(r"(?<!\.)(?<!e-|E-)\b[0-9]+\b(?!\.)", lambda x: f"{x[0]}.0", formula)
 
     # TODO: implies, lambda, delay
 
@@ -226,6 +226,107 @@ def get_species_concentration(species: "Species") -> float:
     if species.isSetInitialAmount():
         return species.getInitialAmount()
     return species.getInitialConcentration()
+
+
+def sort_formulas(formulas: list[tuple[str, "ASTNode"]]) -> list[int]:
+    """Sort formulas based on their dependency.
+
+    Formulas are sorted such that if formula A depends on B (i.e. A -> B),
+    then B comes before A. It is assumed that the input formulas are acyclic.
+    This function can't sort cyclic dependencies such as A -> B -> C -> A.
+
+    :param formulas: A dictionary of (lhs, rhs) tuples.
+    :return: A list of sorted formula indices.
+    """
+
+    def _search_formula(node: "ASTNode", name: str) -> bool:
+        """Recursively search for a variable name in an AST formula.
+
+        :param node: The AST node to search.
+        :param name: The variable name to search for.
+
+        :return: True if the variable name is found, False otherwise.
+        """
+        if node is None:
+            return False
+        if node.getType() == AST_NAME and node.getName() == name:
+            return True
+
+        for i in range(node.getNumChildren()):
+            child = node.getChild(i)
+            if _search_formula(child, name):
+                return True
+        return False
+
+    _compare_cache = dict()
+
+    def _compare_formulas(index_a: int, index_b: int) -> int:
+        """Compare two formulas based on their dependency.
+
+        :param index_a: The index of the first formula (A).
+        :param index_b: The index of the second formula (B).
+
+        :return: An integer indicating the order of the formulas.
+            -1 if A < B (A comes before B)
+            1 if A > B (A comes after B)
+            0 if the order doesn't matter
+        """
+        order = _compare_cache.get((index_a, index_b), None)
+        if order is not None:
+            return order
+
+        var_a = formulas[index_a][0]
+        var_b = formulas[index_b][0]
+
+        rhs_a = formulas[index_a][1]
+        rhs_b = formulas[index_b][1]
+
+        # Check if var_a is in rhs_b
+        if _search_formula(rhs_b, var_a):
+            # var_a is used in rhs_b: rule_a comes before rule_b
+            _compare_cache[(index_a, index_b)] = -1
+            _compare_cache[(index_b, index_a)] = 1
+            return -1
+
+        # Check if var_b is in rhs_a
+        if _search_formula(rhs_a, var_b):
+            # var_b is used in rhs_a: rule_b comes before rule_a
+            _compare_cache[(index_a, index_b)] = 1
+            _compare_cache[(index_b, index_a)] = -1
+            return 1
+
+        # Order doesn't matter
+        _compare_cache[(index_a, index_b)] = 0
+        _compare_cache[(index_b, index_a)] = 0
+        return 0
+
+    def _insertion_sort() -> list[int]:
+        """Sort formulas using insertion sort.
+
+        :return: A list of sorted formula indices.
+        """
+        # We need to compare each formula to all the others until we find a
+        # non-zero comparison i.e. a +1 or -1 match (or until we exhaust
+        # all options) because of cases such as:
+        # Initial order: (a, b, c)
+        # a == b (order doesn't matter, comparison is 0);
+        # b == c (order doesn't matter, comparison is 0);
+        # a > c (a should come after c, comparison is 1);
+        # If we only compare (a, b) and (b, c), no changes will be made.
+        sorted_indices = []
+
+        for index_a in range(len(formulas)):
+            for i, index_b in enumerate(sorted_indices):
+                if _compare_formulas(index_a, index_b) < 0:  # rule_a < rule_b
+                    sorted_indices.insert(i, index_a)
+                    break
+            else:
+                # rule_a comes after everything already in sorted_rules
+                sorted_indices.append(index_a)
+
+        return sorted_indices
+
+    return _insertion_sort()
 
 
 def sort_nodes(node: "ASTNode", node_list: list["ASTNode"] = None) -> list["ASTNode"]:
