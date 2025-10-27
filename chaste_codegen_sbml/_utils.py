@@ -3,10 +3,10 @@
 import re
 from typing import TYPE_CHECKING
 
-from libsbml import AST_NAME, formulaToString
+from libsbml import AST_NAME, Compartment, formulaToString
 
 if TYPE_CHECKING:
-    from libsbml import ASTNode, FunctionDefinition, ListOf, SBase, Species
+    from libsbml import ASTNode, FunctionDefinition, ListOf, SBase
 
 
 def convert_ast_formula(ast_formula: "ASTNode") -> str:
@@ -150,6 +150,17 @@ def convert_str_formula(formula: str) -> str:
     return cpp_formula
 
 
+def get_compartment_size(compartment: "Compartment") -> float:
+    """Get a compartment size.
+
+    :return: The compartment size.
+    """
+    # TODO: Set all related concentrations etc. to 0 if compartment size is 0
+    if compartment.isSetSize():
+        return compartment.getSize()
+    return 1.0
+
+
 def generate_header_guard(filename: str) -> str:
     """Generate a C++ header guard from a filename.
 
@@ -218,16 +229,6 @@ def get_index_by_id(obj_id: str, listof: "ListOf") -> int:
     return None
 
 
-def get_species_concentration(species: "Species") -> float:
-    """Get a initial species concentration.
-
-    :return: The initial species concentration.
-    """
-    if species.isSetInitialAmount():
-        return species.getInitialAmount()
-    return species.getInitialConcentration()
-
-
 def sort_formulas(formulas: list[tuple[str, "ASTNode"]]) -> list[int]:
     """Sort formulas based on their dependency.
 
@@ -235,7 +236,7 @@ def sort_formulas(formulas: list[tuple[str, "ASTNode"]]) -> list[int]:
     then B comes before A. It is assumed that the input formulas are acyclic.
     This function can't sort cyclic dependencies such as A -> B -> C -> A.
 
-    :param formulas: A dictionary of (lhs, rhs) tuples.
+    :param formulas: A list of (lhs_variable, rhs_expression) tuples.
     :return: A list of sorted formula indices.
     """
 
@@ -317,11 +318,11 @@ def sort_formulas(formulas: list[tuple[str, "ASTNode"]]) -> list[int]:
 
         for index_a in range(len(formulas)):
             for i, index_b in enumerate(sorted_indices):
-                if _compare_formulas(index_a, index_b) < 0:  # rule_a < rule_b
+                if _compare_formulas(index_a, index_b) < 0:  # formula_a < formula_b
                     sorted_indices.insert(i, index_a)
                     break
             else:
-                # rule_a comes after everything already in sorted_rules
+                # formula_a comes after everything already in sorted_indices
                 sorted_indices.append(index_a)
 
         return sorted_indices

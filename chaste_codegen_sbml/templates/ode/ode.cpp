@@ -15,6 +15,11 @@ namespace sm = sbmlmath;
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<{{ ode_class_name }}>);
 
+    // VARIABLE PARAMETERS
+{% for param in variable_parameters %}
+    {{ param["id"] }} = {{ param["initial_value"] }};
+{% endfor %}
+
     // STATE VARIABLES
 {% for var in state_variables %}
     {{ var["id"] }} = {{ var["initial_value"] }};
@@ -23,11 +28,6 @@ namespace sm = sbmlmath;
     // DERIVED QUANTITIES
 {% for dq in derived_quantities %}
     {{ dq["id"] }} = {{ dq["initial_value"] }};
-{% endfor %}
-
-    // VARIABLE PARAMETERS
-{% for param in variable_parameters %}
-    {{ param["id"] }} = {{ param["initial_value"] }};
 {% endfor %}
 
     // INITIAL ASSIGNMENTS

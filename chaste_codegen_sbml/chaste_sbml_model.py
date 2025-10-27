@@ -25,8 +25,8 @@ from ._utils import (
     convert_ast_formula,
     convert_str_formula,
     generate_header_guard,
+    get_compartment_size,
     get_function_definition_arguments,
-    get_species_concentration,
     sort_formulas,
     to_camel_case,
     to_cpp_name,
@@ -446,7 +446,7 @@ class ChasteSbmlModel:
             compartment_id = compartment.getId()
             label = compartment.getName().strip()
 
-            value = compartment.getSize() if compartment.isSetSize() else 1.0
+            value = get_compartment_size(compartment)
             units = compartment.getUnits() if compartment.isSetUnits() else NON_DIM_UNITS
 
             if compartment_id in self._odes:
@@ -696,23 +696,29 @@ class ChasteSbmlModel:
         for species in self._sbml_species:
             species_id = species.getId()
             label = species.getName().strip()
-            initial_value = get_species_concentration(species)
-            boundary_condition = species.getBoundaryCondition()
 
             # If there's a compartment we'll normalise the ODEs, so declare it as non-dimensional
             compartment_id = species.getCompartment()
             compartment = self._sbml_compartments.get(compartment_id)
             units = NON_DIM_UNITS if compartment else species.getSubstanceUnits()
+            compartment_size = get_compartment_size(compartment)
+
+            initial_concentration = 0.0
+            if compartment_size > 0:
+                if species.isSetInitialConcentration():
+                    initial_concentration = species.getInitialConcentration()
+                elif species.isSetInitialAmount():
+                    initial_concentration = species.getInitialAmount() / compartment_size
 
             if species_id in assignment_rules:
                 # Derived quantity (includes boundary conditions with assignment rules)
                 rhs = assignment_rules[species_id]
-                self._add_derived_quantity(species_id, label, initial_value, units, rhs)
+                self._add_derived_quantity(species_id, label, initial_concentration, units, rhs)
 
-            elif boundary_condition:
+            elif species.getBoundaryCondition():
                 # Derived quantity (boundary condition with no assignment rule)
-                rhs = str(initial_value)
-                self._add_derived_quantity(species_id, label, initial_value, units, rhs)
+                rhs = str(initial_concentration)
+                self._add_derived_quantity(species_id, label, initial_concentration, units, rhs)
 
             elif species_id in self._odes:
                 # State variable
@@ -722,7 +728,7 @@ class ChasteSbmlModel:
                     # Add parentheses if there are multiple terms
                     rhs = f"({rhs})"
                 rhs = f"{rhs} / {compartment_id}"
-                self._add_state_variable(species_id, label, initial_value, units, rhs)
+                self._add_state_variable(species_id, label, initial_concentration, units, rhs)
 
                 # TODO: Handle time scaling
                 # time_multiplier = self._get_timescale_multiplier()
@@ -732,7 +738,7 @@ class ChasteSbmlModel:
 
             else:
                 # Variable parameter
-                self._add_variable_parameter(species_id, label, initial_value, units)
+                self._add_variable_parameter(species_id, label, initial_concentration, units)
 
     def _generate_output(self, template_path, filename) -> None:
         """Generate a single output file from a template.
