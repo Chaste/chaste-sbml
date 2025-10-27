@@ -15,6 +15,9 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem()
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>);
 
+    // VARIABLE PARAMETERS
+    cell = 1.0;
+
     // STATE VARIABLES
     CycBt = 0.001;
     Cdc20a = 0.001;
@@ -30,9 +33,6 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem()
     Trimer = 0.0;
     Mad = 0.0;
     TF = 0.0;
-
-    // VARIABLE PARAMETERS
-    cell = 1.0;
 
     // INITIAL ASSIGNMENTS
 

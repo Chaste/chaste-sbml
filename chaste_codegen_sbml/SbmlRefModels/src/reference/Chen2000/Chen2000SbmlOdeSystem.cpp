@@ -15,6 +15,9 @@ Chen2000SbmlOdeSystem::Chen2000SbmlOdeSystem()
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Chen2000SbmlOdeSystem>);
 
+    // VARIABLE PARAMETERS
+    COMpartment = 1.0;
+
     // STATE VARIABLES
     Cln2 = 0.0078;
     Clb2_T = 0.2342;
@@ -46,9 +49,6 @@ Chen2000SbmlOdeSystem::Chen2000SbmlOdeSystem()
     MBF = 0.0;
     Mcm1 = 0.0;
     Swi5 = 0.0;
-
-    // VARIABLE PARAMETERS
-    COMpartment = 1.0;
 
     // INITIAL ASSIGNMENTS
 

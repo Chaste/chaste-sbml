@@ -15,6 +15,9 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem()
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Goldbeter1991SbmlOdeSystem>);
 
+    // VARIABLE PARAMETERS
+    cell = 1.0;
+
     // STATE VARIABLES
     C = 0.01;
     M = 0.01;
@@ -23,9 +26,6 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem()
     // DERIVED QUANTITIES
     V1 = 0.0;
     V3 = 0.0;
-
-    // VARIABLE PARAMETERS
-    cell = 1.0;
 
     // INITIAL ASSIGNMENTS
 

@@ -15,6 +15,13 @@ VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem()
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<VanLeeuwen2007SbmlOdeSystem>);
 
+    // VARIABLE PARAMETERS
+    cytosolmembraneandnucleus = 1.0;
+    wnt_level = 0.0;
+    gamma1 = 1.0;
+    gamma2 = 1.0;
+    ComplexTransitThreshold = 1.0;
+
     // STATE VARIABLES
     X = 0.067;
     D = 0.67;
@@ -32,13 +39,6 @@ VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem()
     C_F = 2.54;
     C_T = 2.54;
     drag = 1.0;
-
-    // VARIABLE PARAMETERS
-    cytosolmembraneandnucleus = 1.0;
-    wnt_level = 0.0;
-    gamma1 = 1.0;
-    gamma2 = 1.0;
-    ComplexTransitThreshold = 1.0;
 
     // INITIAL ASSIGNMENTS
 

@@ -15,6 +15,9 @@ Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem()
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Gardner1998SbmlOdeSystem>);
 
+    // VARIABLE PARAMETERS
+    Cell = 1.0;
+
     // STATE VARIABLES
     C = 0.0;
     X = 0.0;
@@ -25,9 +28,6 @@ Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem()
     // DERIVED QUANTITIES
     V1 = 0.0;
     V3 = 0.0;
-
-    // VARIABLE PARAMETERS
-    Cell = 1.0;
 
     // INITIAL ASSIGNMENTS
 

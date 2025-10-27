@@ -15,6 +15,13 @@ Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem()
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Tan2014SbmlOdeSystem>);
 
+    // VARIABLE PARAMETERS
+    compartment = 1.0;
+    CytosolMembrane = 1.16;
+    nucleus = 0.65;
+    wnt_level = 0.0;
+    gamma = 1.0;
+
     // STATE VARIABLES
     bcat_cm = 46.6;
     ligand_cm = 581.1;
@@ -24,14 +31,7 @@ Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem()
     complex_nu = 483.2;
 
     // DERIVED QUANTITIES
-    drag = 1.0;
-
-    // VARIABLE PARAMETERS
-    compartment = 1.0;
-    CytosolMembrane = 1.16;
-    nucleus = 0.65;
-    wnt_level = 0.0;
-    gamma = 1.0;
+    drag = 0.8620689655172414;
 
     // INITIAL ASSIGNMENTS
 

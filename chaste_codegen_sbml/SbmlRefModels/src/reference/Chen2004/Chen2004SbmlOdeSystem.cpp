@@ -15,6 +15,22 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>);
 
+    // VARIABLE PARAMETERS
+    cell = 1.0;
+    BUB2 = 0.2;
+    LTE1 = 0.1;
+    MAD2 = 0.01;
+    bub2l = 0.2;
+    CDC15T = 1.0;
+    ESP1T = 1.0;
+    IET = 1.0;
+    KEZ = 0.3;
+    KEZ2 = 0.2;
+    lte1h = 1.0;
+    lte1l = 0.1;
+    mad2l = 0.01;
+    TEM1T = 1.0;
+
     // STATE VARIABLES
     BUD = 0.008473;
     C2 = 0.238404;
@@ -89,22 +105,6 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
     Vppc1 = 0.0;
     Vppf6 = 0.0;
     F = 0.0;
-
-    // VARIABLE PARAMETERS
-    cell = 1.0;
-    BUB2 = 0.2;
-    LTE1 = 0.1;
-    MAD2 = 0.01;
-    bub2l = 0.2;
-    CDC15T = 1.0;
-    ESP1T = 1.0;
-    IET = 1.0;
-    KEZ = 0.3;
-    KEZ2 = 0.2;
-    lte1h = 1.0;
-    lte1l = 0.1;
-    mad2l = 0.01;
-    TEM1T = 1.0;
 
     // INITIAL ASSIGNMENTS
 

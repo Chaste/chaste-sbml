@@ -193,29 +193,8 @@ private:
                 TS_ASSERT_DELTA(q3_val, 1.0, 1e-3);
             }
 
-            // The following code provides nice output for gnuplot
-            // use the command
-            // plot "tan_2014_cvode.dat" u 1:2
-            // or
-            // plot "tan_2014_cvode.dat" u 1:3 etc. for the various species...
-            // or
-            // plot "tan_2014_cvode.dat" u 1:2, "" u 1:3, "" u 1:4 ... for all species
-
-            OutputFileHandler handler("");
-            out_stream file = handler.OpenOutputFile("tan_2014_" + solverName + ".dat");
-            std::vector<double> times = ode_solution.rGetTimes();
-            std::vector<std::vector<double> > solutions = ode_solution.rGetSolutions();
-            for (unsigned i = 0; i < solutions.size(); i++)
-            {
-                (*file) << times[i];
-                for (unsigned j = 0; j < solutions[i].size(); j++)
-                {
-                    (*file) << "\t" << solutions[i][j];
-                }
-                (*file) << "\t" << drag[i] << "\n"
-                        << std::flush;
-            }
-            file->close();
+            // Exports results to csv
+            sth::ExportCsv("tan_2014_" + solverName + ".csv", ode_solution, ode_system);
         }
         catch (Exception& e)
         {
