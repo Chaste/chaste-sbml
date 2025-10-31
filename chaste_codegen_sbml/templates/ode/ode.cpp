@@ -30,6 +30,10 @@ namespace sm = sbmlmath;
     {{ dq["id"] }} = {{ dq["initial_value"] }};
 {% endfor %}
 
+{% for amount in amounts %}
+    {{ amount["id"] }} = {{ amount["initial_value"] }};
+{% endfor %}
+
     // INITIAL ASSIGNMENTS
 {% for ia in initial_assignments %}
     {{ ia["lhs"] }} = {{ ia["rhs"] }};
@@ -92,6 +96,9 @@ std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, 
     std::vector<double> dqs;
 {% for dq in derived_quantities %}
     dqs.push_back({{ dq["id"] }});
+{% endfor %}
+{% for amount in amounts %}
+    dqs.push_back({{ amount["id"] }});
 {% endfor %}
     return dqs;
 }
@@ -193,6 +200,10 @@ void {{ ode_class_name }}::RunModelRules(double time, const std::vector<double>&
     {{ rule["lhs"] }} = {{ rule["rhs"] }};
 {% endfor %}
 
+{% for amount in amounts %}
+    {{ amount["id"] }} = {{ amount["rhs"] }};
+{% endfor %}
+
     // REACTIONS
 {% for reaction in reactions %}
   {% if reaction["label"] %}
@@ -237,6 +248,12 @@ void CellwiseOdeSystemInformation<{{ ode_class_name }}>::Initialise()
 {% for dq in derived_quantities %}
     this->mDerivedQuantityNames.push_back("{{ dq['id'] }}");
     this->mDerivedQuantityUnits.push_back("{{ dq['units'] }}");
+
+{% endfor %}
+
+{% for amount in amounts %}
+    this->mDerivedQuantityNames.push_back("{{ amount['id'] }}");
+    this->mDerivedQuantityUnits.push_back("{{ amount['units'] }}");
 
 {% endfor %}
 

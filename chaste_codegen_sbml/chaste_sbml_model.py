@@ -114,6 +114,7 @@ class ChasteSbmlModel:
         self._assignment_rules = []  # [ { id: str, label: str, ... } ]
         self._state_variables = []  # [ { id: str, label: str, ... } ]
         self._derived_quantities = []  # [ { id: str, label: str, ... } ]
+        self._amounts = []  # [ { id: str, label: str, ... } ]
         self._variable_parameters = []  # [ { id: str, label: str, ... } ]
         self._constant_parameters = []  # [ { id: str, label: str, ... } ]
         self._initial_assignments = []  # [ { id: str, label: str, ... } ]
@@ -168,6 +169,28 @@ class ChasteSbmlModel:
             )
 
     # -- PRIVATE ---------------------------------------
+
+    def _add_amount(self, id_: str, label: str, initial_value: float, units: str, rhs: str) -> None:
+        """Add an amount derived quantity to the template variables.
+
+        :param id_: The variable ID.
+        :param label: The variable description.
+        :param initial_value: The variable initial value.
+        :param units: The variable units.
+        :param rhs: The variable formula.
+        """
+        amount_id = "amount__" + id_
+        self._amounts.append(
+            {
+                "id": amount_id,
+                "label": label,
+                "index": len(self._amounts),
+                "initial_value": initial_value,
+                "rhs": rhs,
+                "units": units,
+            }
+        )
+        self._variable_types[amount_id] = VarType.AMOUNT
 
     def _add_assignment_rule(self, id_: str, label: str, lhs: str, rhs: str) -> None:
         """Add an assignment rule to the template variables.
@@ -703,12 +726,16 @@ class ChasteSbmlModel:
             units = NON_DIM_UNITS if compartment else species.getSubstanceUnits()
             compartment_size = get_compartment_size(compartment)
 
+            initial_amount = 0.0
             initial_concentration = 0.0
+            # TODO: Raise error/warning if compartment_size is zero?
             if compartment_size > 0:
                 if species.isSetInitialConcentration():
                     initial_concentration = species.getInitialConcentration()
+                    initial_amount = initial_concentration * compartment_size
                 elif species.isSetInitialAmount():
-                    initial_concentration = species.getInitialAmount() / compartment_size
+                    initial_amount = species.getInitialAmount()
+                    initial_concentration = initial_amount / compartment_size
 
             if species_id in assignment_rules:
                 # Derived quantity (includes boundary conditions with assignment rules)
@@ -722,13 +749,19 @@ class ChasteSbmlModel:
 
             elif species_id in self._odes:
                 # State variable
-                # Normalised ODE
                 rhs = self._odes[species_id]
-                if len(rhs[1:].replace("+", "\t").replace("-", "\t").split("\t")) > 1:
-                    # Add parentheses if there are multiple terms
+
+                # Add compartment ODE
+                if compartment_id in self._odes:
+                    compartment_rhs = self._odes[compartment_id]
+                    rhs = f"{rhs} - {species_id} * ({compartment_rhs})"
+
+                # Add parentheses if there are multiple terms
+                if "+" in rhs or "-" in rhs[1:]:
                     rhs = f"({rhs})"
+
+                # Add compartment scaling
                 rhs = f"{rhs} / {compartment_id}"
-                self._add_state_variable(species_id, label, initial_concentration, units, rhs)
 
                 # TODO: Handle time scaling
                 # time_multiplier = self._get_timescale_multiplier()
@@ -736,9 +769,15 @@ class ChasteSbmlModel:
                 #     # This does not include species defined in algebraic rules
                 #     f"rDY[{state_variable_index}] *= {time_multiplier};"
 
+                self._add_state_variable(species_id, label, initial_concentration, units, rhs)
+
             else:
                 # Variable parameter
                 self._add_variable_parameter(species_id, label, initial_concentration, units)
+
+            # Add an extra "amount" derived quantity for the species
+            rhs = f"{species_id} * {compartment_id}"
+            self._add_amount(species_id, label, initial_amount, units, rhs)
 
     def _generate_output(self, template_path, filename) -> None:
         """Generate a single output file from a template.
@@ -810,6 +849,11 @@ class ChasteSbmlModel:
                 if dq["id"] == id_:
                     return dq["index"]
 
+        elif var_type == VarType.AMOUNT:
+            for amount in self._amounts:
+                if amount["id"] == id_:
+                    return amount["index"]
+
         elif var_type == VarType.CONSTANT_PARAMETER:
             for param in self._constant_parameters:
                 if param["id"] == id_:
@@ -847,6 +891,7 @@ class ChasteSbmlModel:
     def _populate_template_vars(self) -> None:
         """Populate the template variables for generating C++ code."""
         template_vars: dict[str, "Any"] = dict(
+            amounts=self._amounts,
             assignment_rules=self._assignment_rules,
             constant_parameters=self._constant_parameters,
             derived_quantities=self._derived_quantities,
@@ -889,6 +934,7 @@ class ChasteSbmlModel:
 
         self._state_variables = []
         self._derived_quantities = []
+        self._amounts = []
         self._variable_parameters = []
         self._constant_parameters = []
 
@@ -906,8 +952,8 @@ class ChasteSbmlModel:
         self._format_parameters()
 
         self._format_reactions()
-        self._format_events()
         self._format_function_definitions()
+        self._format_events()
 
         if not self._state_variables:
             raise NotImplementedError("Models without state variables are not supported.")

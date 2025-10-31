@@ -71,6 +71,8 @@ public:
 
             // Expected results
             std::vector<std::string> expected_result_columns = { {{ test_result_columns }} };
+            std::set<std::string> expected_amounts{ {{ test_amounts }} };
+            std::set<std::string> expected_concentrations{ {{ test_concentrations }} };
 
             std::vector<std::vector<double> > expected_result_data = {
                 {{ test_result_data }}
@@ -86,8 +88,22 @@ public:
             // Check variable values
             for (unsigned j = 1; j < expected_result_columns.size(); j++)
             {
-                const std::string& var_name = expected_result_columns[j];
+                std::string var_name = expected_result_columns[j];
                 TSM_ASSERT_EQUALS(var_name.c_str(), ode_system.HasAnyVariable(var_name), true);
+
+                if (expected_amounts.find(var_name) != expected_amounts.end())
+                {
+                    // Use amount variable
+                    if (ode_system.HasAnyVariable("amount__" + var_name))
+                    {
+                        var_name = "amount__" + var_name;
+                    }
+                }
+                else
+                {
+                    TSM_ASSERT(var_name + " is neither amount nor concentration",
+                               expected_concentrations.find(var_name) != expected_concentrations.end());
+                }
 
                 std::vector<double> values = ode_solution.GetAnyVariable(var_name);
                 TS_ASSERT_EQUALS(values.size(), expected_result_data.size());

@@ -11,8 +11,9 @@ NON_DIM_UNITS = "non-dim"
 class VarType(Enum):
     """Enumeration of variable types in SBML models."""
 
-    STATE_VARIABLE = 1
-    DERIVED_QUANTITY = 2
+    STATE_VARIABLE = 0
+    DERIVED_QUANTITY = 1
+    AMOUNT = 2
     VARIABLE_PARAMETER = 3
     CONSTANT_PARAMETER = 4
     ASSIGNMENT_RULE = 5

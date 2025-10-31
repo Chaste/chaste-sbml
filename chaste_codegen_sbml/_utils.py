@@ -155,7 +155,6 @@ def get_compartment_size(compartment: "Compartment") -> float:
 
     :return: The compartment size.
     """
-    # TODO: Set all related concentrations etc. to 0 if compartment size is 0
     if compartment.isSetSize():
         return compartment.getSize()
     return 1.0
