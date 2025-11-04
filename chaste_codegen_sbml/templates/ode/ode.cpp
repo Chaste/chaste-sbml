@@ -30,10 +30,6 @@ namespace sm = sbmlmath;
     {{ dq["id"] }} = {{ dq["initial_value"] }};
 {% endfor %}
 
-{% for amount in amounts %}
-    {{ amount["id"] }} = {{ amount["initial_value"] }};
-{% endfor %}
-
     // INITIAL ASSIGNMENTS
 {% for ia in initial_assignments %}
     {{ ia["lhs"] }} = {{ ia["rhs"] }};
@@ -91,12 +87,19 @@ namespace sm = sbmlmath;
 
 std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, const std::vector<double> &rY)
 {
+    std::vector<double> dqs;
+
     RunModelRules(time, rY);
 
-    std::vector<double> dqs;
 {% for dq in derived_quantities %}
     dqs.push_back({{ dq["id"] }});
 {% endfor %}
+
+    // AMOUNTS
+{% for amount in amounts %}
+    double {{ amount["id"] }} = {{ amount["rhs"] }};
+{% endfor %}
+
 {% for amount in amounts %}
     dqs.push_back({{ amount["id"] }});
 {% endfor %}
@@ -198,10 +201,6 @@ void {{ ode_class_name }}::RunModelRules(double time, const std::vector<double>&
     // ASSIGNMENT RULES
 {% for rule in assignment_rules %}
     {{ rule["lhs"] }} = {{ rule["rhs"] }};
-{% endfor %}
-
-{% for amount in amounts %}
-    {{ amount["id"] }} = {{ amount["rhs"] }};
 {% endfor %}
 
     // REACTIONS

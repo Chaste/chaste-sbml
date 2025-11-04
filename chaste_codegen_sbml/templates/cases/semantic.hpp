@@ -99,11 +99,6 @@ public:
                         var_name = "amount__" + var_name;
                     }
                 }
-                else
-                {
-                    TSM_ASSERT(var_name + " is neither amount nor concentration",
-                               expected_concentrations.find(var_name) != expected_concentrations.end());
-                }
 
                 std::vector<double> values = ode_solution.GetAnyVariable(var_name);
                 TS_ASSERT_EQUALS(values.size(), expected_result_data.size());

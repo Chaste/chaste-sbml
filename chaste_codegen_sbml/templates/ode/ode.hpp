@@ -49,10 +49,6 @@ private:
     double {{ dq["id"] }}; // {{ dq["label"] }}
 {% endfor %}
 
-{% for amount in amounts %}
-    double {{ amount["id"] }}; // {{ amount["label"] }}
-{% endfor %}
-
     // VARIABLE PARAMETERS
 {% for param in variable_parameters %}
     double {{ param["id"] }}; // {{ param["label"] }}
