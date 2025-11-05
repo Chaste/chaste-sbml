@@ -55,11 +55,21 @@ class ChasteSbmlTestSuiteModel(ChasteSbmlModel):
         test_result_data = ["{ " + ", ".join(row) + " }" for row in test_params["results"][1:]]
         test_result_data = ",\n".join(test_result_data)
 
+        test_amounts = test_params["settings"]["amount"].split(",")
+        test_amounts = ", ".join(f'"{amt.strip()}"' for amt in test_amounts if amt.strip())
+
+        test_concentrations = test_params["settings"]["concentration"].split(",")
+        test_concentrations = ", ".join(
+            f'"{conc.strip()}"' for conc in test_concentrations if conc.strip()
+        )
+
         self._template_vars.update(
             {
                 "test_header_guard": generate_header_guard(self._test_hpp_filename),
                 "test_result_columns": test_result_columns,
                 "test_result_data": test_result_data,
+                "test_amounts": test_amounts,
+                "test_concentrations": test_concentrations,
                 "test_settings": test_params["settings"],
             }
         )
@@ -90,9 +100,10 @@ def generate_semantic_cases(suite_path: str) -> None:
     :param suite_path: Path to the sbml_test_suite repository.
     """
     semantic_path = os.path.join(suite_path, "cases", "semantic")
+    cases = sorted(os.listdir(semantic_path))
 
     test_pack = []
-    for case_ in sorted(os.listdir(semantic_path)):
+    for case_ in cases:
         case_path = os.path.join(semantic_path, case_)
         if not os.path.isdir(case_path):
             continue

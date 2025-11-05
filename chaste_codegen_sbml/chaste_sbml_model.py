@@ -20,7 +20,15 @@ from libsbml import (
     SBMLReader,
 )
 
-from ._config import NON_DIM_UNITS, ROOT_DIR, EventType, ModelType, VarType
+from ._config import (
+    AMOUNT_PREFIX,
+    NON_DIM_UNITS,
+    PREFIX_SEP,
+    ROOT_DIR,
+    EventType,
+    ModelType,
+    VarType,
+)
 from ._utils import (
     convert_ast_formula,
     convert_str_formula,
@@ -52,6 +60,8 @@ class ChasteSbmlModel:
     )
     _jinja_env.globals["VarType"] = VarType
     _jinja_env.globals["EventType"] = EventType
+    _jinja_env.globals["AMOUNT_PREFIX"] = AMOUNT_PREFIX
+    _jinja_env.globals["PREFIX_SEP"] = PREFIX_SEP
 
     # -- PUBLIC --------------------------------------
 
@@ -179,7 +189,7 @@ class ChasteSbmlModel:
         :param units: The variable units.
         :param rhs: The variable formula.
         """
-        amount_id = "amount__" + id_
+        amount_id = AMOUNT_PREFIX + PREFIX_SEP + id_
         self._amounts.append(
             {
                 "id": amount_id,
@@ -772,8 +782,9 @@ class ChasteSbmlModel:
                 self._add_state_variable(species_id, label, initial_concentration, units, rhs)
 
             else:
-                # Variable parameter
-                self._add_variable_parameter(species_id, label, initial_concentration, units)
+                # Derived quantity (constant value)
+                rhs = str(initial_concentration)
+                self._add_derived_quantity(species_id, label, initial_concentration, units, rhs)
 
             # Add an extra "amount" derived quantity for the species
             rhs = f"{species_id} * {compartment_id}"

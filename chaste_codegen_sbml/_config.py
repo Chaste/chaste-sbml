@@ -7,6 +7,9 @@ ROOT_DIR = pathlib.Path(__file__).parent.absolute()
 
 NON_DIM_UNITS = "non-dim"
 
+PREFIX_SEP = "__"
+AMOUNT_PREFIX = "amt"
+
 
 class VarType(Enum):
     """Enumeration of variable types in SBML models."""

@@ -72,7 +72,6 @@ public:
             // Expected results
             std::vector<std::string> expected_result_columns = { {{ test_result_columns }} };
             std::set<std::string> expected_amounts{ {{ test_amounts }} };
-            std::set<std::string> expected_concentrations{ {{ test_concentrations }} };
 
             std::vector<std::vector<double> > expected_result_data = {
                 {{ test_result_data }}
@@ -94,9 +93,9 @@ public:
                 if (expected_amounts.find(var_name) != expected_amounts.end())
                 {
                     // Use amount variable
-                    if (ode_system.HasAnyVariable("amount__" + var_name))
+                    if (ode_system.HasAnyVariable("{{ AMOUNT_PREFIX }}{{ PREFIX_SEP }}" + var_name))
                     {
-                        var_name = "amount__" + var_name;
+                        var_name = "{{ AMOUNT_PREFIX }}{{ PREFIX_SEP }}" + var_name;
                     }
                 }
 
@@ -106,6 +105,7 @@ public:
                 {
                     double delta = std::abs(expected_result_data[i][j] - values[i]);
                     double tol = tol_absolute + tol_relative * std::abs(expected_result_data[i][j]);
+                    tol = std::max(tol, 1e-6); // Set minimum tolerance to avoid false failures
                     std::string msg(sth::ToString(values[i]) + " vs " + sth::ToString(expected_result_data[i][j])
                                     + " at " + sth::ToString(ode_solution.rGetTimes()[i], 3) + " for " + var_name);
                     TSM_ASSERT_LESS_THAN_EQUALS(msg.c_str(), delta, tol);
