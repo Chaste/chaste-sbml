@@ -35,12 +35,10 @@ public:
             double start = {{ test_settings["start"] }};
             double duration = {{ test_settings["duration"] }};
             double steps = {{ test_settings["steps"] }};
-            double tol_absolute = {{ test_settings["absolute"] }} * 10.0; // TODO: review tolerance values
-            double tol_relative = {{ test_settings["relative"] }} * 10.0;
 
             double end = start + duration;
-            double timestep = duration / steps;
-            double sampling = timestep;
+            double sampling = duration / steps;
+            double timestep = sampling / 10.0;
 
             // Solve
             std::vector<double> initial_conditions = ode_system.GetInitialConditions();
@@ -79,12 +77,15 @@ public:
 
             // Check sampling times
             TS_ASSERT_EQUALS(ode_solution.rGetTimes().size(), expected_result_data.size());
-            for (unsigned i = 0; i < ode_solution.rGetTimes().size(); i++)
+            for (unsigned i = 0; i < expected_result_data.size(); i++)
             {
                 TS_ASSERT_DELTA(ode_solution.rGetTimes()[i], expected_result_data[i][0], 1e-6);
             }
 
             // Check variable values
+            double tol_absolute = {{ test_settings["absolute"] }} * 10.0; // TODO: review tolerance values
+            double tol_relative = {{ test_settings["relative"] }} * 10.0;
+
             for (unsigned j = 1; j < expected_result_columns.size(); j++)
             {
                 std::string var_name = expected_result_columns[j];
@@ -101,7 +102,7 @@ public:
 
                 std::vector<double> values = ode_solution.GetAnyVariable(var_name);
                 TS_ASSERT_EQUALS(values.size(), expected_result_data.size());
-                for (unsigned i = 0; i < values.size(); i++)
+                for (unsigned i = 0; i < expected_result_data.size(); i++)
                 {
                     double delta = std::abs(expected_result_data[i][j] - values[i]);
                     double tol = tol_absolute + tol_relative * std::abs(expected_result_data[i][j]);
