@@ -32,7 +32,18 @@ namespace sm = sbmlmath;
 
     // INITIAL ASSIGNMENTS
 {% for ia in initial_assignments %}
+{% if not ia["extra"] %}
     {{ ia["lhs"] }} = {{ ia["rhs"] }};
+{% endif %}
+{% endfor %}
+
+    // ASSIGNMENT RULES
+    RunAssignmentRules(0.0);
+
+{% for ia in initial_assignments %}
+{% if ia["extra"] %}
+    {{ ia["lhs"] }} = {{ ia["rhs"] }};
+{% endif %}
 {% endfor %}
 
     // ODE SYSTEM INFORMATION
@@ -76,9 +87,6 @@ namespace sm = sbmlmath;
     mEventAdjustedStateVars.resize({{ state_variables|length }}, false);
     mEventAdjustedStateValues.resize({{ state_variables|length }}, 0.0);
 {% endif %} {# 'if events' #}
-
-    // Run model rules to complete state initialisation
-    RunModelRules(0.0, mStateVariables);
 }
 
 {{ ode_class_name }}::~{{ ode_class_name }}()
@@ -186,24 +194,17 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
     return min_dist; // Distance to closest event
 }
 
-void {{ ode_class_name }}::RunModelRules(double time, const std::vector<double>& rY)
+// ASSIGNMENT RULES
+void {{ ode_class_name }}::RunAssignmentRules(double time)
 {
-    // STATE VARIABLES
-{% for var in state_variables %}
-    {{ var["id"] }} = rY[{{ var["index"] }}];
-{% endfor %}
-
-    // VARIABLE PARAMETERS
-{% for var in variable_parameters %}
-    {{ var["id"] }} = GetParameter({{ var['index'] }});
-{% endfor %}
-
-    // ASSIGNMENT RULES
 {% for rule in assignment_rules %}
     {{ rule["lhs"] }} = {{ rule["rhs"] }};
 {% endfor %}
+}
 
-    // REACTIONS
+// REACTIONS
+void {{ ode_class_name }}::RunReactions(double time)
+{
 {% for reaction in reactions %}
   {% if reaction["label"] %}
     // {{ reaction["label"] }}
@@ -220,6 +221,22 @@ void {{ ode_class_name }}::RunModelRules(double time, const std::vector<double>&
     {{ reaction["id"] }} = {{ reaction["rhs"] }};
   {% endif %}
 
+{% endfor %}
+}
+
+// VARIABLE PARAMETERS
+void {{ ode_class_name }}::UpdateParameters(double time)
+{
+{% for var in variable_parameters %}
+    {{ var["id"] }} = GetParameter({{ var['index'] }});
+{% endfor %}
+}
+
+// STATE VARIABLES
+void {{ ode_class_name }}::UpdateStateVariables(double time, const std::vector<double>& rStateVariables)
+{
+{% for var in state_variables %}
+    {{ var["id"] }} = rStateVariables[{{ var["index"] }}];
 {% endfor %}
 }
 

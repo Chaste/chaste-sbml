@@ -59,6 +59,52 @@ private:
     double {{ reaction["id"] }}; // {{ reaction["label"] }}
 {% endfor %}
 
+    /**
+     * Process the events in the model.
+     * 
+     * @param time The current time
+     * @param rY The current state variables
+     * 
+     * @return How close we are to the time of the next event
+     */
+    double ProcessModelEvents(double time, const std::vector<double>& rY) override;
+
+    /**
+     * Run the assignment rules to update state.
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     */
+    void RunAssignmentRules(double time) override;
+
+    /**
+     * Run the reactions to update state.
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     */
+    void RunReactions(double time) override;
+
+    /**
+     * Update variable parameters from current ODE system parameter settings.
+     *
+     * @param time The current time
+     */
+    void UpdateParameters(double time) override;
+
+    /**
+     * Update state variables from the given ODE system state.
+     *
+     * @param time The current time
+     * @param rStateVariables The state variables to use
+     */
+    void UpdateStateVariables(double time, const std::vector<double>& rStateVariables) override;
+
+    // MODEL FUNCTIONS
+{% for func in functions %}
+    inline double {{ func["id"] }}({{ func["args"] }});
+{% endfor %}
+
 public:
     /** 
      * Default constructor
@@ -90,29 +136,6 @@ public:
      * @param rDY an output vector to be filled in with the resulting derivatives y' = [y1' ... yn'].
      */
     void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY) override;
-
-    /**
-     * Process the events in the model.
-     * 
-     * @param time The current time
-     * @param rY The current state variables
-     * 
-     * @return How close we are to the time of the next event
-     */
-    double ProcessModelEvents(double time, const std::vector<double>& rY) override;
-
-    /** 
-     * Run the equations governing the model to update state.
-     * 
-     * @param time The current time
-     * @param rY The current state variables
-     */
-    void RunModelRules(double time, const std::vector<double>& rY) override;
-
-    // MODEL FUNCTIONS
-{% for func in functions %}
-    inline double {{ func["id"] }}({{ func["args"] }});
-{% endfor %}
 };
 
 // Register the ODE system with Boost serialization

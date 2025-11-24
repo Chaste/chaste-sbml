@@ -9,6 +9,8 @@ NON_DIM_UNITS = "non-dim"
 
 PREFIX_SEP = "__"
 AMOUNT_PREFIX = "amt"
+CHASTE_PREFIX = "chaste"
+INITIAL_ASSIGNMENT_PREFIX = "ia"
 
 
 class VarType(Enum):

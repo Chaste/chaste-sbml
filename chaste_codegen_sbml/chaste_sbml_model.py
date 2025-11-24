@@ -22,6 +22,8 @@ from libsbml import (
 
 from ._config import (
     AMOUNT_PREFIX,
+    CHASTE_PREFIX,
+    INITIAL_ASSIGNMENT_PREFIX,
     NON_DIM_UNITS,
     PREFIX_SEP,
     ROOT_DIR,
@@ -180,7 +182,7 @@ class ChasteSbmlModel:
 
     # -- PRIVATE ---------------------------------------
 
-    def _add_amount(self, id_: str, label: str, initial_value: float, units: str, rhs: str) -> None:
+    def _add_amount(self, id_: str, units: str, rhs: str) -> None:
         """Add an amount derived quantity to the template variables.
 
         :param id_: The variable ID.
@@ -193,9 +195,7 @@ class ChasteSbmlModel:
         self._amounts.append(
             {
                 "id": amount_id,
-                "label": label,
                 "index": len(self._amounts),
-                "initial_value": initial_value,
                 "rhs": rhs,
                 "units": units,
             }
@@ -312,13 +312,16 @@ class ChasteSbmlModel:
         )
         self._variable_types[id_] = VarType.FUNCTION
 
-    def _add_initial_assignment(self, id_: str, label: str, lhs: str, rhs: str) -> None:
+    def _add_initial_assignment(
+        self, id_: str, label: str, lhs: str, rhs: str, extra: bool = False
+    ) -> None:
         """Add an initial assignment to the template variables.
 
         :param id_: The rule ID.
         :param label: The rule description.
         :param lhs: The left-hand side of the rule.
         :param rhs: The right-hand side of the rule.
+        :param extra: True if this is an extra initial assignment added during processing.
         """
         self._initial_assignments.append(
             {
@@ -327,6 +330,7 @@ class ChasteSbmlModel:
                 "index": len(self._initial_assignments),
                 "lhs": lhs,
                 "rhs": rhs,
+                "extra": extra,
             }
         )
         self._variable_types[id_] = VarType.INITIAL_ASSIGNMENT
@@ -634,7 +638,7 @@ class ChasteSbmlModel:
             label = ia.getName().strip()
             lhs = ia.getSymbol()
             rhs = convert_ast_formula(ia.getMath())
-            self._add_initial_assignment(ia_id, label, lhs, rhs)
+            self._add_initial_assignment(ia_id, label, lhs, rhs, extra=False)
 
     def _format_parameters(self) -> None:
         """Add parameters to template variables."""
@@ -734,28 +738,29 @@ class ChasteSbmlModel:
             compartment_id = species.getCompartment()
             compartment = self._sbml_compartments.get(compartment_id)
             units = NON_DIM_UNITS if compartment else species.getSubstanceUnits()
-            compartment_size = get_compartment_size(compartment)
 
-            initial_amount = 0.0
-            initial_concentration = 0.0
-            # TODO: Raise error/warning if compartment_size is zero?
-            if compartment_size > 0:
-                if species.isSetInitialConcentration():
-                    initial_concentration = species.getInitialConcentration()
-                    initial_amount = initial_concentration * compartment_size
-                elif species.isSetInitialAmount():
-                    initial_amount = species.getInitialAmount()
-                    initial_concentration = initial_amount / compartment_size
+            initial_value = 0.0
+            if species.isSetInitialConcentration():
+                initial_value = species.getInitialConcentration()
+            else:
+                initial_value = species.getInitialAmount()
+
+                # Convert amount to concentration via an extra initial assignment
+                ia_id = PREFIX_SEP.join([CHASTE_PREFIX, INITIAL_ASSIGNMENT_PREFIX, species_id])
+                label = f"Concentration of {species_id}"
+                lhs = species_id
+                rhs = f"{species_id} / {compartment_id}"
+                self._add_initial_assignment(ia_id, label, lhs, rhs, extra=True)
 
             if species_id in assignment_rules:
                 # Derived quantity (includes boundary conditions with assignment rules)
                 rhs = assignment_rules[species_id]
-                self._add_derived_quantity(species_id, label, initial_concentration, units, rhs)
+                self._add_derived_quantity(species_id, label, initial_value, units, rhs)
 
             elif species.getBoundaryCondition():
                 # Derived quantity (boundary condition with no assignment rule)
-                rhs = str(initial_concentration)
-                self._add_derived_quantity(species_id, label, initial_concentration, units, rhs)
+                rhs = str(initial_value)
+                self._add_derived_quantity(species_id, label, initial_value, units, rhs)
 
             elif species_id in self._odes:
                 # State variable
@@ -779,16 +784,16 @@ class ChasteSbmlModel:
                 #     # This does not include species defined in algebraic rules
                 #     f"rDY[{state_variable_index}] *= {time_multiplier};"
 
-                self._add_state_variable(species_id, label, initial_concentration, units, rhs)
+                self._add_state_variable(species_id, label, initial_value, units, rhs)
 
             else:
                 # Derived quantity (constant value)
-                rhs = str(initial_concentration)
-                self._add_derived_quantity(species_id, label, initial_concentration, units, rhs)
+                rhs = str(initial_value)
+                self._add_derived_quantity(species_id, label, initial_value, units, rhs)
 
             # Add an extra "amount" derived quantity for the species
             rhs = f"{species_id} * {compartment_id}"
-            self._add_amount(species_id, label, initial_amount, units, rhs)
+            self._add_amount(species_id, units, rhs)
 
     def _generate_output(self, template_path, filename) -> None:
         """Generate a single output file from a template.
