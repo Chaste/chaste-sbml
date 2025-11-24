@@ -747,7 +747,7 @@ class ChasteSbmlModel:
 
                 # Convert amount to concentration via an extra initial assignment
                 ia_id = PREFIX_SEP.join([CHASTE_PREFIX, INITIAL_ASSIGNMENT_PREFIX, species_id])
-                label = f"Concentration of {species_id}"
+                label = f"Convert {species_id} amount to concentration"
                 lhs = species_id
                 rhs = f"{species_id} / {compartment_id}"
                 self._add_initial_assignment(ia_id, label, lhs, rhs, extra=True)

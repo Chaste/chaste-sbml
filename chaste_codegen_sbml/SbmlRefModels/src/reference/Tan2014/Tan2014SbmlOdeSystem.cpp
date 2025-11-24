@@ -31,9 +31,14 @@ Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem()
     complex_nu = 483.2;
 
     // DERIVED QUANTITIES
-    drag = 0.8620689655172414;
+    drag = 1.0;
 
     // INITIAL ASSIGNMENTS
+
+    // ASSIGNMENT RULES
+    RunAssignmentRules(0.0);
+
+    drag = drag / CytosolMembrane; // Convert drag amount to concentration
 
     // ODE SYSTEM INFORMATION
     SetDefaultInitialCondition(0, bcat_cm);
@@ -66,9 +71,6 @@ Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem()
     K_n_active = 0.0;
 
     // EVENTS
-
-    // Run model rules to complete state initialisation
-    RunModelRules(0.0, mStateVariables);
 }
 
 Tan2014SbmlOdeSystem::~Tan2014SbmlOdeSystem()
@@ -77,10 +79,28 @@ Tan2014SbmlOdeSystem::~Tan2014SbmlOdeSystem()
 
 std::vector<double> Tan2014SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
 {
+    std::vector<double> dqs;
+
     RunModelRules(time, rY);
 
-    std::vector<double> dqs;
     dqs.push_back(drag);
+
+    // AMOUNTS
+    double amt__bcat_cm = bcat_cm * CytosolMembrane;
+    double amt__ligand_cm = ligand_cm * CytosolMembrane;
+    double amt__complex_cm = complex_cm * CytosolMembrane;
+    double amt__bcat_nu = bcat_nu * nucleus;
+    double amt__ligand_nu = ligand_nu * nucleus;
+    double amt__complex_nu = complex_nu * nucleus;
+    double amt__drag = drag * CytosolMembrane;
+
+    dqs.push_back(amt__bcat_cm);
+    dqs.push_back(amt__ligand_cm);
+    dqs.push_back(amt__complex_cm);
+    dqs.push_back(amt__bcat_nu);
+    dqs.push_back(amt__ligand_nu);
+    dqs.push_back(amt__complex_nu);
+    dqs.push_back(amt__drag);
     return dqs;
 }
 
@@ -108,27 +128,15 @@ double Tan2014SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<d
     return min_dist; // Distance to closest event
 }
 
-void Tan2014SbmlOdeSystem::RunModelRules(double time, const std::vector<double>& rY)
+// ASSIGNMENT RULES
+void Tan2014SbmlOdeSystem::RunAssignmentRules(double time)
 {
-    // STATE VARIABLES
-    bcat_cm = rY[0];
-    ligand_cm = rY[1];
-    complex_cm = rY[2];
-    bcat_nu = rY[3];
-    ligand_nu = rY[4];
-    complex_nu = rY[5];
-
-    // VARIABLE PARAMETERS
-    compartment = GetParameter(0);
-    CytosolMembrane = GetParameter(1);
-    nucleus = GetParameter(2);
-    wnt_level = GetParameter(3);
-    gamma = GetParameter(4);
-
-    // ASSIGNMENT RULES
     drag = sm::piecewise((complex_cm - 700.0) / 10.0, sm::gt((complex_cm - 700.0) / 10.0, 1.0), 1.0);
+}
 
-    // REACTIONS
+// REACTIONS
+void Tan2014SbmlOdeSystem::RunReactions(double time)
+{
     Bsynthesis = Bsyn * CytosolMembrane;
 
     kDegradation = CytosolMembrane * kdegradation * gamma * bcat_cm * (1.0 - 0.5 * wnt_level);
@@ -142,6 +150,27 @@ void Tan2014SbmlOdeSystem::RunModelRules(double time, const std::vector<double>&
     K_c_active = K_c_active_k * bcat_cm;
 
     K_n_active = K_n_active_k * bcat_nu;
+}
+
+// VARIABLE PARAMETERS
+void Tan2014SbmlOdeSystem::UpdateParameters(double time)
+{
+    compartment = GetParameter(0);
+    CytosolMembrane = GetParameter(1);
+    nucleus = GetParameter(2);
+    wnt_level = GetParameter(3);
+    gamma = GetParameter(4);
+}
+
+// STATE VARIABLES
+void Tan2014SbmlOdeSystem::UpdateStateVariables(double time, const std::vector<double>& rStateVariables)
+{
+    bcat_cm = rStateVariables[0];
+    ligand_cm = rStateVariables[1];
+    complex_cm = rStateVariables[2];
+    bcat_nu = rStateVariables[3];
+    ligand_nu = rStateVariables[4];
+    complex_nu = rStateVariables[5];
 }
 
 // MODEL FUNCTIONS
@@ -176,6 +205,27 @@ void CellwiseOdeSystemInformation<Tan2014SbmlOdeSystem>::Initialise()
 
     // DERIVED QUANTITIES
     this->mDerivedQuantityNames.push_back("drag");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__bcat_cm");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__ligand_cm");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__complex_cm");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__bcat_nu");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__ligand_nu");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__complex_nu");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__drag");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     // PARAMETERS

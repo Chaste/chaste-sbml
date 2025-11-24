@@ -66,7 +66,8 @@ class TestChen2004SbmlOdeSystem : public AbstractCellBasedTestSuite
 {
 private:
     const unsigned ODE_SIZE = 36u;
-    const unsigned NUM_DERIVED_QUANTITIES = 35u;
+    const unsigned NUM_DERIVED_QUANTITIES = 92u;
+    const unsigned NUM_NORMAL_DERIVED_QUANTITIES = 35u;
 
     std::vector<double> default_initial_conditions = {
         0.008473,  // BUD
@@ -465,24 +466,58 @@ public:
         TS_ASSERT_EQUALS(ode_system.GetNumberOfDerivedQuantities(), NUM_DERIVED_QUANTITIES);
 
         std::vector<std::string> dq_names = {
-            "BCK2", "CDC14T", "CDC15i", "CDC6T", "CKIT", "CLB2T", "CLB5T",
-            "CLN3", "IE", "MCM1", "NET1T", "PE", "SBF", "SIC1T", "TEM1GDP",
-            "D", "mu", "Vdb5", "Vdb2", "Vasbf", "Visbf", "Vkpc1", "Vkpf6",
-            "Vacdh", "Vicdh", "Vppnet", "Vkpnet", "Vdppx", "Vdpds",
-            "Vaiep", "Vd2c1", "Vd2f6", "Vppc1", "Vppf6", "F"
+            "BCK2",
+            "BUB2",
+            "CDC14T",
+            "CDC15i",
+            "CDC6T",
+            "CKIT",
+            "CLB2T",
+            "CLB5T",
+            "CLN3",
+            "IE",
+            "LTE1",
+            "MAD2",
+            "MCM1",
+            "NET1T",
+            "PE",
+            "SBF",
+            "SIC1T",
+            "TEM1GDP",
+            "D",
+            "mu",
+            "Vdb5",
+            "Vdb2",
+            "Vasbf",
+            "Visbf",
+            "Vkpc1",
+            "Vkpf6",
+            "Vacdh",
+            "Vicdh",
+            "Vppnet",
+            "Vkpnet",
+            "Vdppx",
+            "Vdpds",
+            "Vaiep",
+            "Vd2c1",
+            "Vd2f6",
+            "Vppc1",
+            "Vppf6",
+            "F"
         };
 
-        for (unsigned i = 0; i < ode_system.GetNumberOfDerivedQuantities(); i++)
+        for (unsigned i = 0; i < NUM_NORMAL_DERIVED_QUANTITIES; i++)
         {
             TSM_ASSERT_EQUALS(dq_names[i].c_str(), ode_system.GetDerivedQuantityIndex(dq_names[i]), i);
         }
 
         // Compare derived quantities with Tellurium values
         std::vector<double> dqs = ode_system.ComputeDerivedQuantities(0.0, default_initial_conditions);
-        TS_ASSERT_EQUALS(dqs.size(), ode_system.GetNumberOfDerivedQuantities());
+        TS_ASSERT_EQUALS(dqs.size(), NUM_DERIVED_QUANTITIES);
 
         std::vector<double> dqs_expected = {
             0.065125026,          // BCK2
+            0.2,                  // BUB2
             2.117884,             // CDC14T
             0.34346699999999997,  // CDC15i
             0.3866693,            // CDC6T
@@ -491,6 +526,8 @@ public:
             0.1289119,            // CLB5T
             0.06694509131879892,  // CLN3
             0.8985,               // IE
+            0.1,                  // LTE1
+            0.01,                  // MAD2
             0.4690076182110798,   // MCM1
             2.638456,             // NET1T
             0.6986870000000001,   // PE
@@ -519,7 +556,7 @@ public:
             0.4586134093959288,   // F
         };
 
-        for (unsigned i = 0; i < dqs.size(); i++)
+        for (unsigned i = 0; i < NUM_NORMAL_DERIVED_QUANTITIES; i++)
         {
             TSM_ASSERT_DELTA(dq_names[i].c_str(), dqs[i], dqs_expected[i], 1e-3);
         }

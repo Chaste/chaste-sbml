@@ -114,3 +114,11 @@ void AbstractSbmlOdeSystem::ResetEventsOccurred()
 {
     std::fill(mEventTriggered.begin(), mEventTriggered.end(), false);
 }
+
+void AbstractSbmlOdeSystem::RunModelRules(double time, const std::vector<double>& rY)
+{
+    UpdateStateVariables(time, rY);
+    UpdateParameters(time);
+    RunAssignmentRules(time);
+    RunReactions(time);
+}

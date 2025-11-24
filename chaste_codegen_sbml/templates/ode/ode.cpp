@@ -33,7 +33,7 @@ namespace sm = sbmlmath;
     // INITIAL ASSIGNMENTS
 {% for ia in initial_assignments %}
 {% if not ia["extra"] %}
-    {{ ia["lhs"] }} = {{ ia["rhs"] }};
+    {{ ia["lhs"] }} = {{ ia["rhs"] }}; // {{ ia["label"] }}
 {% endif %}
 {% endfor %}
 
@@ -42,7 +42,7 @@ namespace sm = sbmlmath;
 
 {% for ia in initial_assignments %}
 {% if ia["extra"] %}
-    {{ ia["lhs"] }} = {{ ia["rhs"] }};
+    {{ ia["lhs"] }} = {{ ia["rhs"] }}; // {{ ia["label"] }}
 {% endif %}
 {% endfor %}
 

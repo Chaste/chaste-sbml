@@ -11,15 +11,12 @@
 namespace sm = sbmlmath;
 
 Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
-        : AbstractSbmlOdeSystem(36, 14, 4)
+        : AbstractSbmlOdeSystem(36, 11, 4)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>);
 
     // VARIABLE PARAMETERS
     cell = 1.0;
-    BUB2 = 0.2;
-    LTE1 = 0.1;
-    MAD2 = 0.01;
     bub2l = 0.2;
     CDC15T = 1.0;
     ESP1T = 1.0;
@@ -71,6 +68,7 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
 
     // DERIVED QUANTITIES
     BCK2 = 0.0;
+    BUB2 = 0.2;
     CDC14T = 2.0;
     CDC15i = 0.0;
     CDC6T = 0.0;
@@ -79,6 +77,8 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
     CLB5T = 0.12;
     CLN3 = 0.0;
     IE = 0.0;
+    LTE1 = 0.1;
+    MAD2 = 0.01;
     MCM1 = 0.0;
     NET1T = 2.8;
     PE = 0.0;
@@ -107,6 +107,64 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
     F = 0.0;
 
     // INITIAL ASSIGNMENTS
+
+    // ASSIGNMENT RULES
+    RunAssignmentRules(0.0);
+
+    BCK2 = BCK2 / cell;       // Convert BCK2 amount to concentration
+    BUB2 = BUB2 / cell;       // Convert BUB2 amount to concentration
+    BUD = BUD / cell;         // Convert BUD amount to concentration
+    C2 = C2 / cell;           // Convert C2 amount to concentration
+    C2P = C2P / cell;         // Convert C2P amount to concentration
+    C5 = C5 / cell;           // Convert C5 amount to concentration
+    C5P = C5P / cell;         // Convert C5P amount to concentration
+    CDC14 = CDC14 / cell;     // Convert CDC14 amount to concentration
+    CDC14T = CDC14T / cell;   // Convert CDC14T amount to concentration
+    CDC15 = CDC15 / cell;     // Convert CDC15 amount to concentration
+    CDC15i = CDC15i / cell;   // Convert CDC15i amount to concentration
+    CDC20 = CDC20 / cell;     // Convert CDC20 amount to concentration
+    CDC20i = CDC20i / cell;   // Convert CDC20i amount to concentration
+    CDC6 = CDC6 / cell;       // Convert CDC6 amount to concentration
+    CDC6P = CDC6P / cell;     // Convert CDC6P amount to concentration
+    CDC6T = CDC6T / cell;     // Convert CDC6T amount to concentration
+    CDH1 = CDH1 / cell;       // Convert CDH1 amount to concentration
+    CDH1i = CDH1i / cell;     // Convert CDH1i amount to concentration
+    CKIT = CKIT / cell;       // Convert CKIT amount to concentration
+    CLB2 = CLB2 / cell;       // Convert CLB2 amount to concentration
+    CLB2T = CLB2T / cell;     // Convert CLB2T amount to concentration
+    CLB5 = CLB5 / cell;       // Convert CLB5 amount to concentration
+    CLB5T = CLB5T / cell;     // Convert CLB5T amount to concentration
+    CLN2 = CLN2 / cell;       // Convert CLN2 amount to concentration
+    CLN3 = CLN3 / cell;       // Convert CLN3 amount to concentration
+    ESP1 = ESP1 / cell;       // Convert ESP1 amount to concentration
+    F2 = F2 / cell;           // Convert F2 amount to concentration
+    F2P = F2P / cell;         // Convert F2P amount to concentration
+    F5 = F5 / cell;           // Convert F5 amount to concentration
+    F5P = F5P / cell;         // Convert F5P amount to concentration
+    IE = IE / cell;           // Convert IE amount to concentration
+    IEP = IEP / cell;         // Convert IEP amount to concentration
+    LTE1 = LTE1 / cell;       // Convert LTE1 amount to concentration
+    MAD2 = MAD2 / cell;       // Convert MAD2 amount to concentration
+    MASS = MASS / cell;       // Convert MASS amount to concentration
+    MCM1 = MCM1 / cell;       // Convert MCM1 amount to concentration
+    NET1 = NET1 / cell;       // Convert NET1 amount to concentration
+    NET1P = NET1P / cell;     // Convert NET1P amount to concentration
+    NET1T = NET1T / cell;     // Convert NET1T amount to concentration
+    ORI = ORI / cell;         // Convert ORI amount to concentration
+    PDS1 = PDS1 / cell;       // Convert PDS1 amount to concentration
+    PE = PE / cell;           // Convert PE amount to concentration
+    PPX = PPX / cell;         // Convert PPX amount to concentration
+    RENT = RENT / cell;       // Convert RENT amount to concentration
+    RENTP = RENTP / cell;     // Convert RENTP amount to concentration
+    SBF = SBF / cell;         // Convert SBF amount to concentration
+    SIC1 = SIC1 / cell;       // Convert SIC1 amount to concentration
+    SIC1P = SIC1P / cell;     // Convert SIC1P amount to concentration
+    SIC1T = SIC1T / cell;     // Convert SIC1T amount to concentration
+    SPN = SPN / cell;         // Convert SPN amount to concentration
+    SWI5 = SWI5 / cell;       // Convert SWI5 amount to concentration
+    SWI5P = SWI5P / cell;     // Convert SWI5P amount to concentration
+    TEM1GDP = TEM1GDP / cell; // Convert TEM1GDP amount to concentration
+    TEM1GTP = TEM1GTP / cell; // Convert TEM1GTP amount to concentration
 
     // ODE SYSTEM INFORMATION
     SetDefaultInitialCondition(0, BUD);
@@ -184,9 +242,6 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
     mStateVariables.push_back(TEM1GTP);
 
     mParameters.push_back(cell);
-    mParameters.push_back(BUB2);
-    mParameters.push_back(LTE1);
-    mParameters.push_back(MAD2);
     mParameters.push_back(bub2l);
     mParameters.push_back(CDC15T);
     mParameters.push_back(ESP1T);
@@ -307,14 +362,11 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
     mEventSatisfied.resize(4, true); // Prevent events from triggering at the start
     mEventTriggered.resize(4, false);
 
-    mEventAdjustedParameters.resize(14, false);
-    mEventAdjustedParameterValues.resize(14, 0.0);
+    mEventAdjustedParameters.resize(11, false);
+    mEventAdjustedParameterValues.resize(11, 0.0);
 
     mEventAdjustedStateVars.resize(36, false);
     mEventAdjustedStateValues.resize(36, 0.0);
-
-    // Run model rules to complete state initialisation
-    RunModelRules(0.0, mStateVariables);
 }
 
 Chen2004SbmlOdeSystem::~Chen2004SbmlOdeSystem()
@@ -323,10 +375,12 @@ Chen2004SbmlOdeSystem::~Chen2004SbmlOdeSystem()
 
 std::vector<double> Chen2004SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
 {
+    std::vector<double> dqs;
+
     RunModelRules(time, rY);
 
-    std::vector<double> dqs;
     dqs.push_back(BCK2);
+    dqs.push_back(BUB2);
     dqs.push_back(CDC14T);
     dqs.push_back(CDC15i);
     dqs.push_back(CDC6T);
@@ -335,6 +389,8 @@ std::vector<double> Chen2004SbmlOdeSystem::ComputeDerivedQuantities(double time,
     dqs.push_back(CLB5T);
     dqs.push_back(CLN3);
     dqs.push_back(IE);
+    dqs.push_back(LTE1);
+    dqs.push_back(MAD2);
     dqs.push_back(MCM1);
     dqs.push_back(NET1T);
     dqs.push_back(PE);
@@ -361,6 +417,117 @@ std::vector<double> Chen2004SbmlOdeSystem::ComputeDerivedQuantities(double time,
     dqs.push_back(Vppc1);
     dqs.push_back(Vppf6);
     dqs.push_back(F);
+
+    // AMOUNTS
+    double amt__BCK2 = BCK2 * cell;
+    double amt__BUB2 = BUB2 * cell;
+    double amt__BUD = BUD * cell;
+    double amt__C2 = C2 * cell;
+    double amt__C2P = C2P * cell;
+    double amt__C5 = C5 * cell;
+    double amt__C5P = C5P * cell;
+    double amt__CDC14 = CDC14 * cell;
+    double amt__CDC14T = CDC14T * cell;
+    double amt__CDC15 = CDC15 * cell;
+    double amt__CDC15i = CDC15i * cell;
+    double amt__CDC20 = CDC20 * cell;
+    double amt__CDC20i = CDC20i * cell;
+    double amt__CDC6 = CDC6 * cell;
+    double amt__CDC6P = CDC6P * cell;
+    double amt__CDC6T = CDC6T * cell;
+    double amt__CDH1 = CDH1 * cell;
+    double amt__CDH1i = CDH1i * cell;
+    double amt__CKIT = CKIT * cell;
+    double amt__CLB2 = CLB2 * cell;
+    double amt__CLB2T = CLB2T * cell;
+    double amt__CLB5 = CLB5 * cell;
+    double amt__CLB5T = CLB5T * cell;
+    double amt__CLN2 = CLN2 * cell;
+    double amt__CLN3 = CLN3 * cell;
+    double amt__ESP1 = ESP1 * cell;
+    double amt__F2 = F2 * cell;
+    double amt__F2P = F2P * cell;
+    double amt__F5 = F5 * cell;
+    double amt__F5P = F5P * cell;
+    double amt__IE = IE * cell;
+    double amt__IEP = IEP * cell;
+    double amt__LTE1 = LTE1 * cell;
+    double amt__MAD2 = MAD2 * cell;
+    double amt__MASS = MASS * cell;
+    double amt__MCM1 = MCM1 * cell;
+    double amt__NET1 = NET1 * cell;
+    double amt__NET1P = NET1P * cell;
+    double amt__NET1T = NET1T * cell;
+    double amt__ORI = ORI * cell;
+    double amt__PDS1 = PDS1 * cell;
+    double amt__PE = PE * cell;
+    double amt__PPX = PPX * cell;
+    double amt__RENT = RENT * cell;
+    double amt__RENTP = RENTP * cell;
+    double amt__SBF = SBF * cell;
+    double amt__SIC1 = SIC1 * cell;
+    double amt__SIC1P = SIC1P * cell;
+    double amt__SIC1T = SIC1T * cell;
+    double amt__SPN = SPN * cell;
+    double amt__SWI5 = SWI5 * cell;
+    double amt__SWI5P = SWI5P * cell;
+    double amt__TEM1GDP = TEM1GDP * cell;
+    double amt__TEM1GTP = TEM1GTP * cell;
+
+    dqs.push_back(amt__BCK2);
+    dqs.push_back(amt__BUB2);
+    dqs.push_back(amt__BUD);
+    dqs.push_back(amt__C2);
+    dqs.push_back(amt__C2P);
+    dqs.push_back(amt__C5);
+    dqs.push_back(amt__C5P);
+    dqs.push_back(amt__CDC14);
+    dqs.push_back(amt__CDC14T);
+    dqs.push_back(amt__CDC15);
+    dqs.push_back(amt__CDC15i);
+    dqs.push_back(amt__CDC20);
+    dqs.push_back(amt__CDC20i);
+    dqs.push_back(amt__CDC6);
+    dqs.push_back(amt__CDC6P);
+    dqs.push_back(amt__CDC6T);
+    dqs.push_back(amt__CDH1);
+    dqs.push_back(amt__CDH1i);
+    dqs.push_back(amt__CKIT);
+    dqs.push_back(amt__CLB2);
+    dqs.push_back(amt__CLB2T);
+    dqs.push_back(amt__CLB5);
+    dqs.push_back(amt__CLB5T);
+    dqs.push_back(amt__CLN2);
+    dqs.push_back(amt__CLN3);
+    dqs.push_back(amt__ESP1);
+    dqs.push_back(amt__F2);
+    dqs.push_back(amt__F2P);
+    dqs.push_back(amt__F5);
+    dqs.push_back(amt__F5P);
+    dqs.push_back(amt__IE);
+    dqs.push_back(amt__IEP);
+    dqs.push_back(amt__LTE1);
+    dqs.push_back(amt__MAD2);
+    dqs.push_back(amt__MASS);
+    dqs.push_back(amt__MCM1);
+    dqs.push_back(amt__NET1);
+    dqs.push_back(amt__NET1P);
+    dqs.push_back(amt__NET1T);
+    dqs.push_back(amt__ORI);
+    dqs.push_back(amt__PDS1);
+    dqs.push_back(amt__PE);
+    dqs.push_back(amt__PPX);
+    dqs.push_back(amt__RENT);
+    dqs.push_back(amt__RENTP);
+    dqs.push_back(amt__SBF);
+    dqs.push_back(amt__SIC1);
+    dqs.push_back(amt__SIC1P);
+    dqs.push_back(amt__SIC1T);
+    dqs.push_back(amt__SPN);
+    dqs.push_back(amt__SWI5);
+    dqs.push_back(amt__SWI5P);
+    dqs.push_back(amt__TEM1GDP);
+    dqs.push_back(amt__TEM1GTP);
     return dqs;
 }
 
@@ -486,13 +653,8 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
                 min_dist = 0.0;
 
                 // Adjust relevant state variables and parameters
-                // MAD2 = mad2h
-                mEventAdjustedParameters[3] = true;
-                mEventAdjustedParameterValues[3] = mad2h;
-
-                // BUB2 = bub2h
-                mEventAdjustedParameters[1] = true;
-                mEventAdjustedParameterValues[1] = bub2h;
+                MAD2 = mad2h;
+                BUB2 = bub2h;
             }
             mEventSatisfied[1] = true;
         }
@@ -532,17 +694,9 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
                 min_dist = 0.0;
 
                 // Adjust relevant state variables and parameters
-                // MAD2 = mad2l
-                mEventAdjustedParameters[3] = true;
-                mEventAdjustedParameterValues[3] = mad2l;
-
-                // LTE1 = lte1h
-                mEventAdjustedParameters[2] = true;
-                mEventAdjustedParameterValues[2] = lte1h;
-
-                // BUB2 = bub2l
-                mEventAdjustedParameters[1] = true;
-                mEventAdjustedParameterValues[1] = bub2l;
+                MAD2 = mad2l;
+                LTE1 = lte1h;
+                BUB2 = bub2l;
             }
             mEventSatisfied[2] = true;
         }
@@ -586,10 +740,7 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
                 mEventAdjustedStateVars[22] = true;
                 mEventAdjustedStateValues[22] = F * MASS;
 
-                // LTE1 = lte1l
-                mEventAdjustedParameters[2] = true;
-                mEventAdjustedParameterValues[2] = lte1l;
-
+                LTE1 = lte1l;
                 // BUD = 0.0
                 mEventAdjustedStateVars[0] = true;
                 mEventAdjustedStateValues[0] = 0.0;
@@ -610,63 +761,9 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     return min_dist; // Distance to closest event
 }
 
-void Chen2004SbmlOdeSystem::RunModelRules(double time, const std::vector<double>& rY)
+// ASSIGNMENT RULES
+void Chen2004SbmlOdeSystem::RunAssignmentRules(double time)
 {
-    // STATE VARIABLES
-    BUD = rY[0];
-    C2 = rY[1];
-    C2P = rY[2];
-    C5 = rY[3];
-    C5P = rY[4];
-    CDC14 = rY[5];
-    CDC15 = rY[6];
-    CDC20 = rY[7];
-    CDC20i = rY[8];
-    CDC6 = rY[9];
-    CDC6P = rY[10];
-    CDH1 = rY[11];
-    CDH1i = rY[12];
-    CLB2 = rY[13];
-    CLB5 = rY[14];
-    CLN2 = rY[15];
-    ESP1 = rY[16];
-    F2 = rY[17];
-    F2P = rY[18];
-    F5 = rY[19];
-    F5P = rY[20];
-    IEP = rY[21];
-    MASS = rY[22];
-    NET1 = rY[23];
-    NET1P = rY[24];
-    ORI = rY[25];
-    PDS1 = rY[26];
-    PPX = rY[27];
-    RENT = rY[28];
-    RENTP = rY[29];
-    SIC1 = rY[30];
-    SIC1P = rY[31];
-    SPN = rY[32];
-    SWI5 = rY[33];
-    SWI5P = rY[34];
-    TEM1GTP = rY[35];
-
-    // VARIABLE PARAMETERS
-    cell = GetParameter(0);
-    BUB2 = GetParameter(1);
-    LTE1 = GetParameter(2);
-    MAD2 = GetParameter(3);
-    bub2l = GetParameter(4);
-    CDC15T = GetParameter(5);
-    ESP1T = GetParameter(6);
-    IET = GetParameter(7);
-    KEZ = GetParameter(8);
-    KEZ2 = GetParameter(9);
-    lte1h = GetParameter(10);
-    lte1l = GetParameter(11);
-    mad2l = GetParameter(12);
-    TEM1T = GetParameter(13);
-
-    // ASSIGNMENT RULES
     BCK2 = b0 * MASS;
     Visbf = kisbf_p + kisbf_p_p * CLB2;
     CLN3 = C0 * Dn3 * MASS / (Jn3 + Dn3 * MASS);
@@ -702,8 +799,11 @@ void Chen2004SbmlOdeSystem::RunModelRules(double time, const std::vector<double>
     IE = IET - IEP;
     PE = ESP1T - ESP1;
     TEM1GDP = TEM1T - TEM1GTP;
+}
 
-    // REACTIONS
+// REACTIONS
+void Chen2004SbmlOdeSystem::RunReactions(double time)
+{
     // Growth
     Growth = mu * MASS;
 
@@ -991,6 +1091,63 @@ void Chen2004SbmlOdeSystem::RunModelRules(double time, const std::vector<double>
     Spindle_disassembly = Mass_Action_1_222(kdspn, SPN);
 }
 
+// VARIABLE PARAMETERS
+void Chen2004SbmlOdeSystem::UpdateParameters(double time)
+{
+    cell = GetParameter(0);
+    bub2l = GetParameter(1);
+    CDC15T = GetParameter(2);
+    ESP1T = GetParameter(3);
+    IET = GetParameter(4);
+    KEZ = GetParameter(5);
+    KEZ2 = GetParameter(6);
+    lte1h = GetParameter(7);
+    lte1l = GetParameter(8);
+    mad2l = GetParameter(9);
+    TEM1T = GetParameter(10);
+}
+
+// STATE VARIABLES
+void Chen2004SbmlOdeSystem::UpdateStateVariables(double time, const std::vector<double>& rStateVariables)
+{
+    BUD = rStateVariables[0];
+    C2 = rStateVariables[1];
+    C2P = rStateVariables[2];
+    C5 = rStateVariables[3];
+    C5P = rStateVariables[4];
+    CDC14 = rStateVariables[5];
+    CDC15 = rStateVariables[6];
+    CDC20 = rStateVariables[7];
+    CDC20i = rStateVariables[8];
+    CDC6 = rStateVariables[9];
+    CDC6P = rStateVariables[10];
+    CDH1 = rStateVariables[11];
+    CDH1i = rStateVariables[12];
+    CLB2 = rStateVariables[13];
+    CLB5 = rStateVariables[14];
+    CLN2 = rStateVariables[15];
+    ESP1 = rStateVariables[16];
+    F2 = rStateVariables[17];
+    F2P = rStateVariables[18];
+    F5 = rStateVariables[19];
+    F5P = rStateVariables[20];
+    IEP = rStateVariables[21];
+    MASS = rStateVariables[22];
+    NET1 = rStateVariables[23];
+    NET1P = rStateVariables[24];
+    ORI = rStateVariables[25];
+    PDS1 = rStateVariables[26];
+    PPX = rStateVariables[27];
+    RENT = rStateVariables[28];
+    RENTP = rStateVariables[29];
+    SIC1 = rStateVariables[30];
+    SIC1P = rStateVariables[31];
+    SPN = rStateVariables[32];
+    SWI5 = rStateVariables[33];
+    SWI5P = rStateVariables[34];
+    TEM1GTP = rStateVariables[35];
+}
+
 // MODEL FUNCTIONS
 inline double Chen2004SbmlOdeSystem::BB_218(double A1, double A2, double A3, double A4)
 {
@@ -1169,6 +1326,9 @@ void CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityNames.push_back("BCK2");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
+    this->mDerivedQuantityNames.push_back("BUB2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     this->mDerivedQuantityNames.push_back("CDC14T");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
@@ -1191,6 +1351,12 @@ void CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("IE");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("LTE1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("MAD2");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("MCM1");
@@ -1271,17 +1437,170 @@ void CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityNames.push_back("F");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
+    this->mDerivedQuantityNames.push_back("amt__BCK2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__BUB2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__BUD");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__C2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__C2P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__C5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__C5P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__CDC14");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__CDC14T");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__CDC15");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__CDC15i");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__CDC20");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__CDC20i");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__CDC6");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__CDC6P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__CDC6T");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__CDH1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__CDH1i");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__CKIT");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__CLB2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__CLB2T");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__CLB5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__CLB5T");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__CLN2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__CLN3");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__ESP1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__F2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__F2P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__F5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__F5P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__IE");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__IEP");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__LTE1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__MAD2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__MASS");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__MCM1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__NET1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__NET1P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__NET1T");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__ORI");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__PDS1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__PE");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__PPX");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__RENT");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__RENTP");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__SBF");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__SIC1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__SIC1P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__SIC1T");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__SPN");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__SWI5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__SWI5P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__TEM1GDP");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__TEM1GTP");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     // PARAMETERS
     this->mParameterNames.push_back("cell");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("BUB2");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("LTE1");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("MAD2");
     this->mParameterUnits.push_back("non-dim");
 
     this->mParameterNames.push_back("bub2l");

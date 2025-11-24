@@ -42,6 +42,11 @@ VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem()
 
     // INITIAL ASSIGNMENTS
 
+    // ASSIGNMENT RULES
+    RunAssignmentRules(0.0);
+
+    drag = drag / cytosolmembraneandnucleus; // Convert drag amount to concentration
+
     // ODE SYSTEM INFORMATION
     SetDefaultInitialCondition(0, X);
     SetDefaultInitialCondition(1, D);
@@ -100,9 +105,6 @@ VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem()
     mw931baf8f_6572_46f6_96eb_cae40ee267b7 = 0.0;
 
     // EVENTS
-
-    // Run model rules to complete state initialisation
-    RunModelRules(0.0, mStateVariables);
 }
 
 VanLeeuwen2007SbmlOdeSystem::~VanLeeuwen2007SbmlOdeSystem()
@@ -111,12 +113,44 @@ VanLeeuwen2007SbmlOdeSystem::~VanLeeuwen2007SbmlOdeSystem()
 
 std::vector<double> VanLeeuwen2007SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
 {
+    std::vector<double> dqs;
+
     RunModelRules(time, rY);
 
-    std::vector<double> dqs;
     dqs.push_back(C_F);
     dqs.push_back(C_T);
     dqs.push_back(drag);
+
+    // AMOUNTS
+    double amt__X = X * cytosolmembraneandnucleus;
+    double amt__D = D * cytosolmembraneandnucleus;
+    double amt__C_o = C_o * cytosolmembraneandnucleus;
+    double amt__C_u = C_u * cytosolmembraneandnucleus;
+    double amt__C_c = C_c * cytosolmembraneandnucleus;
+    double amt__A = A * cytosolmembraneandnucleus;
+    double amt__C_A = C_A * cytosolmembraneandnucleus;
+    double amt__T = T * cytosolmembraneandnucleus;
+    double amt__C_oT = C_oT * cytosolmembraneandnucleus;
+    double amt__C_cT = C_cT * cytosolmembraneandnucleus;
+    double amt__Y = Y * cytosolmembraneandnucleus;
+    double amt__C_F = C_F * cytosolmembraneandnucleus;
+    double amt__C_T = C_T * cytosolmembraneandnucleus;
+    double amt__drag = drag * cytosolmembraneandnucleus;
+
+    dqs.push_back(amt__X);
+    dqs.push_back(amt__D);
+    dqs.push_back(amt__C_o);
+    dqs.push_back(amt__C_u);
+    dqs.push_back(amt__C_c);
+    dqs.push_back(amt__A);
+    dqs.push_back(amt__C_A);
+    dqs.push_back(amt__T);
+    dqs.push_back(amt__C_oT);
+    dqs.push_back(amt__C_cT);
+    dqs.push_back(amt__Y);
+    dqs.push_back(amt__C_F);
+    dqs.push_back(amt__C_T);
+    dqs.push_back(amt__drag);
     return dqs;
 }
 
@@ -149,34 +183,17 @@ double VanLeeuwen2007SbmlOdeSystem::ProcessModelEvents(double time, const std::v
     return min_dist; // Distance to closest event
 }
 
-void VanLeeuwen2007SbmlOdeSystem::RunModelRules(double time, const std::vector<double>& rY)
+// ASSIGNMENT RULES
+void VanLeeuwen2007SbmlOdeSystem::RunAssignmentRules(double time)
 {
-    // STATE VARIABLES
-    X = rY[0];
-    D = rY[1];
-    C_o = rY[2];
-    C_u = rY[3];
-    C_c = rY[4];
-    A = rY[5];
-    C_A = rY[6];
-    T = rY[7];
-    C_oT = rY[8];
-    C_cT = rY[9];
-    Y = rY[10];
-
-    // VARIABLE PARAMETERS
-    cytosolmembraneandnucleus = GetParameter(0);
-    wnt_level = GetParameter(1);
-    gamma1 = GetParameter(2);
-    gamma2 = GetParameter(3);
-    ComplexTransitThreshold = GetParameter(4);
-
-    // ASSIGNMENT RULES
     C_F = C_o + C_c;
     C_T = C_oT + C_cT;
     drag = sm::max((C_A - 100.0) / 3.0, 1.0);
+}
 
-    // REACTIONS
+// REACTIONS
+void VanLeeuwen2007SbmlOdeSystem::RunReactions(double time)
+{
     // r1
     mwd6b35759_f098_484c_9c65_e84e7e4b61e4 = s_D * gamma1 * X;
 
@@ -250,6 +267,32 @@ void VanLeeuwen2007SbmlOdeSystem::RunModelRules(double time, const std::vector<d
     mw931baf8f_6572_46f6_96eb_cae40ee267b7 = (d_D + wnt_level * xi_D) * D;
 }
 
+// VARIABLE PARAMETERS
+void VanLeeuwen2007SbmlOdeSystem::UpdateParameters(double time)
+{
+    cytosolmembraneandnucleus = GetParameter(0);
+    wnt_level = GetParameter(1);
+    gamma1 = GetParameter(2);
+    gamma2 = GetParameter(3);
+    ComplexTransitThreshold = GetParameter(4);
+}
+
+// STATE VARIABLES
+void VanLeeuwen2007SbmlOdeSystem::UpdateStateVariables(double time, const std::vector<double>& rStateVariables)
+{
+    X = rStateVariables[0];
+    D = rStateVariables[1];
+    C_o = rStateVariables[2];
+    C_u = rStateVariables[3];
+    C_c = rStateVariables[4];
+    A = rStateVariables[5];
+    C_A = rStateVariables[6];
+    T = rStateVariables[7];
+    C_oT = rStateVariables[8];
+    C_cT = rStateVariables[9];
+    Y = rStateVariables[10];
+}
+
 // MODEL FUNCTIONS
 
 template <>
@@ -308,6 +351,48 @@ void CellwiseOdeSystemInformation<VanLeeuwen2007SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("drag");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__X");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__D");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__C_o");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__C_u");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__C_c");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__A");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__C_A");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__T");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__C_oT");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__C_cT");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__Y");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__C_F");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__C_T");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__drag");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     // PARAMETERS

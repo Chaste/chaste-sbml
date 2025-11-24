@@ -52,6 +52,9 @@ Chen2000SbmlOdeSystem::Chen2000SbmlOdeSystem()
 
     // INITIAL ASSIGNMENTS
 
+    // ASSIGNMENT RULES
+    RunAssignmentRules(0.0);
+
     // ODE SYSTEM INFORMATION
     SetDefaultInitialCondition(0, Cln2);
     SetDefaultInitialCondition(1, Clb2_T);
@@ -86,9 +89,6 @@ Chen2000SbmlOdeSystem::Chen2000SbmlOdeSystem()
     // REACTIONS
 
     // EVENTS
-
-    // Run model rules to complete state initialisation
-    RunModelRules(0.0, mStateVariables);
 }
 
 Chen2000SbmlOdeSystem::~Chen2000SbmlOdeSystem()
@@ -97,9 +97,10 @@ Chen2000SbmlOdeSystem::~Chen2000SbmlOdeSystem()
 
 std::vector<double> Chen2000SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
 {
+    std::vector<double> dqs;
+
     RunModelRules(time, rY);
 
-    std::vector<double> dqs;
     dqs.push_back(Vd_b2);
     dqs.push_back(Clb2);
     dqs.push_back(Clb5);
@@ -115,6 +116,9 @@ std::vector<double> Chen2000SbmlOdeSystem::ComputeDerivedQuantities(double time,
     dqs.push_back(MBF);
     dqs.push_back(Mcm1);
     dqs.push_back(Swi5);
+
+    // AMOUNTS
+
     return dqs;
 }
 
@@ -149,27 +153,9 @@ double Chen2000SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     return min_dist; // Distance to closest event
 }
 
-void Chen2000SbmlOdeSystem::RunModelRules(double time, const std::vector<double>& rY)
+// ASSIGNMENT RULES
+void Chen2000SbmlOdeSystem::RunAssignmentRules(double time)
 {
-    // STATE VARIABLES
-    Cln2 = rY[0];
-    Clb2_T = rY[1];
-    Clb5_T = rY[2];
-    Sic1_T = rY[3];
-    Clb2_Sic1 = rY[4];
-    Clb5_Sic1 = rY[5];
-    Cdc20_T = rY[6];
-    Cdc20 = rY[7];
-    Hct1 = rY[8];
-    mass = rY[9];
-    ORI = rY[10];
-    BUD = rY[11];
-    SPN = rY[12];
-
-    // VARIABLE PARAMETERS
-    COMpartment = GetParameter(0);
-
-    // ASSIGNMENT RULES
     Vd_b2 = kd_b2 * (Hct1_T - Hct1) + kd_b2_ * Hct1 + kd_b2__ * Cdc20;
     Clb2 = Clb2_T - Clb2_Sic1;
     Clb5 = Clb5_T - Clb5_Sic1;
@@ -185,8 +171,35 @@ void Chen2000SbmlOdeSystem::RunModelRules(double time, const std::vector<double>
     MBF = SBF;
     Mcm1 = 2.0 * ka_mcm * Clb2 * Ji_mcm / (ki_mcm + ka_mcm * Clb2 * Ji_mcm + ki_mcm * Ja_mcm - ka_mcm * Clb2 + std::sqrt(std::pow(ki_mcm + ka_mcm * Clb2 * Ji_mcm + ki_mcm * Ja_mcm - ka_mcm * Clb2, 2.0) - 4.0 * (ki_mcm - ka_mcm * Clb2) * ka_mcm * Clb2 * Ji_mcm));
     Swi5 = 2.0 * ka_swi * Cdc20 * Ji_swi / (ki_swi + ki_swi_ * Clb2 + ka_swi * Cdc20 * Ji_swi + (ki_swi + ki_swi_ * Clb2) * Ja_swi - ka_swi * Cdc20 + std::sqrt(std::pow(ki_swi + ki_swi_ * Clb2 + ka_swi * Cdc20 * Ji_swi + (ki_swi + ki_swi_ * Clb2) * Ja_swi - ka_swi * Cdc20, 2.0) - 4.0 * (ki_swi + ki_swi_ * Clb2 - ka_swi * Cdc20) * ka_swi * Cdc20 * Ji_swi));
+}
 
-    // REACTIONS
+// REACTIONS
+void Chen2000SbmlOdeSystem::RunReactions(double time)
+{
+}
+
+// VARIABLE PARAMETERS
+void Chen2000SbmlOdeSystem::UpdateParameters(double time)
+{
+    COMpartment = GetParameter(0);
+}
+
+// STATE VARIABLES
+void Chen2000SbmlOdeSystem::UpdateStateVariables(double time, const std::vector<double>& rStateVariables)
+{
+    Cln2 = rStateVariables[0];
+    Clb2_T = rStateVariables[1];
+    Clb5_T = rStateVariables[2];
+    Sic1_T = rStateVariables[3];
+    Clb2_Sic1 = rStateVariables[4];
+    Clb5_Sic1 = rStateVariables[5];
+    Cdc20_T = rStateVariables[6];
+    Cdc20 = rStateVariables[7];
+    Hct1 = rStateVariables[8];
+    mass = rStateVariables[9];
+    ORI = rStateVariables[10];
+    BUD = rStateVariables[11];
+    SPN = rStateVariables[12];
 }
 
 // MODEL FUNCTIONS

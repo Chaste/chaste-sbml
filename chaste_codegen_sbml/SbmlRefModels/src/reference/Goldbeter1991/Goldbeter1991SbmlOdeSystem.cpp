@@ -29,6 +29,9 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem()
 
     // INITIAL ASSIGNMENTS
 
+    // ASSIGNMENT RULES
+    RunAssignmentRules(0.0);
+
     // ODE SYSTEM INFORMATION
     SetDefaultInitialCondition(0, C);
     SetDefaultInitialCondition(1, M);
@@ -50,9 +53,6 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem()
     reaction7 = 0.0;
 
     // EVENTS
-
-    // Run model rules to complete state initialisation
-    RunModelRules(0.0, mStateVariables);
 }
 
 Goldbeter1991SbmlOdeSystem::~Goldbeter1991SbmlOdeSystem()
@@ -61,11 +61,21 @@ Goldbeter1991SbmlOdeSystem::~Goldbeter1991SbmlOdeSystem()
 
 std::vector<double> Goldbeter1991SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
 {
+    std::vector<double> dqs;
+
     RunModelRules(time, rY);
 
-    std::vector<double> dqs;
     dqs.push_back(V1);
     dqs.push_back(V3);
+
+    // AMOUNTS
+    double amt__C = C * cell;
+    double amt__M = M * cell;
+    double amt__X = X * cell;
+
+    dqs.push_back(amt__C);
+    dqs.push_back(amt__M);
+    dqs.push_back(amt__X);
     return dqs;
 }
 
@@ -90,21 +100,16 @@ double Goldbeter1991SbmlOdeSystem::ProcessModelEvents(double time, const std::ve
     return min_dist; // Distance to closest event
 }
 
-void Goldbeter1991SbmlOdeSystem::RunModelRules(double time, const std::vector<double>& rY)
+// ASSIGNMENT RULES
+void Goldbeter1991SbmlOdeSystem::RunAssignmentRules(double time)
 {
-    // STATE VARIABLES
-    C = rY[0];
-    M = rY[1];
-    X = rY[2];
-
-    // VARIABLE PARAMETERS
-    cell = GetParameter(0);
-
-    // ASSIGNMENT RULES
     V1 = C * VM1 * std::pow(C + Kc, -1.0);
     V3 = M * VM3;
+}
 
-    // REACTIONS
+// REACTIONS
+void Goldbeter1991SbmlOdeSystem::RunReactions(double time)
+{
     // creation of cyclin
     reaction1 = 0.0;
     {
@@ -158,6 +163,20 @@ void Goldbeter1991SbmlOdeSystem::RunModelRules(double time, const std::vector<do
     }
 }
 
+// VARIABLE PARAMETERS
+void Goldbeter1991SbmlOdeSystem::UpdateParameters(double time)
+{
+    cell = GetParameter(0);
+}
+
+// STATE VARIABLES
+void Goldbeter1991SbmlOdeSystem::UpdateStateVariables(double time, const std::vector<double>& rStateVariables)
+{
+    C = rStateVariables[0];
+    M = rStateVariables[1];
+    X = rStateVariables[2];
+}
+
 // MODEL FUNCTIONS
 
 template <>
@@ -181,6 +200,15 @@ void CellwiseOdeSystemInformation<Goldbeter1991SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("V3");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__C");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__M");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__X");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     // PARAMETERS

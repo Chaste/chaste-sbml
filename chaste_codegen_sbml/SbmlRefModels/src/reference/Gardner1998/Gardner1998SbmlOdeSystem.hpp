@@ -32,11 +32,11 @@ private:
     const double V3p = 0.3;  // V3p
 
     // STATE VARIABLES
-    double C; // cyclin
-    double X; // protease
-    double M; // cdc2k
-    double Y; // cyclin inhibitor
-    double Z; // complex inhibitor-cyclin
+    double C; // Convert C amount to concentration
+    double X; // Convert X amount to concentration
+    double M; // Convert M amount to concentration
+    double Y; // Convert Y amount to concentration
+    double Z; // Convert Z amount to concentration
 
     // DERIVED QUANTITIES
     double V1; // V1
@@ -59,6 +59,49 @@ private:
     double reaction11; // degradation of inhibited cyclin
     double reaction12; // creation of cyclin inhibitor
     double reaction13; // degradation of cyclin inhibitor
+
+    /**
+     * Process the events in the model.
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     *
+     * @return How close we are to the time of the next event
+     */
+    double ProcessModelEvents(double time, const std::vector<double>& rY) override;
+
+    /**
+     * Run the assignment rules to update state.
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     */
+    void RunAssignmentRules(double time) override;
+
+    /**
+     * Run the reactions to update state.
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     */
+    void RunReactions(double time) override;
+
+    /**
+     * Update variable parameters from current ODE system parameter settings.
+     *
+     * @param time The current time
+     */
+    void UpdateParameters(double time) override;
+
+    /**
+     * Update state variables from the given ODE system state.
+     *
+     * @param time The current time
+     * @param rStateVariables The state variables to use
+     */
+    void UpdateStateVariables(double time, const std::vector<double>& rStateVariables) override;
+
+    // MODEL FUNCTIONS
 
 public:
     /**
@@ -91,26 +134,6 @@ public:
      * @param rDY an output vector to be filled in with the resulting derivatives y' = [y1' ... yn'].
      */
     void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY) override;
-
-    /**
-     * Process the events in the model.
-     *
-     * @param time The current time
-     * @param rY The current state variables
-     *
-     * @return How close we are to the time of the next event
-     */
-    double ProcessModelEvents(double time, const std::vector<double>& rY) override;
-
-    /**
-     * Run the equations governing the model to update state.
-     *
-     * @param time The current time
-     * @param rY The current state variables
-     */
-    void RunModelRules(double time, const std::vector<double>& rY) override;
-
-    // MODEL FUNCTIONS
 };
 
 // Register the ODE system with Boost serialization

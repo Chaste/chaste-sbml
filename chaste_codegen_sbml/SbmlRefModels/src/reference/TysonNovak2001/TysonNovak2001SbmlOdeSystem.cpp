@@ -36,6 +36,21 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem()
 
     // INITIAL ASSIGNMENTS
 
+    // ASSIGNMENT RULES
+    RunAssignmentRules(0.0);
+
+    CycBt = CycBt / cell;   // Convert CycBt amount to concentration
+    CycB = CycB / cell;     // Convert CycB amount to concentration
+    Cdc20a = Cdc20a / cell; // Convert Cdc20a amount to concentration
+    Trimer = Trimer / cell; // Convert Trimer amount to concentration
+    Cdh1 = Cdh1 / cell;     // Convert Cdh1 amount to concentration
+    m = m / cell;           // Convert m amount to concentration
+    Cdc20t = Cdc20t / cell; // Convert Cdc20t amount to concentration
+    IEP = IEP / cell;       // Convert IEP amount to concentration
+    Mad = Mad / cell;       // Convert Mad amount to concentration
+    CKIt = CKIt / cell;     // Convert CKIt amount to concentration
+    SK = SK / cell;         // Convert SK amount to concentration
+
     // ODE SYSTEM INFORMATION
     SetDefaultInitialCondition(0, CycBt);
     SetDefaultInitialCondition(1, Cdc20a);
@@ -94,9 +109,6 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem()
 
     mEventAdjustedStateVars.resize(8, false);
     mEventAdjustedStateValues.resize(8, 0.0);
-
-    // Run model rules to complete state initialisation
-    RunModelRules(0.0, mStateVariables);
 }
 
 TysonNovak2001SbmlOdeSystem::~TysonNovak2001SbmlOdeSystem()
@@ -105,13 +117,39 @@ TysonNovak2001SbmlOdeSystem::~TysonNovak2001SbmlOdeSystem()
 
 std::vector<double> TysonNovak2001SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
 {
+    std::vector<double> dqs;
+
     RunModelRules(time, rY);
 
-    std::vector<double> dqs;
     dqs.push_back(CycB);
     dqs.push_back(Trimer);
     dqs.push_back(Mad);
     dqs.push_back(TF);
+
+    // AMOUNTS
+    double amt__CycBt = CycBt * cell;
+    double amt__CycB = CycB * cell;
+    double amt__Cdc20a = Cdc20a * cell;
+    double amt__Trimer = Trimer * cell;
+    double amt__Cdh1 = Cdh1 * cell;
+    double amt__m = m * cell;
+    double amt__Cdc20t = Cdc20t * cell;
+    double amt__IEP = IEP * cell;
+    double amt__Mad = Mad * cell;
+    double amt__CKIt = CKIt * cell;
+    double amt__SK = SK * cell;
+
+    dqs.push_back(amt__CycBt);
+    dqs.push_back(amt__CycB);
+    dqs.push_back(amt__Cdc20a);
+    dqs.push_back(amt__Trimer);
+    dqs.push_back(amt__Cdh1);
+    dqs.push_back(amt__m);
+    dqs.push_back(amt__Cdc20t);
+    dqs.push_back(amt__IEP);
+    dqs.push_back(amt__Mad);
+    dqs.push_back(amt__CKIt);
+    dqs.push_back(amt__SK);
     return dqs;
 }
 
@@ -183,28 +221,18 @@ double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::v
     return min_dist; // Distance to closest event
 }
 
-void TysonNovak2001SbmlOdeSystem::RunModelRules(double time, const std::vector<double>& rY)
+// ASSIGNMENT RULES
+void TysonNovak2001SbmlOdeSystem::RunAssignmentRules(double time)
 {
-    // STATE VARIABLES
-    CycBt = rY[0];
-    Cdc20a = rY[1];
-    Cdh1 = rY[2];
-    m = rY[3];
-    Cdc20t = rY[4];
-    IEP = rY[5];
-    CKIt = rY[6];
-    SK = rY[7];
-
-    // VARIABLE PARAMETERS
-    cell = GetParameter(0);
-
-    // ASSIGNMENT RULES
     CycB = CycBt - 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow(std::pow(CycBt + CKIt + 1.0 / Keq, 2.0) - 4.0 * CycBt * CKIt, 1.0 / 2.0));
     Trimer = 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow(std::pow(CycBt + CKIt + 1.0 / Keq, 2.0) - 4.0 * CycBt * CKIt, 1.0 / 2.0));
     TF = GK(k15p * m + k15pp * SK, k16p + k16pp * m * CycB, J15, J16);
     Mad = 1.0;
+}
 
-    // REACTIONS
+// REACTIONS
+void TysonNovak2001SbmlOdeSystem::RunReactions(double time)
+{
     // CycBt synthesis
     CycBt_synthesis = k1;
 
@@ -266,6 +294,25 @@ void TysonNovak2001SbmlOdeSystem::RunModelRules(double time, const std::vector<d
     SKdegradation = k14 * SK;
 }
 
+// VARIABLE PARAMETERS
+void TysonNovak2001SbmlOdeSystem::UpdateParameters(double time)
+{
+    cell = GetParameter(0);
+}
+
+// STATE VARIABLES
+void TysonNovak2001SbmlOdeSystem::UpdateStateVariables(double time, const std::vector<double>& rStateVariables)
+{
+    CycBt = rStateVariables[0];
+    Cdc20a = rStateVariables[1];
+    Cdh1 = rStateVariables[2];
+    m = rStateVariables[3];
+    Cdc20t = rStateVariables[4];
+    IEP = rStateVariables[5];
+    CKIt = rStateVariables[6];
+    SK = rStateVariables[7];
+}
+
 // MODEL FUNCTIONS
 inline double TysonNovak2001SbmlOdeSystem::GK(double A1, double A2, double A3, double A4)
 {
@@ -319,6 +366,39 @@ void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("TF");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__CycBt");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__CycB");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__Cdc20a");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__Trimer");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__Cdh1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__m");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__Cdc20t");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__IEP");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__Mad");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__CKIt");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__SK");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     // PARAMETERS

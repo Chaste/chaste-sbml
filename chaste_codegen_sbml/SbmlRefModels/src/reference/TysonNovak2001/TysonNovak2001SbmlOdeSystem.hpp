@@ -65,19 +65,19 @@ private:
     const double J4 = 0.04;      // J4
 
     // STATE VARIABLES
-    double CycBt;  // CycBt
-    double Cdc20a; // Cdc20a
-    double Cdh1;   // Cdh1
-    double m;      // m
-    double Cdc20t; // Cdc20t
-    double IEP;    // IEP
-    double CKIt;   // CKIt
-    double SK;     // SK
+    double CycBt;  // Convert CycBt amount to concentration
+    double Cdc20a; // Convert Cdc20a amount to concentration
+    double Cdh1;   // Convert Cdh1 amount to concentration
+    double m;      // Convert m amount to concentration
+    double Cdc20t; // Convert Cdc20t amount to concentration
+    double IEP;    // Convert IEP amount to concentration
+    double CKIt;   // Convert CKIt amount to concentration
+    double SK;     // Convert SK amount to concentration
 
     // DERIVED QUANTITIES
-    double CycB;   // CycB
-    double Trimer; // Trimer
-    double Mad;    // Mad
+    double CycB;   // Convert CycB amount to concentration
+    double Trimer; // Convert Trimer amount to concentration
+    double Mad;    // Convert Mad amount to concentration
     double TF;     // TF
 
     // VARIABLE PARAMETERS
@@ -104,6 +104,50 @@ private:
     double eq_7;                      // CKIt Trimer sequestred
     double SKsynthesis;               // SK synthesis
     double SKdegradation;             // SK degradation
+
+    /**
+     * Process the events in the model.
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     *
+     * @return How close we are to the time of the next event
+     */
+    double ProcessModelEvents(double time, const std::vector<double>& rY) override;
+
+    /**
+     * Run the assignment rules to update state.
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     */
+    void RunAssignmentRules(double time) override;
+
+    /**
+     * Run the reactions to update state.
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     */
+    void RunReactions(double time) override;
+
+    /**
+     * Update variable parameters from current ODE system parameter settings.
+     *
+     * @param time The current time
+     */
+    void UpdateParameters(double time) override;
+
+    /**
+     * Update state variables from the given ODE system state.
+     *
+     * @param time The current time
+     * @param rStateVariables The state variables to use
+     */
+    void UpdateStateVariables(double time, const std::vector<double>& rStateVariables) override;
+
+    // MODEL FUNCTIONS
+    inline double GK(double A1, double A2, double A3, double A4);
 
 public:
     /**
@@ -136,27 +180,6 @@ public:
      * @param rDY an output vector to be filled in with the resulting derivatives y' = [y1' ... yn'].
      */
     void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY) override;
-
-    /**
-     * Process the events in the model.
-     *
-     * @param time The current time
-     * @param rY The current state variables
-     *
-     * @return How close we are to the time of the next event
-     */
-    double ProcessModelEvents(double time, const std::vector<double>& rY) override;
-
-    /**
-     * Run the equations governing the model to update state.
-     *
-     * @param time The current time
-     * @param rY The current state variables
-     */
-    void RunModelRules(double time, const std::vector<double>& rY) override;
-
-    // MODEL FUNCTIONS
-    inline double GK(double A1, double A2, double A3, double A4);
 };
 
 // Register the ODE system with Boost serialization

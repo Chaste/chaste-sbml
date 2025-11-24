@@ -56,22 +56,22 @@ private:
     const double d_Y = 0.00133333333333333;   // d_Y
 
     // STATE VARIABLES
-    double X;    // X
-    double D;    // D
-    double C_o;  // C_o
-    double C_u;  // C_u
-    double C_c;  // C_c
-    double A;    // A
-    double C_A;  // C_A
-    double T;    // T
-    double C_oT; // C_oT
-    double C_cT; // C_cT
-    double Y;    // Y
+    double X;    // Convert X amount to concentration
+    double D;    // Convert D amount to concentration
+    double C_o;  // Convert C_o amount to concentration
+    double C_u;  // Convert C_u amount to concentration
+    double C_c;  // Convert C_c amount to concentration
+    double A;    // Convert A amount to concentration
+    double C_A;  // Convert C_A amount to concentration
+    double T;    // Convert T amount to concentration
+    double C_oT; // Convert C_oT amount to concentration
+    double C_cT; // Convert C_cT amount to concentration
+    double Y;    // Convert Y amount to concentration
 
     // DERIVED QUANTITIES
-    double C_F;  // C_F
-    double C_T;  // C_T
-    double drag; // drag
+    double C_F;  // Convert C_F amount to concentration
+    double C_T;  // Convert C_T amount to concentration
+    double drag; // Convert drag amount to concentration
 
     // VARIABLE PARAMETERS
     double cytosolmembraneandnucleus; // cytosolmembraneandnucleus
@@ -106,6 +106,49 @@ private:
     double mw925599eb_19a0_4434_8be3_67c40721b71d; // r14
     double mw321b3e5e_f6ed_4345_9346_55ffb1ff2137; // r24
 
+    /**
+     * Process the events in the model.
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     *
+     * @return How close we are to the time of the next event
+     */
+    double ProcessModelEvents(double time, const std::vector<double>& rY) override;
+
+    /**
+     * Run the assignment rules to update state.
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     */
+    void RunAssignmentRules(double time) override;
+
+    /**
+     * Run the reactions to update state.
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     */
+    void RunReactions(double time) override;
+
+    /**
+     * Update variable parameters from current ODE system parameter settings.
+     *
+     * @param time The current time
+     */
+    void UpdateParameters(double time) override;
+
+    /**
+     * Update state variables from the given ODE system state.
+     *
+     * @param time The current time
+     * @param rStateVariables The state variables to use
+     */
+    void UpdateStateVariables(double time, const std::vector<double>& rStateVariables) override;
+
+    // MODEL FUNCTIONS
+
 public:
     /**
      * Default constructor
@@ -137,26 +180,6 @@ public:
      * @param rDY an output vector to be filled in with the resulting derivatives y' = [y1' ... yn'].
      */
     void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY) override;
-
-    /**
-     * Process the events in the model.
-     *
-     * @param time The current time
-     * @param rY The current state variables
-     *
-     * @return How close we are to the time of the next event
-     */
-    double ProcessModelEvents(double time, const std::vector<double>& rY) override;
-
-    /**
-     * Run the equations governing the model to update state.
-     *
-     * @param time The current time
-     * @param rY The current state variables
-     */
-    void RunModelRules(double time, const std::vector<double>& rY) override;
-
-    // MODEL FUNCTIONS
 };
 
 // Register the ODE system with Boost serialization

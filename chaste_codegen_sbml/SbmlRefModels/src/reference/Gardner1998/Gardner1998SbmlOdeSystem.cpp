@@ -31,6 +31,15 @@ Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem()
 
     // INITIAL ASSIGNMENTS
 
+    // ASSIGNMENT RULES
+    RunAssignmentRules(0.0);
+
+    C = C / Cell; // Convert C amount to concentration
+    X = X / Cell; // Convert X amount to concentration
+    M = M / Cell; // Convert M amount to concentration
+    Y = Y / Cell; // Convert Y amount to concentration
+    Z = Z / Cell; // Convert Z amount to concentration
+
     // ODE SYSTEM INFORMATION
     SetDefaultInitialCondition(0, C);
     SetDefaultInitialCondition(1, X);
@@ -62,9 +71,6 @@ Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem()
     reaction13 = 0.0;
 
     // EVENTS
-
-    // Run model rules to complete state initialisation
-    RunModelRules(0.0, mStateVariables);
 }
 
 Gardner1998SbmlOdeSystem::~Gardner1998SbmlOdeSystem()
@@ -73,11 +79,25 @@ Gardner1998SbmlOdeSystem::~Gardner1998SbmlOdeSystem()
 
 std::vector<double> Gardner1998SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
 {
+    std::vector<double> dqs;
+
     RunModelRules(time, rY);
 
-    std::vector<double> dqs;
     dqs.push_back(V1);
     dqs.push_back(V3);
+
+    // AMOUNTS
+    double amt__C = C * Cell;
+    double amt__X = X * Cell;
+    double amt__M = M * Cell;
+    double amt__Y = Y * Cell;
+    double amt__Z = Z * Cell;
+
+    dqs.push_back(amt__C);
+    dqs.push_back(amt__X);
+    dqs.push_back(amt__M);
+    dqs.push_back(amt__Y);
+    dqs.push_back(amt__Z);
     return dqs;
 }
 
@@ -104,23 +124,16 @@ double Gardner1998SbmlOdeSystem::ProcessModelEvents(double time, const std::vect
     return min_dist; // Distance to closest event
 }
 
-void Gardner1998SbmlOdeSystem::RunModelRules(double time, const std::vector<double>& rY)
+// ASSIGNMENT RULES
+void Gardner1998SbmlOdeSystem::RunAssignmentRules(double time)
 {
-    // STATE VARIABLES
-    C = rY[0];
-    X = rY[1];
-    M = rY[2];
-    Y = rY[3];
-    Z = rY[4];
-
-    // VARIABLE PARAMETERS
-    Cell = GetParameter(0);
-
-    // ASSIGNMENT RULES
     V1 = C * V1p * std::pow(C + K6, -1.0);
     V3 = M * V3p;
+}
 
-    // REACTIONS
+// REACTIONS
+void Gardner1998SbmlOdeSystem::RunReactions(double time)
+{
     // creation of cyclin
     reaction1 = 0.0;
     {
@@ -218,6 +231,22 @@ void Gardner1998SbmlOdeSystem::RunModelRules(double time, const std::vector<doub
     }
 }
 
+// VARIABLE PARAMETERS
+void Gardner1998SbmlOdeSystem::UpdateParameters(double time)
+{
+    Cell = GetParameter(0);
+}
+
+// STATE VARIABLES
+void Gardner1998SbmlOdeSystem::UpdateStateVariables(double time, const std::vector<double>& rStateVariables)
+{
+    C = rStateVariables[0];
+    X = rStateVariables[1];
+    M = rStateVariables[2];
+    Y = rStateVariables[3];
+    Z = rStateVariables[4];
+}
+
 // MODEL FUNCTIONS
 
 template <>
@@ -249,6 +278,21 @@ void CellwiseOdeSystemInformation<Gardner1998SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("V3");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__C");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__X");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__M");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__Y");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("amt__Z");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     // PARAMETERS
