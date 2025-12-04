@@ -779,6 +779,7 @@ class ChasteSbmlModel:
         if not self._assignment_rules:
             if any(r.getTypeCode() == SBML_ASSIGNMENT_RULE for r in self._sbml_rules):
                 raise RuntimeError("Please process rules before species.")
+
         assignment_rules = {r["lhs"]: r["rhs"] for r in self._assignment_rules}
         rate_rules = {r["lhs"]: r["rhs"] for r in self._rate_rules}
 
@@ -807,11 +808,6 @@ class ChasteSbmlModel:
             if species_id in assignment_rules:
                 # Derived quantity (includes boundary conditions with assignment rules)
                 rhs = assignment_rules[species_id]
-                self._add_derived_quantity(species_id, label, initial_value, units, rhs)
-
-            elif species.getBoundaryCondition():
-                # Derived quantity (boundary condition with no assignment rule)
-                rhs = str(initial_value)
                 self._add_derived_quantity(species_id, label, initial_value, units, rhs)
 
             elif species_id in self._odes:
