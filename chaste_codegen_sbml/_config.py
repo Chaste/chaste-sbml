@@ -16,16 +16,17 @@ INITIAL_ASSIGNMENT_PREFIX = "ia"
 class VarType(Enum):
     """Enumeration of variable types in SBML models."""
 
-    STATE_VARIABLE = 0
-    DERIVED_QUANTITY = 1
-    AMOUNT = 2
-    VARIABLE_PARAMETER = 3
-    CONSTANT_PARAMETER = 4
-    ASSIGNMENT_RULE = 5
-    INITIAL_ASSIGNMENT = 6
-    FUNCTION = 7
-    REACTION = 8
-    UNKNOWN = 9
+    AMOUNT = 0
+    ASSIGNMENT_RULE = 1
+    CONSTANT_PARAMETER = 2
+    DERIVED_QUANTITY = 3
+    FUNCTION = 4
+    INITIAL_ASSIGNMENT = 5
+    RATE_RULE = 6
+    REACTION = 7
+    STATE_VARIABLE = 8
+    VARIABLE_PARAMETER = 9
+    UNKNOWN = 10
 
 
 class EventType(Enum):

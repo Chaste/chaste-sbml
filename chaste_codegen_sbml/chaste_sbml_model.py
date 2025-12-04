@@ -7,7 +7,7 @@ import subprocess
 from typing import TYPE_CHECKING
 
 from jinja2 import Environment, PackageLoader, select_autoescape
-from libsbml import (
+from libsbml import (  # AST_INTEGER,; AST_RATIONAL,; AST_REAL,; AST_REAL_E,
     AST_RELATIONAL_EQ,
     AST_RELATIONAL_GEQ,
     AST_RELATIONAL_GT,
@@ -124,6 +124,7 @@ class ChasteSbmlModel:
         self._odes = {}  # { id: str }
 
         self._assignment_rules = []  # [ { id: str, label: str, ... } ]
+        self._rate_rules = []  # [ { id: str, label: str, ... } ]
         self._state_variables = []  # [ { id: str, label: str, ... } ]
         self._derived_quantities = []  # [ { id: str, label: str, ... } ]
         self._amounts = []  # [ { id: str, label: str, ... } ]
@@ -343,6 +344,25 @@ class ChasteSbmlModel:
         """
         self._outputs[filename] = code
 
+    def _add_rate_rule(self, id_: str, label: str, lhs: str, rhs: str) -> None:
+        """Add a rate rule to the template variables.
+
+        :param id_: The rule ID.
+        :param label: The rule description.
+        :param lhs: The left-hand side of the rule.
+        :param rhs: The right-hand side of the rule.
+        """
+        self._rate_rules.append(
+            {
+                "id": id_,
+                "label": label,
+                "index": len(self._rate_rules),
+                "lhs": lhs,
+                "rhs": rhs,
+            }
+        )
+        self._variable_types[id_] = VarType.RATE_RULE
+
     def _add_reaction(
         self, id_: str, label: str, rhs: str, parameters: list[dict[str, "Any"]]
     ) -> None:
@@ -410,6 +430,11 @@ class ChasteSbmlModel:
 
     def _extract_odes(self) -> None:
         """Extract the ODEs equations for each species."""
+        # Rules must be processed before ODE extraction
+        if not self._assignment_rules:
+            if any(r.getTypeCode() == SBML_ASSIGNMENT_RULE for r in self._sbml_rules):
+                raise RuntimeError("Please process rules before compartments.")
+
         self._odes = {}
 
         def _update_species_ode(
@@ -458,21 +483,36 @@ class ChasteSbmlModel:
                 _update_species_ode(reaction_id, reactant, is_product=False)
 
         # Extract ODEs from rate rules
-        rate_rules = [r for r in self._sbml_rules if r.getTypeCode() == SBML_RATE_RULE]
-        for rule in rate_rules:
-            lhs = rule.getVariable()
+        for rule in self._rate_rules:
+            lhs = rule["lhs"]
+            rhs = rule["rhs"]
             if lhs in self._odes:
                 raise ValueError(f"{lhs} has more than one rate rule and/or reaction.")
-
-            rhs = convert_str_formula(rule.getFormula())
             self._odes[lhs] = rhs
+
+        # Extract ODEs from assignment rules
+        # assignment_rules = [r for r in self._sbml_rules if r.getTypeCode() == SBML_ASSIGNMENT_RULE]
+        # compartments = {c.getId() for c in self._sbml_compartments}
+
+        # for rule in assignment_rules:
+        #     lhs = rule.getVariable()
+        #     if lhs in self._odes:
+        #         raise ValueError(f"{lhs} has both an assignment rule and a rate rule/reaction.")
+
+        #     # Check for compartments that change size
+        #     if lhs in compartments:
+        #         math = rule.getMath()
+        #         if math.getType() not in [AST_INTEGER, AST_REAL, AST_REAL_E, AST_RATIONAL]:
+        #             rhs = convert_ast_formula(math)
+        #             rhs = f"({rhs}) - {lhs}"
+        #             self._odes[lhs] = rhs
 
         if not self._odes:
             raise NotImplementedError("Models without ODEs are not supported.")
 
     def _format_compartments(self) -> None:
         """Add compartments to template variables."""
-        # Note: rules must be processed before compartments
+        # Rules must be processed before compartments
         if not self._assignment_rules:
             if any(r.getTypeCode() == SBML_ASSIGNMENT_RULE for r in self._sbml_rules):
                 raise RuntimeError("Please process rules before compartments.")
@@ -486,7 +526,10 @@ class ChasteSbmlModel:
             value = get_compartment_size(compartment)
             units = compartment.getUnits() if compartment.isSetUnits() else NON_DIM_UNITS
 
-            if compartment_id in self._odes:
+            if compartment.isSetConstant() and compartment.getConstant():
+                # Derived quantity
+                self._add_derived_quantity(compartment_id, label, value, units, rhs=None)
+            elif compartment_id in self._odes:
                 # State variable
                 rhs = self._odes[compartment_id]
                 self._add_state_variable(compartment_id, label, value, units, rhs)
@@ -642,7 +685,7 @@ class ChasteSbmlModel:
 
     def _format_parameters(self) -> None:
         """Add parameters to template variables."""
-        # Note: rules must be processed before parameters
+        # Rules must be processed before parameters
         if not self._assignment_rules:
             if any(r.getTypeCode() == SBML_ASSIGNMENT_RULE for r in self._sbml_rules):
                 raise RuntimeError("Please process rules before parameters.")
@@ -703,32 +746,41 @@ class ChasteSbmlModel:
 
     def _format_rules(self) -> None:
         """Add rules to template variables."""
-        # Sort assignment rules - variables on rhs must be defined before they are used
-        assignment_rules = [r for r in self._sbml_rules if r.getTypeCode() == SBML_ASSIGNMENT_RULE]
-        formulas = [(r.getVariable(), r.getMath()) for r in assignment_rules]
-        sort_index = sort_formulas(formulas)
-        sorted_rules = [assignment_rules[i] for i in sort_index]
-
-        for rule in sorted_rules:
-            rule_id = rule.getId()
-            label = rule.getName().strip()
-            lhs = rule.getVariable()
-            rhs = convert_str_formula(rule.getFormula())
-            self._add_assignment_rule(rule_id, label, lhs, rhs)
-
         # Algebraic rules are not implemented
         if any(r.getTypeCode() == SBML_ALGEBRAIC_RULE for r in self._sbml_rules):
             raise NotImplementedError("Algebraic rules are not supported.")
 
-        # Note: Rate rules are handled during ODE extraction
+        # Sort assignment rules - variables on rhs must be defined before they are used
+        assignment_rules = [r for r in self._sbml_rules if r.getTypeCode() == SBML_ASSIGNMENT_RULE]
+        formulas = [(r.getVariable(), r.getMath()) for r in assignment_rules]
+        sort_index = sort_formulas(formulas)
+        sorted_assignments = [assignment_rules[i] for i in sort_index]
+
+        for rule in sorted_assignments:
+            rule_id = rule.getId()
+            label = rule.getName().strip()
+            lhs = rule.getVariable()
+            # if lhs not in self._odes: # Exclude assignments converted to ODEs
+            rhs = convert_ast_formula(rule.getMath())
+            self._add_assignment_rule(rule_id, label, lhs, rhs)
+
+        # Get rate rules
+        rate_rules = [r for r in self._sbml_rules if r.getTypeCode() == SBML_RATE_RULE]
+        for rule in rate_rules:
+            rule_id = rule.getId()
+            label = rule.getName().strip()
+            lhs = rule.getVariable()
+            rhs = convert_ast_formula(rule.getMath())
+            self._add_rate_rule(rule_id, label, lhs, rhs)
 
     def _format_species(self) -> None:
         """Add species to template variables."""
-        # Note: rules must be processed before species
+        # Rules must be processed before species
         if not self._assignment_rules:
             if any(r.getTypeCode() == SBML_ASSIGNMENT_RULE for r in self._sbml_rules):
                 raise RuntimeError("Please process rules before species.")
         assignment_rules = {r["lhs"]: r["rhs"] for r in self._assignment_rules}
+        rate_rules = {r["lhs"]: r["rhs"] for r in self._rate_rules}
 
         for species in self._sbml_species:
             species_id = species.getId()
@@ -775,8 +827,9 @@ class ChasteSbmlModel:
                 if "+" in rhs or "-" in rhs[1:]:
                     rhs = f"({rhs})"
 
-                # Add compartment scaling
-                rhs = f"{rhs} / {compartment_id}"
+                # Add compartment scaling if defined by a reaction
+                if species_id not in rate_rules:
+                    rhs = f"{rhs} / {compartment_id}"
 
                 # TODO: Handle time scaling
                 # time_multiplier = self._get_timescale_multiplier()
@@ -946,6 +999,7 @@ class ChasteSbmlModel:
         self._odes = {}
 
         self._assignment_rules = []
+        self._rate_rules = []
         self._initial_assignments = []
 
         self._state_variables = []
@@ -958,9 +1012,9 @@ class ChasteSbmlModel:
         self._events = []
         self._functions = []
 
+        self._format_rules()
         self._extract_odes()
 
-        self._format_rules()
         self._format_initial_assignments()
 
         self._format_compartments()
