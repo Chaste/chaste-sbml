@@ -805,9 +805,16 @@ class ChasteSbmlModel:
                 rhs = f"{species_id} / {compartment_id}"
                 self._add_initial_assignment(ia_id, label, lhs, rhs, extra=True)
 
+            is_bc = species.isSetBoundaryCondition() and species.getBoundaryCondition()
+
             if species_id in assignment_rules:
                 # Derived quantity (includes boundary conditions with assignment rules)
                 rhs = assignment_rules[species_id]
+                self._add_derived_quantity(species_id, label, initial_value, units, rhs)
+
+            elif is_bc and species_id not in rate_rules:
+                # Derived quantity (boundary condition)
+                rhs = str(initial_value)
                 self._add_derived_quantity(species_id, label, initial_value, units, rhs)
 
             elif species_id in self._odes:
