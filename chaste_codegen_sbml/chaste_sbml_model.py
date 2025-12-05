@@ -672,16 +672,22 @@ class ChasteSbmlModel:
     def _format_initial_assignments(self) -> None:
         """Add initial assignments to template variables."""
         # Sort initial assignments - variables on rhs must be defined before they are used
-        formulas = [(ia.getSymbol(), ia.getMath()) for ia in self._sbml_initial_assignments]
-        sort_index = sort_formulas(formulas)
-        sorted_assignments = [self._sbml_initial_assignments.get(i) for i in sort_index]
+        assignments = [ia for ia in self._sbml_initial_assignments]
+        assignments += [r for r in self._sbml_rules if r.getTypeCode() == SBML_ASSIGNMENT_RULE]
 
-        for ia in sorted_assignments:
-            ia_id = ia.getId()
-            label = ia.getName().strip()
-            lhs = ia.getSymbol()
-            rhs = convert_ast_formula(ia.getMath())
-            self._add_initial_assignment(ia_id, label, lhs, rhs, extra=False)
+        formulas = [(ia.getSymbol(), ia.getMath()) for ia in self._sbml_initial_assignments]
+        formulas += [(r.getVariable(), r.getMath()) for r in self._sbml_rules if r.getTypeCode() == SBML_ASSIGNMENT_RULE]
+
+        sort_index = sort_formulas(formulas)
+        sorted_assignments = [assignments[i] for i in sort_index]
+        sorted_formulas = [formulas[i] for i in sort_index]
+
+        for i, assignment in enumerate(sorted_assignments):
+            id_ = assignment.getId()
+            label = assignment.getName().strip()
+            lhs = sorted_formulas[i][0]
+            rhs = convert_ast_formula(sorted_formulas[i][1])
+            self._add_initial_assignment(id_, label, lhs, rhs, extra=False)
 
     def _format_parameters(self) -> None:
         """Add parameters to template variables."""

@@ -37,9 +37,6 @@ namespace sm = sbmlmath;
 {% endif %}
 {% endfor %}
 
-    // ASSIGNMENT RULES
-    RunAssignmentRules(0.0);
-
 {% for ia in initial_assignments %}
 {% if ia["extra"] %}
     {{ ia["lhs"] }} = {{ ia["rhs"] }}; // {{ ia["label"] }}
