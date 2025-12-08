@@ -47,14 +47,14 @@ private:
     double complex_nu; //
 
     // DERIVED QUANTITIES
-    double drag; // Convert drag amount to concentration
-
-    // VARIABLE PARAMETERS
     double compartment;     //
     double CytosolMembrane; //
     double nucleus;         //
-    double wnt_level;       // wnt_level
-    double gamma;           // gamma
+    double drag;            // drag
+
+    // VARIABLE PARAMETERS
+    double wnt_level; // wnt_level
+    double gamma;     // gamma
 
     // REACTIONS
     double Bsynthesis;   //

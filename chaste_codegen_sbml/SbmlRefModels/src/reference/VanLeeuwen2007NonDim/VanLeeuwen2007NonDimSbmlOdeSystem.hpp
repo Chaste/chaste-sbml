@@ -69,16 +69,16 @@ private:
     double Y;    // Convert Y amount to concentration
 
     // DERIVED QUANTITIES
-    double C_F;  // Convert C_F amount to concentration
-    double C_T;  // Convert C_T amount to concentration
-    double drag; // Convert drag amount to concentration
+    double cytosolmembraneandnucleus; // cytosolmembraneandnucleus
+    double C_F;                       // C_F
+    double C_T;                       // C_T
+    double drag;                      // drag
 
     // VARIABLE PARAMETERS
-    double cytosolmembraneandnucleus; // cytosolmembraneandnucleus
-    double wnt_level;                 // wnt_level
-    double gamma1;                    // gamma1
-    double gamma2;                    // gamma2
-    double ComplexTransitThreshold;   // ComplexTransitThreshold
+    double wnt_level;               // wnt_level
+    double gamma1;                  // gamma1
+    double gamma2;                  // gamma2
+    double ComplexTransitThreshold; // ComplexTransitThreshold
 
     // REACTIONS
     double mwcfbf7716_cc13_473c_979a_033c57a28857; // r1

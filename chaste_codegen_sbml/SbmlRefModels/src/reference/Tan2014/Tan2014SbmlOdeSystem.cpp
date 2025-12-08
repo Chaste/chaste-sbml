@@ -11,14 +11,11 @@
 namespace sm = sbmlmath;
 
 Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem()
-        : AbstractSbmlOdeSystem(6, 5, 0)
+        : AbstractSbmlOdeSystem(6, 2, 0)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Tan2014SbmlOdeSystem>);
 
     // VARIABLE PARAMETERS
-    compartment = 1.0;
-    CytosolMembrane = 1.16;
-    nucleus = 0.65;
     wnt_level = 0.0;
     gamma = 1.0;
 
@@ -31,14 +28,13 @@ Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem()
     complex_nu = 483.2;
 
     // DERIVED QUANTITIES
+    compartment = 1.0;
+    CytosolMembrane = 1.16;
+    nucleus = 0.65;
     drag = 1.0;
 
     // INITIAL ASSIGNMENTS
-
-    // ASSIGNMENT RULES
-    RunAssignmentRules(0.0);
-
-    drag = drag / CytosolMembrane; // Convert drag amount to concentration
+    drag = sm::piecewise((complex_cm - 700.0) / 10.0, sm::gt((complex_cm - 700.0) / 10.0, 1.0), 1.0); //
 
     // ODE SYSTEM INFORMATION
     SetDefaultInitialCondition(0, bcat_cm);
@@ -55,20 +51,11 @@ Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem()
     mStateVariables.push_back(ligand_nu);
     mStateVariables.push_back(complex_nu);
 
-    mParameters.push_back(compartment);
-    mParameters.push_back(CytosolMembrane);
-    mParameters.push_back(nucleus);
     mParameters.push_back(wnt_level);
     mParameters.push_back(gamma);
 
     // REACTIONS
-    Bsynthesis = 0.0;
-    kDegradation = 0.0;
-    kC = 0.0;
-    kN = 0.0;
-    kdiffusion = 0.0;
-    K_c_active = 0.0;
-    K_n_active = 0.0;
+    RunReactions(0.0);
 
     // EVENTS
 }
@@ -83,6 +70,9 @@ std::vector<double> Tan2014SbmlOdeSystem::ComputeDerivedQuantities(double time, 
 
     RunModelRules(time, rY);
 
+    dqs.push_back(compartment);
+    dqs.push_back(CytosolMembrane);
+    dqs.push_back(nucleus);
     dqs.push_back(drag);
 
     // AMOUNTS
@@ -155,11 +145,8 @@ void Tan2014SbmlOdeSystem::RunReactions(double time)
 // VARIABLE PARAMETERS
 void Tan2014SbmlOdeSystem::UpdateParameters(double time)
 {
-    compartment = GetParameter(0);
-    CytosolMembrane = GetParameter(1);
-    nucleus = GetParameter(2);
-    wnt_level = GetParameter(3);
-    gamma = GetParameter(4);
+    wnt_level = GetParameter(0);
+    gamma = GetParameter(1);
 }
 
 // STATE VARIABLES
@@ -204,6 +191,15 @@ void CellwiseOdeSystemInformation<Tan2014SbmlOdeSystem>::Initialise()
     this->mInitialConditions.push_back(483.2);
 
     // DERIVED QUANTITIES
+    this->mDerivedQuantityNames.push_back("compartment");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CytosolMembrane");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("nucleus");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     this->mDerivedQuantityNames.push_back("drag");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
@@ -229,15 +225,6 @@ void CellwiseOdeSystemInformation<Tan2014SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     // PARAMETERS
-    this->mParameterNames.push_back("compartment");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("CytosolMembrane");
-    this->mParameterUnits.push_back("non-dim");
-
-    this->mParameterNames.push_back("nucleus");
-    this->mParameterUnits.push_back("non-dim");
-
     this->mParameterNames.push_back("wnt_level");
     this->mParameterUnits.push_back("non-dim");
 

@@ -115,24 +115,24 @@ private:
     double SPN;       // SPN
 
     // DERIVED QUANTITIES
-    double Vd_b2;  // Vd_b2
-    double Clb2;   // Clb2
-    double Clb5;   // Clb5
-    double Sic1;   // Sic1
-    double Vd_b5;  // Vd_b5
-    double Bck2;   // Bck2
-    double Cln3;   // Cln3
-    double Vd2_c1; // Vd2_c1
-    double Vi_20;  // Vi_20
-    double Vi_t1;  // Vi_t1
-    double SBF;    // SBF
-    double Va_sbf; // Va_sbf
-    double MBF;    // MBF
-    double Mcm1;   // Mcm1
-    double Swi5;   // Swi5
+    double COMpartment; //
+    double Vd_b2;       // Vd_b2
+    double Clb2;        // Clb2
+    double Clb5;        // Clb5
+    double Sic1;        // Sic1
+    double Vd_b5;       // Vd_b5
+    double Bck2;        // Bck2
+    double Cln3;        // Cln3
+    double Vd2_c1;      // Vd2_c1
+    double Vi_20;       // Vi_20
+    double Vi_t1;       // Vi_t1
+    double SBF;         // SBF
+    double Va_sbf;      // Va_sbf
+    double MBF;         // MBF
+    double Mcm1;        // Mcm1
+    double Swi5;        // Swi5
 
     // VARIABLE PARAMETERS
-    double COMpartment; //
 
     // REACTIONS
 

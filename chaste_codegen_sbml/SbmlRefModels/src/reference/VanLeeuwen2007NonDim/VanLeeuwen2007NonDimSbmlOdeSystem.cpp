@@ -11,12 +11,11 @@
 namespace sm = sbmlmath;
 
 VanLeeuwen2007NonDimSbmlOdeSystem::VanLeeuwen2007NonDimSbmlOdeSystem()
-        : AbstractSbmlOdeSystem(11, 5, 0)
+        : AbstractSbmlOdeSystem(11, 4, 0)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<VanLeeuwen2007NonDimSbmlOdeSystem>);
 
     // VARIABLE PARAMETERS
-    cytosolmembraneandnucleus = 1.0;
     wnt_level = 0.0;
     gamma1 = 1.0;
     gamma2 = 1.0;
@@ -36,14 +35,15 @@ VanLeeuwen2007NonDimSbmlOdeSystem::VanLeeuwen2007NonDimSbmlOdeSystem()
     Y = 36.0;
 
     // DERIVED QUANTITIES
+    cytosolmembraneandnucleus = 1.0;
     C_F = 76.2;
     C_T = 76.2;
     drag = 1.0;
 
     // INITIAL ASSIGNMENTS
-
-    // ASSIGNMENT RULES
-    RunAssignmentRules(0.0);
+    C_F = C_o + C_c;                            //
+    C_T = C_oT + C_cT;                          //
+    drag = sm::max((C_A - 2300.0) / 36.0, 1.0); //
 
     X = X / cytosolmembraneandnucleus;       // Convert X amount to concentration
     D = D / cytosolmembraneandnucleus;       // Convert D amount to concentration
@@ -56,9 +56,6 @@ VanLeeuwen2007NonDimSbmlOdeSystem::VanLeeuwen2007NonDimSbmlOdeSystem()
     C_oT = C_oT / cytosolmembraneandnucleus; // Convert C_oT amount to concentration
     C_cT = C_cT / cytosolmembraneandnucleus; // Convert C_cT amount to concentration
     Y = Y / cytosolmembraneandnucleus;       // Convert Y amount to concentration
-    C_F = C_F / cytosolmembraneandnucleus;   // Convert C_F amount to concentration
-    C_T = C_T / cytosolmembraneandnucleus;   // Convert C_T amount to concentration
-    drag = drag / cytosolmembraneandnucleus; // Convert drag amount to concentration
 
     // ODE SYSTEM INFORMATION
     SetDefaultInitialCondition(0, X);
@@ -85,37 +82,13 @@ VanLeeuwen2007NonDimSbmlOdeSystem::VanLeeuwen2007NonDimSbmlOdeSystem()
     mStateVariables.push_back(C_cT);
     mStateVariables.push_back(Y);
 
-    mParameters.push_back(cytosolmembraneandnucleus);
     mParameters.push_back(wnt_level);
     mParameters.push_back(gamma1);
     mParameters.push_back(gamma2);
     mParameters.push_back(ComplexTransitThreshold);
 
     // REACTIONS
-    mwcfbf7716_cc13_473c_979a_033c57a28857 = 0.0;
-    mwab347951_a286_432d_b03b_254dcdba4a25 = 0.0;
-    mwc497befc_0edd_4b0d_8895_77dbfa05a4be = 0.0;
-    mwfa0f5940_d4e9_44e1_8a0c_379d6fdf9d0f = 0.0;
-    mwbe108cd1_a5d9_4d55_97c9_ac584df6a005 = 0.0;
-    mwad0ba91a_37fb_48f5_8392_6c043dfdd5dc = 0.0;
-    mw1d3d836b_77bd_489b_9a37_acc874344652 = 0.0;
-    mw552840aa_6d3c_4188_850d_9a3caafcdaa5 = 0.0;
-    mw5a301d6f_ffa1_4362_98de_0919a68808bc = 0.0;
-    mw4b073704_f41a_43d1_8ff8_af03f1cb6e1d = 0.0;
-    mw1c7459d0_b5a9_4a89_8682_79fc8ca4ca6c = 0.0;
-    mw51e5ed29_82db_47fa_9eed_ab52b7786dd5 = 0.0;
-    mw8704b9b0_f93d_405a_89a1_e000c5b66896 = 0.0;
-    mw322e8f78_68f6_4293_ae2a_ab238ec5cf9b = 0.0;
-    mwf5440ce3_586c_491f_ba71_bbf1c485027f = 0.0;
-    mw08c332d6_1aaf_498f_8e1c_13f1b9da85bf = 0.0;
-    mw3ece1442_a0b3_47eb_a8bf_cb317a46165f = 0.0;
-    mwfb6f8dfa_2e07_4249_a8fe_af33ca27471e = 0.0;
-    mwaa4e7692_3290_45ab_8a38_b5ffd49ede87 = 0.0;
-    mw86ea3c28_4745_4a89_9cbd_0f23c603e01b = 0.0;
-    mwee62535f_931d_41e9_ad53_2cad54b94778 = 0.0;
-    mw1b250e04_290a_4689_9fc5_5f0bf6711e02 = 0.0;
-    mw925599eb_19a0_4434_8be3_67c40721b71d = 0.0;
-    mw321b3e5e_f6ed_4345_9346_55ffb1ff2137 = 0.0;
+    RunReactions(0.0);
 
     // EVENTS
 }
@@ -130,6 +103,7 @@ std::vector<double> VanLeeuwen2007NonDimSbmlOdeSystem::ComputeDerivedQuantities(
 
     RunModelRules(time, rY);
 
+    dqs.push_back(cytosolmembraneandnucleus);
     dqs.push_back(C_F);
     dqs.push_back(C_T);
     dqs.push_back(drag);
@@ -283,11 +257,10 @@ void VanLeeuwen2007NonDimSbmlOdeSystem::RunReactions(double time)
 // VARIABLE PARAMETERS
 void VanLeeuwen2007NonDimSbmlOdeSystem::UpdateParameters(double time)
 {
-    cytosolmembraneandnucleus = GetParameter(0);
-    wnt_level = GetParameter(1);
-    gamma1 = GetParameter(2);
-    gamma2 = GetParameter(3);
-    ComplexTransitThreshold = GetParameter(4);
+    wnt_level = GetParameter(0);
+    gamma1 = GetParameter(1);
+    gamma2 = GetParameter(2);
+    ComplexTransitThreshold = GetParameter(3);
 }
 
 // STATE VARIABLES
@@ -357,6 +330,9 @@ void CellwiseOdeSystemInformation<VanLeeuwen2007NonDimSbmlOdeSystem>::Initialise
     this->mInitialConditions.push_back(36.0);
 
     // DERIVED QUANTITIES
+    this->mDerivedQuantityNames.push_back("cytosolmembraneandnucleus");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     this->mDerivedQuantityNames.push_back("C_F");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
@@ -409,9 +385,6 @@ void CellwiseOdeSystemInformation<VanLeeuwen2007NonDimSbmlOdeSystem>::Initialise
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     // PARAMETERS
-    this->mParameterNames.push_back("cytosolmembraneandnucleus");
-    this->mParameterUnits.push_back("non-dim");
-
     this->mParameterNames.push_back("wnt_level");
     this->mParameterUnits.push_back("non-dim");
 

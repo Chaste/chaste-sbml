@@ -200,24 +200,25 @@ private:
     double TEM1GTP; // Convert TEM1GTP amount to concentration
 
     // DERIVED QUANTITIES
-    double BCK2;    // Convert BCK2 amount to concentration
+    double cell;    // cell
+    double BCK2;    // BCK2
     double BUB2;    // Convert BUB2 amount to concentration
-    double CDC14T;  // Convert CDC14T amount to concentration
-    double CDC15i;  // Convert CDC15i amount to concentration
-    double CDC6T;   // Convert CDC6T amount to concentration
-    double CKIT;    // Convert CKIT amount to concentration
-    double CLB2T;   // Convert CLB2T amount to concentration
-    double CLB5T;   // Convert CLB5T amount to concentration
-    double CLN3;    // Convert CLN3 amount to concentration
-    double IE;      // Convert IE amount to concentration
+    double CDC14T;  // CDC14T
+    double CDC15i;  // CDC15i
+    double CDC6T;   // CDC6T
+    double CKIT;    // CKIT
+    double CLB2T;   // CLB2T
+    double CLB5T;   // CLB5T
+    double CLN3;    // CLN3
+    double IE;      // IE
     double LTE1;    // Convert LTE1 amount to concentration
     double MAD2;    // Convert MAD2 amount to concentration
-    double MCM1;    // Convert MCM1 amount to concentration
-    double NET1T;   // Convert NET1T amount to concentration
-    double PE;      // Convert PE amount to concentration
-    double SBF;     // Convert SBF amount to concentration
-    double SIC1T;   // Convert SIC1T amount to concentration
-    double TEM1GDP; // Convert TEM1GDP amount to concentration
+    double MCM1;    // MCM1
+    double NET1T;   // NET1T
+    double PE;      // PE
+    double SBF;     // SBF
+    double SIC1T;   // SIC1T
+    double TEM1GDP; // TEM1GDP
     double D;       // D
     double mu;      // mu
     double Vdb5;    // Vdb5
@@ -240,7 +241,6 @@ private:
     double F;       // F
 
     // VARIABLE PARAMETERS
-    double cell;   // cell
     double bub2l;  // bub2l
     double CDC15T; // CDC15T
     double ESP1T;  // ESP1T

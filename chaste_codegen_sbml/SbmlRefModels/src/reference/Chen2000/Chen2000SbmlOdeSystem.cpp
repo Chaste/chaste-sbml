@@ -11,12 +11,11 @@
 namespace sm = sbmlmath;
 
 Chen2000SbmlOdeSystem::Chen2000SbmlOdeSystem()
-        : AbstractSbmlOdeSystem(13, 1, 0)
+        : AbstractSbmlOdeSystem(13, 0, 0)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Chen2000SbmlOdeSystem>);
 
     // VARIABLE PARAMETERS
-    COMpartment = 1.0;
 
     // STATE VARIABLES
     Cln2 = 0.0078;
@@ -34,26 +33,24 @@ Chen2000SbmlOdeSystem::Chen2000SbmlOdeSystem()
     SPN = 0.0;
 
     // DERIVED QUANTITIES
-    Vd_b2 = 0.0;
-    Clb2 = 0.0;
-    Clb5 = 0.0;
-    Sic1 = 0.0;
-    Vd_b5 = 0.0;
-    Bck2 = 0.0;
-    Cln3 = 0.0;
-    Vd2_c1 = 0.0;
-    Vi_20 = 0.0;
-    Vi_t1 = 0.0;
-    SBF = 0.0;
-    Va_sbf = 0.0;
-    MBF = 0.0;
-    Mcm1 = 0.0;
-    Swi5 = 0.0;
+    COMpartment = 1.0;
 
     // INITIAL ASSIGNMENTS
-
-    // ASSIGNMENT RULES
-    RunAssignmentRules(0.0);
+    Vd_b2 = kd_b2 * (Hct1_T - Hct1) + kd_b2_ * Hct1 + kd_b2__ * Cdc20;                                                                                                                                                                                                                                                                                                 //
+    Clb2 = Clb2_T - Clb2_Sic1;                                                                                                                                                                                                                                                                                                                                         //
+    Clb5 = Clb5_T - Clb5_Sic1;                                                                                                                                                                                                                                                                                                                                         //
+    Sic1 = Sic1_T - (Clb2_Sic1 + Clb5_Sic1);                                                                                                                                                                                                                                                                                                                           //
+    Vd_b5 = kd_b5 + kd_b5_ * Cdc20;                                                                                                                                                                                                                                                                                                                                    //
+    Bck2 = Bck2_0 * mass;                                                                                                                                                                                                                                                                                                                                              //
+    Cln3 = Cln3_max * Dn3 * mass / (Jn3 + Dn3 * mass);                                                                                                                                                                                                                                                                                                                 //
+    Vd2_c1 = kd2_c1 * (epsilonc1_n3 * Cln3 + epsilonc1_k2 * Bck2 + Cln2 + epsilonc1_b5 * Clb5 + epsilonc1_b2 * Clb2);                                                                                                                                                                                                                                                  //
+    Vi_20 = sm::piecewise(ki_20_, sm::geq(ORI, 1.0), ki_20, sm::geq(SPN, 1.0), 0.1);                                                                                                                                                                                                                                                                                   //
+    Vi_t1 = ki_t1 + ki_t1_ * (Cln3 + epsiloni_t1_n2 * Cln2 + epsiloni_t1_b5 * Clb5 + epsiloni_t1_b2 * Clb2);                                                                                                                                                                                                                                                           //
+    Va_sbf = ka_sbf * (Cln2 + epsilonsbf_n3 * (Cln3 + Bck2) + epsilonsbf_b5 * Clb5);                                                                                                                                                                                                                                                                                   //
+    SBF = 2.0 * Va_sbf * Ji_sbf / (ki_sbf + ki_sbf_ * Clb2 + Va_sbf * Ji_sbf + (ki_sbf + ki_sbf_ * Clb2) * Ja_sbf - Va_sbf + std::sqrt(std::pow(ki_sbf + ki_sbf_ * Clb2 + Va_sbf * Ji_sbf + (ki_sbf + ki_sbf_ * Clb2) * Ja_sbf - Va_sbf, 2.0) - 4.0 * Va_sbf * Ji_sbf * (ki_sbf + ki_sbf_ * Clb2 - Va_sbf)));                                                          //
+    MBF = SBF;                                                                                                                                                                                                                                                                                                                                                         //
+    Mcm1 = 2.0 * ka_mcm * Clb2 * Ji_mcm / (ki_mcm + ka_mcm * Clb2 * Ji_mcm + ki_mcm * Ja_mcm - ka_mcm * Clb2 + std::sqrt(std::pow(ki_mcm + ka_mcm * Clb2 * Ji_mcm + ki_mcm * Ja_mcm - ka_mcm * Clb2, 2.0) - 4.0 * (ki_mcm - ka_mcm * Clb2) * ka_mcm * Clb2 * Ji_mcm));                                                                                                 //
+    Swi5 = 2.0 * ka_swi * Cdc20 * Ji_swi / (ki_swi + ki_swi_ * Clb2 + ka_swi * Cdc20 * Ji_swi + (ki_swi + ki_swi_ * Clb2) * Ja_swi - ka_swi * Cdc20 + std::sqrt(std::pow(ki_swi + ki_swi_ * Clb2 + ka_swi * Cdc20 * Ji_swi + (ki_swi + ki_swi_ * Clb2) * Ja_swi - ka_swi * Cdc20, 2.0) - 4.0 * (ki_swi + ki_swi_ * Clb2 - ka_swi * Cdc20) * ka_swi * Cdc20 * Ji_swi)); //
 
     // ODE SYSTEM INFORMATION
     SetDefaultInitialCondition(0, Cln2);
@@ -84,9 +81,8 @@ Chen2000SbmlOdeSystem::Chen2000SbmlOdeSystem()
     mStateVariables.push_back(BUD);
     mStateVariables.push_back(SPN);
 
-    mParameters.push_back(COMpartment);
-
     // REACTIONS
+    RunReactions(0.0);
 
     // EVENTS
 }
@@ -101,6 +97,7 @@ std::vector<double> Chen2000SbmlOdeSystem::ComputeDerivedQuantities(double time,
 
     RunModelRules(time, rY);
 
+    dqs.push_back(COMpartment);
     dqs.push_back(Vd_b2);
     dqs.push_back(Clb2);
     dqs.push_back(Clb5);
@@ -181,7 +178,6 @@ void Chen2000SbmlOdeSystem::RunReactions(double time)
 // VARIABLE PARAMETERS
 void Chen2000SbmlOdeSystem::UpdateParameters(double time)
 {
-    COMpartment = GetParameter(0);
 }
 
 // STATE VARIABLES
@@ -261,6 +257,9 @@ void CellwiseOdeSystemInformation<Chen2000SbmlOdeSystem>::Initialise()
     this->mInitialConditions.push_back(0.0);
 
     // DERIVED QUANTITIES
+    this->mDerivedQuantityNames.push_back("COMpartment");
+    this->mDerivedQuantityUnits.push_back("litre");
+
     this->mDerivedQuantityNames.push_back("Vd_b2");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
@@ -307,9 +306,6 @@ void CellwiseOdeSystemInformation<Chen2000SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     // PARAMETERS
-    this->mParameterNames.push_back("COMpartment");
-    this->mParameterUnits.push_back("litre");
-
     this->mInitialised = true;
 }
 

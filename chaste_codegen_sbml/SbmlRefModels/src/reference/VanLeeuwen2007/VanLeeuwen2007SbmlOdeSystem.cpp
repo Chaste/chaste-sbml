@@ -11,12 +11,11 @@
 namespace sm = sbmlmath;
 
 VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem()
-        : AbstractSbmlOdeSystem(11, 5, 0)
+        : AbstractSbmlOdeSystem(11, 4, 0)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<VanLeeuwen2007SbmlOdeSystem>);
 
     // VARIABLE PARAMETERS
-    cytosolmembraneandnucleus = 1.0;
     wnt_level = 0.0;
     gamma1 = 1.0;
     gamma2 = 1.0;
@@ -36,16 +35,15 @@ VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem()
     Y = 0.48;
 
     // DERIVED QUANTITIES
+    cytosolmembraneandnucleus = 1.0;
     C_F = 2.54;
     C_T = 2.54;
     drag = 1.0;
 
     // INITIAL ASSIGNMENTS
-
-    // ASSIGNMENT RULES
-    RunAssignmentRules(0.0);
-
-    drag = drag / cytosolmembraneandnucleus; // Convert drag amount to concentration
+    C_F = C_o + C_c;                          //
+    C_T = C_oT + C_cT;                        //
+    drag = sm::max((C_A - 100.0) / 3.0, 1.0); //
 
     // ODE SYSTEM INFORMATION
     SetDefaultInitialCondition(0, X);
@@ -72,37 +70,13 @@ VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem()
     mStateVariables.push_back(C_cT);
     mStateVariables.push_back(Y);
 
-    mParameters.push_back(cytosolmembraneandnucleus);
     mParameters.push_back(wnt_level);
     mParameters.push_back(gamma1);
     mParameters.push_back(gamma2);
     mParameters.push_back(ComplexTransitThreshold);
 
     // REACTIONS
-    mwd6b35759_f098_484c_9c65_e84e7e4b61e4 = 0.0;
-    mweddac6d0_231e_4c92_ba2a_c91edc682ff5 = 0.0;
-    mwdf62dfed_ec88_4d81_bc9d_da0e10f41e4b = 0.0;
-    mwee9cc998_28e9_4173_a694_f3e278a639b7 = 0.0;
-    mw661e341d_97d1_4e6f_8812_3be7ffc86d42 = 0.0;
-    mw179aa33c_9a7e_43c0_9285_3d8f97719c60 = 0.0;
-    mwff8d34f9_e036_49f1_b3b8_3706ecb98660 = 0.0;
-    mwd4fa317a_a484_4f38_b9b0_6ed404d9adcb = 0.0;
-    mwcb88a249_a200_4e95_9185_5654bf1ebfc0 = 0.0;
-    mw0aeac2fc_dd2f_4fe7_b60c_97f0b008ed89 = 0.0;
-    mw4b47c66d_37e6_4c33_b043_1f6b3b814449 = 0.0;
-    mw69974db4_8ead_416c_a220_f6dc3be1f3b6 = 0.0;
-    mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc = 0.0;
-    mw581d69f1_60b3_4d21_9323_31b05ee89570 = 0.0;
-    mwb17c2c57_279d_4e88_b9cf_896029135cc1 = 0.0;
-    mwe3236fc5_2118_40cb_8db3_ef9da29137cf = 0.0;
-    mw0be4a28b_e9c6_43da_8f95_d9c564a7caae = 0.0;
-    mwc360befb_07da_4d19_bbec_523fbef47dc9 = 0.0;
-    mw985b39ad_50ff_4d55_95f7_42e7f1bf6a3d = 0.0;
-    mwf27b65bb_38d6_44cf_aa66_9b38ae5885eb = 0.0;
-    mwd7a7bdbb_8f2e_42ed_bf97_48e33e45dafb = 0.0;
-    mw988a8caf_bd68_462b_86d7_51844c1dcfd3 = 0.0;
-    mw9ab26a4c_bd70_45e0_bacc_f830ab28abca = 0.0;
-    mw931baf8f_6572_46f6_96eb_cae40ee267b7 = 0.0;
+    RunReactions(0.0);
 
     // EVENTS
 }
@@ -117,6 +91,7 @@ std::vector<double> VanLeeuwen2007SbmlOdeSystem::ComputeDerivedQuantities(double
 
     RunModelRules(time, rY);
 
+    dqs.push_back(cytosolmembraneandnucleus);
     dqs.push_back(C_F);
     dqs.push_back(C_T);
     dqs.push_back(drag);
@@ -270,11 +245,10 @@ void VanLeeuwen2007SbmlOdeSystem::RunReactions(double time)
 // VARIABLE PARAMETERS
 void VanLeeuwen2007SbmlOdeSystem::UpdateParameters(double time)
 {
-    cytosolmembraneandnucleus = GetParameter(0);
-    wnt_level = GetParameter(1);
-    gamma1 = GetParameter(2);
-    gamma2 = GetParameter(3);
-    ComplexTransitThreshold = GetParameter(4);
+    wnt_level = GetParameter(0);
+    gamma1 = GetParameter(1);
+    gamma2 = GetParameter(2);
+    ComplexTransitThreshold = GetParameter(3);
 }
 
 // STATE VARIABLES
@@ -344,6 +318,9 @@ void CellwiseOdeSystemInformation<VanLeeuwen2007SbmlOdeSystem>::Initialise()
     this->mInitialConditions.push_back(0.48);
 
     // DERIVED QUANTITIES
+    this->mDerivedQuantityNames.push_back("cytosolmembraneandnucleus");
+    this->mDerivedQuantityUnits.push_back("MWDERIVEDUNIT_meter___3");
+
     this->mDerivedQuantityNames.push_back("C_F");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
@@ -396,9 +373,6 @@ void CellwiseOdeSystemInformation<VanLeeuwen2007SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     // PARAMETERS
-    this->mParameterNames.push_back("cytosolmembraneandnucleus");
-    this->mParameterUnits.push_back("MWDERIVEDUNIT_meter___3");
-
     this->mParameterNames.push_back("wnt_level");
     this->mParameterUnits.push_back("non-dim");
 

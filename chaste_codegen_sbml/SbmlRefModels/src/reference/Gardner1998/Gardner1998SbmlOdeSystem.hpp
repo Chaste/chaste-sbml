@@ -39,11 +39,11 @@ private:
     double Z; // Convert Z amount to concentration
 
     // DERIVED QUANTITIES
-    double V1; // V1
-    double V3; // V3
+    double Cell; // Cell
+    double V1;   // V1
+    double V3;   // V3
 
     // VARIABLE PARAMETERS
-    double Cell; // Cell
 
     // REACTIONS
     double reaction1;  // creation of cyclin

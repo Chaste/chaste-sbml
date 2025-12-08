@@ -11,12 +11,11 @@
 namespace sm = sbmlmath;
 
 Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem()
-        : AbstractSbmlOdeSystem(3, 1, 0)
+        : AbstractSbmlOdeSystem(3, 0, 0)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Goldbeter1991SbmlOdeSystem>);
 
     // VARIABLE PARAMETERS
-    cell = 1.0;
 
     // STATE VARIABLES
     C = 0.01;
@@ -24,13 +23,11 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem()
     X = 0.01;
 
     // DERIVED QUANTITIES
-    V1 = 0.0;
-    V3 = 0.0;
+    cell = 1.0;
 
     // INITIAL ASSIGNMENTS
-
-    // ASSIGNMENT RULES
-    RunAssignmentRules(0.0);
+    V1 = C * VM1 * std::pow(C + Kc, -1.0); //
+    V3 = M * VM3;                          //
 
     // ODE SYSTEM INFORMATION
     SetDefaultInitialCondition(0, C);
@@ -41,16 +38,8 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem()
     mStateVariables.push_back(M);
     mStateVariables.push_back(X);
 
-    mParameters.push_back(cell);
-
     // REACTIONS
-    reaction1 = 0.0;
-    reaction2 = 0.0;
-    reaction3 = 0.0;
-    reaction4 = 0.0;
-    reaction5 = 0.0;
-    reaction6 = 0.0;
-    reaction7 = 0.0;
+    RunReactions(0.0);
 
     // EVENTS
 }
@@ -65,6 +54,7 @@ std::vector<double> Goldbeter1991SbmlOdeSystem::ComputeDerivedQuantities(double 
 
     RunModelRules(time, rY);
 
+    dqs.push_back(cell);
     dqs.push_back(V1);
     dqs.push_back(V3);
 
@@ -166,7 +156,6 @@ void Goldbeter1991SbmlOdeSystem::RunReactions(double time)
 // VARIABLE PARAMETERS
 void Goldbeter1991SbmlOdeSystem::UpdateParameters(double time)
 {
-    cell = GetParameter(0);
 }
 
 // STATE VARIABLES
@@ -196,6 +185,9 @@ void CellwiseOdeSystemInformation<Goldbeter1991SbmlOdeSystem>::Initialise()
     this->mInitialConditions.push_back(0.01);
 
     // DERIVED QUANTITIES
+    this->mDerivedQuantityNames.push_back("cell");
+    this->mDerivedQuantityUnits.push_back("volume");
+
     this->mDerivedQuantityNames.push_back("V1");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
@@ -212,9 +204,6 @@ void CellwiseOdeSystemInformation<Goldbeter1991SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     // PARAMETERS
-    this->mParameterNames.push_back("cell");
-    this->mParameterUnits.push_back("volume");
-
     this->mInitialised = true;
 }
 

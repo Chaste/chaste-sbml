@@ -37,11 +37,11 @@ private:
     double X; // Cyclin Protease
 
     // DERIVED QUANTITIES
-    double V1; // V1
-    double V3; // V3
+    double cell; // cell
+    double V1;   // V1
+    double V3;   // V3
 
     // VARIABLE PARAMETERS
-    double cell; // cell
 
     // REACTIONS
     double reaction1; // creation of cyclin

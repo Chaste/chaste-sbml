@@ -11,12 +11,11 @@
 namespace sm = sbmlmath;
 
 TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem()
-        : AbstractSbmlOdeSystem(8, 1, 1)
+        : AbstractSbmlOdeSystem(8, 0, 1)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>);
 
     // VARIABLE PARAMETERS
-    cell = 1.0;
 
     // STATE VARIABLES
     CycBt = 0.001;
@@ -29,25 +28,20 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem()
     SK = 0.001;
 
     // DERIVED QUANTITIES
-    CycB = 0.0;
-    Trimer = 0.0;
-    Mad = 0.0;
-    TF = 0.0;
+    cell = 1.0;
 
     // INITIAL ASSIGNMENTS
-
-    // ASSIGNMENT RULES
-    RunAssignmentRules(0.0);
+    CycB = CycBt - 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow(std::pow(CycBt + CKIt + 1.0 / Keq, 2.0) - 4.0 * CycBt * CKIt, 1.0 / 2.0)); //
+    Trimer = 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow(std::pow(CycBt + CKIt + 1.0 / Keq, 2.0) - 4.0 * CycBt * CKIt, 1.0 / 2.0));       //
+    TF = GK(k15p * m + k15pp * SK, k16p + k16pp * m * CycB, J15, J16);                                                                                  //
+    Mad = 1.0;                                                                                                                                          //
 
     CycBt = CycBt / cell;   // Convert CycBt amount to concentration
-    CycB = CycB / cell;     // Convert CycB amount to concentration
     Cdc20a = Cdc20a / cell; // Convert Cdc20a amount to concentration
-    Trimer = Trimer / cell; // Convert Trimer amount to concentration
     Cdh1 = Cdh1 / cell;     // Convert Cdh1 amount to concentration
     m = m / cell;           // Convert m amount to concentration
     Cdc20t = Cdc20t / cell; // Convert Cdc20t amount to concentration
     IEP = IEP / cell;       // Convert IEP amount to concentration
-    Mad = Mad / cell;       // Convert Mad amount to concentration
     CKIt = CKIt / cell;     // Convert CKIt amount to concentration
     SK = SK / cell;         // Convert SK amount to concentration
 
@@ -70,29 +64,8 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem()
     mStateVariables.push_back(CKIt);
     mStateVariables.push_back(SK);
 
-    mParameters.push_back(cell);
-
     // REACTIONS
-    CycBt_synthesis = 0.0;
-    CycBdegradation = 0.0;
-    CycBdegradationviaCdh1 = 0.0;
-    CycBtdegradationviaCdc20a = 0.0;
-    Cdh1synthesis = 0.0;
-    Cdh1degradation = 0.0;
-    Cdc20tsynthesis = 0.0;
-    Cdc20t_deg = 0.0;
-    Cdc20activation = 0.0;
-    Cdc20ainhibition = 0.0;
-    Cdc20adegradation = 0.0;
-    IEPsynthesis = 0.0;
-    IEPdegradation = 0.0;
-    growth = 0.0;
-    CKItsynthesis = 0.0;
-    CKIdegradation = 0.0;
-    CKItphosphorilationviaSK = 0.0;
-    eq_7 = 0.0;
-    SKsynthesis = 0.0;
-    SKdegradation = 0.0;
+    RunReactions(0.0);
 
     // EVENTS
     mEventType.resize(1, SbmlEventType::UNKNOWN);
@@ -104,8 +77,8 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem()
     mEventSatisfied.resize(1, true); // Prevent events from triggering at the start
     mEventTriggered.resize(1, false);
 
-    mEventAdjustedParameters.resize(1, false);
-    mEventAdjustedParameterValues.resize(1, 0.0);
+    mEventAdjustedParameters.resize(0, false);
+    mEventAdjustedParameterValues.resize(0, 0.0);
 
     mEventAdjustedStateVars.resize(8, false);
     mEventAdjustedStateValues.resize(8, 0.0);
@@ -121,6 +94,7 @@ std::vector<double> TysonNovak2001SbmlOdeSystem::ComputeDerivedQuantities(double
 
     RunModelRules(time, rY);
 
+    dqs.push_back(cell);
     dqs.push_back(CycB);
     dqs.push_back(Trimer);
     dqs.push_back(Mad);
@@ -297,7 +271,6 @@ void TysonNovak2001SbmlOdeSystem::RunReactions(double time)
 // VARIABLE PARAMETERS
 void TysonNovak2001SbmlOdeSystem::UpdateParameters(double time)
 {
-    cell = GetParameter(0);
 }
 
 // STATE VARIABLES
@@ -356,6 +329,9 @@ void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
     this->mInitialConditions.push_back(0.001);
 
     // DERIVED QUANTITIES
+    this->mDerivedQuantityNames.push_back("cell");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     this->mDerivedQuantityNames.push_back("CycB");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
@@ -402,9 +378,6 @@ void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     // PARAMETERS
-    this->mParameterNames.push_back("cell");
-    this->mParameterUnits.push_back("non-dim");
-
     this->mInitialised = true;
 }
 

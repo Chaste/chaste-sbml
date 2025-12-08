@@ -11,12 +11,11 @@
 namespace sm = sbmlmath;
 
 Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem()
-        : AbstractSbmlOdeSystem(5, 1, 0)
+        : AbstractSbmlOdeSystem(5, 0, 0)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Gardner1998SbmlOdeSystem>);
 
     // VARIABLE PARAMETERS
-    Cell = 1.0;
 
     // STATE VARIABLES
     C = 0.0;
@@ -26,13 +25,11 @@ Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem()
     Z = 1.0;
 
     // DERIVED QUANTITIES
-    V1 = 0.0;
-    V3 = 0.0;
+    Cell = 1.0;
 
     // INITIAL ASSIGNMENTS
-
-    // ASSIGNMENT RULES
-    RunAssignmentRules(0.0);
+    V1 = C * V1p * std::pow(C + K6, -1.0); //
+    V3 = M * V3p;                          //
 
     C = C / Cell; // Convert C amount to concentration
     X = X / Cell; // Convert X amount to concentration
@@ -53,22 +50,8 @@ Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem()
     mStateVariables.push_back(Y);
     mStateVariables.push_back(Z);
 
-    mParameters.push_back(Cell);
-
     // REACTIONS
-    reaction1 = 0.0;
-    reaction2 = 0.0;
-    reaction3 = 0.0;
-    reaction4 = 0.0;
-    reaction5 = 0.0;
-    reaction6 = 0.0;
-    reaction7 = 0.0;
-    reaction8 = 0.0;
-    reaction9 = 0.0;
-    reaction10 = 0.0;
-    reaction11 = 0.0;
-    reaction12 = 0.0;
-    reaction13 = 0.0;
+    RunReactions(0.0);
 
     // EVENTS
 }
@@ -83,6 +66,7 @@ std::vector<double> Gardner1998SbmlOdeSystem::ComputeDerivedQuantities(double ti
 
     RunModelRules(time, rY);
 
+    dqs.push_back(Cell);
     dqs.push_back(V1);
     dqs.push_back(V3);
 
@@ -234,7 +218,6 @@ void Gardner1998SbmlOdeSystem::RunReactions(double time)
 // VARIABLE PARAMETERS
 void Gardner1998SbmlOdeSystem::UpdateParameters(double time)
 {
-    Cell = GetParameter(0);
 }
 
 // STATE VARIABLES
@@ -274,6 +257,9 @@ void CellwiseOdeSystemInformation<Gardner1998SbmlOdeSystem>::Initialise()
     this->mInitialConditions.push_back(1.0);
 
     // DERIVED QUANTITIES
+    this->mDerivedQuantityNames.push_back("Cell");
+    this->mDerivedQuantityUnits.push_back("volume");
+
     this->mDerivedQuantityNames.push_back("V1");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
@@ -296,9 +282,6 @@ void CellwiseOdeSystemInformation<Gardner1998SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     // PARAMETERS
-    this->mParameterNames.push_back("Cell");
-    this->mParameterUnits.push_back("volume");
-
     this->mInitialised = true;
 }
 

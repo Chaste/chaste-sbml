@@ -11,12 +11,11 @@
 namespace sm = sbmlmath;
 
 Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
-        : AbstractSbmlOdeSystem(36, 11, 4)
+        : AbstractSbmlOdeSystem(36, 10, 4)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>);
 
     // VARIABLE PARAMETERS
-    cell = 1.0;
     bub2l = 0.2;
     CDC15T = 1.0;
     ESP1T = 1.0;
@@ -67,51 +66,52 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
     TEM1GTP = 0.9;
 
     // DERIVED QUANTITIES
-    BCK2 = 0.0;
+    cell = 1.0;
     BUB2 = 0.2;
     CDC14T = 2.0;
-    CDC15i = 0.0;
-    CDC6T = 0.0;
-    CKIT = 0.0;
     CLB2T = 0.17;
     CLB5T = 0.12;
-    CLN3 = 0.0;
-    IE = 0.0;
     LTE1 = 0.1;
     MAD2 = 0.01;
-    MCM1 = 0.0;
     NET1T = 2.8;
-    PE = 0.0;
-    SBF = 0.0;
-    SIC1T = 0.0;
-    TEM1GDP = 0.0;
-    D = 0.0;
-    mu = 0.0;
-    Vdb5 = 0.0;
-    Vdb2 = 0.0;
-    Vasbf = 0.0;
-    Visbf = 0.0;
-    Vkpc1 = 0.0;
-    Vkpf6 = 0.0;
-    Vacdh = 0.0;
-    Vicdh = 0.0;
-    Vppnet = 0.0;
-    Vkpnet = 0.0;
-    Vdppx = 0.0;
-    Vdpds = 0.0;
-    Vaiep = 0.0;
-    Vd2c1 = 0.0;
-    Vd2f6 = 0.0;
-    Vppc1 = 0.0;
-    Vppf6 = 0.0;
-    F = 0.0;
 
     // INITIAL ASSIGNMENTS
+    BCK2 = b0 * MASS;                                                                                  //
+    Visbf = kisbf_p + kisbf_p_p * CLB2;                                                                //
+    CLN3 = C0 * Dn3 * MASS / (Jn3 + Dn3 * MASS);                                                       //
+    Vppc1 = kppc1 * CDC14;                                                                             //
+    Vppf6 = kppf6 * CDC14;                                                                             //
+    Vaiep = kaiep * CLB2;                                                                              //
+    Vacdh = kacdh_p + kacdh_p_p * CDC14;                                                               //
+    Vicdh = kicdh_p + kicdh_p_p * (eicdhn3 * CLN3 + eicdhn2 * CLN2 + eicdhb5 * CLB5 + eicdhb2 * CLB2); //
+    Vkpnet = (kkpnet_p + kkpnet_p_p * CDC15) * MASS;                                                   //
+    Vppnet = kppnet_p + kppnet_p_p * PPX;                                                              //
+    Vasbf = kasbf * (esbfn2 * CLN2 + esbfn3 * (CLN3 + BCK2) + esbfb5 * CLB5);                          //
+    SBF = GK_219(Vasbf, Visbf, Jasbf, Jisbf);                                                          //
+    MCM1 = GK_219(kamcm * CLB2, kimcm, Jamcm, Jimcm);                                                  //
+    mu = sm::log(2.0) / mdt;                                                                           //
+    D = 1.026 / mu - 32.0;                                                                             //
+    F = std::exp(-mu * D);                                                                             //
+    Vd2c1 = kd2c1 * (ec1n3 * CLN3 + ec1k2 * BCK2 + ec1n2 * CLN2 + ec1b5 * CLB5 + ec1b2 * CLB2);        //
+    Vd2f6 = kd2f6 * (ef6n3 * CLN3 + ef6k2 * BCK2 + ef6n2 * CLN2 + ef6b5 * CLB5 + ef6b2 * CLB2);        //
+    Vkpc1 = kd1c1 + Vd2c1 / (Jd2c1 + SIC1 + C2 + C5 + SIC1P + C2P + C5P);                              //
+    Vkpf6 = kd1f6 + Vd2f6 / (Jd2f6 + CDC6 + F2 + F5 + CDC6P + F2P + F5P);                              //
+    Vdb2 = kdb2_p + kdb2_p_p * CDH1 + kdb2p * CDC20;                                                   //
+    Vdb5 = kdb5_p + kdb5_p_p * CDC20;                                                                  //
+    Vdpds = kd1pds_p + kd2pds_p_p * CDC20 + kd3pds_p_p * CDH1;                                         //
+    Vdppx = kdppx_p + kdppx_p_p * (J20ppx + CDC20) * Jpds / (Jpds + PDS1);                             //
+    CLB2T = CLB2 + C2 + C2P + F2 + F2P;                                                                //
+    CLB5T = CLB5 + C5 + C5P + F5 + F5P;                                                                //
+    CDC14T = CDC14 + RENT + RENTP;                                                                     //
+    NET1T = NET1 + NET1P + RENT + RENTP;                                                               //
+    SIC1T = SIC1 + C2 + C5 + SIC1P + C2P + C5P;                                                        //
+    CDC6T = CDC6 + F2 + F5 + CDC6P + F2P + F5P;                                                        //
+    CKIT = SIC1T + CDC6T;                                                                              //
+    CDC15i = CDC15T - CDC15;                                                                           //
+    IE = IET - IEP;                                                                                    //
+    PE = ESP1T - ESP1;                                                                                 //
+    TEM1GDP = TEM1T - TEM1GTP;                                                                         //
 
-    // ASSIGNMENT RULES
-    RunAssignmentRules(0.0);
-
-    BCK2 = BCK2 / cell;       // Convert BCK2 amount to concentration
     BUB2 = BUB2 / cell;       // Convert BUB2 amount to concentration
     BUD = BUD / cell;         // Convert BUD amount to concentration
     C2 = C2 / cell;           // Convert C2 amount to concentration
@@ -119,51 +119,37 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
     C5 = C5 / cell;           // Convert C5 amount to concentration
     C5P = C5P / cell;         // Convert C5P amount to concentration
     CDC14 = CDC14 / cell;     // Convert CDC14 amount to concentration
-    CDC14T = CDC14T / cell;   // Convert CDC14T amount to concentration
     CDC15 = CDC15 / cell;     // Convert CDC15 amount to concentration
-    CDC15i = CDC15i / cell;   // Convert CDC15i amount to concentration
     CDC20 = CDC20 / cell;     // Convert CDC20 amount to concentration
     CDC20i = CDC20i / cell;   // Convert CDC20i amount to concentration
     CDC6 = CDC6 / cell;       // Convert CDC6 amount to concentration
     CDC6P = CDC6P / cell;     // Convert CDC6P amount to concentration
-    CDC6T = CDC6T / cell;     // Convert CDC6T amount to concentration
     CDH1 = CDH1 / cell;       // Convert CDH1 amount to concentration
     CDH1i = CDH1i / cell;     // Convert CDH1i amount to concentration
-    CKIT = CKIT / cell;       // Convert CKIT amount to concentration
     CLB2 = CLB2 / cell;       // Convert CLB2 amount to concentration
-    CLB2T = CLB2T / cell;     // Convert CLB2T amount to concentration
     CLB5 = CLB5 / cell;       // Convert CLB5 amount to concentration
-    CLB5T = CLB5T / cell;     // Convert CLB5T amount to concentration
     CLN2 = CLN2 / cell;       // Convert CLN2 amount to concentration
-    CLN3 = CLN3 / cell;       // Convert CLN3 amount to concentration
     ESP1 = ESP1 / cell;       // Convert ESP1 amount to concentration
     F2 = F2 / cell;           // Convert F2 amount to concentration
     F2P = F2P / cell;         // Convert F2P amount to concentration
     F5 = F5 / cell;           // Convert F5 amount to concentration
     F5P = F5P / cell;         // Convert F5P amount to concentration
-    IE = IE / cell;           // Convert IE amount to concentration
     IEP = IEP / cell;         // Convert IEP amount to concentration
     LTE1 = LTE1 / cell;       // Convert LTE1 amount to concentration
     MAD2 = MAD2 / cell;       // Convert MAD2 amount to concentration
     MASS = MASS / cell;       // Convert MASS amount to concentration
-    MCM1 = MCM1 / cell;       // Convert MCM1 amount to concentration
     NET1 = NET1 / cell;       // Convert NET1 amount to concentration
     NET1P = NET1P / cell;     // Convert NET1P amount to concentration
-    NET1T = NET1T / cell;     // Convert NET1T amount to concentration
     ORI = ORI / cell;         // Convert ORI amount to concentration
     PDS1 = PDS1 / cell;       // Convert PDS1 amount to concentration
-    PE = PE / cell;           // Convert PE amount to concentration
     PPX = PPX / cell;         // Convert PPX amount to concentration
     RENT = RENT / cell;       // Convert RENT amount to concentration
     RENTP = RENTP / cell;     // Convert RENTP amount to concentration
-    SBF = SBF / cell;         // Convert SBF amount to concentration
     SIC1 = SIC1 / cell;       // Convert SIC1 amount to concentration
     SIC1P = SIC1P / cell;     // Convert SIC1P amount to concentration
-    SIC1T = SIC1T / cell;     // Convert SIC1T amount to concentration
     SPN = SPN / cell;         // Convert SPN amount to concentration
     SWI5 = SWI5 / cell;       // Convert SWI5 amount to concentration
     SWI5P = SWI5P / cell;     // Convert SWI5P amount to concentration
-    TEM1GDP = TEM1GDP / cell; // Convert TEM1GDP amount to concentration
     TEM1GTP = TEM1GTP / cell; // Convert TEM1GTP amount to concentration
 
     // ODE SYSTEM INFORMATION
@@ -241,7 +227,6 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
     mStateVariables.push_back(SWI5P);
     mStateVariables.push_back(TEM1GTP);
 
-    mParameters.push_back(cell);
     mParameters.push_back(bub2l);
     mParameters.push_back(CDC15T);
     mParameters.push_back(ESP1T);
@@ -254,100 +239,7 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
     mParameters.push_back(TEM1T);
 
     // REACTIONS
-    Growth = 0.0;
-    Synthesis_of_CLN2 = 0.0;
-    Degradation_of_CLN2 = 0.0;
-    Synthesis_of_CLB2 = 0.0;
-    Degradation_of_CLB2 = 0.0;
-    Synthesis_of_CLB5 = 0.0;
-    Degradation_of_CLB5 = 0.0;
-    Synthesis_of_SIC1 = 0.0;
-    Phosphorylation_of_SIC1 = 0.0;
-    Dephosphorylation_of_SIC1 = 0.0;
-    Fast_Degradation_of_SIC1P = 0.0;
-    Assoc_of_CLB2_and_SIC1 = 0.0;
-    Dissoc_of_CLB2SIC1_complex = 0.0;
-    Assoc_of_CLB5_and_SIC1 = 0.0;
-    Dissoc_of_CLB5SIC1 = 0.0;
-    Phosphorylation_of_C2 = 0.0;
-    Dephosphorylation_of_C2P = 0.0;
-    Phosphorylation_of_C5 = 0.0;
-    Dephosphorylation_of_C5P = 0.0;
-    Degradation_of_CLB2_in_C2 = 0.0;
-    Degradation_of_CLB5_in_C5 = 0.0;
-    Degradation_of_SIC1_in_C2P = 0.0;
-    Degradation_of_SIC1P_in_C5P_ = 0.0;
-    Degradation_of_CLB2_in_C2P = 0.0;
-    Degradation_of_CLB5_in_C5P = 0.0;
-    CDC6_synthesis = 0.0;
-    Phosphorylation_of_CDC6 = 0.0;
-    Dephosphorylation_of_CDC6 = 0.0;
-    Degradation_of_CDC6P = 0.0;
-    CLB2CDC6_complex_formation = 0.0;
-    CLB2CDC6_dissociation = 0.0;
-    CLB5CDC6_complex_formation = 0.0;
-    CLB5CDC6_dissociation = 0.0;
-    F2_phosphorylation = 0.0;
-    F2P_dephosphorylation = 0.0;
-    F5_phosphorylation = 0.0;
-    F5P_dephosphorylation = 0.0;
-    CLB2_degradation_in_F2 = 0.0;
-    CLB5_degradation_in_F5 = 0.0;
-    CDC6_degradation_in_F2P = 0.0;
-    CDC6_degradation_in_F5P = 0.0;
-    CLB2_degradation_in_F2P = 0.0;
-    CLB5_degradation_in_F5P = 0.0;
-    Synthesis_of_SWI5 = 0.0;
-    Degradation_of_SWI5 = 0.0;
-    Degradation_of_SWI5P = 0.0;
-    Activation_of_SWI5 = 0.0;
-    Inactivation_of_SWI5 = 0.0;
-    Activation_of_IEP = 0.0;
-    Inactivation_1 = 0.0;
-    Synthesis_of_inactive_CDC20 = 0.0;
-    Degradation_of_inactiveCDC20 = 0.0;
-    Degradation_of_active_CDC20 = 0.0;
-    Activation_of_CDC20 = 0.0;
-    Inactivation_2 = 0.0;
-    CDH1_synthesis = 0.0;
-    CDH1_degradation = 0.0;
-    CDH1i_degradation = 0.0;
-    CDH1i_activation = 0.0;
-    Inactivation_3 = 0.0;
-    CDC14_synthesis = 0.0;
-    CDC14_degradation = 0.0;
-    Assoc_with_NET1_to_form_RENT = 0.0;
-    Dissoc_from_RENT = 0.0;
-    Assoc_with_NET1P_to_form_RENTP = 0.0;
-    Dissoc_from_RENP = 0.0;
-    Net1_synthesis = 0.0;
-    Net1_degradation = 0.0;
-    Net1P_degradation = 0.0;
-    NET1_phosphorylation = 0.0;
-    dephosphorylation_1 = 0.0;
-    RENT_phosphorylation = 0.0;
-    dephosphorylation_2 = 0.0;
-    Degradation_of_NET1_in_RENT = 0.0;
-    Degradation_of_NET1P_in_RENTP = 0.0;
-    Degradation_of_CDC14_in_RENT = 0.0;
-    Degradation_of_CDC14_in_RENTP = 0.0;
-    TEM1_activation = 0.0;
-    inactivation_1 = 0.0;
-    CDC15_activation = 0.0;
-    inactivation_2 = 0.0;
-    PPX_synthesis = 0.0;
-    degradation_1 = 0.0;
-    PDS1_synthesis = 0.0;
-    degradation_2 = 0.0;
-    Degradation_of_PDS1_in_PE = 0.0;
-    Assoc_with_ESP1_to_form_PE = 0.0;
-    Disso_from_PE = 0.0;
-    DNA_synthesis = 0.0;
-    Negative_regulation_of_DNA_synthesis = 0.0;
-    Budding = 0.0;
-    Negative_regulation_of_Cell_budding = 0.0;
-    Spindle_formation = 0.0;
-    Spindle_disassembly = 0.0;
+    RunReactions(0.0);
 
     // EVENTS
     mEventType.resize(4, SbmlEventType::UNKNOWN);
@@ -362,8 +254,8 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
     mEventSatisfied.resize(4, true); // Prevent events from triggering at the start
     mEventTriggered.resize(4, false);
 
-    mEventAdjustedParameters.resize(11, false);
-    mEventAdjustedParameterValues.resize(11, 0.0);
+    mEventAdjustedParameters.resize(10, false);
+    mEventAdjustedParameterValues.resize(10, 0.0);
 
     mEventAdjustedStateVars.resize(36, false);
     mEventAdjustedStateValues.resize(36, 0.0);
@@ -379,6 +271,7 @@ std::vector<double> Chen2004SbmlOdeSystem::ComputeDerivedQuantities(double time,
 
     RunModelRules(time, rY);
 
+    dqs.push_back(cell);
     dqs.push_back(BCK2);
     dqs.push_back(BUB2);
     dqs.push_back(CDC14T);
@@ -1094,17 +987,16 @@ void Chen2004SbmlOdeSystem::RunReactions(double time)
 // VARIABLE PARAMETERS
 void Chen2004SbmlOdeSystem::UpdateParameters(double time)
 {
-    cell = GetParameter(0);
-    bub2l = GetParameter(1);
-    CDC15T = GetParameter(2);
-    ESP1T = GetParameter(3);
-    IET = GetParameter(4);
-    KEZ = GetParameter(5);
-    KEZ2 = GetParameter(6);
-    lte1h = GetParameter(7);
-    lte1l = GetParameter(8);
-    mad2l = GetParameter(9);
-    TEM1T = GetParameter(10);
+    bub2l = GetParameter(0);
+    CDC15T = GetParameter(1);
+    ESP1T = GetParameter(2);
+    IET = GetParameter(3);
+    KEZ = GetParameter(4);
+    KEZ2 = GetParameter(5);
+    lte1h = GetParameter(6);
+    lte1l = GetParameter(7);
+    mad2l = GetParameter(8);
+    TEM1T = GetParameter(9);
 }
 
 // STATE VARIABLES
@@ -1323,6 +1215,9 @@ void CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>::Initialise()
     this->mInitialConditions.push_back(0.9);
 
     // DERIVED QUANTITIES
+    this->mDerivedQuantityNames.push_back("cell");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     this->mDerivedQuantityNames.push_back("BCK2");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
@@ -1600,9 +1495,6 @@ void CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     // PARAMETERS
-    this->mParameterNames.push_back("cell");
-    this->mParameterUnits.push_back("non-dim");
-
     this->mParameterNames.push_back("bub2l");
     this->mParameterUnits.push_back("non-dim");
 

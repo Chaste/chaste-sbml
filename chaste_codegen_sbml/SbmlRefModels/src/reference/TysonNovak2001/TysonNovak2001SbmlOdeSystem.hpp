@@ -75,13 +75,13 @@ private:
     double SK;     // Convert SK amount to concentration
 
     // DERIVED QUANTITIES
-    double CycB;   // Convert CycB amount to concentration
-    double Trimer; // Convert Trimer amount to concentration
-    double Mad;    // Convert Mad amount to concentration
+    double cell;   // cell
+    double CycB;   // CycB
+    double Trimer; // Trimer
+    double Mad;    // Mad
     double TF;     // TF
 
     // VARIABLE PARAMETERS
-    double cell; // cell
 
     // REACTIONS
     double CycBt_synthesis;           // CycBt synthesis
