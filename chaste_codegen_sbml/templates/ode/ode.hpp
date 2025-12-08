@@ -29,12 +29,12 @@ private:
     // FIXED PARAMETERS
 {% for param in constant_parameters %}
 {% if param["rhs"] is none %}
+{% if param["value"] is none %}
+    double {{ param["id"] }} = {{ param["value"] }}; // {{ param["label"] }}
+{% else %}
     const double {{ param["id"] }} = {{ param["value"] }}; // {{ param["label"] }}
 {% endif %}
-{% endfor %}
-
-{% for param in constant_parameters %}
-{% if param["rhs"] is not none %}
+{% else %}
     double {{ param["id"] }} = {{ param["value"] }}; // {{ param["label"] }}
 {% endif %}
 {% endfor %}

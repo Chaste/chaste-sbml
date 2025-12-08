@@ -17,28 +17,34 @@ namespace sm = sbmlmath;
 
     // VARIABLE PARAMETERS
 {% for param in variable_parameters %}
+{% if param["initial_value"] is not none %}
     {{ param["id"] }} = {{ param["initial_value"] }};
+{% endif %}
 {% endfor %}
 
     // STATE VARIABLES
 {% for var in state_variables %}
+{% if var["initial_value"] is not none %}
     {{ var["id"] }} = {{ var["initial_value"] }};
+{% endif %}
 {% endfor %}
 
     // DERIVED QUANTITIES
 {% for dq in derived_quantities %}
+{% if dq["initial_value"] is not none %}
     {{ dq["id"] }} = {{ dq["initial_value"] }};
+{% endif %}
 {% endfor %}
 
     // INITIAL ASSIGNMENTS
 {% for ia in initial_assignments %}
-{% if not ia["extra"] %}
+{% if ia["custom"] is false() %}
     {{ ia["lhs"] }} = {{ ia["rhs"] }}; // {{ ia["label"] }}
 {% endif %}
 {% endfor %}
 
 {% for ia in initial_assignments %}
-{% if ia["extra"] %}
+{% if ia["custom"] is true() %}
     {{ ia["lhs"] }} = {{ ia["rhs"] }}; // {{ ia["label"] }}
 {% endif %}
 {% endfor %}
@@ -57,9 +63,7 @@ namespace sm = sbmlmath;
 {% endfor %}
 
     // REACTIONS
-{% for reaction in reactions %}
-    {{ reaction["id"] }} = 0.0;
-{% endfor %}
+    RunReactions(0.0);
 
     // EVENTS
 {% if events %}
@@ -253,7 +257,11 @@ void CellwiseOdeSystemInformation<{{ ode_class_name }}>::Initialise()
 {% for var in state_variables %}
     this->mVariableNames.push_back("{{ var['id'] }}");
     this->mVariableUnits.push_back("{{ var['units'] }}");
+{% if var["initial_value"] is not none %}
     this->mInitialConditions.push_back({{ var['initial_value'] }});
+{% else %}
+    this->mInitialConditions.push_back(0.0);
+{% endif %}
 
 {% endfor %}
 

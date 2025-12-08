@@ -314,7 +314,7 @@ class ChasteSbmlModel:
         self._variable_types[id_] = VarType.FUNCTION
 
     def _add_initial_assignment(
-        self, id_: str, label: str, lhs: str, rhs: str, extra: bool = False
+        self, id_: str, label: str, lhs: str, rhs: str, custom: bool = False
     ) -> None:
         """Add an initial assignment to the template variables.
 
@@ -322,7 +322,7 @@ class ChasteSbmlModel:
         :param label: The rule description.
         :param lhs: The left-hand side of the rule.
         :param rhs: The right-hand side of the rule.
-        :param extra: True if this is an extra initial assignment added during processing.
+        :param custom: True if this is a custom initial assignment added during processing.
         """
         self._initial_assignments.append(
             {
@@ -331,7 +331,7 @@ class ChasteSbmlModel:
                 "index": len(self._initial_assignments),
                 "lhs": lhs,
                 "rhs": rhs,
-                "extra": extra,
+                "custom": custom,
             }
         )
         self._variable_types[id_] = VarType.INITIAL_ASSIGNMENT
@@ -673,10 +673,16 @@ class ChasteSbmlModel:
         """Add initial assignments to template variables."""
         # Sort initial assignments - variables on rhs must be defined before they are used
         assignments = [ia for ia in self._sbml_initial_assignments]
+
+        # TODO: Don't repeat this code from _format_rules
         assignments += [r for r in self._sbml_rules if r.getTypeCode() == SBML_ASSIGNMENT_RULE]
 
         formulas = [(ia.getSymbol(), ia.getMath()) for ia in self._sbml_initial_assignments]
-        formulas += [(r.getVariable(), r.getMath()) for r in self._sbml_rules if r.getTypeCode() == SBML_ASSIGNMENT_RULE]
+        formulas += [
+            (r.getVariable(), r.getMath())
+            for r in self._sbml_rules
+            if r.getTypeCode() == SBML_ASSIGNMENT_RULE
+        ]
 
         sort_index = sort_formulas(formulas)
         sorted_assignments = [assignments[i] for i in sort_index]
@@ -687,7 +693,7 @@ class ChasteSbmlModel:
             label = assignment.getName().strip()
             lhs = sorted_formulas[i][0]
             rhs = convert_ast_formula(sorted_formulas[i][1])
-            self._add_initial_assignment(id_, label, lhs, rhs, extra=False)
+            self._add_initial_assignment(id_, label, lhs, rhs, custom=False)
 
     def _format_parameters(self) -> None:
         """Add parameters to template variables."""
@@ -703,8 +709,13 @@ class ChasteSbmlModel:
             param_id = param.getId()
             label = param.getName().strip()
 
-            value = param.getValue() if param.isSetValue() else 0.0
-            units = param.getUnits() if param.isSetUnits() else NON_DIM_UNITS
+            value = None
+            if param.isSetValue():
+                value = param.getValue()
+
+            units = NON_DIM_UNITS
+            if param.isSetUnits():
+                units = param.getUnits()
 
             if param_id in self._odes:
                 # State variable
@@ -788,6 +799,7 @@ class ChasteSbmlModel:
 
         assignment_rules = {r["lhs"]: r["rhs"] for r in self._assignment_rules}
         rate_rules = {r["lhs"]: r["rhs"] for r in self._rate_rules}
+        initial_assignments = {r["lhs"]: r["rhs"] for r in self._initial_assignments}
 
         for species in self._sbml_species:
             species_id = species.getId()
@@ -798,18 +810,20 @@ class ChasteSbmlModel:
             compartment = self._sbml_compartments.get(compartment_id)
             units = NON_DIM_UNITS if compartment else species.getSubstanceUnits()
 
-            initial_value = 0.0
+            initial_value = None
             if species.isSetInitialConcentration():
                 initial_value = species.getInitialConcentration()
-            else:
+
+            elif species.isSetInitialAmount():
                 initial_value = species.getInitialAmount()
 
-                # Convert amount to concentration via an extra initial assignment
-                ia_id = PREFIX_SEP.join([CHASTE_PREFIX, INITIAL_ASSIGNMENT_PREFIX, species_id])
-                label = f"Convert {species_id} amount to concentration"
-                lhs = species_id
-                rhs = f"{species_id} / {compartment_id}"
-                self._add_initial_assignment(ia_id, label, lhs, rhs, extra=True)
+                if (species_id not in assignment_rules) and (species_id not in initial_assignments):
+                    # Convert initial amount to concentration via a custom initial assignment
+                    ia_id = PREFIX_SEP.join([CHASTE_PREFIX, INITIAL_ASSIGNMENT_PREFIX, species_id])
+                    label = f"Convert {species_id} amount to concentration"
+                    lhs = species_id
+                    rhs = f"{species_id} / {compartment_id}"
+                    self._add_initial_assignment(ia_id, label, lhs, rhs, custom=True)
 
             is_bc = species.isSetBoundaryCondition() and species.getBoundaryCondition()
 
