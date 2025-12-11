@@ -28,14 +28,10 @@ private:
 
     // FIXED PARAMETERS
 {% for param in constant_parameters %}
-{% if param["rhs"] is none %}
-{% if param["value"] is none %}
-    double {{ param["id"] }} = {{ param["value"] }}; // {{ param["label"] }}
-{% else %}
+{% if param["rhs"] is none and param["value"] is not none %}
     const double {{ param["id"] }} = {{ param["value"] }}; // {{ param["label"] }}
-{% endif %}
 {% else %}
-    double {{ param["id"] }} = {{ param["value"] }}; // {{ param["label"] }}
+    double {{ param["id"] }}; // {{ param["label"] }}
 {% endif %}
 {% endfor %}
 
@@ -76,6 +72,13 @@ private:
      * @param rY The current state variables
      */
     void RunAssignmentRules(double time) override;
+
+    /**
+     * Run the initial assignments to set initial state.
+     *
+     * @param time The current time
+     */
+    void RunInitialAssignments(double time) override;
 
     /**
      * Run the reactions to update state.

@@ -37,11 +37,7 @@ namespace sm = sbmlmath;
 {% endfor %}
 
     // INITIAL ASSIGNMENTS
-{% for ia in initial_assignments %}
-{% if ia["custom"] is false() %}
-    {{ ia["lhs"] }} = {{ ia["rhs"] }}; // {{ ia["label"] }}
-{% endif %}
-{% endfor %}
+    RunInitialAssignments(0.0);
 
 {% for ia in initial_assignments %}
 {% if ia["custom"] is true() %}
@@ -200,6 +196,16 @@ void {{ ode_class_name }}::RunAssignmentRules(double time)
 {
 {% for rule in assignment_rules %}
     {{ rule["lhs"] }} = {{ rule["rhs"] }};
+{% endfor %}
+}
+
+// INITIAL ASSIGNMENTS
+void {{ ode_class_name }}::RunInitialAssignments(double time)
+{
+{% for ia in initial_assignments %}
+{% if ia["custom"] is false() %}
+    {{ ia["lhs"] }} = {{ ia["rhs"] }}; // {{ ia["label"] }}
+{% endif %}
 {% endfor %}
 }
 

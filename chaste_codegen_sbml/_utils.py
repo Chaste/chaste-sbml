@@ -42,7 +42,9 @@ def convert_str_formula(formula: str) -> str:
         "nan": "NAN",
         "notanumber": "NAN",
         "pi": "M_PI",
-        "time": "SimulationTime::Instance()->GetTimeStep()",
+        "time": "time",
+        "t": "time",
+        "s": "time",
     }
     # skip: "true", "false"
 
