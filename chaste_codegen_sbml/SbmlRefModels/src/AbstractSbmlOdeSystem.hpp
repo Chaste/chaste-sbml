@@ -96,6 +96,13 @@ private:
     virtual void RunAssignmentRules(double time) = 0;
 
     /**
+     * Run the initial assignments to set initial state.
+     *
+     * @param time The current time
+     */
+    virtual void RunInitialAssignments(double time) = 0;
+
+    /**
      * Run the reactions to update state.
      *
      * @param time The current time
