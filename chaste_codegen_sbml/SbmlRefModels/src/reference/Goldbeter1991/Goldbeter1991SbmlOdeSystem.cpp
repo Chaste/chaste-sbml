@@ -26,8 +26,7 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem()
     cell = 1.0;
 
     // INITIAL ASSIGNMENTS
-    V1 = C * VM1 * std::pow(C + Kc, -1.0); //
-    V3 = M * VM3;                          //
+    RunInitialAssignments(0.0);
 
     // ODE SYSTEM INFORMATION
     SetDefaultInitialCondition(0, C);
@@ -95,6 +94,13 @@ void Goldbeter1991SbmlOdeSystem::RunAssignmentRules(double time)
 {
     V1 = C * VM1 * std::pow(C + Kc, -1.0);
     V3 = M * VM3;
+}
+
+// INITIAL ASSIGNMENTS
+void Goldbeter1991SbmlOdeSystem::RunInitialAssignments(double time)
+{
+    V1 = C * VM1 * std::pow(C + Kc, -1.0); //
+    V3 = M * VM3;                          //
 }
 
 // REACTIONS

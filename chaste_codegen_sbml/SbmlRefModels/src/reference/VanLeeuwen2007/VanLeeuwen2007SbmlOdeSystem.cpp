@@ -41,9 +41,7 @@ VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem()
     drag = 1.0;
 
     // INITIAL ASSIGNMENTS
-    C_F = C_o + C_c;                          //
-    C_T = C_oT + C_cT;                        //
-    drag = sm::max((C_A - 100.0) / 3.0, 1.0); //
+    RunInitialAssignments(0.0);
 
     // ODE SYSTEM INFORMATION
     SetDefaultInitialCondition(0, X);
@@ -164,6 +162,14 @@ void VanLeeuwen2007SbmlOdeSystem::RunAssignmentRules(double time)
     C_F = C_o + C_c;
     C_T = C_oT + C_cT;
     drag = sm::max((C_A - 100.0) / 3.0, 1.0);
+}
+
+// INITIAL ASSIGNMENTS
+void VanLeeuwen2007SbmlOdeSystem::RunInitialAssignments(double time)
+{
+    C_F = C_o + C_c;                          //
+    C_T = C_oT + C_cT;                        //
+    drag = sm::max((C_A - 100.0) / 3.0, 1.0); //
 }
 
 // REACTIONS

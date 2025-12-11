@@ -41,9 +41,7 @@ VanLeeuwen2007NonDimSbmlOdeSystem::VanLeeuwen2007NonDimSbmlOdeSystem()
     drag = 1.0;
 
     // INITIAL ASSIGNMENTS
-    C_F = C_o + C_c;                            //
-    C_T = C_oT + C_cT;                          //
-    drag = sm::max((C_A - 2300.0) / 36.0, 1.0); //
+    RunInitialAssignments(0.0);
 
     X = X / cytosolmembraneandnucleus;       // Convert X amount to concentration
     D = D / cytosolmembraneandnucleus;       // Convert D amount to concentration
@@ -176,6 +174,14 @@ void VanLeeuwen2007NonDimSbmlOdeSystem::RunAssignmentRules(double time)
     C_F = C_o + C_c;
     C_T = C_oT + C_cT;
     drag = sm::max((C_A - 2300.0) / 36.0, 1.0);
+}
+
+// INITIAL ASSIGNMENTS
+void VanLeeuwen2007NonDimSbmlOdeSystem::RunInitialAssignments(double time)
+{
+    C_F = C_o + C_c;                            //
+    C_T = C_oT + C_cT;                          //
+    drag = sm::max((C_A - 2300.0) / 36.0, 1.0); //
 }
 
 // REACTIONS

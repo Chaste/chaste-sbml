@@ -76,41 +76,7 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
     NET1T = 2.8;
 
     // INITIAL ASSIGNMENTS
-    BCK2 = b0 * MASS;                                                                                  //
-    Visbf = kisbf_p + kisbf_p_p * CLB2;                                                                //
-    CLN3 = C0 * Dn3 * MASS / (Jn3 + Dn3 * MASS);                                                       //
-    Vppc1 = kppc1 * CDC14;                                                                             //
-    Vppf6 = kppf6 * CDC14;                                                                             //
-    Vaiep = kaiep * CLB2;                                                                              //
-    Vacdh = kacdh_p + kacdh_p_p * CDC14;                                                               //
-    Vicdh = kicdh_p + kicdh_p_p * (eicdhn3 * CLN3 + eicdhn2 * CLN2 + eicdhb5 * CLB5 + eicdhb2 * CLB2); //
-    Vkpnet = (kkpnet_p + kkpnet_p_p * CDC15) * MASS;                                                   //
-    Vppnet = kppnet_p + kppnet_p_p * PPX;                                                              //
-    Vasbf = kasbf * (esbfn2 * CLN2 + esbfn3 * (CLN3 + BCK2) + esbfb5 * CLB5);                          //
-    SBF = GK_219(Vasbf, Visbf, Jasbf, Jisbf);                                                          //
-    MCM1 = GK_219(kamcm * CLB2, kimcm, Jamcm, Jimcm);                                                  //
-    mu = sm::log(2.0) / mdt;                                                                           //
-    D = 1.026 / mu - 32.0;                                                                             //
-    F = std::exp(-mu * D);                                                                             //
-    Vd2c1 = kd2c1 * (ec1n3 * CLN3 + ec1k2 * BCK2 + ec1n2 * CLN2 + ec1b5 * CLB5 + ec1b2 * CLB2);        //
-    Vd2f6 = kd2f6 * (ef6n3 * CLN3 + ef6k2 * BCK2 + ef6n2 * CLN2 + ef6b5 * CLB5 + ef6b2 * CLB2);        //
-    Vkpc1 = kd1c1 + Vd2c1 / (Jd2c1 + SIC1 + C2 + C5 + SIC1P + C2P + C5P);                              //
-    Vkpf6 = kd1f6 + Vd2f6 / (Jd2f6 + CDC6 + F2 + F5 + CDC6P + F2P + F5P);                              //
-    Vdb2 = kdb2_p + kdb2_p_p * CDH1 + kdb2p * CDC20;                                                   //
-    Vdb5 = kdb5_p + kdb5_p_p * CDC20;                                                                  //
-    Vdpds = kd1pds_p + kd2pds_p_p * CDC20 + kd3pds_p_p * CDH1;                                         //
-    Vdppx = kdppx_p + kdppx_p_p * (J20ppx + CDC20) * Jpds / (Jpds + PDS1);                             //
-    CLB2T = CLB2 + C2 + C2P + F2 + F2P;                                                                //
-    CLB5T = CLB5 + C5 + C5P + F5 + F5P;                                                                //
-    CDC14T = CDC14 + RENT + RENTP;                                                                     //
-    NET1T = NET1 + NET1P + RENT + RENTP;                                                               //
-    SIC1T = SIC1 + C2 + C5 + SIC1P + C2P + C5P;                                                        //
-    CDC6T = CDC6 + F2 + F5 + CDC6P + F2P + F5P;                                                        //
-    CKIT = SIC1T + CDC6T;                                                                              //
-    CDC15i = CDC15T - CDC15;                                                                           //
-    IE = IET - IEP;                                                                                    //
-    PE = ESP1T - ESP1;                                                                                 //
-    TEM1GDP = TEM1T - TEM1GTP;                                                                         //
+    RunInitialAssignments(0.0);
 
     BUB2 = BUB2 / cell;       // Convert BUB2 amount to concentration
     BUD = BUD / cell;         // Convert BUD amount to concentration
@@ -692,6 +658,46 @@ void Chen2004SbmlOdeSystem::RunAssignmentRules(double time)
     IE = IET - IEP;
     PE = ESP1T - ESP1;
     TEM1GDP = TEM1T - TEM1GTP;
+}
+
+// INITIAL ASSIGNMENTS
+void Chen2004SbmlOdeSystem::RunInitialAssignments(double time)
+{
+    BCK2 = b0 * MASS;                                                                                  //
+    Visbf = kisbf_p + kisbf_p_p * CLB2;                                                                //
+    CLN3 = C0 * Dn3 * MASS / (Jn3 + Dn3 * MASS);                                                       //
+    Vppc1 = kppc1 * CDC14;                                                                             //
+    Vppf6 = kppf6 * CDC14;                                                                             //
+    Vaiep = kaiep * CLB2;                                                                              //
+    Vacdh = kacdh_p + kacdh_p_p * CDC14;                                                               //
+    Vicdh = kicdh_p + kicdh_p_p * (eicdhn3 * CLN3 + eicdhn2 * CLN2 + eicdhb5 * CLB5 + eicdhb2 * CLB2); //
+    Vkpnet = (kkpnet_p + kkpnet_p_p * CDC15) * MASS;                                                   //
+    Vppnet = kppnet_p + kppnet_p_p * PPX;                                                              //
+    Vasbf = kasbf * (esbfn2 * CLN2 + esbfn3 * (CLN3 + BCK2) + esbfb5 * CLB5);                          //
+    SBF = GK_219(Vasbf, Visbf, Jasbf, Jisbf);                                                          //
+    MCM1 = GK_219(kamcm * CLB2, kimcm, Jamcm, Jimcm);                                                  //
+    mu = sm::log(2.0) / mdt;                                                                           //
+    D = 1.026 / mu - 32.0;                                                                             //
+    F = std::exp(-mu * D);                                                                             //
+    Vd2c1 = kd2c1 * (ec1n3 * CLN3 + ec1k2 * BCK2 + ec1n2 * CLN2 + ec1b5 * CLB5 + ec1b2 * CLB2);        //
+    Vd2f6 = kd2f6 * (ef6n3 * CLN3 + ef6k2 * BCK2 + ef6n2 * CLN2 + ef6b5 * CLB5 + ef6b2 * CLB2);        //
+    Vkpc1 = kd1c1 + Vd2c1 / (Jd2c1 + SIC1 + C2 + C5 + SIC1P + C2P + C5P);                              //
+    Vkpf6 = kd1f6 + Vd2f6 / (Jd2f6 + CDC6 + F2 + F5 + CDC6P + F2P + F5P);                              //
+    Vdb2 = kdb2_p + kdb2_p_p * CDH1 + kdb2p * CDC20;                                                   //
+    Vdb5 = kdb5_p + kdb5_p_p * CDC20;                                                                  //
+    Vdpds = kd1pds_p + kd2pds_p_p * CDC20 + kd3pds_p_p * CDH1;                                         //
+    Vdppx = kdppx_p + kdppx_p_p * (J20ppx + CDC20) * Jpds / (Jpds + PDS1);                             //
+    CLB2T = CLB2 + C2 + C2P + F2 + F2P;                                                                //
+    CLB5T = CLB5 + C5 + C5P + F5 + F5P;                                                                //
+    CDC14T = CDC14 + RENT + RENTP;                                                                     //
+    NET1T = NET1 + NET1P + RENT + RENTP;                                                               //
+    SIC1T = SIC1 + C2 + C5 + SIC1P + C2P + C5P;                                                        //
+    CDC6T = CDC6 + F2 + F5 + CDC6P + F2P + F5P;                                                        //
+    CKIT = SIC1T + CDC6T;                                                                              //
+    CDC15i = CDC15T - CDC15;                                                                           //
+    IE = IET - IEP;                                                                                    //
+    PE = ESP1T - ESP1;                                                                                 //
+    TEM1GDP = TEM1T - TEM1GTP;                                                                         //
 }
 
 // REACTIONS

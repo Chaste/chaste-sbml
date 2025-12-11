@@ -367,6 +367,13 @@ private:
     void RunAssignmentRules(double time) override;
 
     /**
+     * Run the initial assignments to set initial state.
+     *
+     * @param time The current time
+     */
+    void RunInitialAssignments(double time) override;
+
+    /**
      * Run the reactions to update state.
      *
      * @param time The current time

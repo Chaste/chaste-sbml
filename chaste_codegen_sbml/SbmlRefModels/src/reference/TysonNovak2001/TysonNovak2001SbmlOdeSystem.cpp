@@ -31,10 +31,7 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem()
     cell = 1.0;
 
     // INITIAL ASSIGNMENTS
-    CycB = CycBt - 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow(std::pow(CycBt + CKIt + 1.0 / Keq, 2.0) - 4.0 * CycBt * CKIt, 1.0 / 2.0)); //
-    Trimer = 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow(std::pow(CycBt + CKIt + 1.0 / Keq, 2.0) - 4.0 * CycBt * CKIt, 1.0 / 2.0));       //
-    TF = GK(k15p * m + k15pp * SK, k16p + k16pp * m * CycB, J15, J16);                                                                                  //
-    Mad = 1.0;                                                                                                                                          //
+    RunInitialAssignments(0.0);
 
     CycBt = CycBt / cell;   // Convert CycBt amount to concentration
     Cdc20a = Cdc20a / cell; // Convert Cdc20a amount to concentration
@@ -202,6 +199,15 @@ void TysonNovak2001SbmlOdeSystem::RunAssignmentRules(double time)
     Trimer = 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow(std::pow(CycBt + CKIt + 1.0 / Keq, 2.0) - 4.0 * CycBt * CKIt, 1.0 / 2.0));
     TF = GK(k15p * m + k15pp * SK, k16p + k16pp * m * CycB, J15, J16);
     Mad = 1.0;
+}
+
+// INITIAL ASSIGNMENTS
+void TysonNovak2001SbmlOdeSystem::RunInitialAssignments(double time)
+{
+    CycB = CycBt - 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow(std::pow(CycBt + CKIt + 1.0 / Keq, 2.0) - 4.0 * CycBt * CKIt, 1.0 / 2.0)); //
+    Trimer = 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow(std::pow(CycBt + CKIt + 1.0 / Keq, 2.0) - 4.0 * CycBt * CKIt, 1.0 / 2.0));       //
+    TF = GK(k15p * m + k15pp * SK, k16p + k16pp * m * CycB, J15, J16);                                                                                  //
+    Mad = 1.0;                                                                                                                                          //
 }
 
 // REACTIONS

@@ -28,8 +28,7 @@ Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem()
     Cell = 1.0;
 
     // INITIAL ASSIGNMENTS
-    V1 = C * V1p * std::pow(C + K6, -1.0); //
-    V3 = M * V3p;                          //
+    RunInitialAssignments(0.0);
 
     C = C / Cell; // Convert C amount to concentration
     X = X / Cell; // Convert X amount to concentration
@@ -113,6 +112,13 @@ void Gardner1998SbmlOdeSystem::RunAssignmentRules(double time)
 {
     V1 = C * V1p * std::pow(C + K6, -1.0);
     V3 = M * V3p;
+}
+
+// INITIAL ASSIGNMENTS
+void Gardner1998SbmlOdeSystem::RunInitialAssignments(double time)
+{
+    V1 = C * V1p * std::pow(C + K6, -1.0); //
+    V3 = M * V3p;                          //
 }
 
 // REACTIONS

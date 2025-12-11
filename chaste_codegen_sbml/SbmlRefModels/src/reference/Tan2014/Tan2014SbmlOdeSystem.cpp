@@ -34,7 +34,7 @@ Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem()
     drag = 1.0;
 
     // INITIAL ASSIGNMENTS
-    drag = sm::piecewise((complex_cm - 700.0) / 10.0, sm::gt((complex_cm - 700.0) / 10.0, 1.0), 1.0); //
+    RunInitialAssignments(0.0);
 
     // ODE SYSTEM INFORMATION
     SetDefaultInitialCondition(0, bcat_cm);
@@ -122,6 +122,12 @@ double Tan2014SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<d
 void Tan2014SbmlOdeSystem::RunAssignmentRules(double time)
 {
     drag = sm::piecewise((complex_cm - 700.0) / 10.0, sm::gt((complex_cm - 700.0) / 10.0, 1.0), 1.0);
+}
+
+// INITIAL ASSIGNMENTS
+void Tan2014SbmlOdeSystem::RunInitialAssignments(double time)
+{
+    drag = sm::piecewise((complex_cm - 700.0) / 10.0, sm::gt((complex_cm - 700.0) / 10.0, 1.0), 1.0); //
 }
 
 // REACTIONS
