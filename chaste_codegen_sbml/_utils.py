@@ -3,7 +3,7 @@
 import re
 from typing import TYPE_CHECKING
 
-from libsbml import AST_NAME, Compartment, formulaToString
+from libsbml import AST_FUNCTION_DELAY, AST_NAME, Compartment, formulaToString
 
 if TYPE_CHECKING:
     from libsbml import ASTNode, FunctionDefinition, ListOf, SBase
@@ -16,6 +16,11 @@ def convert_ast_formula(ast_formula: "ASTNode") -> str:
     :param convert_names: Whether to convert state variable and parameter names.
     :return: The equivalent C++ string.
     """
+    unsupported_functions = ["delay"]
+    for func in unsupported_functions:
+        if search_ast_type(ast_formula, AST_FUNCTION_DELAY):
+            raise NotImplementedError(f"SBML function not supported: '{func}'.")
+
     return convert_str_formula(formulaToString(ast_formula))
 
 
@@ -241,25 +246,6 @@ def sort_formulas(formulas: list[tuple[str, "ASTNode"]]) -> list[int]:
     :return: A list of sorted formula indices.
     """
 
-    def _search_formula(node: "ASTNode", name: str) -> bool:
-        """Recursively search for a variable name in an AST formula.
-
-        :param node: The AST node to search.
-        :param name: The variable name to search for.
-
-        :return: True if the variable name is found, False otherwise.
-        """
-        if node is None:
-            return False
-        if node.getType() == AST_NAME and node.getName() == name:
-            return True
-
-        for i in range(node.getNumChildren()):
-            child = node.getChild(i)
-            if _search_formula(child, name):
-                return True
-        return False
-
     _compare_cache = dict()
 
     def _compare_formulas(index_a: int, index_b: int) -> int:
@@ -284,14 +270,14 @@ def sort_formulas(formulas: list[tuple[str, "ASTNode"]]) -> list[int]:
         rhs_b = formulas[index_b][1]
 
         # Check if var_a is in rhs_b
-        if _search_formula(rhs_b, var_a):
+        if search_ast_var(rhs_b, var_a):
             # var_a is used in rhs_b: rule_a comes before rule_b
             _compare_cache[(index_a, index_b)] = -1
             _compare_cache[(index_b, index_a)] = 1
             return -1
 
         # Check if var_b is in rhs_a
-        if _search_formula(rhs_a, var_b):
+        if search_ast_var(rhs_a, var_b):
             # var_b is used in rhs_a: rule_b comes before rule_a
             _compare_cache[(index_a, index_b)] = 1
             _compare_cache[(index_b, index_a)] = -1
@@ -329,6 +315,50 @@ def sort_formulas(formulas: list[tuple[str, "ASTNode"]]) -> list[int]:
         return sorted_indices
 
     return _insertion_sort()
+
+
+def search_ast_type(root: "ASTNode", node_type: int) -> bool:
+    """Recursively search the AST for a node of a certain type.
+
+    :param root: The root node of the AST.
+    :param node_type: The type of node to search for.
+
+    :return: True if a node matching the spec is found, False otherwise.
+    """
+    if root is None:
+        return False
+
+    if root.getType() == node_type:
+        return True
+
+    for i in range(root.getNumChildren()):
+        child = root.getChild(i)
+        if search_ast_type(child, node_type):
+            return True
+
+    return False
+
+
+def search_ast_var(root: "ASTNode", name: str) -> bool:
+    """Recursively search the AST for a variable with a specified name.
+
+    :param root: The root node of the AST.
+    :param name: The name to search for.
+
+    :return: True if a node mathching the specs is found, False otherwise.
+    """
+    if root is None:
+        return False
+
+    if root.getType() == AST_NAME and root.getName() == name:
+        return True
+
+    for i in range(root.getNumChildren()):
+        child = root.getChild(i)
+        if search_ast_var(child, name):
+            return True
+
+    return False
 
 
 def sort_nodes(node: "ASTNode", node_list: list["ASTNode"] = None) -> list["ASTNode"]:
