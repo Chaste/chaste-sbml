@@ -235,6 +235,50 @@ def get_index_by_id(obj_id: str, listof: "ListOf") -> int:
     return None
 
 
+def search_ast_type(root: "ASTNode", node_type: int) -> bool:
+    """Recursively search the AST for a node of a certain type.
+
+    :param root: The root node of the AST.
+    :param node_type: The type of node to search for.
+
+    :return: True if a node matching the spec is found, False otherwise.
+    """
+    if root is None:
+        return False
+
+    if root.getType() == node_type:
+        return True
+
+    for i in range(root.getNumChildren()):
+        child = root.getChild(i)
+        if search_ast_type(child, node_type):
+            return True
+
+    return False
+
+
+def search_ast_var(root: "ASTNode", name: str) -> bool:
+    """Recursively search the AST for a variable with a specified name.
+
+    :param root: The root node of the AST.
+    :param name: The name to search for.
+
+    :return: True if a node mathching the specs is found, False otherwise.
+    """
+    if root is None:
+        return False
+
+    if root.getType() == AST_NAME and root.getName() == name:
+        return True
+
+    for i in range(root.getNumChildren()):
+        child = root.getChild(i)
+        if search_ast_var(child, name):
+            return True
+
+    return False
+
+
 def sort_formulas(formulas: list[tuple[str, "ASTNode"]]) -> list[int]:
     """Sort formulas based on their dependency.
 
@@ -315,50 +359,6 @@ def sort_formulas(formulas: list[tuple[str, "ASTNode"]]) -> list[int]:
         return sorted_indices
 
     return _insertion_sort()
-
-
-def search_ast_type(root: "ASTNode", node_type: int) -> bool:
-    """Recursively search the AST for a node of a certain type.
-
-    :param root: The root node of the AST.
-    :param node_type: The type of node to search for.
-
-    :return: True if a node matching the spec is found, False otherwise.
-    """
-    if root is None:
-        return False
-
-    if root.getType() == node_type:
-        return True
-
-    for i in range(root.getNumChildren()):
-        child = root.getChild(i)
-        if search_ast_type(child, node_type):
-            return True
-
-    return False
-
-
-def search_ast_var(root: "ASTNode", name: str) -> bool:
-    """Recursively search the AST for a variable with a specified name.
-
-    :param root: The root node of the AST.
-    :param name: The name to search for.
-
-    :return: True if a node mathching the specs is found, False otherwise.
-    """
-    if root is None:
-        return False
-
-    if root.getType() == AST_NAME and root.getName() == name:
-        return True
-
-    for i in range(root.getNumChildren()):
-        child = root.getChild(i)
-        if search_ast_var(child, name):
-            return True
-
-    return False
 
 
 def sort_nodes(node: "ASTNode", node_list: list["ASTNode"] = None) -> list["ASTNode"]:

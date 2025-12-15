@@ -55,6 +55,11 @@ private:
     double {{ reaction["id"] }}; // {{ reaction["label"] }}
 {% endfor %}
 
+    // REFERENCES
+{% for ref in reference_variables %}
+    double& {{ ref["id"] }} = {{ ref["var_id"] }};
+{% endfor %}
+
     /**
      * Process the events in the model.
      * 

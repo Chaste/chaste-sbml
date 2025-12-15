@@ -33,7 +33,6 @@ from ._config import (
 )
 from ._utils import (
     convert_ast_formula,
-    convert_str_formula,
     generate_header_guard,
     get_compartment_size,
     get_function_definition_arguments,
@@ -46,7 +45,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from jinja2.environment import Template
-    from libsbml import SpeciesReference
+    from libsbml import Reaction, SpeciesReference
 
 
 class ChasteSbmlModel:
@@ -134,6 +133,7 @@ class ChasteSbmlModel:
         self._reactions = []  # [ { id: str, label: str, ... } ]
         self._events = []  # [ { name: str, trigger: str, ... } ]
         self._functions = []  # [ { name: str, args: [str], body: str } ]
+        self._reference_variables = []  # [ { id: str, id: str } ]
 
         self._template_vars = {}  # type: dict[str, Any]
 
@@ -384,6 +384,21 @@ class ChasteSbmlModel:
         )
         self._variable_types[id_] = VarType.REACTION
 
+    def _add_reference_variable(self, id_: str, var_id: str) -> None:
+        """Add a reference variable to the template variables.
+
+        :param id_: The ID of the reference variable.
+        :param var_id: The ID of the variable pointed to by the reference variable.
+        """
+        self._reference_variables.append(
+            {
+                "id": id_,
+                "index": len(self._reference_variables),
+                "var_id": var_id,
+            }
+        )
+        self._variable_types[id_] = VarType.REFERENCE_VARIABLE
+
     def _add_state_variable(
         self, id_: str, label: str, initial_value: float, units: str, rhs: str
     ) -> None:
@@ -430,32 +445,30 @@ class ChasteSbmlModel:
 
     def _extract_odes(self) -> None:
         """Extract the ODEs equations for each species."""
-        # Rules must be processed before ODE extraction
-        if not self._assignment_rules:
-            if any(r.getTypeCode() == SBML_ASSIGNMENT_RULE for r in self._sbml_rules):
-                raise RuntimeError("Please process rules before compartments.")
-
+        # Note: rules must be processed before ODE extraction
         self._odes = {}
 
-        def _update_species_ode(
-            reaction_id: str, species_reference: "SpeciesReference", is_product: bool
-        ) -> None:
+        def _update_ode(species_ref: "SpeciesReference", rxn: "Reaction", is_product: bool) -> None:
             """Update the ODE for a species based on a species reference in a reaction.
 
-            :param species_reference: The species reference.
-            :param reaction_id: The ID of the reaction.
+            :param species_ref: The species reference.
+            :param rxn: The reaction.
             :param is_product: True if the species reference is a product, False if a reactant.
             """
-            species_id = species_reference.getSpecies()
+            species_id = species_ref.getSpecies()
+            if species_ref.isSetId():
+                species_ref_id = species_ref.getId()
+                self._add_reference_variable(species_ref_id, species_id)
 
-            rhs = reaction_id
-            if species_reference.isSetStoichiometry():
-                stoich_value = float(species_reference.getStoichiometry())
+            rhs = rxn.getId()
+
+            if species_ref.isSetStoichiometry():
+                stoich_value = float(species_ref.getStoichiometry())
                 if stoich_value != 1.0:
                     rhs = f"({stoich_value} * {rhs})"
 
-            elif species_reference.isSetStoichiometryMath():
-                stoich_math = species_reference.getStoichiometryMath().getMath()
+            elif species_ref.isSetStoichiometryMath():
+                stoich_math = species_ref.getStoichiometryMath().getMath()
                 rhs = f"(({convert_ast_formula(stoich_math)}) * {rhs})"
 
             if species_id in self._odes:
@@ -473,14 +486,13 @@ class ChasteSbmlModel:
         # each ODE will essentially be the sum of the products minus the
         # sum of the reactants divided by the compartment volume
         for reaction in self._sbml_reactions:
-            reaction_id = reaction.getId()
 
             # Decompose reaction into sum of products minus sum of reactants
             for product in reaction.getListOfProducts():
-                _update_species_ode(reaction_id, product, is_product=True)
+                _update_ode(product, reaction, is_product=True)
 
             for reactant in reaction.getListOfReactants():
-                _update_species_ode(reaction_id, reactant, is_product=False)
+                _update_ode(reactant, reaction, is_product=False)
 
         # Extract ODEs from rate rules
         for rule in self._rate_rules:
@@ -512,11 +524,7 @@ class ChasteSbmlModel:
 
     def _format_compartments(self) -> None:
         """Add compartments to template variables."""
-        # Rules must be processed before compartments
-        if not self._assignment_rules:
-            if any(r.getTypeCode() == SBML_ASSIGNMENT_RULE for r in self._sbml_rules):
-                raise RuntimeError("Please process rules before compartments.")
-
+        # Note: rules must be processed before compartments
         assignment_rules = {rule["lhs"]: rule["rhs"] for rule in self._assignment_rules}
 
         for compartment in self._sbml_compartments:
@@ -672,17 +680,21 @@ class ChasteSbmlModel:
     def _format_initial_assignments(self) -> None:
         """Add initial assignments to template variables."""
         # Sort initial assignments - variables on rhs must be defined before they are used
-        assignments = [ia for ia in self._sbml_initial_assignments]
+        initial_assignments = [
+            ia for ia in self._sbml_initial_assignments if ia.getMath() is not None
+        ]
 
         # TODO: Don't repeat this code from _format_rules
-        assignments += [r for r in self._sbml_rules if r.getTypeCode() == SBML_ASSIGNMENT_RULE]
-
-        formulas = [(ia.getSymbol(), ia.getMath()) for ia in self._sbml_initial_assignments]
-        formulas += [
-            (r.getVariable(), r.getMath())
+        assignment_rules = [
+            r
             for r in self._sbml_rules
-            if r.getTypeCode() == SBML_ASSIGNMENT_RULE
+            if r.getTypeCode() == SBML_ASSIGNMENT_RULE and r.getMath() is not None
         ]
+
+        assignments = initial_assignments + assignment_rules
+
+        formulas = [(ia.getSymbol(), ia.getMath()) for ia in initial_assignments]
+        formulas += [(r.getVariable(), r.getMath()) for r in assignment_rules]
 
         sort_index = sort_formulas(formulas)
         sorted_assignments = [assignments[i] for i in sort_index]
@@ -697,11 +709,7 @@ class ChasteSbmlModel:
 
     def _format_parameters(self) -> None:
         """Add parameters to template variables."""
-        # Rules must be processed before parameters
-        if not self._assignment_rules:
-            if any(r.getTypeCode() == SBML_ASSIGNMENT_RULE for r in self._sbml_rules):
-                raise RuntimeError("Please process rules before parameters.")
-
+        # Note: rules must be processed before parameters
         assignment_rules = {rule["lhs"]: rule["rhs"] for rule in self._assignment_rules}
         initial_assignments = {ia["lhs"]: ia["rhs"] for ia in self._initial_assignments}
 
@@ -742,22 +750,29 @@ class ChasteSbmlModel:
             reaction_id = reaction.getId()
             label = reaction.getName().strip()
 
-            kinetic_law = reaction.getKineticLaw()
-            rhs = convert_str_formula(kinetic_law.getFormula())
-
+            rhs = ""
             reaction_parameters = []
-            sbml_parameters = kinetic_law.getListOfParameters()
-            for param in sbml_parameters:
-                param_id = param.getId()
-                param_descr = param.getName().strip()
-                param_value = param.getValue()  # TODO: What if not set?
-                reaction_parameters.append(
-                    {
-                        "id": param_id,
-                        "label": param_descr,
-                        "value": param_value,
-                    }
-                )
+
+            kinetic_law = reaction.getKineticLaw()
+            if kinetic_law is None:
+                species = [r.getSpecies() for r in reaction.getListOfReactants()]
+                rhs = " * ".join(species)
+
+            else:
+                rhs = convert_ast_formula(kinetic_law.getMath())
+
+                sbml_parameters = kinetic_law.getListOfParameters()
+                for param in sbml_parameters:
+                    param_id = param.getId()
+                    param_descr = param.getName().strip()
+                    param_value = param.getValue()  # TODO: What if not set?
+                    reaction_parameters.append(
+                        {
+                            "id": param_id,
+                            "label": param_descr,
+                            "value": param_value,
+                        }
+                    )
 
             self._add_reaction(reaction_id, label, rhs, reaction_parameters)
 
@@ -777,9 +792,12 @@ class ChasteSbmlModel:
             rule_id = rule.getId()
             label = rule.getName().strip()
             lhs = rule.getVariable()
+
             # if lhs not in self._odes: # Exclude assignments converted to ODEs
-            rhs = convert_ast_formula(rule.getMath())
-            self._add_assignment_rule(rule_id, label, lhs, rhs)
+            math = rule.getMath()
+            if math is not None:
+                rhs = convert_ast_formula(math)
+                self._add_assignment_rule(rule_id, label, lhs, rhs)
 
         # Get rate rules
         rate_rules = [r for r in self._sbml_rules if r.getTypeCode() == SBML_RATE_RULE]
@@ -787,16 +805,15 @@ class ChasteSbmlModel:
             rule_id = rule.getId()
             label = rule.getName().strip()
             lhs = rule.getVariable()
-            rhs = convert_ast_formula(rule.getMath())
-            self._add_rate_rule(rule_id, label, lhs, rhs)
+
+            math = rule.getMath()
+            if math is not None:
+                rhs = convert_ast_formula(math)
+                self._add_rate_rule(rule_id, label, lhs, rhs)
 
     def _format_species(self) -> None:
         """Add species to template variables."""
-        # Rules must be processed before species
-        if not self._assignment_rules:
-            if any(r.getTypeCode() == SBML_ASSIGNMENT_RULE for r in self._sbml_rules):
-                raise RuntimeError("Please process rules before species.")
-
+        # Note: Rules must be processed before species
         assignment_rules = {r["lhs"]: r["rhs"] for r in self._assignment_rules}
         rate_rules = {r["lhs"]: r["rhs"] for r in self._rate_rules}
         initial_assignments = {r["lhs"]: r["rhs"] for r in self._initial_assignments}
@@ -820,10 +837,10 @@ class ChasteSbmlModel:
                 if (species_id not in assignment_rules) and (species_id not in initial_assignments):
                     # Convert initial amount to concentration via a custom initial assignment
                     ia_id = PREFIX_SEP.join([CHASTE_PREFIX, INITIAL_ASSIGNMENT_PREFIX, species_id])
-                    label = f"Convert {species_id} amount to concentration"
-                    lhs = species_id
-                    rhs = f"{species_id} / {compartment_id}"
-                    self._add_initial_assignment(ia_id, label, lhs, rhs, custom=True)
+                    ia_label = f"Convert {species_id} amount to concentration"
+                    ia_lhs = species_id
+                    ia_rhs = f"{species_id} / {compartment_id}"
+                    self._add_initial_assignment(ia_id, ia_label, ia_lhs, ia_rhs, custom=True)
 
             is_bc = species.isSetBoundaryCondition() and species.getBoundaryCondition()
 
@@ -929,47 +946,64 @@ class ChasteSbmlModel:
         :param id_: The variable ID.
         :return: The variable index.
         """
+        # TODO: Make this more generic
         var_type = self._get_variable_type(id_)
 
-        if var_type == VarType.STATE_VARIABLE:
-            for state_variable in self._state_variables:
-                if state_variable["id"] == id_:
-                    return state_variable["index"]
-
-        elif var_type == VarType.DERIVED_QUANTITY:
-            for dq in self._derived_quantities:
-                if dq["id"] == id_:
-                    return dq["index"]
-
-        elif var_type == VarType.AMOUNT:
+        if var_type == VarType.AMOUNT:
             for amount in self._amounts:
                 if amount["id"] == id_:
                     return amount["index"]
-
-        elif var_type == VarType.CONSTANT_PARAMETER:
-            for param in self._constant_parameters:
-                if param["id"] == id_:
-                    return param["index"]
-
-        elif var_type == VarType.VARIABLE_PARAMETER:
-            for param in self._variable_parameters:
-                if param["id"] == id_:
-                    return param["index"]
 
         elif var_type == VarType.ASSIGNMENT_RULE:
             for rule in self._assignment_rules:
                 if rule["id"] == id_:
                     return rule["index"]
 
+        elif var_type == VarType.CONSTANT_PARAMETER:
+            for param in self._constant_parameters:
+                if param["id"] == id_:
+                    return param["index"]
+
+        elif var_type == VarType.DERIVED_QUANTITY:
+            for dq in self._derived_quantities:
+                if dq["id"] == id_:
+                    return dq["index"]
+
         elif var_type == VarType.FUNCTION:
             for func in self._functions:
                 if func["id"] == id_:
                     return func["index"]
 
+        elif var_type == VarType.INITIAL_ASSIGNMENT:
+            for initial_assignment in self._initial_assignments:
+                if initial_assignment["id"] == id_:
+                    return initial_assignment["index"]
+
+        elif var_type == VarType.RATE_RULE:
+            for rate_rule in self._rate_rules:
+                if rate_rule["id"] == id_:
+                    return rate_rule["index"]
+
         elif var_type == VarType.REACTION:
             for reaction in self._reactions:
                 if reaction["id"] == id_:
                     return reaction["index"]
+                    return rate_rule["index"]
+
+        elif var_type == VarType.REFERENCE_VARIABLE:
+            for reference_variable in self._reference_variables:
+                if reference_variable["id"] == id_:
+                    return reference_variable["index"]
+
+        elif var_type == VarType.STATE_VARIABLE:
+            for state_variable in self._state_variables:
+                if state_variable["id"] == id_:
+                    return state_variable["index"]
+
+        elif var_type == VarType.VARIABLE_PARAMETER:
+            for param in self._variable_parameters:
+                if param["id"] == id_:
+                    return param["index"]
 
         raise ValueError(f"ID '{id_}' is not a recognized variable.")
 
@@ -994,6 +1028,7 @@ class ChasteSbmlModel:
             ode_header_guard=generate_header_guard(self._ode_hpp_filename),
             ode_hpp_file=self._ode_hpp_filename,
             reactions=self._reactions,
+            reference_variables=self._reference_variables,
             state_variables=self._state_variables,
             variable_parameters=self._variable_parameters,
         )
@@ -1030,11 +1065,13 @@ class ChasteSbmlModel:
         self._amounts = []
         self._variable_parameters = []
         self._constant_parameters = []
+        self._reference_variables = []
 
         self._reactions = []
         self._events = []
         self._functions = []
 
+        # TODO: enforce processing order e.g. rules must be processed first
         self._format_rules()
         self._extract_odes()
 

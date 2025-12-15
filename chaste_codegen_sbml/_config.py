@@ -24,9 +24,10 @@ class VarType(Enum):
     INITIAL_ASSIGNMENT = 5
     RATE_RULE = 6
     REACTION = 7
-    STATE_VARIABLE = 8
-    VARIABLE_PARAMETER = 9
-    UNKNOWN = 10
+    REFERENCE_VARIABLE = 8
+    STATE_VARIABLE = 9
+    VARIABLE_PARAMETER = 10
+    UNKNOWN = 11
 
 
 class EventType(Enum):
