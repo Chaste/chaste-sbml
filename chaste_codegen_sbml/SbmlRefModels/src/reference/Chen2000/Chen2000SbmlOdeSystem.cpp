@@ -35,6 +35,8 @@ Chen2000SbmlOdeSystem::Chen2000SbmlOdeSystem()
     // DERIVED QUANTITIES
     COMpartment = 1.0;
 
+    // STOICHIOMETRY VARIABLES
+
     // INITIAL ASSIGNMENTS
     RunInitialAssignments(0.0);
 

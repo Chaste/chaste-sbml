@@ -56,6 +56,8 @@ private:
     double wnt_level; // wnt_level
     double gamma;     // gamma
 
+    // STOICHIOMETRY VARIABLES
+
     // REACTIONS
     double Bsynthesis;   //
     double kDegradation; //

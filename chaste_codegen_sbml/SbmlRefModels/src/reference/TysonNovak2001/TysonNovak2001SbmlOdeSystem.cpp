@@ -30,6 +30,8 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem()
     // DERIVED QUANTITIES
     cell = 1.0;
 
+    // STOICHIOMETRY VARIABLES
+
     // INITIAL ASSIGNMENTS
     RunInitialAssignments(0.0);
 

@@ -162,47 +162,47 @@ private:
     const double mdt = 90.0;         // mdt
 
     // STATE VARIABLES
-    double BUD;     // Convert BUD amount to concentration
-    double C2;      // Convert C2 amount to concentration
-    double C2P;     // Convert C2P amount to concentration
-    double C5;      // Convert C5 amount to concentration
-    double C5P;     // Convert C5P amount to concentration
-    double CDC14;   // Convert CDC14 amount to concentration
-    double CDC15;   // Convert CDC15 amount to concentration
-    double CDC20;   // Convert CDC20 amount to concentration
-    double CDC20i;  // Convert CDC20i amount to concentration
-    double CDC6;    // Convert CDC6 amount to concentration
-    double CDC6P;   // Convert CDC6P amount to concentration
-    double CDH1;    // Convert CDH1 amount to concentration
-    double CDH1i;   // Convert CDH1i amount to concentration
-    double CLB2;    // Convert CLB2 amount to concentration
-    double CLB5;    // Convert CLB5 amount to concentration
-    double CLN2;    // Convert CLN2 amount to concentration
-    double ESP1;    // Convert ESP1 amount to concentration
-    double F2;      // Convert F2 amount to concentration
-    double F2P;     // Convert F2P amount to concentration
-    double F5;      // Convert F5 amount to concentration
-    double F5P;     // Convert F5P amount to concentration
-    double IEP;     // Convert IEP amount to concentration
-    double MASS;    // Convert MASS amount to concentration
-    double NET1;    // Convert NET1 amount to concentration
-    double NET1P;   // Convert NET1P amount to concentration
-    double ORI;     // Convert ORI amount to concentration
-    double PDS1;    // Convert PDS1 amount to concentration
-    double PPX;     // Convert PPX amount to concentration
-    double RENT;    // Convert RENT amount to concentration
-    double RENTP;   // Convert RENTP amount to concentration
-    double SIC1;    // Convert SIC1 amount to concentration
-    double SIC1P;   // Convert SIC1P amount to concentration
-    double SPN;     // Convert SPN amount to concentration
-    double SWI5;    // Convert SWI5 amount to concentration
-    double SWI5P;   // Convert SWI5P amount to concentration
-    double TEM1GTP; // Convert TEM1GTP amount to concentration
+    double BUD;     // BUD
+    double C2;      // C2
+    double C2P;     // C2P
+    double C5;      // C5
+    double C5P;     // C5P
+    double CDC14;   // CDC14
+    double CDC15;   // CDC15
+    double CDC20;   // CDC20
+    double CDC20i;  // CDC20i
+    double CDC6;    // CDC6
+    double CDC6P;   // CDC6P
+    double CDH1;    // CDH1
+    double CDH1i;   // CDH1i
+    double CLB2;    // CLB2
+    double CLB5;    // CLB5
+    double CLN2;    // CLN2
+    double ESP1;    // ESP1
+    double F2;      // F2
+    double F2P;     // F2P
+    double F5;      // F5
+    double F5P;     // F5P
+    double IEP;     // IEP
+    double MASS;    // MASS
+    double NET1;    // NET1
+    double NET1P;   // NET1P
+    double ORI;     // ORI
+    double PDS1;    // PDS1
+    double PPX;     // PPX
+    double RENT;    // RENT
+    double RENTP;   // RENTP
+    double SIC1;    // SIC1
+    double SIC1P;   // SIC1P
+    double SPN;     // SPN
+    double SWI5;    // SWI5
+    double SWI5P;   // SWI5P
+    double TEM1GTP; // TEM1GTP
 
     // DERIVED QUANTITIES
     double cell;    // cell
     double BCK2;    // BCK2
-    double BUB2;    // Convert BUB2 amount to concentration
+    double BUB2;    // BUB2
     double CDC14T;  // CDC14T
     double CDC15i;  // CDC15i
     double CDC6T;   // CDC6T
@@ -211,8 +211,8 @@ private:
     double CLB5T;   // CLB5T
     double CLN3;    // CLN3
     double IE;      // IE
-    double LTE1;    // Convert LTE1 amount to concentration
-    double MAD2;    // Convert MAD2 amount to concentration
+    double LTE1;    // LTE1
+    double MAD2;    // MAD2
     double MCM1;    // MCM1
     double NET1T;   // NET1T
     double PE;      // PE
@@ -251,6 +251,8 @@ private:
     double lte1l;  // lte1l
     double mad2l;  // mad2l
     double TEM1T;  // TEM1T
+
+    // STOICHIOMETRY VARIABLES
 
     // REACTIONS
     double Growth;                               // Growth

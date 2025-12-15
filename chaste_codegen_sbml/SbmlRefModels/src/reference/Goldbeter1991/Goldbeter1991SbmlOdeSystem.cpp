@@ -25,6 +25,8 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem()
     // DERIVED QUANTITIES
     cell = 1.0;
 
+    // STOICHIOMETRY VARIABLES
+
     // INITIAL ASSIGNMENTS
     RunInitialAssignments(0.0);
 

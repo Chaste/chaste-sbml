@@ -56,17 +56,17 @@ private:
     const double d_Y = 0.00133333333333333;   // d_Y
 
     // STATE VARIABLES
-    double X;    // Convert X amount to concentration
-    double D;    // Convert D amount to concentration
-    double C_o;  // Convert C_o amount to concentration
-    double C_u;  // Convert C_u amount to concentration
-    double C_c;  // Convert C_c amount to concentration
-    double A;    // Convert A amount to concentration
-    double C_A;  // Convert C_A amount to concentration
-    double T;    // Convert T amount to concentration
-    double C_oT; // Convert C_oT amount to concentration
-    double C_cT; // Convert C_cT amount to concentration
-    double Y;    // Convert Y amount to concentration
+    double X;    // X
+    double D;    // D
+    double C_o;  // C_o
+    double C_u;  // C_u
+    double C_c;  // C_c
+    double A;    // A
+    double C_A;  // C_A
+    double T;    // T
+    double C_oT; // C_oT
+    double C_cT; // C_cT
+    double Y;    // Y
 
     // DERIVED QUANTITIES
     double cytosolmembraneandnucleus; // cytosolmembraneandnucleus
@@ -79,6 +79,8 @@ private:
     double gamma1;                  // gamma1
     double gamma2;                  // gamma2
     double ComplexTransitThreshold; // ComplexTransitThreshold
+
+    // STOICHIOMETRY VARIABLES
 
     // REACTIONS
     double mwcfbf7716_cc13_473c_979a_033c57a28857; // r1

@@ -43,6 +43,8 @@ private:
 
     // VARIABLE PARAMETERS
 
+    // STOICHIOMETRY VARIABLES
+
     // REACTIONS
     double reaction1; // creation of cyclin
     double reaction2; // default degradation of cyclin

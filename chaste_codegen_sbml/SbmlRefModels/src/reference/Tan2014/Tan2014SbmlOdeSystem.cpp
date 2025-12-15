@@ -33,6 +33,8 @@ Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem()
     nucleus = 0.65;
     drag = 1.0;
 
+    // STOICHIOMETRY VARIABLES
+
     // INITIAL ASSIGNMENTS
     RunInitialAssignments(0.0);
 

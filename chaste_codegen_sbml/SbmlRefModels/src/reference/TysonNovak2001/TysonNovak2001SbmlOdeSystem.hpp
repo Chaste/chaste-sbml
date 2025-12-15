@@ -65,14 +65,14 @@ private:
     const double J4 = 0.04;      // J4
 
     // STATE VARIABLES
-    double CycBt;  // Convert CycBt amount to concentration
-    double Cdc20a; // Convert Cdc20a amount to concentration
-    double Cdh1;   // Convert Cdh1 amount to concentration
-    double m;      // Convert m amount to concentration
-    double Cdc20t; // Convert Cdc20t amount to concentration
-    double IEP;    // Convert IEP amount to concentration
-    double CKIt;   // Convert CKIt amount to concentration
-    double SK;     // Convert SK amount to concentration
+    double CycBt;  // CycBt
+    double Cdc20a; // Cdc20a
+    double Cdh1;   // Cdh1
+    double m;      // m
+    double Cdc20t; // Cdc20t
+    double IEP;    // IEP
+    double CKIt;   // CKIt
+    double SK;     // SK
 
     // DERIVED QUANTITIES
     double cell;   // cell
@@ -82,6 +82,8 @@ private:
     double TF;     // TF
 
     // VARIABLE PARAMETERS
+
+    // STOICHIOMETRY VARIABLES
 
     // REACTIONS
     double CycBt_synthesis;           // CycBt synthesis

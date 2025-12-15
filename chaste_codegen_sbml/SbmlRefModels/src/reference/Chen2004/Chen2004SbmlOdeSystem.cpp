@@ -75,6 +75,8 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
     MAD2 = 0.01;
     NET1T = 2.8;
 
+    // STOICHIOMETRY VARIABLES
+
     // INITIAL ASSIGNMENTS
     RunInitialAssignments(0.0);
 

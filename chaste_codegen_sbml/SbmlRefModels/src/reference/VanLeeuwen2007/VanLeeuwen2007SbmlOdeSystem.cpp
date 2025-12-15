@@ -40,6 +40,8 @@ VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem()
     C_T = 2.54;
     drag = 1.0;
 
+    // STOICHIOMETRY VARIABLES
+
     // INITIAL ASSIGNMENTS
     RunInitialAssignments(0.0);
 

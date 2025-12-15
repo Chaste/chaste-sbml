@@ -27,6 +27,8 @@ Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem()
     // DERIVED QUANTITIES
     Cell = 1.0;
 
+    // STOICHIOMETRY VARIABLES
+
     // INITIAL ASSIGNMENTS
     RunInitialAssignments(0.0);
 

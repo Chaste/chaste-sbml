@@ -80,6 +80,8 @@ private:
     double gamma2;                  // gamma2
     double ComplexTransitThreshold; // ComplexTransitThreshold
 
+    // STOICHIOMETRY VARIABLES
+
     // REACTIONS
     double mwd6b35759_f098_484c_9c65_e84e7e4b61e4; // r1
     double mweddac6d0_231e_4c92_ba2a_c91edc682ff5; // r2

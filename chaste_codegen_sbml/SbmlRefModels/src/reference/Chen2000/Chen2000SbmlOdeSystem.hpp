@@ -134,6 +134,8 @@ private:
 
     // VARIABLE PARAMETERS
 
+    // STOICHIOMETRY VARIABLES
+
     // REACTIONS
 
     /**

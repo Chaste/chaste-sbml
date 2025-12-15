@@ -32,11 +32,11 @@ private:
     const double V3p = 0.3;  // V3p
 
     // STATE VARIABLES
-    double C; // Convert C amount to concentration
-    double X; // Convert X amount to concentration
-    double M; // Convert M amount to concentration
-    double Y; // Convert Y amount to concentration
-    double Z; // Convert Z amount to concentration
+    double C; // cyclin
+    double X; // protease
+    double M; // cdc2k
+    double Y; // cyclin inhibitor
+    double Z; // complex inhibitor-cyclin
 
     // DERIVED QUANTITIES
     double Cell; // Cell
@@ -44,6 +44,8 @@ private:
     double V3;   // V3
 
     // VARIABLE PARAMETERS
+
+    // STOICHIOMETRY VARIABLES
 
     // REACTIONS
     double reaction1;  // creation of cyclin
