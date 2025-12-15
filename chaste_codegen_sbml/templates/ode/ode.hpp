@@ -50,14 +50,14 @@ private:
     double {{ param["id"] }}; // {{ param["label"] }}
 {% endfor %}
 
+    // STOICHIOMETRY VARIABLES
+{% for var in stoichiometry_variables %}
+    double {{ var["id"] }}; // {{ var["label"] }}
+{% endfor %}
+
     // REACTIONS
 {% for reaction in reactions %}
     double {{ reaction["id"] }}; // {{ reaction["label"] }}
-{% endfor %}
-
-    // REFERENCES
-{% for ref in reference_variables %}
-    double& {{ ref["id"] }} = {{ ref["var_id"] }};
 {% endfor %}
 
     /**

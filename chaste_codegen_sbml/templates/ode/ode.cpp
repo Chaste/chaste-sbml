@@ -36,6 +36,15 @@ namespace sm = sbmlmath;
 {% endif %}
 {% endfor %}
 
+    // STOICHIOMETRY VARIABLES
+{% for svar in stoichiometry_variables %}
+{% if svar["rhs"] is not none %}
+   {{ svar["id"] }} = {{ svar["rhs"] }};
+{% elif svar["initial_value"] is not none %}
+    {{ svar["id"] }} = {{ svar["initial_value"] }};
+{% endif %}
+{% endfor %}
+
     // INITIAL ASSIGNMENTS
     RunInitialAssignments(0.0);
 

@@ -133,7 +133,7 @@ class ChasteSbmlModel:
         self._reactions = []  # [ { id: str, label: str, ... } ]
         self._events = []  # [ { name: str, trigger: str, ... } ]
         self._functions = []  # [ { name: str, args: [str], body: str } ]
-        self._reference_variables = []  # [ { id: str, id: str } ]
+        self._stoichiometry_variables = []  # [ { id: str, label: str, ... } ]
 
         self._template_vars = {}  # type: dict[str, Any]
 
@@ -384,21 +384,6 @@ class ChasteSbmlModel:
         )
         self._variable_types[id_] = VarType.REACTION
 
-    def _add_reference_variable(self, id_: str, var_id: str) -> None:
-        """Add a reference variable to the template variables.
-
-        :param id_: The ID of the reference variable.
-        :param var_id: The ID of the variable pointed to by the reference variable.
-        """
-        self._reference_variables.append(
-            {
-                "id": id_,
-                "index": len(self._reference_variables),
-                "var_id": var_id,
-            }
-        )
-        self._variable_types[id_] = VarType.REFERENCE_VARIABLE
-
     def _add_state_variable(
         self, id_: str, label: str, initial_value: float, units: str, rhs: str
     ) -> None:
@@ -421,6 +406,25 @@ class ChasteSbmlModel:
             }
         )
         self._variable_types[id_] = VarType.STATE_VARIABLE
+
+    def _add_stoichiometry_variable(
+        self, id_: str, label: str, initial_value: float, rhs: str
+    ) -> None:
+        """Add a stoichiometry variable to the template variables.
+
+        :param id_: The ID of the stoichiometry variable.
+        :param label: The description of the stoichiometry variable.
+        """
+        self._stoichiometry_variables.append(
+            {
+                "id": id_,
+                "index": len(self._stoichiometry_variables),
+                "label": label,
+                "initial_value": initial_value,
+                "rhs": rhs,
+            }
+        )
+        self._variable_types[id_] = VarType.STOICHIOMETRY_VARIABLE
 
     def _add_variable_parameter(
         self, id_: str, label: str, initial_value: float, units: str = NON_DIM_UNITS
@@ -455,22 +459,33 @@ class ChasteSbmlModel:
             :param rxn: The reaction.
             :param is_product: True if the species reference is a product, False if a reactant.
             """
-            species_id = species_ref.getSpecies()
-            if species_ref.isSetId():
-                species_ref_id = species_ref.getId()
-                self._add_reference_variable(species_ref_id, species_id)
-
             rhs = rxn.getId()
 
+            # Account for stoichiometry
+            sto_value = None
             if species_ref.isSetStoichiometry():
-                stoich_value = float(species_ref.getStoichiometry())
-                if stoich_value != 1.0:
-                    rhs = f"({stoich_value} * {rhs})"
+                sto_value = species_ref.getStoichiometry()
 
-            elif species_ref.isSetStoichiometryMath():
-                stoich_math = species_ref.getStoichiometryMath().getMath()
-                rhs = f"(({convert_ast_formula(stoich_math)}) * {rhs})"
+            sto_formula = None
+            if species_ref.isSetStoichiometryMath():
+                sto_math = species_ref.getStoichiometryMath().getMath()
+                sto_formula = convert_ast_formula(sto_math)
 
+            if species_ref.isSetId():
+                sto_id = species_ref.getId()
+                sto_label = species_ref.getName().strip()
+                self._add_stoichiometry_variable(sto_id, sto_label, sto_value, sto_formula)
+
+                rhs = f"({sto_id} * {rhs})"
+
+            elif sto_formula is not None:
+                rhs = f"({sto_formula} * {rhs})"
+
+            elif sto_value is not None and sto_value != 1:
+                rhs = f"({sto_value} * {rhs})"
+
+            # Update the ODE
+            species_id = species_ref.getSpecies()
             if species_id in self._odes:
                 if is_product:
                     self._odes[species_id] += f" + {rhs}"
@@ -979,6 +994,11 @@ class ChasteSbmlModel:
                 if initial_assignment["id"] == id_:
                     return initial_assignment["index"]
 
+        elif var_type == VarType.STOICHIOMETRY_VARIABLE:
+            for stoichiometry_variable in self._stoichiometry_variables:
+                if stoichiometry_variable["id"] == id_:
+                    return stoichiometry_variable["index"]
+
         elif var_type == VarType.RATE_RULE:
             for rate_rule in self._rate_rules:
                 if rate_rule["id"] == id_:
@@ -989,11 +1009,6 @@ class ChasteSbmlModel:
                 if reaction["id"] == id_:
                     return reaction["index"]
                     return rate_rule["index"]
-
-        elif var_type == VarType.REFERENCE_VARIABLE:
-            for reference_variable in self._reference_variables:
-                if reference_variable["id"] == id_:
-                    return reference_variable["index"]
 
         elif var_type == VarType.STATE_VARIABLE:
             for state_variable in self._state_variables:
@@ -1028,8 +1043,8 @@ class ChasteSbmlModel:
             ode_header_guard=generate_header_guard(self._ode_hpp_filename),
             ode_hpp_file=self._ode_hpp_filename,
             reactions=self._reactions,
-            reference_variables=self._reference_variables,
             state_variables=self._state_variables,
+            stoichiometry_variables=self._stoichiometry_variables,
             variable_parameters=self._variable_parameters,
         )
 
@@ -1065,7 +1080,7 @@ class ChasteSbmlModel:
         self._amounts = []
         self._variable_parameters = []
         self._constant_parameters = []
-        self._reference_variables = []
+        self._stoichiometry_variables = []
 
         self._reactions = []
         self._events = []
