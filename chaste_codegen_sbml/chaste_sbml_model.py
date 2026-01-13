@@ -840,16 +840,28 @@ class ChasteSbmlModel:
             # If there's a compartment we'll normalise the ODEs, so declare it as non-dimensional
             compartment_id = species.getCompartment()
             compartment = self._sbml_compartments.get(compartment_id)
+
             units = NON_DIM_UNITS if compartment else species.getSubstanceUnits()
+            has_only_substance_units = (
+                species.isSetHasOnlySubstanceUnits() and species.getHasOnlySubstanceUnits()
+            )
 
             initial_value = None
             if species.isSetInitialConcentration():
                 initial_value = species.getInitialConcentration()
 
+                if has_only_substance_units and (species_id not in assignment_rules) and (species_id not in initial_assignments):
+                    # Convert initial concentration to amount via a custom initial assignment
+                    ia_id = PREFIX_SEP.join([CHASTE_PREFIX, INITIAL_ASSIGNMENT_PREFIX, species_id])
+                    ia_label = f"Convert {species_id} concentration to amount"
+                    ia_lhs = species_id
+                    ia_rhs = f"{species_id} * {compartment_id}"
+                    self._add_initial_assignment(ia_id, ia_label, ia_lhs, ia_rhs, custom=True)
+
             elif species.isSetInitialAmount():
                 initial_value = species.getInitialAmount()
 
-                if (species_id not in assignment_rules) and (species_id not in initial_assignments):
+                if not has_only_substance_units and (species_id not in assignment_rules) and (species_id not in initial_assignments):
                     # Convert initial amount to concentration via a custom initial assignment
                     ia_id = PREFIX_SEP.join([CHASTE_PREFIX, INITIAL_ASSIGNMENT_PREFIX, species_id])
                     ia_label = f"Convert {species_id} amount to concentration"
@@ -883,7 +895,7 @@ class ChasteSbmlModel:
                     rhs = f"({rhs})"
 
                 # Add compartment scaling if defined by a reaction
-                if species_id not in rate_rules:
+                if not (has_only_substance_units or species_id in rate_rules):
                     rhs = f"{rhs} / {compartment_id}"
 
                 # TODO: Handle time scaling
@@ -899,9 +911,10 @@ class ChasteSbmlModel:
                 rhs = str(initial_value)
                 self._add_derived_quantity(species_id, label, initial_value, units, rhs)
 
-            # Add an extra "amount" derived quantity for the species
-            rhs = f"{species_id} * {compartment_id}"
-            self._add_amount(species_id, units, rhs)
+            if not has_only_substance_units:
+                # Add an extra "amount" derived quantity for the species
+                rhs = f"{species_id} * {compartment_id}"
+                self._add_amount(species_id, units, rhs)
 
     def _generate_output(self, template_path, filename) -> None:
         """Generate a single output file from a template.
