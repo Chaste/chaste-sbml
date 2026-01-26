@@ -16,9 +16,9 @@ namespace sm = sbmlmath;
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<{{ ode_class_name }}>);
 
     // VARIABLE PARAMETERS
-{% for param in variable_parameters %}
-{% if param["initial_value"] is not none %}
-    {{ param["id"] }} = {{ param["initial_value"] }};
+{% for param in parameters %}
+{% if param["value"] is not none %}
+    {{ param["id"] }} = {{ param["value"] }};
 {% endif %}
 {% endfor %}
 
@@ -63,7 +63,7 @@ namespace sm = sbmlmath;
     mStateVariables.push_back({{ var["id"] }});
 {% endfor %}
 
-{% for param in variable_parameters %}
+{% for param in parameters %}
     mParameters.push_back({{ param["id"] }});
 {% endfor %}
 
@@ -87,8 +87,8 @@ namespace sm = sbmlmath;
     mEventSatisfied.resize({{ events|length }}, true); // Prevent events from triggering at the start
     mEventTriggered.resize({{ events|length }}, false);
 
-    mEventAdjustedParameters.resize({{ variable_parameters|length }}, false);
-    mEventAdjustedParameterValues.resize({{ variable_parameters|length }}, 0.0);
+    mEventAdjustedParameters.resize({{ parameters|length }}, false);
+    mEventAdjustedParameterValues.resize({{ parameters|length }}, 0.0);
 
     mEventAdjustedStateVars.resize({{ state_variables|length }}, false);
     mEventAdjustedStateValues.resize({{ state_variables|length }}, 0.0);
@@ -243,8 +243,10 @@ void {{ ode_class_name }}::RunReactions(double time)
 // VARIABLE PARAMETERS
 void {{ ode_class_name }}::UpdateParameters(double time)
 {
-{% for var in variable_parameters %}
-    {{ var["id"] }} = GetParameter({{ var['index'] }});
+{% for param in parameters %}
+{% if param["fixed"] is false() %}
+    {{ param["id"] }} = GetParameter({{ param['index'] }});
+{% endif %}
 {% endfor %}
 }
 
@@ -294,7 +296,7 @@ void CellwiseOdeSystemInformation<{{ ode_class_name }}>::Initialise()
 {% endfor %}
 
     // PARAMETERS
-{% for var in variable_parameters %}
+{% for var in parameters %}
     this->mParameterNames.push_back("{{ var['id'] }}");
     this->mParameterUnits.push_back("{{ var['units'] }}");
 

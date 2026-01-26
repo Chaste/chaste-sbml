@@ -1,7 +1,7 @@
 """Utility functions for code generation."""
 
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from libsbml import AST_FUNCTION_DELAY, AST_NAME, Compartment, formulaToString
 
@@ -211,7 +211,7 @@ def get_function_definition_arguments(fn_def: "FunctionDefinition") -> list[str]
     return [formulaToString(fn_def.getArgument(i)) for i in range(n)]
 
 
-def get_index_by_obj(obj: "SBase", listof: "ListOf") -> int:
+def get_index_by_obj(obj: "SBase", listof: "ListOf") -> Optional[int]:
     """Return the index of an object in a libsbml.ListOf.
 
     :param o: The object.
@@ -223,7 +223,7 @@ def get_index_by_obj(obj: "SBase", listof: "ListOf") -> int:
     return None
 
 
-def get_index_by_id(obj_id: str, listof: "ListOf") -> int:
+def get_index_by_id(obj_id: str, listof: "ListOf") -> Optional[int]:
     """Return the index of an object in a libsbml.ListOf by its id.
 
     :param o: The object.
@@ -361,7 +361,7 @@ def sort_formulas(formulas: list[tuple[str, "ASTNode"]]) -> list[int]:
     return _insertion_sort()
 
 
-def sort_nodes(node: "ASTNode", node_list: list["ASTNode"] = None) -> list["ASTNode"]:
+def sort_nodes(node: "ASTNode", node_list: Optional[list["ASTNode"]] = None) -> list["ASTNode"]:
     """Traverse an ASTNode tree and return an ordered list of nodes.
 
     :param node: The current ASTNode.

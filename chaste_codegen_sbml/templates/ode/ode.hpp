@@ -26,13 +26,9 @@ private:
         archive & boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
     }
 
-    // FIXED PARAMETERS
-{% for param in constant_parameters %}
-{% if param["rhs"] is none and param["value"] is not none %}
-    const double {{ param["id"] }} = {{ param["value"] }}; // {{ param["label"] }}
-{% else %}
+    // PARAMETERS
+{% for param in parameters %}
     double {{ param["id"] }}; // {{ param["label"] }}
-{% endif %}
 {% endfor %}
 
     // STATE VARIABLES
@@ -43,11 +39,6 @@ private:
     // DERIVED QUANTITIES
 {% for dq in derived_quantities %}
     double {{ dq["id"] }}; // {{ dq["label"] }}
-{% endfor %}
-
-    // VARIABLE PARAMETERS
-{% for param in variable_parameters %}
-    double {{ param["id"] }}; // {{ param["label"] }}
 {% endfor %}
 
     // STOICHIOMETRY VARIABLES

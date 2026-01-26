@@ -3,8 +3,9 @@
 import abc
 import os
 import pathlib
+from pydoc import doc
 import subprocess
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 import warnings
 
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -93,23 +94,30 @@ class ChasteSbmlModel:
         self._ode_hpp_filename = f"{self._ode_class_name}.hpp"
         self._ode_cpp_filename = f"{self._ode_class_name}.cpp"
 
-        self._srn_class_name = None
-        self._srn_hpp_filename = None
-        self._srn_cpp_filename = None
+        self._srn_class_name = ""
+        self._srn_hpp_filename = ""
+        self._srn_cpp_filename = ""
         if self._model_type == ModelType.SRN:
             self._srn_class_name = self._model_name + "SrnModel"
             self._srn_hpp_filename = f"{self._srn_class_name}.hpp"
             self._srn_cpp_filename = f"{self._srn_class_name}.cpp"
 
-        self._cell_cycle_class_name = None
-        self._cell_cycle_hpp_filename = None
-        self._cell_cycle_cpp_filename = None
+        self._cell_cycle_class_name = ""
+        self._cell_cycle_hpp_filename = ""
+        self._cell_cycle_cpp_filename = ""
         if self._model_type == ModelType.CELL_CYCLE:
             self._cell_cycle_class_name = self._model_name + "CellCycleModel"
             self._cell_cycle_hpp_filename = f"{self._cell_cycle_class_name}.hpp"
             self._cell_cycle_cpp_filename = f"{self._cell_cycle_class_name}.cpp"
 
-        self._sbml_model = SBMLReader().readSBMLFromFile(self._sbml_file).getModel()
+        reader = SBMLReader()
+        doc = reader.readSBMLFromFile(self._sbml_file)
+
+        if doc.getNumErrors() > 0:
+            print(doc.getErrorLog().toString())
+            raise ValueError(f"Errors found while reading SBML file: {self._sbml_file}")
+
+        self._sbml_model = doc.getModel()
         self._sbml_compartments = self._sbml_model.getListOfCompartments()
         self._sbml_events = self._sbml_model.getListOfEvents()
         self._sbml_function_definitions = self._sbml_model.getListOfFunctionDefinitions()
@@ -128,8 +136,7 @@ class ChasteSbmlModel:
         self._state_variables = []  # [ { id: str, label: str, ... } ]
         self._derived_quantities = []  # [ { id: str, label: str, ... } ]
         self._amounts = []  # [ { id: str, label: str, ... } ]
-        self._variable_parameters = []  # [ { id: str, label: str, ... } ]
-        self._constant_parameters = []  # [ { id: str, label: str, ... } ]
+        self._parameters = []  # [ { id: str, label: str, ... } ]
         self._initial_assignments = []  # [ { id: str, label: str, ... } ]
         self._reactions = []  # [ { id: str, label: str, ... } ]
         self._events = []  # [ { name: str, trigger: str, ... } ]
@@ -223,30 +230,39 @@ class ChasteSbmlModel:
         )
         self._variable_types[id_] = VarType.ASSIGNMENT_RULE
 
-    def _add_constant_parameter(
-        self, id_: str, label: str, value: float, units: str, rhs: str
+    def _add_parameter(
+        self,
+        id_: str,
+        label: str,
+        value: Optional[float],
+        units: str,
+        rhs: Optional[str] = None,
+        fixed: bool = False,
     ) -> None:
-        """Add a constant parameter to the template variables.
+        """Add a parameter to the template variables.
 
         :param id_: The parameter ID.
         :param label: The parameter description.
         :param value: The parameter value.
         :param units: The parameter units.
+        :param rhs: The parameter formula.
+        :param fixed: True if the parameter is fixed.
         """
-        self._constant_parameters.append(
+        self._parameters.append(
             {
                 "id": id_,
+                "fixed": fixed,
                 "label": label,
-                "index": len(self._constant_parameters),
+                "index": len(self._parameters),
                 "rhs": rhs,
                 "value": value,
                 "units": units,
             }
         )
-        self._variable_types[id_] = VarType.CONSTANT_PARAMETER
+        self._variable_types[id_] = VarType.PARAMETER
 
     def _add_derived_quantity(
-        self, id_: str, label: str, initial_value: float, units: str, rhs: str
+        self, id_: str, label: str, initial_value: Optional[float], units: str, rhs: Optional[str]
     ) -> None:
         """Add a derived quantity to the template variables.
 
@@ -386,7 +402,7 @@ class ChasteSbmlModel:
         self._variable_types[id_] = VarType.REACTION
 
     def _add_state_variable(
-        self, id_: str, label: str, initial_value: float, units: str, rhs: str
+        self, id_: str, label: str, initial_value: Optional[float], units: str, rhs: str
     ) -> None:
         """Add a state variable to the template variables.
 
@@ -409,7 +425,7 @@ class ChasteSbmlModel:
         self._variable_types[id_] = VarType.STATE_VARIABLE
 
     def _add_stoichiometry_variable(
-        self, id_: str, label: str, initial_value: float, rhs: str
+        self, id_: str, label: str, initial_value: Optional[float], rhs: Optional[str]
     ) -> None:
         """Add a stoichiometry variable to the template variables.
 
@@ -426,27 +442,6 @@ class ChasteSbmlModel:
             }
         )
         self._variable_types[id_] = VarType.STOICHIOMETRY_VARIABLE
-
-    def _add_variable_parameter(
-        self, id_: str, label: str, initial_value: float, units: str = NON_DIM_UNITS
-    ) -> None:
-        """Add a variable parameter to the template variables.
-
-        :param id_: The parameter ID.
-        :param label: The parameter description.
-        :param initial_value: The parameter initial value.
-        :param units: The parameter units.
-        """
-        self._variable_parameters.append(
-            {
-                "id": id_,
-                "label": label,
-                "index": len(self._variable_parameters),
-                "initial_value": initial_value,
-                "units": units,
-            }
-        )
-        self._variable_types[id_] = VarType.VARIABLE_PARAMETER
 
     def _extract_odes(self) -> None:
         """Extract the ODEs equations for each species."""
@@ -563,7 +558,7 @@ class ChasteSbmlModel:
                 self._add_derived_quantity(compartment_id, label, value, units, rhs)
             else:
                 # Variable parameter
-                self._add_variable_parameter(compartment_id, label, value, units)
+                self._add_parameter(compartment_id, label, value, units, fixed=False)
 
     def _format_events(self) -> None:
         """Add events to template variables."""
@@ -750,15 +745,15 @@ class ChasteSbmlModel:
                 rhs = assignment_rules[param_id]
                 self._add_derived_quantity(param_id, label, value, units, rhs)
             elif param.isSetConstant() and param.getConstant():
-                # Constant parameter
+                # Fixed parameter
                 if param_id in initial_assignments:
                     rhs = initial_assignments[param_id]
                 else:
                     rhs = None
-                self._add_constant_parameter(param_id, label, value, units, rhs)
+                self._add_parameter(param_id, label, value, units, rhs, fixed=True)
             else:
                 # Variable parameter
-                self._add_variable_parameter(param_id, label, value, units)
+                self._add_parameter(param_id, label, value, units, fixed=False)
 
     def _format_reactions(self) -> None:
         """Add reactions to template variables."""
@@ -851,7 +846,11 @@ class ChasteSbmlModel:
             if species.isSetInitialConcentration():
                 initial_value = species.getInitialConcentration()
 
-                if has_only_substance_units and (species_id not in assignment_rules) and (species_id not in initial_assignments):
+                if (
+                    has_only_substance_units
+                    and (species_id not in assignment_rules)
+                    and (species_id not in initial_assignments)
+                ):
                     # Convert initial concentration to amount via a custom initial assignment
                     ia_id = PREFIX_SEP.join([CHASTE_PREFIX, INITIAL_ASSIGNMENT_PREFIX, species_id])
                     ia_label = f"Convert {species_id} concentration to amount"
@@ -862,7 +861,11 @@ class ChasteSbmlModel:
             elif species.isSetInitialAmount():
                 initial_value = species.getInitialAmount()
 
-                if not has_only_substance_units and (species_id not in assignment_rules) and (species_id not in initial_assignments):
+                if (
+                    not has_only_substance_units
+                    and (species_id not in assignment_rules)
+                    and (species_id not in initial_assignments)
+                ):
                     # Convert initial amount to concentration via a custom initial assignment
                     ia_id = PREFIX_SEP.join([CHASTE_PREFIX, INITIAL_ASSIGNMENT_PREFIX, species_id])
                     ia_label = f"Convert {species_id} amount to concentration"
@@ -879,7 +882,7 @@ class ChasteSbmlModel:
 
             elif is_bc and species_id not in rate_rules:
                 # Derived quantity (boundary condition)
-                rhs = str(initial_value)
+                rhs = "" if initial_value is None else str(initial_value)
                 self._add_derived_quantity(species_id, label, initial_value, units, rhs)
 
             elif species_id in self._odes:
@@ -989,11 +992,6 @@ class ChasteSbmlModel:
                 if rule["id"] == id_:
                     return rule["index"]
 
-        elif var_type == VarType.CONSTANT_PARAMETER:
-            for param in self._constant_parameters:
-                if param["id"] == id_:
-                    return param["index"]
-
         elif var_type == VarType.DERIVED_QUANTITY:
             for dq in self._derived_quantities:
                 if dq["id"] == id_:
@@ -1008,6 +1006,11 @@ class ChasteSbmlModel:
             for initial_assignment in self._initial_assignments:
                 if initial_assignment["id"] == id_:
                     return initial_assignment["index"]
+
+        elif var_type == VarType.PARAMETER:
+            for param in self._parameters:
+                if param["id"] == id_:
+                    return param["index"]
 
         elif var_type == VarType.STOICHIOMETRY_VARIABLE:
             for stoichiometry_variable in self._stoichiometry_variables:
@@ -1030,11 +1033,6 @@ class ChasteSbmlModel:
                 if state_variable["id"] == id_:
                     return state_variable["index"]
 
-        elif var_type == VarType.VARIABLE_PARAMETER:
-            for param in self._variable_parameters:
-                if param["id"] == id_:
-                    return param["index"]
-
         raise ValueError(f"ID '{id_}' is not a recognized variable.")
 
     def _get_variable_type(self, var_id: str) -> bool:
@@ -1049,7 +1047,6 @@ class ChasteSbmlModel:
         template_vars: dict[str, "Any"] = dict(
             amounts=self._amounts,
             assignment_rules=self._assignment_rules,
-            constant_parameters=self._constant_parameters,
             derived_quantities=self._derived_quantities,
             events=self._events,
             functions=self._functions,
@@ -1057,10 +1054,10 @@ class ChasteSbmlModel:
             ode_class_name=self._ode_class_name,
             ode_header_guard=generate_header_guard(self._ode_hpp_filename),
             ode_hpp_file=self._ode_hpp_filename,
+            parameters=self._parameters,
             reactions=self._reactions,
             state_variables=self._state_variables,
             stoichiometry_variables=self._stoichiometry_variables,
-            variable_parameters=self._variable_parameters,
         )
 
         if self._model_type == ModelType.SRN:
@@ -1093,8 +1090,7 @@ class ChasteSbmlModel:
         self._state_variables = []
         self._derived_quantities = []
         self._amounts = []
-        self._variable_parameters = []
-        self._constant_parameters = []
+        self._parameters = []
         self._stoichiometry_variables = []
 
         self._reactions = []
