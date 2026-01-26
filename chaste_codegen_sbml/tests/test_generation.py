@@ -88,7 +88,9 @@ def test_generation(tmp_path, model_name, model_type):
 
     ref_dir = ROOT_DIR / "SbmlRefModels" / "src" / "reference" / model_name
     gen_dir = tmp_path
-    # import pathlib; gen_dir = pathlib.Path(".").absolute()
+    import pathlib
+
+    gen_dir = pathlib.Path(".").absolute()
 
     gen_ode_hpp = gen_dir / f"{model_name}SbmlOdeSystem.hpp"
     gen_ode_cpp = gen_dir / f"{model_name}SbmlOdeSystem.cpp"

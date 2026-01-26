@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-sbml_versions = ["l2v5"]
+sbml_versions = ["l2v5", "l3v2", "l3v1"]
 
 
 class TestType(Enum):
@@ -43,6 +43,9 @@ class ChasteSbmlTestSuiteModel(ChasteSbmlModel):
                 prefix = "Syntactic"
             case _:
                 raise ValueError(f"Unknown test type: {test_type}")
+
+        if test_params["settings"]["start"].strip() == "":
+            raise NotImplementedError("Steady state test with no start time.")
 
         model_name = f"{prefix}{test_params['case']}{sbml_version.upper()}Sbml"
 
@@ -103,6 +106,8 @@ def generate_semantic_cases(suite_path: str) -> None:
     cases = sorted(os.listdir(semantic_path))
 
     test_pack = []
+    selection = [1103, 1106, 1117, 1118, 1121, 1122, 1123, 1182, 1183, 1184, 1185, 1198]
+    cases = [cases[i - 1] for i in selection]
     for case_ in cases:
         case_path = os.path.join(semantic_path, case_)
         if not os.path.isdir(case_path):
@@ -168,9 +173,11 @@ def generate_semantic_cases(suite_path: str) -> None:
                     os.replace(src_file, dst_file)
             except NotImplementedError as e:
                 logger.warning(f"Skipping semantic {case_} {sbml_version}: {e}")
+            break  # Only generate for the first available SBML version
 
     # Update WeeklyTestPack
-    with open(ROOT_DIR / "SbmlRefModels" / "test" / "WeeklyTestPack.txt", "a") as f:
+    with open(ROOT_DIR / "S"
+    "bmlRefModels" / "test" / "WeeklyTestPack.txt", "w") as f:
         f.write("\n".join(test_pack) + "\n")
 
 

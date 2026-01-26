@@ -5,6 +5,7 @@ import os
 import pathlib
 import subprocess
 from typing import TYPE_CHECKING
+import warnings
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 from libsbml import (  # AST_INTEGER,; AST_RATIONAL,; AST_REAL,; AST_REAL_E,
@@ -885,17 +886,18 @@ class ChasteSbmlModel:
                 # State variable
                 rhs = self._odes[species_id]
 
-                # Add compartment ODE
-                if compartment_id in self._odes:
-                    compartment_rhs = self._odes[compartment_id]
-                    rhs = f"{rhs} - {species_id} * ({compartment_rhs})"
-
                 # Add parentheses if there are multiple terms
                 if "+" in rhs or "-" in rhs[1:]:
                     rhs = f"({rhs})"
 
                 # Add compartment scaling if defined by a reaction
                 if not (has_only_substance_units or species_id in rate_rules):
+                    # Add compartment ODE if there is one
+                    if compartment_id in self._odes:
+                        compartment_rhs = self._odes[compartment_id]
+                        rhs = f"({rhs} - {species_id} * ({compartment_rhs}))"
+
+                    # Scale by compartment volume
                     rhs = f"{rhs} / {compartment_id}"
 
                 # TODO: Handle time scaling

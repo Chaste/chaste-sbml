@@ -114,7 +114,7 @@ public:
             }
 
             // Exports results to csv
-            // sth::ExportCsv("{{ ode_class_name }}.csv", ode_solution, ode_system);
+            sth::ExportCsv("{{ ode_class_name }}.csv", ode_solution, ode_system);
         }
         catch (Exception& e)
         {
