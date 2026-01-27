@@ -289,7 +289,6 @@ def sort_formulas(formulas: list[tuple[str, "ASTNode"]]) -> list[int]:
     :param formulas: A list of (lhs_variable, rhs_expression) tuples.
     :return: A list of sorted formula indices.
     """
-
     _compare_cache = dict()
 
     def _compare_formulas(index_a: int, index_b: int) -> int:

@@ -11,11 +11,11 @@
 namespace sm = sbmlmath;
 
 {{ ode_class_name }}::{{ ode_class_name }}()
-    : AbstractSbmlOdeSystem({{ state_variables|length }}, {{variable_parameters|length }}, {{ events|length }})
+    : AbstractSbmlOdeSystem({{ state_variables|length }}, {{parameters|length }}, {{ events|length }})
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<{{ ode_class_name }}>);
 
-    // VARIABLE PARAMETERS
+    // PARAMETERS
 {% for param in parameters %}
 {% if param["value"] is not none %}
     {{ param["id"] }} = {{ param["value"] }};

@@ -3,22 +3,22 @@
 import abc
 import os
 import pathlib
-from pydoc import doc
 import subprocess
 from typing import TYPE_CHECKING, Optional
-import warnings
 
 from jinja2 import Environment, PackageLoader, select_autoescape
-from libsbml import (  # AST_INTEGER,; AST_RATIONAL,; AST_REAL,; AST_REAL_E,
+from libsbml import (
     AST_RELATIONAL_EQ,
     AST_RELATIONAL_GEQ,
     AST_RELATIONAL_GT,
     AST_RELATIONAL_LEQ,
     AST_RELATIONAL_LT,
     AST_RELATIONAL_NEQ,
+    LIBSBML_OPERATION_SUCCESS,
     SBML_ALGEBRAIC_RULE,
     SBML_ASSIGNMENT_RULE,
     SBML_RATE_RULE,
+    ConversionProperties,
     SBMLReader,
 )
 
@@ -110,12 +110,26 @@ class ChasteSbmlModel:
             self._cell_cycle_hpp_filename = f"{self._cell_cycle_class_name}.hpp"
             self._cell_cycle_cpp_filename = f"{self._cell_cycle_class_name}.cpp"
 
+        # Read the SBML model
         reader = SBMLReader()
         doc = reader.readSBMLFromFile(self._sbml_file)
 
         if doc.getNumErrors() > 0:
-            print(doc.getErrorLog().toString())
+            doc.printErrors()
             raise ValueError(f"Errors found while reading SBML file: {self._sbml_file}")
+
+        # Run required conversions
+        config = ConversionProperties()
+        config.addOption("sortRules")
+        config.addOption("removeUnusedUnits")
+        config.addOption("expandInitialAssignments")
+        # config.addOption('replaceReactions')
+        # config.addOption('expandFunctionDefinitions')
+
+        status = doc.convert(config)
+        if status != LIBSBML_OPERATION_SUCCESS:
+            doc.printErrors()
+            raise ValueError("Errors during conversion")
 
         self._sbml_model = doc.getModel()
         self._sbml_compartments = self._sbml_model.getListOfCompartments()
@@ -451,6 +465,9 @@ class ChasteSbmlModel:
         def _update_ode(species_ref: "SpeciesReference", rxn: "Reaction", is_product: bool) -> None:
             """Update the ODE for a species based on a species reference in a reaction.
 
+            Each ODE will essentially be the sum of the products minus the
+            sum of the reactants divided by the compartment volume
+
             :param species_ref: The species reference.
             :param rxn: The reaction.
             :param is_product: True if the species reference is a product, False if a reactant.
@@ -493,16 +510,16 @@ class ChasteSbmlModel:
                 else:
                     self._odes[species_id] = f"-{rhs}"
 
-        # Extract ODEs from reactions:
-        # each ODE will essentially be the sum of the products minus the
-        # sum of the reactants divided by the compartment volume
+        # Extract ODEs from reactions
         for reaction in self._sbml_reactions:
+            products = reaction.getListOfProducts()
+            reactants = reaction.getListOfReactants()
 
             # Decompose reaction into sum of products minus sum of reactants
-            for product in reaction.getListOfProducts():
+            for product in products:
                 _update_ode(product, reaction, is_product=True)
 
-            for reactant in reaction.getListOfReactants():
+            for reactant in reactants:
                 _update_ode(reactant, reaction, is_product=False)
 
         # Extract ODEs from rate rules
@@ -880,14 +897,19 @@ class ChasteSbmlModel:
                 rhs = assignment_rules[species_id]
                 self._add_derived_quantity(species_id, label, initial_value, units, rhs)
 
-            elif is_bc and species_id not in rate_rules:
+            elif is_bc and (species_id not in rate_rules) and (compartment_id not in self._odes):
                 # Derived quantity (boundary condition)
                 rhs = "" if initial_value is None else str(initial_value)
                 self._add_derived_quantity(species_id, label, initial_value, units, rhs)
 
-            elif species_id in self._odes:
+            elif species_id in self._odes or (is_bc and compartment_id in self._odes):
                 # State variable
-                rhs = self._odes[species_id]
+                if species_id in self._odes:
+                    # Species
+                    rhs = self._odes[species_id]
+                if is_bc:
+                    # Boundary condition in changing compartment
+                    rhs = ""
 
                 # Add parentheses if there are multiple terms
                 if "+" in rhs or "-" in rhs[1:]:
