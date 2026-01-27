@@ -15,6 +15,8 @@ namespace sm = sbmlmath;
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<{{ ode_class_name }}>);
 
+    const double time = 0.0;
+
     // PARAMETERS
 {% for param in parameters %}
 {% if param["value"] is not none %}
@@ -46,7 +48,7 @@ namespace sm = sbmlmath;
 {% endfor %}
 
     // INITIAL ASSIGNMENTS
-    RunInitialAssignments(0.0);
+    RunInitialAssignments(time);
 
 {% for ia in initial_assignments %}
 {% if ia["custom"] is true() %}
@@ -68,7 +70,7 @@ namespace sm = sbmlmath;
 {% endfor %}
 
     // REACTIONS
-    RunReactions(0.0);
+    RunReactions(time);
 
     // EVENTS
 {% if events %}

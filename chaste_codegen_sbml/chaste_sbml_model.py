@@ -897,19 +897,20 @@ class ChasteSbmlModel:
                 rhs = assignment_rules[species_id]
                 self._add_derived_quantity(species_id, label, initial_value, units, rhs)
 
-            elif is_bc and (species_id not in rate_rules) and (compartment_id not in self._odes):
-                # Derived quantity (boundary condition)
-                rhs = "" if initial_value is None else str(initial_value)
-                self._add_derived_quantity(species_id, label, initial_value, units, rhs)
+            elif is_bc and (species_id not in rate_rules):
+                if compartment_id in self._odes and not has_only_substance_units:
+                    # State variable: boundary condition in changing compartment
+                    compartment_rhs = self._odes[compartment_id]
+                    rhs = f"(-{species_id} * ({compartment_rhs})) / {compartment_id}"
+                    self._add_state_variable(species_id, label, initial_value, units, rhs)
+                else:
+                    # Derived quantity
+                    rhs = "" if initial_value is None else str(initial_value)
+                    self._add_derived_quantity(species_id, label, initial_value, units, rhs)
 
-            elif species_id in self._odes or (is_bc and compartment_id in self._odes):
+            elif species_id in self._odes:
                 # State variable
-                if species_id in self._odes:
-                    # Species
-                    rhs = self._odes[species_id]
-                if is_bc:
-                    # Boundary condition in changing compartment
-                    rhs = ""
+                rhs = self._odes[species_id]
 
                 # Add parentheses if there are multiple terms
                 if "+" in rhs or "-" in rhs[1:]:
