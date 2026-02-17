@@ -17,15 +17,6 @@ namespace sm = sbmlmath;
 
     Initialise();
 
-    // STOICHIOMETRY VARIABLES
-{% for svar in stoichiometry_variables %}
-{% if svar["rhs"] is not none %}
-   {{ svar["id"] }} = {{ svar["rhs"] }};
-{% elif svar["initial_value"] is not none %}
-    {{ svar["id"] }} = {{ svar["initial_value"] }};
-{% endif %}
-{% endfor %}
-
     // EVENTS
 {% if events %}
     mEventType.resize({{ events|length }}, SbmlEventType::UNKNOWN);
@@ -62,6 +53,12 @@ std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, 
 {% if derived_quantities %}
     RunModelEquations(time, rY);
 
+{% for eq in equations %}
+{% if ( eq["type"] == EquationType.AMOUNT ) %}
+    double {{ eq["lhs"] }} = {{ eq["rhs"] }}; // {{ eq["label"] }}
+{% endif %}
+{% endfor %}
+
 {% for dq in derived_quantities %}
     dqs.push_back({{ dq["id"] }});
 {% endfor %}
@@ -92,7 +89,9 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
 void {{ ode_class_name }}::Initialise(double time)
 {
 {% for eq in equations %}
+{% if ( eq["type"] != EquationType.AMOUNT ) %}
     {{ eq["lhs"] }} = {{ eq["rhs"] }}; // {{ eq["label"] }}
+{% endif %}
 {% endfor %}
 
 {% for var in state_variables %}
@@ -198,8 +197,18 @@ std::vector<double> {{ ode_class_name }}::RunModelEquations(double time, const s
 {% endfor %}
 
 {% for eq in equations %}
-{% if ( eq["type"] != EquationType.INITIAL_VALUE and eq["type"] != EquationType.INITIAL_ASSIGNMENT ) %}
-    {{ eq["lhs"] }} = {{ eq["rhs"] }}; // {{ eq["label"] }}
+{% if ( eq["type"] not in [EquationType.INITIAL_VALUE, EquationType.INITIAL_ASSIGNMENT, EquationType.AMOUNT] ) %}
+{% if eq["local_parameters"] %}
+    // {{ eq["lhs"] }}: {{ eq["label"] }}
+    {
+{% for local_parameter in eq["local_parameters"] %}
+        double {{ local_parameter["id"] }} = {{ local_parameter["value"] }};
+{% endfor %}
+        {{ eq["lhs"] }} = {{ eq["rhs"] }};
+    }
+{% else %}
+    {{ eq["lhs"] }} = {{ eq["rhs"] }};  // {{ eq["label"] }}
+{% endif %}
 {% endif %}
 {% endfor %}
 
@@ -213,23 +222,6 @@ std::vector<double> {{ ode_class_name }}::RunModelEquations(double time, const s
 // REACTIONS
 void {{ ode_class_name }}::RunReactions(double time)
 {
-{% for reaction in reactions %}
-  {% if reaction["label"] %}
-    // {{ reaction["label"] }}
-  {% endif %}
-  {% if reaction["parameters"] %}
-    {{ reaction["id"] }} = 0.0;
-    {
-  {% for param in reaction["parameters"] %}
-        double {{ param["id"] }} = {{ param["value"] }};
-  {% endfor %}
-        {{ reaction["id"] }} = {{ reaction["rhs"] }};
-    }
-  {% else %}
-    {{ reaction["id"] }} = {{ reaction["rhs"] }};
-  {% endif %}
-
-{% endfor %}
 }
 
 // VARIABLE PARAMETERS

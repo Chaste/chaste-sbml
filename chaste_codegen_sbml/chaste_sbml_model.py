@@ -3,6 +3,7 @@
 import abc
 import os
 import pathlib
+import re
 import subprocess
 from typing import TYPE_CHECKING, Optional
 
@@ -40,7 +41,6 @@ from ._utils import (
     get_compartment_size,
     get_derivative_var,
     get_function_definition_arguments,
-    sort_formulas,
     to_camel_case,
     to_cpp_name,
 )
@@ -49,7 +49,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from jinja2.environment import Template
-    from libsbml import Reaction, SpeciesReference
+    from libsbml import Reaction, Species, SpeciesReference
 
 
 class ChasteSbmlModel:
@@ -209,25 +209,21 @@ class ChasteSbmlModel:
 
     # -- PRIVATE ---------------------------------------
 
-    def _add_amount(self, id_: str, units: str, rhs: str) -> None:
-        """Add an amount derived quantity to the template variables.
+    def _add_amount(self, species: "Species") -> None:
+        """Add an amount derived quantity variable to the template variables.
 
-        :param id_: The variable ID.
-        :param label: The variable description.
-        :param initial_value: The variable initial value.
-        :param units: The variable units.
-        :param rhs: The variable formula.
+        :param species: The related Species.
         """
-        amount_id = AMOUNT_PREFIX + PREFIX_SEP + id_
-        self._amounts.append(
-            {
-                "id": amount_id,
-                "index": len(self._amounts),
-                "rhs": rhs,
-                "units": units,
-            }
-        )
-        self._variable_types[amount_id] = VarType.AMOUNT
+        species_id = species.getId()
+        compartment_id = species.getCompartment()
+
+        amt_id = AMOUNT_PREFIX + PREFIX_SEP + species_id
+        amt_label = f"Amount of {species_id}"
+        amt_units = NON_DIM_UNITS  # TODO: Use correct units
+        amt_rhs = f"{species_id} * {compartment_id}"
+
+        self._add_derived_quantity(amt_id, amt_label, None, amt_units, is_amount=True)
+        self._add_equation(amt_id, amt_rhs, eq_type=EquationType.AMOUNT)
 
     def _add_assignment_rule(self, id_: str, label: str, lhs: str, rhs: str) -> None:
         """Add an assignment rule to the template variables.
@@ -241,46 +237,18 @@ class ChasteSbmlModel:
             {
                 "id": id_,
                 "label": label,
-                "index": len(self._assignment_rules),
                 "lhs": lhs,
                 "rhs": rhs,
             }
         )
-        self._variable_types[id_] = VarType.ASSIGNMENT_RULE
 
-    def _add_parameter(
+    def _add_derived_quantity(
         self,
         id_: str,
         label: str,
-        value: Optional[float],
-        units: str,
-        rhs: Optional[str] = None,
-        fixed: bool = False,
-    ) -> None:
-        """Add a parameter to the template variables.
-
-        :param id_: The parameter ID.
-        :param label: The parameter description.
-        :param value: The parameter value.
-        :param units: The parameter units.
-        :param rhs: The parameter formula.
-        :param fixed: True if the parameter is fixed.
-        """
-        self._parameters.append(
-            {
-                "id": id_,
-                "fixed": fixed,
-                "label": label,
-                "index": len(self._parameters),
-                "rhs": rhs,
-                "value": value,
-                "units": units,
-            }
-        )
-        self._variable_types[id_] = VarType.PARAMETER
-
-    def _add_derived_quantity(
-        self, id_: str, label: str, initial_value: Optional[float], units: str, rhs: Optional[str]
+        initial_value: Optional[float],
+        units: str = NON_DIM_UNITS,
+        is_amount: bool = False,
     ) -> None:
         """Add a derived quantity to the template variables.
 
@@ -288,7 +256,7 @@ class ChasteSbmlModel:
         :param label: The variable description.
         :param initial_value: The variable initial value.
         :param units: The variable units.
-        :param rhs: The variable formula.
+        :param is_amount: True if the derived quantity is an amount conversion.
         """
         self._derived_quantities.append(
             {
@@ -296,28 +264,61 @@ class ChasteSbmlModel:
                 "label": label,
                 "index": len(self._derived_quantities),
                 "initial_value": initial_value,
-                "rhs": rhs,
+                "is_amount": is_amount,
                 "units": units,
             }
         )
         self._variable_types[id_] = VarType.DERIVED_QUANTITY
 
     def _add_equation(
-        self, lhs: str, rhs: str, label: str, eq_type: EquationType = EquationType.UNKNOWN
+        self,
+        lhs: str,
+        rhs: str,
+        eq_type: EquationType = EquationType.UNKNOWN,
+        local_parameters: Optional[list[dict[str, str]]] = None,
     ) -> None:
-        # derivative / assignment_rule / initial_value / initial_assignment / reaction / normal
+        """Add an equation to the template variables.
+
+        :param lhs: The left-hand side of the equation.
+        :param rhs: The right-hand side of the equation.
+        :param eq_type: The type of the equation.
+        :param local_parameters: A list of local parameters used in the equation.
+        """
         if eq_type == EquationType.DERIVATIVE:
             lhs = get_derivative_var(lhs)
 
-        self._equations.append(
-            {
-                "label": label,
-                "index": len(self._equations),
-                "lhs": lhs,
-                "rhs": rhs,
-                "type": eq_type,
-            }
-        )
+        eq = {
+            "lhs": str(lhs),
+            "rhs": str(rhs),
+            "type": eq_type,
+            "local_parameters": local_parameters,
+        }
+
+        # Insert equation in appropriate order based on dependencies.
+        if eq_type == EquationType.INITIAL_VALUE:
+            # Initial value equations come first.
+            for i, other_eq in enumerate(self._equations):
+                if other_eq["type"] != EquationType.INITIAL_VALUE:
+                    self._equations.insert(i, eq)
+                    break
+            else:
+                self._equations.append(eq)
+
+        else:
+            for i, other_eq in enumerate(self._equations):
+                # Skip comparison if other equation has local parameter overriding lhs
+                if other_eq["local_parameters"]:
+                    if any(lhs == param["id"] for param in other_eq["local_parameters"]):
+                        break
+
+                # No local parameter overrides lhs, so proceed with dependency check
+                match = re.search(rf"\b{lhs}\b", other_eq["rhs"])
+                if match:
+                    self._equations.insert(i, eq)
+                    break
+            else:
+                # No other equations depend on this one.
+                self._equations.append(eq)
 
     def _add_event(
         self,
@@ -365,28 +366,22 @@ class ChasteSbmlModel:
         )
         self._variable_types[id_] = VarType.FUNCTION
 
-    def _add_initial_assignment(
-        self, id_: str, label: str, lhs: str, rhs: str, custom: bool = False
-    ) -> None:
+    def _add_initial_assignment(self, id_: str, label: str, lhs: str, rhs: str) -> None:
         """Add an initial assignment to the template variables.
 
         :param id_: The rule ID.
         :param label: The rule description.
         :param lhs: The left-hand side of the rule.
         :param rhs: The right-hand side of the rule.
-        :param custom: True if this is a custom initial assignment added during processing.
         """
         self._initial_assignments.append(
             {
                 "id": id_,
                 "label": label,
-                "index": len(self._initial_assignments),
                 "lhs": lhs,
                 "rhs": rhs,
-                "custom": custom,
             }
         )
-        self._variable_types[id_] = VarType.INITIAL_ASSIGNMENT
 
     def _add_output(self, filename: str, code: str) -> None:
         """Add generated code to the outputs dictionary.
@@ -395,6 +390,34 @@ class ChasteSbmlModel:
         :param code: The code.
         """
         self._outputs[filename] = code
+
+    def _add_parameter(
+        self,
+        id_: str,
+        label: str,
+        initial_value: Optional[float] = None,
+        units: str = NON_DIM_UNITS,
+        is_const: bool = False,
+    ) -> None:
+        """Add a parameter variable to the template variables.
+
+        :param id_: The variable ID.
+        :param label: The variable description.
+        :param initial_value: The variable initial value.
+        :param units: The variable units.
+        :param is_const: True if variable is constant.
+        """
+        self._parameters.append(
+            {
+                "id": id_,
+                "is_const": is_const,
+                "label": label,
+                "index": len(self._parameters),
+                "initial_value": initial_value,
+                "units": units,
+            }
+        )
+        self._variable_types[id_] = VarType.PARAMETER
 
     def _add_rate_rule(self, id_: str, label: str, lhs: str, rhs: str) -> None:
         """Add a rate rule to the template variables.
@@ -408,36 +431,28 @@ class ChasteSbmlModel:
             {
                 "id": id_,
                 "label": label,
-                "index": len(self._rate_rules),
                 "lhs": lhs,
                 "rhs": rhs,
             }
         )
-        self._variable_types[id_] = VarType.RATE_RULE
 
-    def _add_reaction(
-        self, id_: str, label: str, rhs: str, parameters: list[dict[str, "Any"]]
-    ) -> None:
-        """Add a reaction to the template variables.
+    def _add_reaction(self, id_: str, label: str) -> None:
+        """Add a reaction variable to the template variables.
 
-        :param id_: The reaction ID.
-        :param label: The reaction description.
-        :param rhs: The reaction formula.
-        :param parameters: The reaction parameters.
+        :param id_: The variable ID.
+        :param label: The variable description.
         """
         self._reactions.append(
             {
+                "index": len(self._reactions),
                 "id": id_,
                 "label": label,
-                "index": len(self._reactions),
-                "rhs": rhs,
-                "parameters": parameters,
             }
         )
         self._variable_types[id_] = VarType.REACTION
 
     def _add_state_variable(
-        self, id_: str, label: str, initial_value: Optional[float], units: str, rhs: str
+        self, id_: str, label: str, initial_value: Optional[float], units: str = NON_DIM_UNITS
     ) -> None:
         """Add a state variable to the template variables.
 
@@ -445,39 +460,38 @@ class ChasteSbmlModel:
         :param label: The variable description.
         :param initial_value: The variable initial value.
         :param units: The variable units.
-        :param rhs: The variable formula.
         """
         self._state_variables.append(
             {
+                "index": len(self._state_variables),
                 "id": id_,
                 "derivative_id": get_derivative_var(id_),
                 "label": label,
-                "index": len(self._state_variables),
                 "initial_value": initial_value,
-                "rhs": rhs,
                 "units": units,
             }
         )
         self._variable_types[id_] = VarType.STATE_VARIABLE
 
-    def _add_stoichiometry_variable(
-        self, id_: str, label: str, initial_value: Optional[float], rhs: Optional[str]
-    ) -> None:
+    def _add_stoichiometry_variable(self, species_reference: "SpeciesReference") -> None:
         """Add a stoichiometry variable to the template variables.
 
-        :param id_: The ID of the stoichiometry variable.
-        :param label: The description of the stoichiometry variable.
+        :param species_reference: The related SpeciesReference.
         """
-        self._stoichiometry_variables.append(
-            {
-                "id": id_,
-                "index": len(self._stoichiometry_variables),
-                "label": label,
-                "initial_value": initial_value,
-                "rhs": rhs,
-            }
-        )
-        self._variable_types[id_] = VarType.STOICHIOMETRY_VARIABLE
+        id_ = species_reference.getId()
+        label = species_reference.getName().strip()
+
+        initial_value = None
+        if species_reference.isSetStoichiometry():
+            initial_value = species_reference.getStoichiometry()
+            self._add_equation(id_, f"{initial_value}", eq_type=EquationType.INITIAL_VALUE)
+
+        self._add_parameter(id_, label, initial_value, NON_DIM_UNITS)  # TODO: Use correct units
+
+        if species_reference.isSetStoichiometryMath():
+            math = species_reference.getStoichiometryMath().getMath()
+            rhs = convert_ast_formula(math)
+            self._add_equation(id_, rhs, eq_type=EquationType.ASSIGNMENT_RULE)
 
     def _extract_odes(self) -> None:
         """Extract the ODEs equations for each species."""
@@ -497,27 +511,20 @@ class ChasteSbmlModel:
             rhs = rxn.getId()
 
             # Account for stoichiometry
-            sto_value = None
-            if species_ref.isSetStoichiometry():
-                sto_value = species_ref.getStoichiometry()
-
-            sto_formula = None
-            if species_ref.isSetStoichiometryMath():
-                sto_math = species_ref.getStoichiometryMath().getMath()
-                sto_formula = convert_ast_formula(sto_math)
-
             if species_ref.isSetId():
+                self._add_stoichiometry_variable(species_ref)
                 sto_id = species_ref.getId()
-                sto_label = species_ref.getName().strip()
-                self._add_stoichiometry_variable(sto_id, sto_label, sto_value, sto_formula)
-
                 rhs = f"({sto_id} * {rhs})"
 
-            elif sto_formula is not None:
+            elif species_ref.isSetStoichiometryMath():
+                sto_math = species_ref.getStoichiometryMath().getMath()
+                sto_formula = convert_ast_formula(sto_math)
                 rhs = f"({sto_formula} * {rhs})"
 
-            elif sto_value is not None and sto_value != 1:
-                rhs = f"({sto_value} * {rhs})"
+            elif species_ref.isSetStoichiometry():
+                sto_value = species_ref.getStoichiometry()
+                if sto_value != 1:
+                    rhs = f"({sto_value} * {rhs})"
 
             # Update the ODE
             species_id = species_ref.getSpecies()
@@ -581,28 +588,26 @@ class ChasteSbmlModel:
             compartment_id = compartment.getId()
             label = compartment.getName().strip()
 
-            value = get_compartment_size(compartment)
-            self._add_equation(
-                compartment_id, f"{value}", label, eq_type=EquationType.INITIAL_VALUE
-            )
+            size = get_compartment_size(compartment)
+            self._add_equation(compartment_id, f"{size}", eq_type=EquationType.INITIAL_VALUE)
             units = compartment.getUnits() if compartment.isSetUnits() else NON_DIM_UNITS
 
             if compartment.isSetConstant() and compartment.getConstant():
                 # Derived quantity
-                self._add_derived_quantity(compartment_id, label, value, units, rhs=None)
+                self._add_derived_quantity(compartment_id, label, size, units)
             elif compartment_id in self._odes:
                 # State variable
                 rhs = self._odes[compartment_id]
-                self._add_state_variable(compartment_id, label, value, units, rhs)
-                self._add_equation(compartment_id, rhs, label, eq_type=EquationType.DERIVATIVE)
+                self._add_state_variable(compartment_id, label, size, units)
+                self._add_equation(compartment_id, rhs, eq_type=EquationType.DERIVATIVE)
             elif compartment_id in assignment_rules:
                 # Derived quantity
                 rhs = assignment_rules[compartment_id]
-                self._add_derived_quantity(compartment_id, label, value, units, rhs)
-                self._add_equation(compartment_id, rhs, label, eq_type=EquationType.ASSIGNMENT_RULE)
+                self._add_derived_quantity(compartment_id, label, size, units)
+                self._add_equation(compartment_id, rhs, eq_type=EquationType.ASSIGNMENT_RULE)
             else:
                 # Variable parameter
-                self._add_parameter(compartment_id, label, value, units, fixed=False)
+                self._add_parameter(compartment_id, label, size, units)
 
     def _format_events(self) -> None:
         """Add events to template variables."""
@@ -740,7 +745,7 @@ class ChasteSbmlModel:
                 label = ia.getName().strip()
                 lhs = ia.getSymbol()
                 rhs = convert_ast_formula(ia.getMath())
-                self._add_initial_assignment(id_, label, lhs, rhs, custom=False)
+                self._add_initial_assignment(id_, label, lhs, rhs)
 
     def _format_parameters(self) -> None:
         """Add parameters to template variables."""
@@ -755,35 +760,37 @@ class ChasteSbmlModel:
             value = None
             if param.isSetValue():
                 value = param.getValue()
-                self._add_equation(param_id, value, label, eq_type=EquationType.INITIAL_VALUE)
+                self._add_equation(param_id, value, eq_type=EquationType.INITIAL_VALUE)
 
             units = NON_DIM_UNITS
+
+            is_const = param.isSetConstant() and param.getConstant()
+
             if param.isSetUnits():
                 units = param.getUnits()
 
             if param_id in self._odes:
                 # State variable
                 rhs = self._odes[param_id]
-                self._add_state_variable(param_id, label, value, units, rhs)
-                self._add_equation(param_id, rhs, label, eq_type=EquationType.DERIVATIVE)
+                self._add_state_variable(param_id, label, value, units)
+                self._add_equation(param_id, rhs, eq_type=EquationType.DERIVATIVE)
 
             elif param_id in assignment_rules:
                 # Derived quantity
                 rhs = assignment_rules[param_id]
-                self._add_derived_quantity(param_id, label, value, units, rhs)
-                self._add_equation(param_id, rhs, label, eq_type=EquationType.ASSIGNMENT_RULE)
+                self._add_derived_quantity(param_id, label, value, units)
+                self._add_equation(param_id, rhs, eq_type=EquationType.ASSIGNMENT_RULE)
             elif param_id in initial_assignments:
                 # Fixed parameter with initial assignment
                 rhs = initial_assignments[param_id]
-                fixed = param.isSetConstant() and param.getConstant()
-                self._add_parameter(param_id, label, value, units, rhs, fixed=fixed)
-                self._add_equation(param_id, rhs, label, eq_type=EquationType.INITIAL_ASSIGNMENT)
+                self._add_parameter(param_id, label, value, units, is_const=is_const)
+                self._add_equation(param_id, rhs, eq_type=EquationType.INITIAL_ASSIGNMENT)
             elif param.isSetConstant() and param.getConstant():
-                # Fixed parameter without initial assignment or assignment rule
-                self._add_parameter(param_id, label, value, units, fixed=True)
+                # Fixed parameter without an initial assignment or assignment rule
+                self._add_parameter(param_id, label, value, units, is_const=True)
             else:
                 # Variable parameter
-                self._add_parameter(param_id, label, value, units, fixed=False)
+                self._add_parameter(param_id, label, value, units, is_const=False)
 
     def _format_reactions(self) -> None:
         """Add reactions to template variables."""
@@ -792,7 +799,7 @@ class ChasteSbmlModel:
             label = reaction.getName().strip()
 
             rhs = ""
-            reaction_parameters = []
+            local_parameters = []
 
             kinetic_law = reaction.getKineticLaw()
             if kinetic_law is None:
@@ -802,21 +809,28 @@ class ChasteSbmlModel:
             else:
                 rhs = convert_ast_formula(kinetic_law.getMath())
 
-                sbml_parameters = kinetic_law.getListOfParameters()
-                for param in sbml_parameters:
+                parameters = kinetic_law.getListOfParameters()
+                for param in parameters:
                     param_id = param.getId()
-                    param_descr = param.getName().strip()
-                    param_value = param.getValue()  # TODO: What if not set?
-                    reaction_parameters.append(
+                    if not param.isSetValue():
+                        raise ValueError(
+                            f"Local parameter {param_id} in reaction {reaction_id} has no value."
+                        )
+                    local_parameters.append(
                         {
                             "id": param_id,
-                            "label": param_descr,
-                            "value": param_value,
+                            "label": param.getName().strip(),
+                            "value": str(param.getValue()),
                         }
                     )
 
-            self._add_reaction(reaction_id, label, rhs, reaction_parameters)
-            self._add_equation(reaction_id, rhs, label, eq_type=EquationType.REACTION)
+            self._add_reaction(reaction_id, label)
+            self._add_equation(
+                reaction_id,
+                rhs,
+                local_parameters=local_parameters,
+                eq_type=EquationType.REACTION,
+            )
 
     def _format_rules(self) -> None:
         """Add rules to template variables."""
@@ -869,9 +883,7 @@ class ChasteSbmlModel:
             initial_value = None
             if species.isSetInitialConcentration():
                 initial_value = species.getInitialConcentration()
-                self._add_equation(
-                    species_id, initial_value, label, eq_type=EquationType.INITIAL_VALUE
-                )
+                self._add_equation(species_id, initial_value, eq_type=EquationType.INITIAL_VALUE)
 
                 if (
                     has_only_substance_units
@@ -883,16 +895,12 @@ class ChasteSbmlModel:
                     ia_label = f"Convert {species_id} concentration to amount"
                     ia_lhs = species_id
                     ia_rhs = f"{species_id} * {compartment_id}"
-                    self._add_initial_assignment(ia_id, ia_label, ia_lhs, ia_rhs, custom=True)
-                    self._add_equation(
-                        ia_lhs, ia_rhs, ia_label, eq_type=EquationType.INITIAL_ASSIGNMENT
-                    )
+                    self._add_initial_assignment(ia_id, ia_label, ia_lhs, ia_rhs)
+                    self._add_equation(ia_lhs, ia_rhs, eq_type=EquationType.INITIAL_ASSIGNMENT)
 
             elif species.isSetInitialAmount():
                 initial_value = species.getInitialAmount()
-                self._add_equation(
-                    species_id, initial_value, label, eq_type=EquationType.INITIAL_VALUE
-                )
+                self._add_equation(species_id, initial_value, eq_type=EquationType.INITIAL_VALUE)
 
                 if (
                     not has_only_substance_units
@@ -904,29 +912,27 @@ class ChasteSbmlModel:
                     ia_label = f"Convert {species_id} amount to concentration"
                     ia_lhs = species_id
                     ia_rhs = f"{species_id} / {compartment_id}"
-                    self._add_initial_assignment(ia_id, ia_label, ia_lhs, ia_rhs, custom=True)
-                    self._add_equation(
-                        ia_lhs, ia_rhs, ia_label, eq_type=EquationType.INITIAL_ASSIGNMENT
-                    )
+                    self._add_initial_assignment(ia_id, ia_label, ia_lhs, ia_rhs)
+                    self._add_equation(ia_lhs, ia_rhs, eq_type=EquationType.INITIAL_ASSIGNMENT)
+
             is_bc = species.isSetBoundaryCondition() and species.getBoundaryCondition()
 
             if species_id in assignment_rules:
                 # Derived quantity (includes boundary conditions with assignment rules)
                 rhs = assignment_rules[species_id]
                 self._add_derived_quantity(species_id, label, initial_value, units, rhs)
-                self._add_equation(species_id, rhs, label, eq_type=EquationType.ASSIGNMENT_RULE)
+                self._add_equation(species_id, rhs, eq_type=EquationType.ASSIGNMENT_RULE)
 
             elif is_bc and (species_id not in rate_rules):
                 if compartment_id in self._odes and not has_only_substance_units:
                     # State variable: boundary condition in changing compartment
                     compartment_rhs = self._odes[compartment_id]
                     rhs = f"(-{species_id} * ({compartment_rhs})) / {compartment_id}"
-                    self._add_state_variable(species_id, label, initial_value, units, rhs)
-                    self._add_equation(species_id, rhs, label, eq_type=EquationType.DERIVATIVE)
+                    self._add_state_variable(species_id, label, initial_value, units)
+                    self._add_equation(species_id, rhs, eq_type=EquationType.DERIVATIVE)
                 else:
                     # Derived quantity
-                    rhs = "" if initial_value is None else str(initial_value)
-                    self._add_derived_quantity(species_id, label, initial_value, units, rhs)
+                    self._add_derived_quantity(species_id, label, initial_value, units)
 
             elif species_id in self._odes:
                 # State variable
@@ -949,21 +955,19 @@ class ChasteSbmlModel:
                 # TODO: Handle time scaling
                 # time_multiplier = self._get_timescale_multiplier()
                 # if time_multiplier != 1.0:
-                #     # This does not include species defined in algebraic rules
                 #     f"rDY[{state_variable_index}] *= {time_multiplier};"
 
-                self._add_state_variable(species_id, label, initial_value, units, rhs)
-                self._add_equation(species_id, rhs, label, eq_type=EquationType.DERIVATIVE)
+                self._add_state_variable(species_id, label, initial_value, units)
+                self._add_equation(species_id, rhs, eq_type=EquationType.DERIVATIVE)
 
             else:
                 # Derived quantity (constant value)
                 rhs = str(initial_value)
-                self._add_derived_quantity(species_id, label, initial_value, units, rhs)
+                self._add_derived_quantity(species_id, label, initial_value, units)
 
             if not has_only_substance_units:
                 # Add an extra "amount" derived quantity for the species
-                rhs = f"{species_id} * {compartment_id}"
-                self._add_amount(species_id, units, rhs)
+                self._add_amount(species)
 
     def _generate_output(self, template_path, filename) -> None:
         """Generate a single output file from a template.
@@ -1031,11 +1035,6 @@ class ChasteSbmlModel:
                 if amount["id"] == id_:
                     return amount["index"]
 
-        elif var_type == VarType.ASSIGNMENT_RULE:
-            for rule in self._assignment_rules:
-                if rule["id"] == id_:
-                    return rule["index"]
-
         elif var_type == VarType.DERIVED_QUANTITY:
             for dq in self._derived_quantities:
                 if dq["id"] == id_:
@@ -1046,31 +1045,15 @@ class ChasteSbmlModel:
                 if func["id"] == id_:
                     return func["index"]
 
-        elif var_type == VarType.INITIAL_ASSIGNMENT:
-            for initial_assignment in self._initial_assignments:
-                if initial_assignment["id"] == id_:
-                    return initial_assignment["index"]
-
         elif var_type == VarType.PARAMETER:
             for param in self._parameters:
                 if param["id"] == id_:
                     return param["index"]
 
-        elif var_type == VarType.STOICHIOMETRY_VARIABLE:
-            for stoichiometry_variable in self._stoichiometry_variables:
-                if stoichiometry_variable["id"] == id_:
-                    return stoichiometry_variable["index"]
-
-        elif var_type == VarType.RATE_RULE:
-            for rate_rule in self._rate_rules:
-                if rate_rule["id"] == id_:
-                    return rate_rule["index"]
-
         elif var_type == VarType.REACTION:
             for reaction in self._reactions:
                 if reaction["id"] == id_:
                     return reaction["index"]
-                    return rate_rule["index"]
 
         elif var_type == VarType.STATE_VARIABLE:
             for state_variable in self._state_variables:
@@ -1095,7 +1078,6 @@ class ChasteSbmlModel:
             equations=self._equations,
             events=self._events,
             functions=self._functions,
-            initial_assignments=self._initial_assignments,
             ode_class_name=self._ode_class_name,
             ode_header_guard=generate_header_guard(self._ode_hpp_filename),
             ode_hpp_file=self._ode_hpp_filename,
@@ -1159,14 +1141,5 @@ class ChasteSbmlModel:
 
         if not self._state_variables:
             raise NotImplementedError("Models without state variables are not supported.")
-
-        # Sort equations
-        equations = [eqn for eqn in self._equations if eqn["type"] != EquationType.INITIAL_VALUE]
-        sort_index = sort_formulas([(str(eqn["lhs"]), str(eqn["rhs"])) for eqn in equations])
-        sorted_equations = [equations[i] for i in sort_index]
-        self._equations = [
-            eqn for eqn in self._equations if eqn["type"] == EquationType.INITIAL_VALUE
-        ]
-        self._equations += sorted_equations
 
         self._populate_template_vars()
