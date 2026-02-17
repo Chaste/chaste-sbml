@@ -49,10 +49,10 @@ namespace sm = sbmlmath;
 std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, const std::vector<double> &rY)
 {
     std::vector<double> dqs;
-
 {% if derived_quantities %}
     RunModelEquations(time, rY);
 
+    // AMOUNTS
 {% for eq in equations %}
 {% if ( eq["type"] == EquationType.AMOUNT ) %}
     double {{ eq["lhs"] }} = {{ eq["rhs"] }}; // {{ eq["label"] }}
@@ -62,16 +62,8 @@ std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, 
 {% for dq in derived_quantities %}
     dqs.push_back({{ dq["id"] }});
 {% endfor %}
-
-    // AMOUNTS
-{% for amount in amounts %}
-    double {{ amount["id"] }} = {{ amount["rhs"] }};
-{% endfor %}
-
-{% for amount in amounts %}
-    dqs.push_back({{ amount["id"] }});
-{% endfor %}
 {% endif %} {# 'if derived_quantities' #}
+
     return dqs;
 }
 
@@ -214,7 +206,7 @@ std::vector<double> {{ ode_class_name }}::RunModelEquations(double time, const s
 
     std::vector<double> derivatives({{ state_variables|length }});
 {% for var in state_variables %}
-    derivatives[{{ var["index"] }}] = d_{{ var["id"] }}_dt;
+    derivatives[{{ var["index"] }}] = {{ var["derivative_id"] }};
 {% endfor %}
     return derivatives;
 }
@@ -270,12 +262,6 @@ void CellwiseOdeSystemInformation<{{ ode_class_name }}>::Initialise()
 {% for dq in derived_quantities %}
     this->mDerivedQuantityNames.push_back("{{ dq['id'] }}");
     this->mDerivedQuantityUnits.push_back("{{ dq['units'] }}");
-
-{% endfor %}
-
-{% for amount in amounts %}
-    this->mDerivedQuantityNames.push_back("{{ amount['id'] }}");
-    this->mDerivedQuantityUnits.push_back("{{ amount['units'] }}");
 
 {% endfor %}
 

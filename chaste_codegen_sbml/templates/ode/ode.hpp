@@ -42,7 +42,9 @@ private:
 
     // DERIVED QUANTITIES
 {% for dq in derived_quantities %}
+{% if dq["is_amount"] is false() %}
     double {{ dq["id"] }}; // {{ dq["label"] }}
+{% endif %}
 {% endfor %}
 
     // STOICHIOMETRY VARIABLES
