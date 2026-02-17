@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, Optional
 
 from libsbml import AST_FUNCTION_DELAY, AST_NAME, Compartment, formulaToString
 
+from chaste_codegen_sbml._config import DERIVATIVE_PREFIX, DERIVATIVE_SUFFIX
+
 if TYPE_CHECKING:
     from libsbml import ASTNode, FunctionDefinition, ListOf, SBase
 
@@ -154,6 +156,11 @@ def convert_str_formula(formula: str) -> str:
 
         cpp_tokens.append(cpp_token)
     cpp_formula = "".join(cpp_tokens)
+
+    results = re.findall(r"rateOf\(([^)]+)\)", cpp_formula)
+    if results:
+        for var in results:
+            cpp_formula = cpp_formula.replace(f"rateOf({var})", get_derivative_var(var))
     return cpp_formula
 
 
@@ -165,6 +172,15 @@ def get_compartment_size(compartment: "Compartment") -> float:
     if compartment.isSetSize():
         return compartment.getSize()
     return 1.0
+
+
+def get_derivative_var(var: str) -> str:
+    """Get the derivative variable name for a given variable.
+
+    :param var: The variable name.
+    :return: The derivative variable name.
+    """
+    return f"{DERIVATIVE_PREFIX}{var}{DERIVATIVE_SUFFIX}"
 
 
 def generate_header_guard(filename: str) -> str:
@@ -279,7 +295,7 @@ def search_ast_var(root: "ASTNode", name: str) -> bool:
     return False
 
 
-def sort_formulas(formulas: list[tuple[str, "ASTNode"]]) -> list[int]:
+def sort_formulas(formulas: list[tuple[str, str]]) -> list[int]:
     """Sort formulas based on their dependency.
 
     Formulas are sorted such that if formula A depends on B (i.e. A -> B),
@@ -313,14 +329,14 @@ def sort_formulas(formulas: list[tuple[str, "ASTNode"]]) -> list[int]:
         rhs_b = formulas[index_b][1]
 
         # Check if var_a is in rhs_b
-        if search_ast_var(rhs_b, var_a):
+        if search_var(rhs_b, var_a):
             # var_a is used in rhs_b: rule_a comes before rule_b
             _compare_cache[(index_a, index_b)] = -1
             _compare_cache[(index_b, index_a)] = 1
             return -1
 
         # Check if var_b is in rhs_a
-        if search_ast_var(rhs_a, var_b):
+        if search_var(rhs_a, var_b):
             # var_b is used in rhs_a: rule_b comes before rule_a
             _compare_cache[(index_a, index_b)] = 1
             _compare_cache[(index_b, index_a)] = -1
@@ -356,6 +372,22 @@ def sort_formulas(formulas: list[tuple[str, "ASTNode"]]) -> list[int]:
                 sorted_indices.append(index_a)
 
         return sorted_indices
+
+    def search_var(formula: str, name: str) -> bool:
+        """Search the formula for a variable with a specified name.
+
+        :param formula: The formula.
+        :param name: The name to search for.
+
+        :return: True if a variable with that name is found, False otherwise.
+        """
+        if not formula or not name:
+            return False
+
+        match = re.search(rf"\b{name}\b", formula)
+        if match:
+            return True
+        return False
 
     return _insertion_sort()
 

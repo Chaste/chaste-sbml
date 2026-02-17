@@ -15,28 +15,7 @@ namespace sm = sbmlmath;
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<{{ ode_class_name }}>);
 
-    const double time = 0.0;
-
-    // PARAMETERS
-{% for param in parameters %}
-{% if param["value"] is not none %}
-    {{ param["id"] }} = {{ param["value"] }};
-{% endif %}
-{% endfor %}
-
-    // STATE VARIABLES
-{% for var in state_variables %}
-{% if var["initial_value"] is not none %}
-    {{ var["id"] }} = {{ var["initial_value"] }};
-{% endif %}
-{% endfor %}
-
-    // DERIVED QUANTITIES
-{% for dq in derived_quantities %}
-{% if dq["initial_value"] is not none %}
-    {{ dq["id"] }} = {{ dq["initial_value"] }};
-{% endif %}
-{% endfor %}
+    Initialise();
 
     // STOICHIOMETRY VARIABLES
 {% for svar in stoichiometry_variables %}
@@ -46,31 +25,6 @@ namespace sm = sbmlmath;
     {{ svar["id"] }} = {{ svar["initial_value"] }};
 {% endif %}
 {% endfor %}
-
-    // INITIAL ASSIGNMENTS
-    RunInitialAssignments(time);
-
-{% for ia in initial_assignments %}
-{% if ia["custom"] is true() %}
-    {{ ia["lhs"] }} = {{ ia["rhs"] }}; // {{ ia["label"] }}
-{% endif %}
-{% endfor %}
-
-    // ODE SYSTEM INFORMATION
-{% for var in state_variables %}
-    SetDefaultInitialCondition({{ var["index"] }}, {{ var["id"] }});
-{% endfor %}
-
-{% for var in state_variables %}
-    mStateVariables.push_back({{ var["id"] }});
-{% endfor %}
-
-{% for param in parameters %}
-    mParameters.push_back({{ param["id"] }});
-{% endfor %}
-
-    // REACTIONS
-    RunReactions(time);
 
     // EVENTS
 {% if events %}
@@ -105,7 +59,8 @@ std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, 
 {
     std::vector<double> dqs;
 
-    RunModelRules(time, rY);
+{% if derived_quantities %}
+    RunModelEquations(time, rY);
 
 {% for dq in derived_quantities %}
     dqs.push_back({{ dq["id"] }});
@@ -119,18 +74,38 @@ std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, 
 {% for amount in amounts %}
     dqs.push_back({{ amount["id"] }});
 {% endfor %}
+{% endif %} {# 'if derived_quantities' #}
     return dqs;
 }
 
 void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-    RunModelRules(time, rY);
-
-{% for var in state_variables %}
-    rDY[{{ var["index"] }}] = {{ var["rhs"] }}; // d[{{ var["id"] }}]/dt
-{% endfor %}
+    std::vector<double> derivatives = RunModelEquations(time, rY);
+    for (unsigned i = 0; i < rDY.size(); ++i)
+    {
+        rDY[i] = derivatives[i];
+    }
 
     // TODO: Scale time appropriately
+}
+
+void {{ ode_class_name }}::Initialise(double time)
+{
+{% for eq in equations %}
+    {{ eq["lhs"] }} = {{ eq["rhs"] }}; // {{ eq["label"] }}
+{% endfor %}
+
+{% for var in state_variables %}
+    mStateVariables.push_back({{ var["id"] }});
+{% endfor %}
+
+{% for var in state_variables %}
+    SetDefaultInitialCondition({{ var["index"] }}, {{ var["id"] }});
+{% endfor %}
+
+{% for param in parameters %}
+    mParameters.push_back({{ param["id"] }});
+{% endfor %}
 }
 
 double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<double> &rY)
@@ -205,19 +180,34 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
 // ASSIGNMENT RULES
 void {{ ode_class_name }}::RunAssignmentRules(double time)
 {
-{% for rule in assignment_rules %}
-    {{ rule["lhs"] }} = {{ rule["rhs"] }};
-{% endfor %}
 }
 
 // INITIAL ASSIGNMENTS
 void {{ ode_class_name }}::RunInitialAssignments(double time)
 {
-{% for ia in initial_assignments %}
-{% if ia["custom"] is false() %}
-    {{ ia["lhs"] }} = {{ ia["rhs"] }}; // {{ ia["label"] }}
+}
+
+std::vector<double> {{ ode_class_name }}::RunModelEquations(double time, const std::vector<double>& rStateVariables)
+{
+{% for var in state_variables %}
+    {{ var["id"] }} = rStateVariables[{{ var["index"] }}];
+{% endfor %}
+
+{% for param in parameters %}
+    {{ param["id"] }} = GetParameter({{ param['index'] }});
+{% endfor %}
+
+{% for eq in equations %}
+{% if ( eq["type"] != EquationType.INITIAL_VALUE and eq["type"] != EquationType.INITIAL_ASSIGNMENT ) %}
+    {{ eq["lhs"] }} = {{ eq["rhs"] }}; // {{ eq["label"] }}
 {% endif %}
 {% endfor %}
+
+    std::vector<double> derivatives({{ state_variables|length }});
+{% for var in state_variables %}
+    derivatives[{{ var["index"] }}] = d_{{ var["id"] }}_dt;
+{% endfor %}
+    return derivatives;
 }
 
 // REACTIONS

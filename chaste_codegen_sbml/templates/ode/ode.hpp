@@ -36,6 +36,10 @@ private:
     double {{ var["id"] }}; // {{ var["label"] }}
 {% endfor %}
 
+{% for var in state_variables %}
+   double {{ var["derivative_id"] }};
+{% endfor %}
+
     // DERIVED QUANTITIES
 {% for dq in derived_quantities %}
     double {{ dq["id"] }}; // {{ dq["label"] }}
@@ -135,6 +139,10 @@ public:
      * @param rDY an output vector to be filled in with the resulting derivatives y' = [y1' ... yn'].
      */
     void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY) override;
+
+    void Initialise(double time = 0.0);
+
+    std::vector<double> RunModelEquations(double time, const std::vector<double>& rStateVariables);
 };
 
 // Register the ODE system with Boost serialization
