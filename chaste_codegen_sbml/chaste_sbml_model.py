@@ -293,32 +293,7 @@ class ChasteSbmlModel:
             "type": eq_type,
             "local_parameters": local_parameters,
         }
-
-        # Insert equation in appropriate order based on dependencies.
-        if eq_type == EquationType.INITIAL_VALUE:
-            # Initial value equations come first.
-            for i, other_eq in enumerate(self._equations):
-                if other_eq["type"] != EquationType.INITIAL_VALUE:
-                    self._equations.insert(i, eq)
-                    break
-            else:
-                self._equations.append(eq)
-
-        else:
-            for i, other_eq in enumerate(self._equations):
-                # Skip comparison if other equation has local parameter overriding lhs
-                if other_eq["local_parameters"]:
-                    if any(lhs == param["id"] for param in other_eq["local_parameters"]):
-                        break
-
-                # No local parameter overrides lhs, so proceed with dependency check
-                match = re.search(rf"\b{lhs}\b", other_eq["rhs"])
-                if match:
-                    self._equations.insert(i, eq)
-                    break
-            else:
-                # No other equations depend on this one.
-                self._equations.append(eq)
+        self._equations.append(eq)
 
     def _add_event(
         self,
@@ -409,10 +384,10 @@ class ChasteSbmlModel:
         """
         self._parameters.append(
             {
+                "index": len(self._parameters),
                 "id": id_,
                 "is_const": is_const,
                 "label": label,
-                "index": len(self._parameters),
                 "initial_value": initial_value,
                 "units": units,
             }
@@ -558,23 +533,6 @@ class ChasteSbmlModel:
             if lhs in self._odes:
                 raise ValueError(f"{lhs} has more than one rate rule and/or reaction.")
             self._odes[lhs] = rhs
-
-        # Extract ODEs from assignment rules
-        # assignment_rules = [r for r in self._sbml_rules if r.getTypeCode() == SBML_ASSIGNMENT_RULE]
-        # compartments = {c.getId() for c in self._sbml_compartments}
-
-        # for rule in assignment_rules:
-        #     lhs = rule.getVariable()
-        #     if lhs in self._odes:
-        #         raise ValueError(f"{lhs} has both an assignment rule and a rate rule/reaction.")
-
-        #     # Check for compartments that change size
-        #     if lhs in compartments:
-        #         math = rule.getMath()
-        #         if math.getType() not in [AST_INTEGER, AST_REAL, AST_REAL_E, AST_RATIONAL]:
-        #             rhs = convert_ast_formula(math)
-        #             rhs = f"({rhs}) - {lhs}"
-        #             self._odes[lhs] = rhs
 
         if not self._odes:
             raise NotImplementedError("Models without ODEs are not supported.")
@@ -1139,7 +1097,75 @@ class ChasteSbmlModel:
         self._format_function_definitions()
         self._format_events()
 
+        self._sort_equations()
+
         if not self._state_variables:
             raise NotImplementedError("Models without state variables are not supported.")
 
         self._populate_template_vars()
+
+    def _sort_equations(self) -> None:
+        """Sort equations, ordering by groups, then by dependencies.
+
+        Group order (ignored if there are dependencies that require a different order):
+        1. Initial value equations e.g. `S0 = 1.0`.
+        2. Initial assignment equations e.g. `S1 = 2 * S0`.
+        3. Assignment rules e.g. `k0 = k0 + 1.0`.
+        4. Reactions e.g. `J0 = k0 * S0 + k1 * S1`.
+        5. Derivatives e.g. `d_S0_dt = J0 - J1`.
+        6. Amounts e.g. `amt_S0 = S0 * compartment`.
+
+        Dependency order: if equation A depends on B (i.e. A -> B), then B should
+        come before A. It is assumed that dependencies are acyclic. This cannot 
+        sort cyclic dependencies such as A -> B -> A or A -> B -> C -> A.
+        """
+
+        def _depends(eq: dict, var: str) -> bool:
+            """Check if a variable appears in the rhs of an equation.
+
+            :param eq: The equation to check.
+            :param var: The variable to check for.
+            :return: True if the variable appears in the rhs of the equation, False otherwise.
+            """
+            # False if there is a local parameter with the same name as the variable.
+            if eq["local_parameters"]:
+                if any(var == param["id"] for param in eq["local_parameters"]):
+                    return False
+
+            return bool(re.search(rf"\b{var}\b", eq["rhs"]))
+
+        # Sort equations by group
+        group_order = [
+            EquationType.INITIAL_VALUE,
+            EquationType.INITIAL_ASSIGNMENT,
+            EquationType.ASSIGNMENT_RULE,
+            EquationType.REACTION,
+            EquationType.DERIVATIVE,
+            EquationType.AMOUNT,
+            EquationType.UNKNOWN,
+        ]
+
+        sorted_equations = [
+            eq for eq_type in group_order for eq in self._equations if eq["type"] == eq_type
+        ]
+
+        # Sort equations by dependencies
+        for _ in range(len(sorted_equations)):  # Max iterations for worst case
+            re_sorted_equations = []
+            for eq in sorted_equations:
+                for i, other_eq in enumerate(re_sorted_equations):
+                    # Insert eq before the first other equation that depends on it.
+                    if _depends(other_eq, eq["lhs"]):
+                        re_sorted_equations.insert(i, eq)
+                        break
+                else:
+                    # No other equations depend on this one.
+                    re_sorted_equations.append(eq)
+
+            if sorted_equations == re_sorted_equations:
+                # No changes were made.
+                break
+
+            sorted_equations = re_sorted_equations
+
+        self._equations = sorted_equations
