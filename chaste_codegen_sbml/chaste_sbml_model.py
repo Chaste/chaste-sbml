@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Optional
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 from libsbml import (
+    AST_FUNCTION_DELAY,
     AST_RELATIONAL_EQ,
     AST_RELATIONAL_GEQ,
     AST_RELATIONAL_GT,
@@ -21,11 +22,15 @@ from libsbml import (
     SBML_RATE_RULE,
     ConversionProperties,
     SBMLReader,
+    formulaToL3String,
+    parseL3Formula,
 )
 
 from ._config import (
     AMOUNT_PREFIX,
     CHASTE_PREFIX,
+    DERIVATIVE_PREFIX,
+    DERIVATIVE_SUFFIX,
     INITIAL_ASSIGNMENT_PREFIX,
     NON_DIM_UNITS,
     PREFIX_SEP,
@@ -36,11 +41,10 @@ from ._config import (
     VarType,
 )
 from ._utils import (
-    convert_ast_formula,
     generate_header_guard,
     get_compartment_size,
-    get_derivative_var,
     get_function_definition_arguments,
+    search_ast_type,
     to_camel_case,
     to_cpp_name,
 )
@@ -49,7 +53,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from jinja2.environment import Template
-    from libsbml import Reaction, Species, SpeciesReference
+    from libsbml import ASTNode, Reaction, Species, SpeciesReference
 
 
 class ChasteSbmlModel:
@@ -221,24 +225,25 @@ class ChasteSbmlModel:
         amt_label = f"Amount of {species_id}"
         amt_units = NON_DIM_UNITS  # TODO: Use correct units
         amt_rhs = f"{species_id} * {compartment_id}"
+        amt_math = parseL3Formula(amt_rhs)
 
         self._add_derived_quantity(amt_id, amt_label, None, amt_units, is_amount=True)
-        self._add_equation(amt_id, amt_rhs, eq_type=EquationType.AMOUNT)
+        self._add_equation(var=amt_id, math=amt_math, eq_type=EquationType.AMOUNT)
 
-    def _add_assignment_rule(self, id_: str, label: str, lhs: str, rhs: str) -> None:
+    def _add_assignment_rule(self, id_: str, label: str, var: str, math: "ASTNode") -> None:
         """Add an assignment rule to the template variables.
 
         :param id_: The rule ID.
         :param label: The rule description.
-        :param lhs: The left-hand side of the rule.
-        :param rhs: The right-hand side of the rule.
+        :param var: The variable being defined.
+        :param math: The right-hand side of the rule as an ASTNode.
         """
         self._assignment_rules.append(
             {
                 "id": id_,
                 "label": label,
-                "lhs": lhs,
-                "rhs": rhs,
+                "var": var,
+                "math": math,
             }
         )
 
@@ -272,24 +277,24 @@ class ChasteSbmlModel:
 
     def _add_equation(
         self,
-        lhs: str,
-        rhs: str,
+        var: str,
+        math: "ASTNode",
         eq_type: EquationType = EquationType.UNKNOWN,
         local_parameters: Optional[list[dict[str, str]]] = None,
     ) -> None:
         """Add an equation to the template variables.
 
-        :param lhs: The left-hand side of the equation.
-        :param rhs: The right-hand side of the equation.
-        :param eq_type: The type of the equation.
-        :param local_parameters: A list of local parameters used in the equation.
-        """
-        if eq_type == EquationType.DERIVATIVE:
-            lhs = get_derivative_var(lhs)
+        These are expected to be equations of the form `var = rhs`.
 
+        :param var: The variable being defined.
+        :param math: The right-hand side of the equation as an AST.
+        :param eq_type: The type of the equation.
+        :param local_parameters: A list of local parameter names used in the equation.
+        """
         eq = {
-            "lhs": str(lhs),
-            "rhs": str(rhs),
+            "var": var,
+            "rhs": "",
+            "math": math,
             "type": eq_type,
             "local_parameters": local_parameters,
         }
@@ -341,22 +346,17 @@ class ChasteSbmlModel:
         )
         self._variable_types[id_] = VarType.FUNCTION
 
-    def _add_initial_assignment(self, id_: str, label: str, lhs: str, rhs: str) -> None:
+    def _add_initial_assignment(
+        self, id_: str, label: str, var: str, math: Optional["ASTNode"] = None
+    ) -> None:
         """Add an initial assignment to the template variables.
 
         :param id_: The rule ID.
         :param label: The rule description.
-        :param lhs: The left-hand side of the rule.
-        :param rhs: The right-hand side of the rule.
+        :param var: The variable being assigned.
+        :param math: The right-hand side of the rule as an ASTNode.
         """
-        self._initial_assignments.append(
-            {
-                "id": id_,
-                "label": label,
-                "lhs": lhs,
-                "rhs": rhs,
-            }
-        )
+        self._initial_assignments.append({"id": id_, "label": label, "var": var, "math": math})
 
     def _add_output(self, filename: str, code: str) -> None:
         """Add generated code to the outputs dictionary.
@@ -394,20 +394,20 @@ class ChasteSbmlModel:
         )
         self._variable_types[id_] = VarType.PARAMETER
 
-    def _add_rate_rule(self, id_: str, label: str, lhs: str, rhs: str) -> None:
+    def _add_rate_rule(self, id_: str, label: str, var: str, math: "ASTNode") -> None:
         """Add a rate rule to the template variables.
 
         :param id_: The rule ID.
         :param label: The rule description.
-        :param lhs: The left-hand side of the rule.
-        :param rhs: The right-hand side of the rule.
+        :param var: The variable being defined.
+        :param math: The right-hand side of the rule as an ASTNode.
         """
         self._rate_rules.append(
             {
                 "id": id_,
                 "label": label,
-                "lhs": lhs,
-                "rhs": rhs,
+                "var": var,
+                "math": math,
             }
         )
 
@@ -428,7 +428,7 @@ class ChasteSbmlModel:
 
     def _add_state_variable(
         self, id_: str, label: str, initial_value: Optional[float], units: str = NON_DIM_UNITS
-    ) -> None:
+    ) -> dict:
         """Add a state variable to the template variables.
 
         :param id_: The variable ID.
@@ -436,17 +436,19 @@ class ChasteSbmlModel:
         :param initial_value: The variable initial value.
         :param units: The variable units.
         """
-        self._state_variables.append(
-            {
-                "index": len(self._state_variables),
-                "id": id_,
-                "derivative_id": get_derivative_var(id_),
-                "label": label,
-                "initial_value": initial_value,
-                "units": units,
-            }
-        )
+        state_var = {
+            "index": len(self._state_variables),
+            "id": id_,
+            "derivative_id": f"{DERIVATIVE_PREFIX}{id_}{DERIVATIVE_SUFFIX}",
+            "label": label,
+            "initial_value": initial_value,
+            "units": units,
+        }
+
+        self._state_variables.append(state_var)
         self._variable_types[id_] = VarType.STATE_VARIABLE
+
+        return state_var
 
     def _add_stoichiometry_variable(self, species_reference: "SpeciesReference") -> None:
         """Add a stoichiometry variable to the template variables.
@@ -459,14 +461,15 @@ class ChasteSbmlModel:
         initial_value = None
         if species_reference.isSetStoichiometry():
             initial_value = species_reference.getStoichiometry()
-            self._add_equation(id_, f"{initial_value}", eq_type=EquationType.INITIAL_VALUE)
+            self._add_equation(
+                var=id_, math=parseL3Formula(f"{initial_value}"), eq_type=EquationType.INITIAL_VALUE
+            )
 
         self._add_parameter(id_, label, initial_value, NON_DIM_UNITS)  # TODO: Use correct units
 
         if species_reference.isSetStoichiometryMath():
             math = species_reference.getStoichiometryMath().getMath()
-            rhs = convert_ast_formula(math)
-            self._add_equation(id_, rhs, eq_type=EquationType.ASSIGNMENT_RULE)
+            self._add_equation(var=id_, math=math, eq_type=EquationType.ASSIGNMENT_RULE)
 
     def _extract_odes(self) -> None:
         """Extract the ODEs equations for each species."""
@@ -485,6 +488,8 @@ class ChasteSbmlModel:
             """
             rhs = rxn.getId()
 
+            # TODO: Build all formulas as ASTs
+
             # Account for stoichiometry
             if species_ref.isSetId():
                 self._add_stoichiometry_variable(species_ref)
@@ -493,7 +498,7 @@ class ChasteSbmlModel:
 
             elif species_ref.isSetStoichiometryMath():
                 sto_math = species_ref.getStoichiometryMath().getMath()
-                sto_formula = convert_ast_formula(sto_math)
+                sto_formula = self._formula_to_string(sto_math)
                 rhs = f"({sto_formula} * {rhs})"
 
             elif species_ref.isSetStoichiometry():
@@ -528,11 +533,11 @@ class ChasteSbmlModel:
 
         # Extract ODEs from rate rules
         for rule in self._rate_rules:
-            lhs = rule["lhs"]
-            rhs = rule["rhs"]
-            if lhs in self._odes:
-                raise ValueError(f"{lhs} has more than one rate rule and/or reaction.")
-            self._odes[lhs] = rhs
+            var = rule["var"]
+            math = rule["math"]
+            if var in self._odes:
+                raise ValueError(f"{var} has more than one rate rule and/or reaction.")
+            self._odes[var] = math
 
         if not self._odes:
             raise NotImplementedError("Models without ODEs are not supported.")
@@ -540,14 +545,18 @@ class ChasteSbmlModel:
     def _format_compartments(self) -> None:
         """Add compartments to template variables."""
         # Note: rules must be processed before compartments
-        assignment_rules = {rule["lhs"]: rule["rhs"] for rule in self._assignment_rules}
+        assignment_rules = {rule["var"]: rule["math"] for rule in self._assignment_rules}
 
         for compartment in self._sbml_compartments:
             compartment_id = compartment.getId()
             label = compartment.getName().strip()
 
             size = get_compartment_size(compartment)
-            self._add_equation(compartment_id, f"{size}", eq_type=EquationType.INITIAL_VALUE)
+            self._add_equation(
+                var=compartment_id,
+                math=parseL3Formula(f"{size}"),
+                eq_type=EquationType.INITIAL_VALUE,
+            )
             units = compartment.getUnits() if compartment.isSetUnits() else NON_DIM_UNITS
 
             if compartment.isSetConstant() and compartment.getConstant():
@@ -556,16 +565,30 @@ class ChasteSbmlModel:
             elif compartment_id in self._odes:
                 # State variable
                 rhs = self._odes[compartment_id]
-                self._add_state_variable(compartment_id, label, size, units)
-                self._add_equation(compartment_id, rhs, eq_type=EquationType.DERIVATIVE)
+                state_var = self._add_state_variable(compartment_id, label, size, units)
+                self._add_equation(
+                    var=state_var["derivative_id"],
+                    math=parseL3Formula(rhs),
+                    eq_type=EquationType.DERIVATIVE,
+                )
             elif compartment_id in assignment_rules:
                 # Derived quantity
-                rhs = assignment_rules[compartment_id]
+                math = assignment_rules[compartment_id]
                 self._add_derived_quantity(compartment_id, label, size, units)
-                self._add_equation(compartment_id, rhs, eq_type=EquationType.ASSIGNMENT_RULE)
+                self._add_equation(
+                    var=compartment_id, math=math, eq_type=EquationType.ASSIGNMENT_RULE
+                )
             else:
                 # Variable parameter
                 self._add_parameter(compartment_id, label, size, units)
+
+    def _format_equations(self) -> None:
+        """Convert and sort equations."""
+        for eq in self._equations:
+            if eq["math"]:
+                eq["rhs"] = self._formula_to_string(eq["math"])
+
+        self._sort_equations()
 
     def _format_events(self) -> None:
         """Add events to template variables."""
@@ -573,7 +596,7 @@ class ChasteSbmlModel:
 
         for event in self._sbml_events:
             if event.isSetDelay():
-                math = convert_ast_formula(event.getDelay().getMath())
+                math = self._formula_to_string(event.getDelay().getMath())
                 try:
                     delay = float(math)
                 except ValueError:
@@ -595,7 +618,7 @@ class ChasteSbmlModel:
                     break
 
             trigger_math = event.getTrigger().getMath()
-            trigger_formula = convert_ast_formula(trigger_math)
+            trigger_formula = self._formula_to_string(trigger_math)
 
             trigger_distance = "1.0"
             node_type = trigger_math.getType()
@@ -607,8 +630,8 @@ class ChasteSbmlModel:
                 AST_RELATIONAL_GEQ,
                 AST_RELATIONAL_NEQ,
             ]:
-                lc = convert_ast_formula(trigger_math.getLeftChild())
-                rc = convert_ast_formula(trigger_math.getRightChild())
+                lc = self._formula_to_string(trigger_math.getLeftChild())
+                rc = self._formula_to_string(trigger_math.getRightChild())
 
                 # Distance is negative when the condition is false,
                 # zero at the point where the condition switches from false to true,
@@ -666,7 +689,7 @@ class ChasteSbmlModel:
                 lhs = assignment.getVariable()
                 type_ = self._get_variable_type(lhs)
                 index = self._get_variable_index(lhs)
-                rhs = convert_ast_formula(assignment.getMath())
+                rhs = self._formula_to_string(assignment.getMath())
 
                 assignments.append(
                     {
@@ -686,7 +709,7 @@ class ChasteSbmlModel:
             label = fd.getName().strip()
             arg_list = get_function_definition_arguments(fd)
             args = ", ".join(map(lambda x: f"double {x}", arg_list))
-            body = convert_ast_formula(fd.getBody())
+            body = self._formula_to_string(fd.getBody())
 
             self._add_function(
                 fd_id,
@@ -701,15 +724,15 @@ class ChasteSbmlModel:
             if ia.getMath() is not None:
                 id_ = ia.getId()
                 label = ia.getName().strip()
-                lhs = ia.getSymbol()
-                rhs = convert_ast_formula(ia.getMath())
-                self._add_initial_assignment(id_, label, lhs, rhs)
+                var = ia.getSymbol()
+                math = ia.getMath()
+                self._add_initial_assignment(id_, label, var, math)
 
     def _format_parameters(self) -> None:
         """Add parameters to template variables."""
         # Note: rules must be processed before parameters
-        assignment_rules = {rule["lhs"]: rule["rhs"] for rule in self._assignment_rules}
-        initial_assignments = {ia["lhs"]: ia["rhs"] for ia in self._initial_assignments}
+        assignment_rules = {rule["var"]: rule["math"] for rule in self._assignment_rules}
+        initial_assignments = {ia["var"]: ia["math"] for ia in self._initial_assignments}
 
         for param in self._sbml_parameters:
             param_id = param.getId()
@@ -718,7 +741,11 @@ class ChasteSbmlModel:
             value = None
             if param.isSetValue():
                 value = param.getValue()
-                self._add_equation(param_id, value, eq_type=EquationType.INITIAL_VALUE)
+                self._add_equation(
+                    var=param_id,
+                    math=parseL3Formula(f"{value}"),
+                    eq_type=EquationType.INITIAL_VALUE,
+                )
 
             units = NON_DIM_UNITS
 
@@ -729,20 +756,22 @@ class ChasteSbmlModel:
 
             if param_id in self._odes:
                 # State variable
-                rhs = self._odes[param_id]
-                self._add_state_variable(param_id, label, value, units)
-                self._add_equation(param_id, rhs, eq_type=EquationType.DERIVATIVE)
+                math = self._odes[param_id]
+                state_var = self._add_state_variable(param_id, label, value, units)
+                self._add_equation(
+                    var=state_var["derivative_id"], math=math, eq_type=EquationType.DERIVATIVE
+                )
 
             elif param_id in assignment_rules:
                 # Derived quantity
-                rhs = assignment_rules[param_id]
+                math = assignment_rules[param_id]
                 self._add_derived_quantity(param_id, label, value, units)
-                self._add_equation(param_id, rhs, eq_type=EquationType.ASSIGNMENT_RULE)
+                self._add_equation(var=param_id, math=math, eq_type=EquationType.ASSIGNMENT_RULE)
             elif param_id in initial_assignments:
                 # Fixed parameter with initial assignment
-                rhs = initial_assignments[param_id]
+                math = initial_assignments[param_id]
                 self._add_parameter(param_id, label, value, units, is_const=is_const)
-                self._add_equation(param_id, rhs, eq_type=EquationType.INITIAL_ASSIGNMENT)
+                self._add_equation(var=param_id, math=math, eq_type=EquationType.INITIAL_ASSIGNMENT)
             elif param.isSetConstant() and param.getConstant():
                 # Fixed parameter without an initial assignment or assignment rule
                 self._add_parameter(param_id, label, value, units, is_const=True)
@@ -753,26 +782,30 @@ class ChasteSbmlModel:
     def _format_reactions(self) -> None:
         """Add reactions to template variables."""
         for reaction in self._sbml_reactions:
-            reaction_id = reaction.getId()
+            id_ = reaction.getId()
             label = reaction.getName().strip()
-
-            rhs = ""
-            local_parameters = []
+            self._add_reaction(id_, label)
 
             kinetic_law = reaction.getKineticLaw()
             if kinetic_law is None:
                 species = [r.getSpecies() for r in reaction.getListOfReactants()]
                 rhs = " * ".join(species)
+                self._add_equation(
+                    var=id_,
+                    math=parseL3Formula(rhs),
+                    eq_type=EquationType.REACTION,
+                )
 
             else:
-                rhs = convert_ast_formula(kinetic_law.getMath())
+                math = kinetic_law.getMath()
 
                 parameters = kinetic_law.getListOfParameters()
+                local_parameters = []
                 for param in parameters:
                     param_id = param.getId()
                     if not param.isSetValue():
                         raise ValueError(
-                            f"Local parameter {param_id} in reaction {reaction_id} has no value."
+                            f"Local parameter {param_id} in reaction {id_} has no value."
                         )
                     local_parameters.append(
                         {
@@ -781,14 +814,12 @@ class ChasteSbmlModel:
                             "value": str(param.getValue()),
                         }
                     )
-
-            self._add_reaction(reaction_id, label)
-            self._add_equation(
-                reaction_id,
-                rhs,
-                local_parameters=local_parameters,
-                eq_type=EquationType.REACTION,
-            )
+                self._add_equation(
+                    var=id_,
+                    math=math,
+                    local_parameters=local_parameters,
+                    eq_type=EquationType.REACTION,
+                )
 
     def _format_rules(self) -> None:
         """Add rules to template variables."""
@@ -796,34 +827,24 @@ class ChasteSbmlModel:
         if any(r.getTypeCode() == SBML_ALGEBRAIC_RULE for r in self._sbml_rules):
             raise NotImplementedError("Algebraic rules are not supported.")
 
-        # Get assignment
-        assignment_rules = [r for r in self._sbml_rules if r.getTypeCode() == SBML_ASSIGNMENT_RULE]
-        for rule in assignment_rules:
+        # Get assignment and rate rules
+        for rule in self._sbml_rules:
             math = rule.getMath()
             if math is not None:
-                rule_id = rule.getId()
+                id_ = rule.getId()
                 label = rule.getName().strip()
-                lhs = rule.getVariable()
-                rhs = convert_ast_formula(math)
-                self._add_assignment_rule(rule_id, label, lhs, rhs)
-
-        # Get rate rules
-        rate_rules = [r for r in self._sbml_rules if r.getTypeCode() == SBML_RATE_RULE]
-        for rule in rate_rules:
-            math = rule.getMath()
-            if math is not None:
-                rule_id = rule.getId()
-                label = rule.getName().strip()
-                lhs = rule.getVariable()
-                rhs = convert_ast_formula(math)
-                self._add_rate_rule(rule_id, label, lhs, rhs)
+                var = rule.getVariable()
+                if rule.getTypeCode() == SBML_ASSIGNMENT_RULE:
+                    self._add_assignment_rule(id_, label, var, math)
+                elif rule.getTypeCode() == SBML_RATE_RULE:
+                    self._add_rate_rule(id_, label, var, math)
 
     def _format_species(self) -> None:
         """Add species to template variables."""
         # Note: Rules must be processed before species
-        assignment_rules = {r["lhs"]: r["rhs"] for r in self._assignment_rules}
-        rate_rules = {r["lhs"]: r["rhs"] for r in self._rate_rules}
-        initial_assignments = {r["lhs"]: r["rhs"] for r in self._initial_assignments}
+        assignment_rules = {ar["var"]: ar["math"] for ar in self._assignment_rules}
+        rate_rules = {rr["var"]: rr["math"] for rr in self._rate_rules}
+        initial_assignments = {ia["var"]: ia["math"] for ia in self._initial_assignments}
 
         for species in self._sbml_species:
             species_id = species.getId()
@@ -841,7 +862,11 @@ class ChasteSbmlModel:
             initial_value = None
             if species.isSetInitialConcentration():
                 initial_value = species.getInitialConcentration()
-                self._add_equation(species_id, initial_value, eq_type=EquationType.INITIAL_VALUE)
+                self._add_equation(
+                    var=species_id,
+                    math=parseL3Formula(initial_value),
+                    eq_type=EquationType.INITIAL_VALUE,
+                )
 
                 if (
                     has_only_substance_units
@@ -851,10 +876,13 @@ class ChasteSbmlModel:
                     # Convert initial concentration to amount via a custom initial assignment
                     ia_id = PREFIX_SEP.join([CHASTE_PREFIX, INITIAL_ASSIGNMENT_PREFIX, species_id])
                     ia_label = f"Convert {species_id} concentration to amount"
-                    ia_lhs = species_id
+                    ia_var = species_id
                     ia_rhs = f"{species_id} * {compartment_id}"
-                    self._add_initial_assignment(ia_id, ia_label, ia_lhs, ia_rhs)
-                    self._add_equation(ia_lhs, ia_rhs, eq_type=EquationType.INITIAL_ASSIGNMENT)
+                    ia_math = parseL3Formula(ia_rhs)
+                    self._add_initial_assignment(ia_id, ia_label, ia_var, ia_math)
+                    self._add_equation(
+                        var=ia_var, math=ia_math, eq_type=EquationType.INITIAL_ASSIGNMENT
+                    )
 
             elif species.isSetInitialAmount():
                 initial_value = species.getInitialAmount()
@@ -868,26 +896,32 @@ class ChasteSbmlModel:
                     # Convert initial amount to concentration via a custom initial assignment
                     ia_id = PREFIX_SEP.join([CHASTE_PREFIX, INITIAL_ASSIGNMENT_PREFIX, species_id])
                     ia_label = f"Convert {species_id} amount to concentration"
-                    ia_lhs = species_id
+                    ia_var = species_id
                     ia_rhs = f"{species_id} / {compartment_id}"
-                    self._add_initial_assignment(ia_id, ia_label, ia_lhs, ia_rhs)
-                    self._add_equation(ia_lhs, ia_rhs, eq_type=EquationType.INITIAL_ASSIGNMENT)
+                    ia_math = parseL3Formula(ia_rhs)
+                    self._add_initial_assignment(ia_id, ia_label, ia_var, ia_math)
+                    self._add_equation(
+                        var=ia_var, math=ia_math, eq_type=EquationType.INITIAL_ASSIGNMENT
+                    )
 
             is_bc = species.isSetBoundaryCondition() and species.getBoundaryCondition()
 
             if species_id in assignment_rules:
                 # Derived quantity (includes boundary conditions with assignment rules)
-                rhs = assignment_rules[species_id]
-                self._add_derived_quantity(species_id, label, initial_value, units, rhs)
-                self._add_equation(species_id, rhs, eq_type=EquationType.ASSIGNMENT_RULE)
+                math = assignment_rules[species_id]
+                self._add_derived_quantity(species_id, label, initial_value, units)
+                self._add_equation(var=species_id, math=math, eq_type=EquationType.ASSIGNMENT_RULE)
 
             elif is_bc and (species_id not in rate_rules):
                 if compartment_id in self._odes and not has_only_substance_units:
                     # State variable: boundary condition in changing compartment
                     compartment_rhs = self._odes[compartment_id]
                     rhs = f"(-{species_id} * ({compartment_rhs})) / {compartment_id}"
-                    self._add_state_variable(species_id, label, initial_value, units)
-                    self._add_equation(species_id, rhs, eq_type=EquationType.DERIVATIVE)
+                    math = parseL3Formula(rhs)
+                    state_var = self._add_state_variable(species_id, label, initial_value, units)
+                    self._add_equation(
+                        var=state_var["derivative_id"], math=math, eq_type=EquationType.DERIVATIVE
+                    )
                 else:
                     # Derived quantity
                     self._add_derived_quantity(species_id, label, initial_value, units)
@@ -915,8 +949,12 @@ class ChasteSbmlModel:
                 # if time_multiplier != 1.0:
                 #     f"rDY[{state_variable_index}] *= {time_multiplier};"
 
-                self._add_state_variable(species_id, label, initial_value, units)
-                self._add_equation(species_id, rhs, eq_type=EquationType.DERIVATIVE)
+                state_var = self._add_state_variable(species_id, label, initial_value, units)
+                self._add_equation(
+                    var=state_var["derivative_id"],
+                    math=parseL3Formula(rhs),
+                    eq_type=EquationType.DERIVATIVE,
+                )
 
             else:
                 # Derived quantity (constant value)
@@ -926,6 +964,153 @@ class ChasteSbmlModel:
             if not has_only_substance_units:
                 # Add an extra "amount" derived quantity for the species
                 self._add_amount(species)
+
+    def _formula_to_string(self, math: "ASTNode") -> str:
+        """Convert an AST math formula to an equivalent C++ string.
+
+        :param math: The AST math formula.
+        :return: The equivalent C++ string.
+        """
+        unsupported_functions = ["delay"]
+        for func in unsupported_functions:
+            if search_ast_type(math, AST_FUNCTION_DELAY):
+                raise NotImplementedError(f"SBML function not supported: '{func}'.")
+
+        formula = formulaToL3String(math)
+
+        # Convert all integer literals to doubles to fix integer division.
+        # TODO: Perhaps instead of regex, traverse AST and convert some AST_INTEGER
+        # nodes to AST_REAL. This should only need to apply to numbers used in a division.
+        formula = re.sub(r"(?<!\.)(?<!e-|E-)\b[0-9]+\b(?!\.)", lambda x: f"{x[0]}.0", formula)
+
+        # SBML contants to be replaced with C++ equivalents
+        constants = {
+            "avogadro": "sm::AVOGADRO",
+            "exponentiale": "M_E",
+            "inf": "std::numeric_limits<double>::infinity()",
+            "infinity": "std::numeric_limits<double>::infinity()",
+            "nan": "NAN",
+            "notanumber": "NAN",
+            "pi": "M_PI",
+            "time": "time",
+            "t": "time",
+            "s": "time",
+        }
+        # skip: "true", "false"
+
+        # SBML functions with same name as C++ equivalents
+        unchanged_functions = {
+            "acos",
+            "acosh",
+            "asin",
+            "asinh",
+            "atan",
+            "atanh",
+            "ceil",
+            "cos",
+            "cosh",
+            "exp",
+            "floor",
+            "pow",
+            "sin",
+            "sinh",
+            "sqrt",
+            "tan",
+            "tanh",
+        }
+
+        # SBML functions with different names in C++
+        renamed_functions = {
+            "abs": "fabs",
+            "arccos": "acos",
+            "arccosh": "acosh",
+            "arcsin": "asin",
+            "arcsinh": "asinh",
+            "arctan": "atan",
+            "arctanh": "atanh",
+            "ceiling": "ceil",
+            "ln": "log",
+            "power": "pow",
+            "rem": "fmod",
+        }
+
+        # SBML functions with custom implementations
+        custom_functions = {
+            "and": "and_",
+            "acot": "acot",
+            "acoth": "acoth",
+            "acsc": "acsc",
+            "acsch": "acsch",
+            "asec": "asec",
+            "asech": "asech",
+            "arccot": "acot",
+            "arccoth": "acoth",
+            "arccsc": "acsc",
+            "arccsch": "acsch",
+            "arcsec": "asec",
+            "arcsech": "asech",
+            "cot": "cot",
+            "coth": "coth",
+            "csc": "csc",
+            "csch": "csch",
+            "eq": "eq",
+            "factorial": "factorial",
+            "geq": "geq",
+            "gt": "gt",
+            "leq": "leq",
+            "log": "log",
+            "lt": "lt",
+            "max": "max",
+            "min": "min",
+            "neq": "neq",
+            "not": "not_",
+            "or": "or_",
+            "piecewise": "piecewise",
+            "quotient": "quotient",
+            "root": "root",
+            "sec": "sec",
+            "sech": "sech",
+            "sqr": "sqr",
+            "xor": "xor_",
+        }
+
+        # TODO: From SBML Level 3 upwards, log defaults to base 10.
+        # SBML versions lower than 3 default to base e.
+        # See https://sbml.org/software/libsbml/5.18.0/docs/formatted/python-api/namespacelibsbml.html#a8e96a5a70569ae32655c6302638f6dc3  # noqa: B950
+
+        tokens = re.findall(r"\w+|\W+", formula)
+
+        cpp_tokens = []
+        for token in tokens:
+            cpp_token = token
+
+            # Replace function names and constants.
+            if token in constants:
+                cpp_token = f"{constants[token]}"
+
+            elif token in unchanged_functions:
+                cpp_token = f"std::{token}"
+
+            elif token in renamed_functions:
+                cpp_token = f"std::{renamed_functions[token]}"
+
+            elif token in custom_functions:
+                cpp_token = f"sm::{custom_functions[token]}"
+
+            cpp_tokens.append(cpp_token)
+        cpp_formula = "".join(cpp_tokens)
+
+        results = re.findall(r"rateOf\(([^)]+)\)", cpp_formula)
+        if results:
+            for var in results:
+                rate = "0.0"
+                var_type = self._get_variable_type(var)
+                if var_type == VarType.STATE_VARIABLE:
+                    i = self._get_variable_index(var)
+                    state_var = self._state_variables[i]
+                    rate = state_var["derivative_id"]
+                cpp_formula = cpp_formula.replace(f"rateOf({var})", rate)
+        return cpp_formula
 
     def _generate_output(self, template_path, filename) -> None:
         """Generate a single output file from a template.
@@ -1093,14 +1278,14 @@ class ChasteSbmlModel:
         self._format_species()
         self._format_parameters()
 
+        if not self._state_variables:
+            raise NotImplementedError("Models without state variables are not supported.")
+
         self._format_reactions()
         self._format_function_definitions()
         self._format_events()
 
-        self._sort_equations()
-
-        if not self._state_variables:
-            raise NotImplementedError("Models without state variables are not supported.")
+        self._format_equations()
 
         self._populate_template_vars()
 
@@ -1116,7 +1301,7 @@ class ChasteSbmlModel:
         6. Amounts e.g. `amt_S0 = S0 * compartment`.
 
         Dependency order: if equation A depends on B (i.e. A -> B), then B should
-        come before A. It is assumed that dependencies are acyclic. This cannot 
+        come before A. It is assumed that dependencies are acyclic. This cannot
         sort cyclic dependencies such as A -> B -> A or A -> B -> C -> A.
         """
 
@@ -1155,7 +1340,7 @@ class ChasteSbmlModel:
             for eq in sorted_equations:
                 for i, other_eq in enumerate(re_sorted_equations):
                     # Insert eq before the first other equation that depends on it.
-                    if _depends(other_eq, eq["lhs"]):
+                    if _depends(other_eq, eq["var"]):
                         re_sorted_equations.insert(i, eq)
                         break
                 else:
