@@ -436,6 +436,7 @@ class ChasteSbmlModel:
         :param initial_value: The variable initial value.
         :param units: The variable units.
         """
+        # TODO: Check for name clashes with derivative_id's
         state_var = {
             "index": len(self._state_variables),
             "id": id_,
@@ -848,9 +849,19 @@ class ChasteSbmlModel:
         rate_rules = {rr["var"]: rr["math"] for rr in self._rate_rules}
         initial_assignments = {ia["var"]: ia["math"] for ia in self._initial_assignments}
 
+        model_conversion_factor = None
+        if self._sbml_model.isSetConversionFactor():
+            model_conversion_factor = self._sbml_model.getConversionFactor()
+
         for species in self._sbml_species:
             species_id = species.getId()
             label = species.getName().strip()
+
+            conversion_factor = None
+            if species.isSetConversionFactor():
+                conversion_factor = species.getConversionFactor()
+            elif model_conversion_factor is not None:
+                conversion_factor = model_conversion_factor
 
             # If there's a compartment we'll normalise the ODEs, so declare it as non-dimensional
             compartment_id = species.getCompartment()
@@ -921,6 +932,8 @@ class ChasteSbmlModel:
                     # State variable: boundary condition in changing compartment
                     compartment_rhs = self._odes[compartment_id]
                     rhs = f"(-{species_id} * ({compartment_rhs})) / {compartment_id}"
+                    if conversion_factor is not None:
+                        rhs = f"({rhs}) * {conversion_factor}"
                     math = parseL3Formula(rhs)
                     state_var = self._add_state_variable(species_id, label, initial_value, units)
                     self._add_equation(
@@ -953,6 +966,9 @@ class ChasteSbmlModel:
                 # time_multiplier = self._get_timescale_multiplier()
                 # if time_multiplier != 1.0:
                 #     f"rDY[{state_variable_index}] *= {time_multiplier};"
+
+                if conversion_factor is not None:
+                    rhs = f"({rhs}) * {conversion_factor}"
 
                 state_var = self._add_state_variable(species_id, label, initial_value, units)
                 self._add_equation(
