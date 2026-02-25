@@ -461,9 +461,8 @@ class ChasteSbmlModel:
         initial_value = None
         if species_reference.isSetStoichiometry():
             initial_value = species_reference.getStoichiometry()
-            self._add_equation(
-                var=id_, math=parseL3Formula(f"{initial_value}"), eq_type=EquationType.INITIAL_VALUE
-            )
+            math = parseL3Formula(f"{initial_value}")
+            self._add_equation(var=id_, math=math, eq_type=EquationType.INITIAL_VALUE)
 
         self._add_parameter(id_, label, initial_value, NON_DIM_UNITS)  # TODO: Use correct units
 
@@ -474,9 +473,9 @@ class ChasteSbmlModel:
     def _extract_odes(self) -> None:
         """Extract the ODEs equations for each species."""
         # Note: rules must be processed before ODE extraction
-        self._odes = {}
+        odes = {}
 
-        def _update_ode(species_ref: "SpeciesReference", rxn: "Reaction", is_product: bool) -> None:
+        def _update_ode(species_ref: "SpeciesReference", rxn: "Reaction", add: bool) -> None:
             """Update the ODE for a species based on a species reference in a reaction.
 
             Each ODE will essentially be the sum of the products minus the
@@ -484,11 +483,9 @@ class ChasteSbmlModel:
 
             :param species_ref: The species reference.
             :param rxn: The reaction.
-            :param is_product: True if the species reference is a product, False if a reactant.
+            :param add: True if the species reference is a product, False if a reactant.
             """
             rhs = rxn.getId()
-
-            # TODO: Build all formulas as ASTs
 
             # Account for stoichiometry
             if species_ref.isSetId():
@@ -508,16 +505,16 @@ class ChasteSbmlModel:
 
             # Update the ODE
             species_id = species_ref.getSpecies()
-            if species_id in self._odes:
-                if is_product:
-                    self._odes[species_id] += f" + {rhs}"
+            if species_id in odes:
+                if add:
+                    odes[species_id] += f" + {rhs}"
                 else:
-                    self._odes[species_id] += f" - {rhs}"
+                    odes[species_id] += f" - {rhs}"
             else:
-                if is_product:
-                    self._odes[species_id] = rhs
+                if add:
+                    odes[species_id] = rhs
                 else:
-                    self._odes[species_id] = f"-{rhs}"
+                    odes[species_id] = f"-{rhs}"
 
         # Extract ODEs from reactions
         for reaction in self._sbml_reactions:
@@ -526,21 +523,27 @@ class ChasteSbmlModel:
 
             # Decompose reaction into sum of products minus sum of reactants
             for product in products:
-                _update_ode(product, reaction, is_product=True)
+                _update_ode(product, reaction, add=True)
 
             for reactant in reactants:
-                _update_ode(reactant, reaction, is_product=False)
+                _update_ode(reactant, reaction, add=False)
+
+        # Convert string formulas to ASTs
+        for var, rhs in odes.items():
+            odes[var] = parseL3Formula(f"({rhs})")
 
         # Extract ODEs from rate rules
         for rule in self._rate_rules:
             var = rule["var"]
             math = rule["math"]
-            if var in self._odes:
+            if var in odes:
                 raise ValueError(f"{var} has more than one rate rule and/or reaction.")
-            self._odes[var] = math
+            odes[var] = math
 
-        if not self._odes:
+        if not odes:
             raise NotImplementedError("Models without ODEs are not supported.")
+
+        self._odes = odes
 
     def _format_compartments(self) -> None:
         """Add compartments to template variables."""
@@ -548,39 +551,38 @@ class ChasteSbmlModel:
         assignment_rules = {rule["var"]: rule["math"] for rule in self._assignment_rules}
 
         for compartment in self._sbml_compartments:
-            compartment_id = compartment.getId()
+            id_ = compartment.getId()
             label = compartment.getName().strip()
 
             size = get_compartment_size(compartment)
+            math = parseL3Formula(f"{size}")
             self._add_equation(
-                var=compartment_id,
-                math=parseL3Formula(f"{size}"),
+                var=id_,
+                math=math,
                 eq_type=EquationType.INITIAL_VALUE,
             )
             units = compartment.getUnits() if compartment.isSetUnits() else NON_DIM_UNITS
 
             if compartment.isSetConstant() and compartment.getConstant():
                 # Derived quantity
-                self._add_derived_quantity(compartment_id, label, size, units)
-            elif compartment_id in self._odes:
+                self._add_derived_quantity(id_, label, size, units)
+            elif id_ in self._odes:
                 # State variable
-                rhs = self._odes[compartment_id]
-                state_var = self._add_state_variable(compartment_id, label, size, units)
+                math = self._odes[id_]
+                state_var = self._add_state_variable(id_, label, size, units)
                 self._add_equation(
                     var=state_var["derivative_id"],
-                    math=parseL3Formula(rhs),
+                    math=math,
                     eq_type=EquationType.DERIVATIVE,
                 )
-            elif compartment_id in assignment_rules:
+            elif id_ in assignment_rules:
                 # Derived quantity
-                math = assignment_rules[compartment_id]
-                self._add_derived_quantity(compartment_id, label, size, units)
-                self._add_equation(
-                    var=compartment_id, math=math, eq_type=EquationType.ASSIGNMENT_RULE
-                )
+                math = assignment_rules[id_]
+                self._add_derived_quantity(id_, label, size, units)
+                self._add_equation(var=id_, math=math, eq_type=EquationType.ASSIGNMENT_RULE)
             else:
                 # Variable parameter
-                self._add_parameter(compartment_id, label, size, units)
+                self._add_parameter(id_, label, size, units)
 
     def _format_equations(self) -> None:
         """Convert and sort equations."""
@@ -862,9 +864,10 @@ class ChasteSbmlModel:
             initial_value = None
             if species.isSetInitialConcentration():
                 initial_value = species.getInitialConcentration()
+                math = parseL3Formula(f"{initial_value}")
                 self._add_equation(
                     var=species_id,
-                    math=parseL3Formula(initial_value),
+                    math=math,
                     eq_type=EquationType.INITIAL_VALUE,
                 )
 
@@ -886,7 +889,8 @@ class ChasteSbmlModel:
 
             elif species.isSetInitialAmount():
                 initial_value = species.getInitialAmount()
-                self._add_equation(species_id, initial_value, eq_type=EquationType.INITIAL_VALUE)
+                math = parseL3Formula(f"{initial_value}")
+                self._add_equation(species_id, math, eq_type=EquationType.INITIAL_VALUE)
 
                 if (
                     not has_only_substance_units
@@ -928,7 +932,8 @@ class ChasteSbmlModel:
 
             elif species_id in self._odes:
                 # State variable
-                rhs = self._odes[species_id]
+                math = self._odes[species_id]
+                rhs = formulaToL3String(math)
 
                 # Add parentheses if there are multiple terms
                 if "+" in rhs or "-" in rhs[1:]:

@@ -55,7 +55,7 @@ std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, 
     // AMOUNTS
 {% for eq in equations %}
 {% if ( eq["type"] == EquationType.AMOUNT ) %}
-    double {{ eq["lhs"] }} = {{ eq["rhs"] }}; // {{ eq["label"] }}
+    double {{ eq["var"] }} = {{ eq["rhs"] }}; // {{ eq["label"] }}
 {% endif %}
 {% endfor %}
 
@@ -82,7 +82,7 @@ void {{ ode_class_name }}::Initialise(double time)
 {
 {% for eq in equations %}
 {% if ( eq["type"] != EquationType.AMOUNT ) %}
-    {{ eq["lhs"] }} = {{ eq["rhs"] }}; // {{ eq["label"] }}
+    {{ eq["var"] }} = {{ eq["rhs"] }}; // {{ eq["label"] }}
 {% endif %}
 {% endfor %}
 
@@ -191,15 +191,15 @@ std::vector<double> {{ ode_class_name }}::RunModelEquations(double time, const s
 {% for eq in equations %}
 {% if ( eq["type"] not in [EquationType.INITIAL_VALUE, EquationType.INITIAL_ASSIGNMENT, EquationType.AMOUNT] ) %}
 {% if eq["local_parameters"] %}
-    // {{ eq["lhs"] }}: {{ eq["label"] }}
+    // {{ eq["var"] }}: {{ eq["label"] }}
     {
 {% for local_parameter in eq["local_parameters"] %}
         double {{ local_parameter["id"] }} = {{ local_parameter["value"] }};
 {% endfor %}
-        {{ eq["lhs"] }} = {{ eq["rhs"] }};
+        {{ eq["var"] }} = {{ eq["rhs"] }};
     }
 {% else %}
-    {{ eq["lhs"] }} = {{ eq["rhs"] }};  // {{ eq["label"] }}
+    {{ eq["var"] }} = {{ eq["rhs"] }};  // {{ eq["label"] }}
 {% endif %}
 {% endif %}
 {% endfor %}
