@@ -4,10 +4,13 @@ import abc
 import os
 import pathlib
 import re
+import shutil
 import subprocess
 from typing import TYPE_CHECKING, Optional
 
 from jinja2 import Environment, PackageLoader, select_autoescape
+from libsbml import formulaToString  # TODO: switch to formulaToL3String
+from libsbml import parseFormula  # TODO: switch to parseL3Formula
 from libsbml import (
     AST_FUNCTION_DELAY,
     AST_RELATIONAL_EQ,
@@ -22,8 +25,6 @@ from libsbml import (
     SBML_RATE_RULE,
     ConversionProperties,
     SBMLReader,
-    formulaToL3String,
-    parseL3Formula,
 )
 
 from ._config import (
@@ -127,8 +128,10 @@ class ChasteSbmlModel:
 
         # Run required conversions
         config = ConversionProperties()
+        # Sort assignment rules in order or dependence.
         config.addOption("sortRules")
         config.addOption("removeUnusedUnits")
+        # Convert initial assignments to initial values where possible
         config.addOption("expandInitialAssignments")
         # config.addOption('replaceReactions')
         # config.addOption('expandFunctionDefinitions')
@@ -199,17 +202,19 @@ class ChasteSbmlModel:
                 f.write(code)
 
         # Format with clang-format
-        for filename in self._outputs:
-            file_path = str(root_dir / filename)
-            subprocess.run(
-                [
-                    "clang-format",
-                    "-i",
-                    f"-style=file:{ROOT_DIR}/.clang-format",
-                    str(file_path),
-                ],
-                check=True,
-            )
+        clang_format = shutil.which("clang-format")
+        if clang_format is not None:
+            for filename in self._outputs:
+                file_path = str(root_dir / filename)
+                subprocess.run(
+                    [
+                        clang_format,
+                        "-i",
+                        f"-style=file:{ROOT_DIR}/.clang-format",
+                        str(file_path),
+                    ],
+                    check=True,
+                )
 
     # -- PRIVATE ---------------------------------------
 
@@ -225,7 +230,7 @@ class ChasteSbmlModel:
         amt_label = f"Amount of {species_id}"
         amt_units = NON_DIM_UNITS  # TODO: Use correct units
         amt_rhs = f"{species_id} * {compartment_id}"
-        amt_math = parseL3Formula(amt_rhs)
+        amt_math = parseFormula(amt_rhs)
 
         self._add_derived_quantity(amt_id, amt_label, None, amt_units, is_amount=True)
         self._add_equation(var=amt_id, math=amt_math, eq_type=EquationType.AMOUNT)
@@ -462,7 +467,7 @@ class ChasteSbmlModel:
         initial_value = None
         if species_reference.isSetStoichiometry():
             initial_value = species_reference.getStoichiometry()
-            math = parseL3Formula(f"{initial_value}")
+            math = parseFormula(f"{initial_value}")
             self._add_equation(var=id_, math=math, eq_type=EquationType.INITIAL_VALUE)
 
         self._add_parameter(id_, label, initial_value, NON_DIM_UNITS)  # TODO: Use correct units
@@ -531,7 +536,7 @@ class ChasteSbmlModel:
 
         # Convert string formulas to ASTs
         for var, rhs in odes.items():
-            odes[var] = parseL3Formula(f"({rhs})")
+            odes[var] = parseFormula(f"({rhs})")
 
         # Extract ODEs from rate rules
         for rule in self._rate_rules:
@@ -556,7 +561,7 @@ class ChasteSbmlModel:
             label = compartment.getName().strip()
 
             size = get_compartment_size(compartment)
-            math = parseL3Formula(f"{size}")
+            math = parseFormula(f"{size}")
             self._add_equation(
                 var=id_,
                 math=math,
@@ -746,7 +751,7 @@ class ChasteSbmlModel:
                 value = param.getValue()
                 self._add_equation(
                     var=param_id,
-                    math=parseL3Formula(f"{value}"),
+                    math=parseFormula(f"{value}"),
                     eq_type=EquationType.INITIAL_VALUE,
                 )
 
@@ -795,7 +800,7 @@ class ChasteSbmlModel:
                 rhs = " * ".join(species)
                 self._add_equation(
                     var=id_,
-                    math=parseL3Formula(rhs),
+                    math=parseFormula(rhs),
                     eq_type=EquationType.REACTION,
                 )
 
@@ -875,7 +880,7 @@ class ChasteSbmlModel:
             initial_value = None
             if species.isSetInitialConcentration():
                 initial_value = species.getInitialConcentration()
-                math = parseL3Formula(f"{initial_value}")
+                math = parseFormula(f"{initial_value}")
                 self._add_equation(
                     var=species_id,
                     math=math,
@@ -892,7 +897,7 @@ class ChasteSbmlModel:
                     ia_label = f"Convert {species_id} concentration to amount"
                     ia_var = species_id
                     ia_rhs = f"{species_id} * {compartment_id}"
-                    ia_math = parseL3Formula(ia_rhs)
+                    ia_math = parseFormula(ia_rhs)
                     self._add_initial_assignment(ia_id, ia_label, ia_var, ia_math)
                     self._add_equation(
                         var=ia_var, math=ia_math, eq_type=EquationType.INITIAL_ASSIGNMENT
@@ -900,7 +905,7 @@ class ChasteSbmlModel:
 
             elif species.isSetInitialAmount():
                 initial_value = species.getInitialAmount()
-                math = parseL3Formula(f"{initial_value}")
+                math = parseFormula(f"{initial_value}")
                 self._add_equation(species_id, math, eq_type=EquationType.INITIAL_VALUE)
 
                 if (
@@ -913,7 +918,7 @@ class ChasteSbmlModel:
                     ia_label = f"Convert {species_id} amount to concentration"
                     ia_var = species_id
                     ia_rhs = f"{species_id} / {compartment_id}"
-                    ia_math = parseL3Formula(ia_rhs)
+                    ia_math = parseFormula(ia_rhs)
                     self._add_initial_assignment(ia_id, ia_label, ia_var, ia_math)
                     self._add_equation(
                         var=ia_var, math=ia_math, eq_type=EquationType.INITIAL_ASSIGNMENT
@@ -934,7 +939,7 @@ class ChasteSbmlModel:
                     rhs = f"(-{species_id} * ({compartment_rhs})) / {compartment_id}"
                     if conversion_factor is not None:
                         rhs = f"({rhs}) * {conversion_factor}"
-                    math = parseL3Formula(rhs)
+                    math = parseFormula(rhs)
                     state_var = self._add_state_variable(species_id, label, initial_value, units)
                     self._add_equation(
                         var=state_var["derivative_id"], math=math, eq_type=EquationType.DERIVATIVE
@@ -946,7 +951,7 @@ class ChasteSbmlModel:
             elif species_id in self._odes:
                 # State variable
                 math = self._odes[species_id]
-                rhs = formulaToL3String(math)
+                rhs = formulaToString(math)
 
                 # Add parentheses if there are multiple terms
                 if "+" in rhs or "-" in rhs[1:]:
@@ -956,7 +961,8 @@ class ChasteSbmlModel:
                 if not (has_only_substance_units or species_id in rate_rules):
                     # Add compartment ODE if there is one
                     if compartment_id in self._odes:
-                        compartment_rhs = self._odes[compartment_id]
+                        compartment_math = self._odes[compartment_id]
+                        compartment_rhs = formulaToString(compartment_math)
                         rhs = f"({rhs} - {species_id} * ({compartment_rhs}))"
 
                     # Scale by compartment volume
@@ -973,7 +979,7 @@ class ChasteSbmlModel:
                 state_var = self._add_state_variable(species_id, label, initial_value, units)
                 self._add_equation(
                     var=state_var["derivative_id"],
-                    math=parseL3Formula(rhs),
+                    math=parseFormula(rhs),
                     eq_type=EquationType.DERIVATIVE,
                 )
 
@@ -997,7 +1003,7 @@ class ChasteSbmlModel:
             if search_ast_type(math, AST_FUNCTION_DELAY):
                 raise NotImplementedError(f"SBML function not supported: '{func}'.")
 
-        formula = formulaToL3String(math)
+        formula = formulaToString(math)
 
         # Convert all integer literals to doubles to fix integer division.
         # TODO: Perhaps instead of regex, traverse AST and convert some AST_INTEGER

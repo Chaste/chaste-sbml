@@ -82,7 +82,17 @@ void {{ ode_class_name }}::Initialise(double time)
 {
 {% for eq in equations %}
 {% if ( eq["type"] != EquationType.AMOUNT ) %}
-    {{ eq["var"] }} = {{ eq["rhs"] }}; // {{ eq["label"] }}
+{% if eq["local_parameters"] %}
+    // {{ eq["var"] }}: {{ eq["label"] }}
+    {
+{% for local_parameter in eq["local_parameters"] %}
+        double {{ local_parameter["id"] }} = {{ local_parameter["value"] }};
+{% endfor %}
+        {{ eq["var"] }} = {{ eq["rhs"] }};
+    }
+{% else %}
+    {{ eq["var"] }} = {{ eq["rhs"] }};  // {{ eq["label"] }}
+{% endif %}
 {% endif %}
 {% endfor %}
 
