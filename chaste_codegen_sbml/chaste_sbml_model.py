@@ -128,7 +128,7 @@ class ChasteSbmlModel:
 
         # Run required conversions
         config = ConversionProperties()
-        # Sort assignment rules in order or dependence.
+        # Sort assignment rules in order of dependence.
         config.addOption("sortRules")
         config.addOption("removeUnusedUnits")
         # Convert initial assignments to initial values where possible
@@ -762,30 +762,26 @@ class ChasteSbmlModel:
             if param.isSetUnits():
                 units = param.getUnits()
 
+            if param_id in initial_assignments:
+                math = initial_assignments[param_id]
+                self._add_equation(var=param_id, math=math, eq_type=EquationType.INITIAL_ASSIGNMENT)
+
             if param_id in self._odes:
                 # State variable
                 math = self._odes[param_id]
                 state_var = self._add_state_variable(param_id, label, value, units)
-                self._add_equation(
-                    var=state_var["derivative_id"], math=math, eq_type=EquationType.DERIVATIVE
-                )
+                d_param_id = state_var["derivative_id"]
+                self._add_equation(var=d_param_id, math=math, eq_type=EquationType.DERIVATIVE)
 
             elif param_id in assignment_rules:
                 # Derived quantity
                 math = assignment_rules[param_id]
                 self._add_derived_quantity(param_id, label, value, units)
                 self._add_equation(var=param_id, math=math, eq_type=EquationType.ASSIGNMENT_RULE)
-            elif param_id in initial_assignments:
-                # Fixed parameter with initial assignment
-                math = initial_assignments[param_id]
-                self._add_parameter(param_id, label, value, units, is_const=is_const)
-                self._add_equation(var=param_id, math=math, eq_type=EquationType.INITIAL_ASSIGNMENT)
-            elif param.isSetConstant() and param.getConstant():
-                # Fixed parameter without an initial assignment or assignment rule
-                self._add_parameter(param_id, label, value, units, is_const=True)
+
             else:
-                # Variable parameter
-                self._add_parameter(param_id, label, value, units, is_const=False)
+                # Fixed / variable parameter
+                self._add_parameter(param_id, label, value, units, is_const=is_const)
 
     def _format_reactions(self) -> None:
         """Add reactions to template variables."""
@@ -925,6 +921,11 @@ class ChasteSbmlModel:
                     )
 
             is_bc = species.isSetBoundaryCondition() and species.getBoundaryCondition()
+
+
+            if species_id in initial_assignments:
+                math = initial_assignments[species_id]
+                self._add_equation(var=species_id, math=math, eq_type=EquationType.INITIAL_ASSIGNMENT)
 
             if species_id in assignment_rules:
                 # Derived quantity (includes boundary conditions with assignment rules)
