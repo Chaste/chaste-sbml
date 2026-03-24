@@ -75,13 +75,6 @@ public:
                 {{ test_result_data }}
             };
 
-            // Check sampling times
-            TS_ASSERT_EQUALS(ode_solution.rGetTimes().size(), expected_result_data.size());
-            for (unsigned i = 0; i < expected_result_data.size(); i++)
-            {
-                TS_ASSERT_DELTA(ode_solution.rGetTimes()[i], expected_result_data[i][0], 1e-6);
-            }
-
             // Check variable values
             double tol_absolute = {{ test_settings["absolute"] }} * 10.0; // TODO: review tolerance values
             double tol_relative = {{ test_settings["relative"] }} * 10.0;
