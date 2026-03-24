@@ -555,6 +555,7 @@ class ChasteSbmlModel:
         """Add compartments to template variables."""
         # Note: rules must be processed before compartments
         assignment_rules = {rule["var"]: rule["math"] for rule in self._assignment_rules}
+        initial_assignments = {ia["var"]: ia["math"] for ia in self._initial_assignments}
 
         for compartment in self._sbml_compartments:
             id_ = compartment.getId()
@@ -569,7 +570,13 @@ class ChasteSbmlModel:
             )
             units = compartment.getUnits() if compartment.isSetUnits() else NON_DIM_UNITS
 
-            if compartment.isSetConstant() and compartment.getConstant():
+            is_const = compartment.isSetConstant() and compartment.getConstant()
+
+            if id_ in initial_assignments:
+                math = initial_assignments[id_]
+                self._add_equation(var=id_, math=math, eq_type=EquationType.INITIAL_ASSIGNMENT)
+
+            if is_const:
                 # Derived quantity
                 self._add_derived_quantity(id_, label, size, units)
             elif id_ in self._odes:
