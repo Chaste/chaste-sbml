@@ -50,6 +50,10 @@ void sbmltesthelpers::ExportCsv(const std::string& filename,
     const std::vector<std::string>& dq_names = ode_system.rGetDerivedQuantityNames();
     const std::vector<std::vector<double> >& dq_data = ode_solution.rGetDerivedQuantities(&ode_system);
 
+    // Parameters
+    const std::vector<std::string>& param_names = ode_system.rGetParameterNames();
+    const std::vector<double>& param_data = ode_solution.rGetParameters(&ode_system);
+
     // Sanity checks
     if (time_data.empty())
     {
@@ -81,6 +85,11 @@ void sbmltesthelpers::ExportCsv(const std::string& filename,
         throw std::length_error("Number of derived quantity names do not match data.");
     }
 
+    if ((param_data.empty() && !param_names.empty()) || (!param_data.empty() && param_data.size() != param_names.size()))
+    {
+        throw std::length_error("Number of parameter names do not match data.");
+    }
+
     // Write column headings
     (*file) << "time";
     if (!svar_names.empty())
@@ -95,6 +104,13 @@ void sbmltesthelpers::ExportCsv(const std::string& filename,
         for (unsigned i = 0; i < dq_names.size(); i++)
         {
             (*file) << "," << dq_names[i];
+        }
+    }
+    if (!param_names.empty())
+    {
+        for (unsigned i = 0; i < param_names.size(); i++)
+        {
+            (*file) << "," << param_names[i];
         }
     }
     (*file) << std::endl
@@ -116,6 +132,13 @@ void sbmltesthelpers::ExportCsv(const std::string& filename,
             for (unsigned j = 0; j < dq_data[i].size(); j++)
             {
                 (*file) << "," << dq_data[i][j];
+            }
+        }
+        if (!param_data.empty())
+        {
+            for (unsigned j = 0; j < param_data.size(); j++)
+            {
+                (*file) << "," << param_data[j];
             }
         }
         (*file) << std::endl
