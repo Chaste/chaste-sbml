@@ -943,7 +943,8 @@ class ChasteSbmlModel:
             elif is_bc and (species_id not in rate_rules):
                 if compartment_id in self._odes and not has_only_substance_units:
                     # State variable: boundary condition in changing compartment
-                    compartment_rhs = self._odes[compartment_id]
+                    compartment_math = self._odes[compartment_id]
+                    compartment_rhs = formulaToString(compartment_math)
                     rhs = f"(-{species_id} * ({compartment_rhs})) / {compartment_id}"
                     if conversion_factor is not None:
                         rhs = f"({rhs}) * {conversion_factor}"
