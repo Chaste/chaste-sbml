@@ -1,0 +1,82 @@
+name: sbml_test_suite
+
+on: [pull_request]
+
+concurrency:
+  group: build_and_test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  semantic_tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - first_case: "0"
+            last_case: "399"
+          - first_case: "400"
+            last_case: "799"
+          - first_case: "800"
+            last_case: "1199"
+          - first_case: "1200"
+            last_case: "1599"
+          - first_case: "1600"
+            last_case: "1823"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Checkout Chaste
+        uses: actions/checkout@v6
+        with:
+          repository: Chaste/Chaste
+          path: Chaste
+
+      - name: Checkout SBML test suite
+        uses: actions/checkout@v6
+        with:
+          repository: sbmlteam/sbml-test-suite
+          path: sbml-test-suite
+
+      - name: Install Chaste dependencies
+        run: |
+          sudo wget -O /usr/share/keyrings/chaste.asc https://chaste.github.io/chaste.asc
+          codename="$(. /etc/os-release && echo ${VERSION_CODENAME} | sed 's/\.//')"
+          repo="deb [signed-by=/usr/share/keyrings/chaste.asc] https://chaste.github.io/ubuntu ${codename}/"
+          echo "${repo}" | sudo tee /etc/apt/sources.list.d/chaste.list
+          sudo apt-get update
+          sudo apt-get install -y chaste-dependencies python3-pip
+
+      - name: Install SBML codegen
+        run: |
+          python3 -m pip install .[dev]
+
+      - name: Setup Chaste paths
+        run: |
+          mkdir -p Chaste/build
+          mkdir -p chaste_codegen_sbml/SbmlRefModels/src/cases/semantic
+          ln -s $(pwd)/chaste_codegen_sbml/SbmlRefModels $(pwd)/Chaste/projects/SbmlRefModels
+
+      - name: Generate semantic test cases
+        run: |
+          python3 chaste_codegen_sbml/SbmlRefModels/generate_cases.py \
+            --input-dir sbml-test-suite \
+            --first-case ${{ matrix.first_case }} \
+            --last-case ${{ matrix.last_case }}
+
+      - name: Configure Chaste
+        run: |
+          cmake -DCMAKE_BUILD_TYPE=Debug -DChaste_ERROR_ON_WARNING=OFF -DChaste_COVERAGE=ON ..
+        working-directory: Chaste/build
+
+      - name: Build SbmlRefModels
+        run: |
+          cmake --build . --target project_SbmlRefModels --parallel $(nproc)
+        working-directory: Chaste/build
+
+      - name: Run Semantic Tests
+        run: |
+          ctest -j $(nproc) -L TestSemantic --output-on-failure
+        working-directory: Chaste/build

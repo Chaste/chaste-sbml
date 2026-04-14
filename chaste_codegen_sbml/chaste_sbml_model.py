@@ -9,8 +9,6 @@ import subprocess
 from typing import TYPE_CHECKING, Optional
 
 from jinja2 import Environment, PackageLoader, select_autoescape
-from libsbml import formulaToL3String
-from libsbml import parseL3Formula
 from libsbml import (
     AST_FUNCTION_DELAY,
     AST_RELATIONAL_EQ,
@@ -25,6 +23,8 @@ from libsbml import (
     SBML_RATE_RULE,
     ConversionProperties,
     SBMLReader,
+    formulaToL3String,
+    parseL3Formula,
 )
 
 from ._config import (
@@ -929,10 +929,11 @@ class ChasteSbmlModel:
 
             is_bc = species.isSetBoundaryCondition() and species.getBoundaryCondition()
 
-
             if species_id in initial_assignments:
                 math = initial_assignments[species_id]
-                self._add_equation(var=species_id, math=math, eq_type=EquationType.INITIAL_ASSIGNMENT)
+                self._add_equation(
+                    var=species_id, math=math, eq_type=EquationType.INITIAL_ASSIGNMENT
+                )
 
             if species_id in assignment_rules:
                 # Derived quantity (includes boundary conditions with assignment rules)

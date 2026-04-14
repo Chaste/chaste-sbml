@@ -1,5 +1,6 @@
 """Generate Chaste code from the cases in the SBML Test Suite."""
 
+import argparse
 import csv
 import logging
 import os
@@ -34,18 +35,14 @@ class ChasteSbmlTestSuiteModel(ChasteSbmlModel):
         self, sbml_file: str, sbml_version: str, test_params: dict[str, "Any"], **kwargs
     ) -> None:
         test_type = test_params["type"]
-        match test_type:
-            case TestType.SEMANTIC:
-                prefix = "Semantic"
-            case TestType.STOCHASTIC:
-                prefix = "Stochastic"
-            case TestType.SYNTACTIC:
-                prefix = "Syntactic"
-            case _:
-                raise ValueError(f"Unknown test type: {test_type}")
-
-        if test_params["settings"]["start"].strip() == "":
-            raise NotImplementedError("Steady state test with no start time.")
+        if test_type == TestType.SEMANTIC:
+            prefix = "Semantic"
+        elif test_type == TestType.STOCHASTIC:
+            prefix = "Stochastic"
+        elif test_type == TestType.SYNTACTIC:
+            prefix = "Syntactic"
+        else:
+            raise ValueError(f"Unknown test type: {test_type}")
 
         model_name = f"{prefix}{test_params['case']}{sbml_version.upper()}Sbml"
 
@@ -66,6 +63,8 @@ class ChasteSbmlTestSuiteModel(ChasteSbmlModel):
             f'"{conc.strip()}"' for conc in test_concentrations if conc.strip()
         )
 
+        steady_state = test_params["settings"]["start"].strip() == ""
+
         self._template_vars.update(
             {
                 "test_header_guard": generate_header_guard(self._test_hpp_filename),
@@ -74,6 +73,7 @@ class ChasteSbmlTestSuiteModel(ChasteSbmlModel):
                 "test_amounts": test_amounts,
                 "test_concentrations": test_concentrations,
                 "test_settings": test_params["settings"],
+                "test_steady_state": steady_state,
             }
         )
 
@@ -84,29 +84,28 @@ class ChasteSbmlTestSuiteModel(ChasteSbmlModel):
 
         # Generate the test code
         template_path = "cases"
-        match self._test_type:
-            case TestType.SEMANTIC:
-                template_path += "/semantic.hpp"
-            case TestType.STOCHASTIC:
-                template_path += "/stochastic.hpp"
-            case TestType.SYNTACTIC:
-                template_path += "/syntactic.hpp"
-            case _:
-                raise ValueError(f"Unknown test type: {self._test_type}")
+        if self._test_type == TestType.SEMANTIC:
+            template_path += "/semantic.hpp"
+        elif self._test_type == TestType.STOCHASTIC:
+            template_path += "/stochastic.hpp"
+        elif self._test_type == TestType.SYNTACTIC:
+            template_path += "/syntactic.hpp"
+        else:
+            raise ValueError(f"Unknown test type: {self._test_type}")
 
         self._generate_output(template_path, self._test_hpp_filename)
 
 
-def generate_semantic_cases(suite_path: str) -> None:
+def generate_semantic_cases(input_path: str, selection: list[int] | None = None) -> None:
     """Generate Chaste code from sbml_test_suite semantic cases.
 
-    :param suite_path: Path to the sbml_test_suite repository.
+    :param input_path: Path to the SBML test suite repository.
+    :param output_path: Path to the output directory.
     """
-    semantic_path = os.path.join(suite_path, "cases", "semantic")
+    semantic_path = os.path.join(input_path, "cases", "semantic")
     cases = sorted(os.listdir(semantic_path))
 
     test_pack = []
-    selection = [1103, 1106, 1117, 1118, 1121, 1122, 1123, 1182, 1183, 1184, 1185, 1198]
     cases = [cases[i - 1] for i in selection]
     for case_ in cases:
         case_path = os.path.join(semantic_path, case_)
@@ -176,52 +175,56 @@ def generate_semantic_cases(suite_path: str) -> None:
             break  # Only generate for the first available SBML version
 
     # Update WeeklyTestPack
-    with open(ROOT_DIR / "S"
-    "bmlRefModels" / "test" / "WeeklyTestPack.txt", "w") as f:
+    with open(ROOT_DIR / "SbmlRefModels" / "test" / "WeeklyTestPack.txt", "w") as f:
         f.write("\n".join(test_pack) + "\n")
 
 
-def generate_stochastic_cases(suite_path: str) -> None:
-    """Generate Chaste code from sbml_test_suite stochastic cases.
-
-    :param suite_path: Path to the sbml_test_suite repository.
-    """
-    pass
-
-
-def generate_syntactic_cases(suite_path: str) -> None:
-    """Generate Chaste code from sbml_test_suite syntactic cases.
-
-    :param suite_path: Path to the sbml_test_suite repository.
-    """
-    pass
-
-
-def parse_args() -> str:
+def parse_args()  -> argparse.Namespace:
     """Parse command line arguments.
 
-    :return: Path to the sbml_test_suite repository.
+    :return: The parsed command line arguments.
     """
-    if len(sys.argv) != 2:
-        print(f"Usage: python {sys.argv[0]} /path/to/sbml_test_suite")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(
+        prog="generate_cases",
+        description="Generate Chaste code from the cases in the SBML Test Suite.",
+    )
 
-    suite_path = sys.argv[1]
-    if not os.path.isdir(suite_path):
-        print(f"Error: Path '{suite_path}' does not exist.")
-        sys.exit(1)
+    parser.add_argument(
+        "--input-dir",
+        type=str,
+        default="sbml-test-suite",
+        help="Directory containing the SBML test suite.",
+    )
 
-    return suite_path
+    parser.add_argument(
+        "--first-case",
+        type=int,
+        default=0,
+        help="First test case to generate.",
+    )
+
+    parser.add_argument(
+        "--last-case",
+        type=int,
+        default=100,
+        help="Last test case to generate.",
+    )
+
+    return parser.parse_args()
 
 
 def main() -> None:
+    args = parse_args()
+
     logging.basicConfig(level=logging.INFO)
 
-    suite_path = parse_args()
+    args.input_dir = os.path.abspath(args.input_dir)
+    if not os.path.isdir(args.input_dir):
+        logger.error(f"No SBML test suite @ '{args.input_dir}'")
+        sys.exit(1)
 
-    generate_semantic_cases(suite_path)
-    # generate_stochastic_cases(suite_path)
-    # generate_syntactic_cases(suite_path)
+    # TODO: Only semantic cases are currently supported
+    generate_semantic_cases(args.input_dir, selection=range(args.first_case, args.last_case + 1))
 
 
 if __name__ == "__main__":
