@@ -10,6 +10,9 @@ jobs:
   semantic_tests:
     runs-on: ubuntu-latest
 
+    env:
+      PROJ_ROOT: chaste_codegen_sbml/SbmlRefModels
+
     strategy:
       fail-fast: false
       matrix:
@@ -45,19 +48,23 @@ jobs:
 
       - name: Generate semantic test cases
         run: |
-          mkdir -p chaste_codegen_sbml/SbmlRefModels/src/cases/semantic
-          python3 chaste_codegen_sbml/SbmlRefModels/generate_cases.py \
-            --input-dir sbml-test-suite \
+          mkdir -p ${PROJ_ROOT}/src/cases/semantic
+          python3 ${PROJ_ROOT}/generate_cases.py \
+            --sbml-test-suite-dir sbml-test-suite \
+            --gen-src-dir ${PROJ_ROOT}/src/cases/semantic \
+            --gen-test-dir ${PROJ_ROOT}/test/cases/semantic \
             --first-case ${{ matrix.first_case }} \
             --last-case ${{ matrix.last_case }}
 
-      - name: List generated test cases
+      - name: Check for generated test cases
         run: |
-          ls -l chaste_codegen_sbml/SbmlRefModels/src/cases/semantic
+          ls -al ${PROJ_ROOT}/test/
+          [ "$(ls -A ${PROJ_ROOT}/test/)" ] && exit 0 || exit 1
 
-      - name: Show WeeklyTestPack
+      - name: Check WeeklyTestPack
         run: |
-          cat chaste_codegen_sbml/SbmlRefModels/test/WeeklyTestPack.txt
+          cat ${PROJ_ROOT}/test/WeeklyTestPack.txt
+          [ -s ${PROJ_ROOT}/test/WeeklyTestPack.txt ] && exit 0 || exit 1
 
       - name: Checkout Chaste
         uses: actions/checkout@v6
@@ -77,7 +84,7 @@ jobs:
       - name: Setup Chaste paths
         run: |
           mkdir -p Chaste/build
-          ln -s $(pwd)/chaste_codegen_sbml/SbmlRefModels $(pwd)/Chaste/projects/SbmlRefModels
+          ln -s $(pwd)/${PROJ_ROOT} $(pwd)/Chaste/projects/SbmlRefModels
 
       - name: Configure Chaste
         run: |

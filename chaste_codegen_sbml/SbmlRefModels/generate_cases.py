@@ -96,20 +96,32 @@ class ChasteSbmlTestSuiteModel(ChasteSbmlModel):
         self._generate_output(template_path, self._test_hpp_filename)
 
 
-def generate_semantic_cases(input_path: str, selection: list[int] | None = None) -> None:
+def generate_semantic_cases(
+    selection: list[int] | None = None,
+    sbml_test_suite_dir: str = "sbml_test_suite",
+    gen_src_dir: str = "src",
+    gen_test_dir: str = "test",
+    test_pack_file: str = "test/WeeklyTestPack.txt",
+) -> None:
     """Generate Chaste code from sbml_test_suite semantic cases.
 
-    :param input_path: Path to the SBML test suite repository.
-    :param output_path: Path to the output directory.
+    :param selection: List of case numbers to generate. If None, all cases will be generated.
+    :param sbml_test_suite_dir: Path to the SBML test suite repository.
+    :param gen_src_dir: Path to the directory where generated source code will be placed.
+    :param gen_test_dir: Path to the directory where generated tests will be placed.
+    :param test_pack_file: Path to the file where generated test paths will be stored.
     """
-    semantic_path = os.path.join(input_path, "cases", "semantic")
+    semantic_path = os.path.join(sbml_test_suite_dir, "cases", "semantic")
     cases = sorted(os.listdir(semantic_path))
 
     test_pack = []
-    cases = [cases[i - 1] for i in selection]
+    if selection:
+        cases = [cases[i - 1] for i in selection]
+
     for case_ in cases:
         case_path = os.path.join(semantic_path, case_)
         if not os.path.isdir(case_path):
+            # Skip non-directory entries (e.g. README files)
             continue
 
         test_params = {
@@ -120,8 +132,7 @@ def generate_semantic_cases(input_path: str, selection: list[int] | None = None)
         # Load settings from settings file
         settings_file = os.path.join(case_path, f"{case_}-settings.txt")
         if not os.path.isfile(settings_file):
-            logger.warning(f"Settings not found for semantic {case_}: '{settings_file}'")
-            continue
+            raise ValueError(f"Settings not found for semantic {case_}: '{settings_file}'")
 
         settings = {}
         with open(settings_file, "r") as f:
@@ -143,11 +154,11 @@ def generate_semantic_cases(input_path: str, selection: list[int] | None = None)
             test_params["results"] = list(reader)
 
         # Make output directories
-        model_dir = ROOT_DIR / "SbmlRefModels" / "src" / "cases" / "semantic" / case_
+        model_dir = os.path.join(gen_src_dir, case_)
         if not os.path.exists(model_dir):
             os.makedirs(model_dir)
 
-        test_dir = ROOT_DIR / "SbmlRefModels" / "test" / "cases" / "semantic" / case_
+        test_dir = os.path.join(gen_test_dir, case_)
         if not os.path.exists(test_dir):
             os.makedirs(test_dir)
 
@@ -175,13 +186,12 @@ def generate_semantic_cases(input_path: str, selection: list[int] | None = None)
             break  # Only generate for the first available SBML version
 
     # Update WeeklyTestPack
-    weekly_test_pack = ROOT_DIR / "SbmlRefModels" / "test" / "WeeklyTestPack.txt"
-    logger.info(f"Updating {weekly_test_pack}")
-    with open(weekly_test_pack, "w") as f:
+    logger.info(f"Updating {test_pack_file}")
+    with open(test_pack_file, "w") as f:
         f.write("\n".join(test_pack) + "\n")
 
 
-def parse_args()  -> argparse.Namespace:
+def parse_args() -> argparse.Namespace:
     """Parse command line arguments.
 
     :return: The parsed command line arguments.
@@ -192,10 +202,31 @@ def parse_args()  -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--input-dir",
+        "--sbml-test-suite-dir",
         type=str,
         default="sbml-test-suite",
         help="Directory containing the SBML test suite.",
+    )
+
+    parser.add_argument(
+        "--gen-src-dir",
+        type=str,
+        default="src",
+        help="Directory where generated code will be placed.",
+    )
+
+    parser.add_argument(
+        "--gen-test-dir",
+        type=str,
+        default="test",
+        help="Directory where generated tests will be placed.",
+    )
+
+    parser.add_argument(
+        "--test-pack-file",
+        type=str,
+        default="test/WeeklyTestPack.txt",
+        help="File where generated test paths will be stored.",
     )
 
     parser.add_argument(
@@ -220,13 +251,19 @@ def main() -> None:
 
     logging.basicConfig(level=logging.INFO)
 
-    args.input_dir = os.path.abspath(args.input_dir)
-    if not os.path.isdir(args.input_dir):
-        logger.error(f"No SBML test suite @ '{args.input_dir}'")
+    args.sbml_test_suite_dir = os.path.abspath(args.sbml_test_suite_dir)
+    if not os.path.isdir(args.sbml_test_suite_dir):
+        logger.error(f"No SBML test suite @ '{args.sbml_test_suite_dir}'")
         sys.exit(1)
 
     # TODO: Only semantic cases are currently supported
-    generate_semantic_cases(args.input_dir, selection=range(args.first_case, args.last_case + 1))
+    generate_semantic_cases(
+        selection=list(range(args.first_case, args.last_case + 1)),
+        sbml_test_suite_dir=args.sbml_test_suite_dir,
+        gen_src_dir=args.gen_src_dir,
+        gen_test_dir=args.gen_test_dir,
+        test_pack_file=args.test_pack_file,
+    )
 
 
 if __name__ == "__main__":
