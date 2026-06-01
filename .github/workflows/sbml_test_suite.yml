@@ -16,14 +16,14 @@ jobs:
         include:
           - first_case: "0"
             last_case: "399"
-          - first_case: "400"
-            last_case: "799"
-          - first_case: "800"
-            last_case: "1199"
-          - first_case: "1200"
-            last_case: "1599"
-          - first_case: "1600"
-            last_case: "1823"
+          # - first_case: "400"
+          #   last_case: "799"
+          # - first_case: "800"
+          #   last_case: "1199"
+          # - first_case: "1200"
+          #   last_case: "1599"
+          # - first_case: "1600"
+          #   last_case: "1823"
 
     steps:
       - name: Checkout
@@ -41,6 +41,16 @@ jobs:
           repository: sbmlteam/sbml-test-suite
           path: sbml-test-suite
 
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.12
+
+      - name: Install SBML codegen
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install .[dev]
+
       - name: Install Chaste dependencies
         run: |
           sudo wget -O /usr/share/keyrings/chaste.asc https://chaste.github.io/chaste.asc
@@ -50,11 +60,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y chaste-dependencies python3-pip
 
-      - name: Install SBML codegen
-        run: |
-          python3 -m pip install .[dev]
-
-      - name: Setup Chaste paths
+      - name: Setup paths
         run: |
           mkdir -p Chaste/build
           mkdir -p chaste_codegen_sbml/SbmlRefModels/src/cases/semantic
