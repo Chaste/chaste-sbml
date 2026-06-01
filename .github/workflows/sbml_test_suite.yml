@@ -29,18 +29,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Checkout Chaste
-        uses: actions/checkout@v6
-        with:
-          repository: Chaste/Chaste
-          path: Chaste
-
-      - name: Checkout SBML test suite
-        uses: actions/checkout@v6
-        with:
-          repository: sbmlteam/sbml-test-suite
-          path: sbml-test-suite
-
       - name: Setup Python 3.12
         uses: actions/setup-python@v6
         with:
@@ -51,6 +39,26 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install .[dev]
 
+      - name: Checkout SBML test suite
+        uses: actions/checkout@v6
+        with:
+          repository: sbmlteam/sbml-test-suite
+          path: sbml-test-suite
+
+      - name: Generate semantic test cases
+        run: |
+          mkdir -p chaste_codegen_sbml/SbmlRefModels/src/cases/semantic
+          python3 chaste_codegen_sbml/SbmlRefModels/generate_cases.py \
+            --input-dir sbml-test-suite \
+            --first-case ${{ matrix.first_case }} \
+            --last-case ${{ matrix.last_case }}
+
+      - name: Checkout Chaste
+        uses: actions/checkout@v6
+        with:
+          repository: Chaste/Chaste
+          path: Chaste
+
       - name: Install Chaste dependencies
         run: |
           sudo wget -O /usr/share/keyrings/chaste.asc https://chaste.github.io/chaste.asc
@@ -60,21 +68,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y chaste-dependencies python3-pip
 
-      - name: Setup paths
-        run: |
-          mkdir -p Chaste/build
-          mkdir -p chaste_codegen_sbml/SbmlRefModels/src/cases/semantic
-          ln -s $(pwd)/chaste_codegen_sbml/SbmlRefModels $(pwd)/Chaste/projects/SbmlRefModels
-
-      - name: Generate semantic test cases
-        run: |
-          python3 chaste_codegen_sbml/SbmlRefModels/generate_cases.py \
-            --input-dir sbml-test-suite \
-            --first-case ${{ matrix.first_case }} \
-            --last-case ${{ matrix.last_case }}
-
       - name: Configure Chaste
         run: |
+          mkdir -p Chaste/build
+          ln -s $(pwd)/chaste_codegen_sbml/SbmlRefModels $(pwd)/Chaste/projects/SbmlRefModels
           cmake -DCMAKE_BUILD_TYPE=Debug -DChaste_ERROR_ON_WARNING=OFF -DChaste_COVERAGE=ON ..
         working-directory: Chaste/build
 
