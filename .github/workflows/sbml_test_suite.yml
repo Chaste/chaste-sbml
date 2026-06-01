@@ -3,7 +3,7 @@ name: sbml_test_suite
 on: [pull_request]
 
 concurrency:
-  group: build_and_test-${{ github.ref }}
+  group: sbml_test_suite-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
