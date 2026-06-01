@@ -175,7 +175,9 @@ def generate_semantic_cases(input_path: str, selection: list[int] | None = None)
             break  # Only generate for the first available SBML version
 
     # Update WeeklyTestPack
-    with open(ROOT_DIR / "SbmlRefModels" / "test" / "WeeklyTestPack.txt", "w") as f:
+    weekly_test_pack = ROOT_DIR / "SbmlRefModels" / "test" / "WeeklyTestPack.txt"
+    logger.info(f"Updating {weekly_test_pack}")
+    with open(weekly_test_pack, "w") as f:
         f.write("\n".join(test_pack) + "\n")
 
 

@@ -51,6 +51,14 @@ jobs:
             --first-case ${{ matrix.first_case }} \
             --last-case ${{ matrix.last_case }}
 
+      - name: List generated test cases
+        run: |
+          ls -l chaste_codegen_sbml/SbmlRefModels/src/cases/semantic
+
+      - name: Show WeeklyTestPack
+        run: |
+          cat chaste_codegen_sbml/SbmlRefModels/test/WeeklyTestPack.txt
+
       - name: Checkout Chaste
         uses: actions/checkout@v6
         with:
