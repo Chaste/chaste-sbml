@@ -68,10 +68,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y chaste-dependencies python3-pip
 
-      - name: Configure Chaste
+      - name: Setup Chaste paths
         run: |
           mkdir -p Chaste/build
           ln -s $(pwd)/chaste_codegen_sbml/SbmlRefModels $(pwd)/Chaste/projects/SbmlRefModels
+
+      - name: Configure Chaste
+        run: |
           cmake -DCMAKE_BUILD_TYPE=Debug -DChaste_ERROR_ON_WARNING=OFF -DChaste_COVERAGE=ON ..
         working-directory: Chaste/build
 
