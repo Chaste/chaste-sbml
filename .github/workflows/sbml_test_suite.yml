@@ -15,14 +15,12 @@ jobs:
       matrix:
         include:
           - first_case: "0"
-            last_case: "399"
-          # - first_case: "400"
-          #   last_case: "799"
-          # - first_case: "800"
-          #   last_case: "1199"
-          # - first_case: "1200"
-          #   last_case: "1599"
-          # - first_case: "1600"
+            last_case: "454"
+          # - first_case: "455"
+          #   last_case: "909"
+          # - first_case: "910"
+          #   last_case: "1364"
+          # - first_case: "1365"
           #   last_case: "1823"
 
     steps:
@@ -66,7 +64,7 @@ jobs:
           repo="deb [signed-by=/usr/share/keyrings/chaste.asc] https://chaste.github.io/ubuntu ${codename}/"
           echo "${repo}" | sudo tee /etc/apt/sources.list.d/chaste.list
           sudo apt-get update
-          sudo apt-get install -y chaste-dependencies python3-pip
+          sudo apt-get install -y chaste-dependencies lcov
 
       - name: Setup Chaste paths
         run: |
