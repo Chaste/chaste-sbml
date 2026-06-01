@@ -53,6 +53,7 @@ jobs:
             --sbml-test-suite-dir sbml-test-suite \
             --gen-src-dir ${PROJ_ROOT}/src/cases/semantic \
             --gen-test-dir ${PROJ_ROOT}/test/cases/semantic \
+            --test-pack-file ${PROJ_ROOT}/test/WeeklyTestPack.txt \
             --first-case ${{ matrix.first_case }} \
             --last-case ${{ matrix.last_case }}
 

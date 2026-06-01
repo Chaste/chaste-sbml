@@ -256,6 +256,11 @@ def main() -> None:
         logger.error(f"No SBML test suite @ '{args.sbml_test_suite_dir}'")
         sys.exit(1)
 
+    args.test_pack_file = os.path.abspath(args.test_pack_file)
+    if not os.path.isfile(args.test_pack_file):
+        logger.error(f"No test pack file @ '{args.test_pack_file}'")
+        sys.exit(1)
+
     # TODO: Only semantic cases are currently supported
     generate_semantic_cases(
         selection=list(range(args.first_case, args.last_case + 1)),
