@@ -3,8 +3,8 @@
 
 # Import SBML models into Chaste
 
-The `chaste_codegen_sbml` tool converts [SBML](https://sbml.org) models into C++
-Chaste code using [libSBML](https://github.com/sbmlteam/libsbml).
+This project is a Python code generator that reads an [SBML](https://sbml.org) model and emits C++ classes compatible
+with [Chaste](https://chaste.github.io), so you can run SBML-defined biology models inside Chaste simulations.
 
 ## Installation
 

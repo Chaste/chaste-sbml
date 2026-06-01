@@ -19,12 +19,12 @@ jobs:
         include:
           - first_case: "0"
             last_case: "454"
-          # - first_case: "455"
-          #   last_case: "909"
-          # - first_case: "910"
-          #   last_case: "1364"
-          # - first_case: "1365"
-          #   last_case: "1823"
+          - first_case: "455"
+            last_case: "909"
+          - first_case: "910"
+            last_case: "1364"
+          - first_case: "1365"
+            last_case: "1823"
 
     steps:
       - name: Checkout
@@ -57,10 +57,15 @@ jobs:
             --first-case ${{ matrix.first_case }} \
             --last-case ${{ matrix.last_case }}
 
-      - name: Check for generated test cases
+      - name: Check for generated src
         run: |
-          ls -al ${PROJ_ROOT}/test/
-          [ "$(ls -A ${PROJ_ROOT}/test/)" ] && exit 0 || exit 1
+          ls -al ${PROJ_ROOT}/src/cases/semantic
+          [ "$(ls -A ${PROJ_ROOT}/src/cases/semantic)" ] && exit 0 || exit 1
+
+      - name: Check for generated tests
+        run: |
+          ls -al ${PROJ_ROOT}/test/cases/semantic
+          [ "$(ls -A ${PROJ_ROOT}/test/cases/semantic)" ] && exit 0 || exit 1
 
       - name: Check WeeklyTestPack
         run: |
@@ -97,7 +102,24 @@ jobs:
           cmake --build . --target project_SbmlRefModels --parallel $(nproc)
         working-directory: Chaste/build
 
-      - name: Run Semantic Tests
+      - name: Select relevant semantic tests from status CSV
+        id: select_tests
         run: |
-          ctest -j $(nproc) -L TestSemantic --output-on-failure
+          filter_output="$(bash "${PROJ_ROOT}/infra/filter_test_suite_cases.sh" \
+            --status-csv "${PROJ_ROOT}/test/data/sbml_test_suite_status.csv" \
+            --first-case "${{ matrix.first_case }}" \
+            --last-case "${{ matrix.last_case }}")"
+
+          echo "${filter_output}"
+
+          selected_count="$(printf "%s\n" "${filter_output}" | grep '^selected_count=' | tail -n1 | cut -d'=' -f2-)"
+          test_regex="$(printf "%s\n" "${filter_output}" | grep '^test_regex=' | tail -n1 | cut -d'=' -f2-)"
+
+          echo "selected_count=${selected_count}" >> "${GITHUB_OUTPUT}"
+          echo "test_regex=${test_regex}" >> "${GITHUB_OUTPUT}"
+
+      - name: Run Semantic Tests
+        if: steps.select_tests.outputs.selected_count != '0'
+        run: |
+          ctest -j $(nproc) -R "${{ steps.select_tests.outputs.test_regex }}" --output-on-failure
         working-directory: Chaste/build

@@ -1020,6 +1020,17 @@ class ChasteSbmlModel:
         # nodes to AST_REAL. This should only need to apply to numbers used in a division.
         formula = re.sub(r"(?<!\.)(?<!e-|E-)\b[0-9]+\b(?!\.)", lambda x: f"{x[0]}.0", formula)
 
+        # Convert infix power syntax (e.g. x^2) to function syntax (pow(x, 2)) for C++.
+        # Repeat to handle nested parenthesized terms from inside out.
+        power_expr_pattern = re.compile(
+            r"(\([^()]+\)|[A-Za-z_][A-Za-z0-9_\.]*)\s*\^\s*(\([^()]+\)|[-+]?[A-Za-z_0-9\.]+)"
+        )
+        for _ in range(50):
+            updated = power_expr_pattern.sub(r"pow(\1, \2)", formula)
+            if updated == formula:
+                break
+            formula = updated
+
         # SBML contants to be replaced with C++ equivalents
         constants = {
             "avogadro": "sm::AVOGADRO",
