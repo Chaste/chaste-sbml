@@ -26,22 +26,24 @@ private:
         archive& boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
     }
 
-    // FIXED PARAMETERS
-    const double VM1 = 3.0; // VM1
-    const double VM3 = 1.0; // VM3
-    const double Kc = 0.5;  // Kc
+    // PARAMETERS
+    double VM1; // VM1
+    double VM3; // VM3
+    double Kc;  // Kc
 
     // STATE VARIABLES
     double C; // Cyclin
     double M; // cdc_2_kinase
     double X; // Cyclin Protease
 
+    double d_C_dt;
+    double d_M_dt;
+    double d_X_dt;
+
     // DERIVED QUANTITIES
     double cell; // cell
     double V1;   // V1
     double V3;   // V3
-
-    // VARIABLE PARAMETERS
 
     // STOICHIOMETRY VARIABLES
 
@@ -135,6 +137,10 @@ public:
      * @param rDY an output vector to be filled in with the resulting derivatives y' = [y1' ... yn'].
      */
     void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY) override;
+
+    void Initialise(double time = 0.0);
+
+    std::vector<double> RunModelEquations(double time, const std::vector<double>& rStateVariables);
 };
 
 // Register the ODE system with Boost serialization

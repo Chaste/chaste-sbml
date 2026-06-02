@@ -11,36 +11,11 @@
 namespace sm = sbmlmath;
 
 Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem()
-        : AbstractSbmlOdeSystem(3, 0, 0)
+        : AbstractSbmlOdeSystem(3, 3, 0)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Goldbeter1991SbmlOdeSystem>);
 
-    // VARIABLE PARAMETERS
-
-    // STATE VARIABLES
-    C = 0.01;
-    M = 0.01;
-    X = 0.01;
-
-    // DERIVED QUANTITIES
-    cell = 1.0;
-
-    // STOICHIOMETRY VARIABLES
-
-    // INITIAL ASSIGNMENTS
-    RunInitialAssignments(0.0);
-
-    // ODE SYSTEM INFORMATION
-    SetDefaultInitialCondition(0, C);
-    SetDefaultInitialCondition(1, M);
-    SetDefaultInitialCondition(2, X);
-
-    mStateVariables.push_back(C);
-    mStateVariables.push_back(M);
-    mStateVariables.push_back(X);
-
-    // REACTIONS
-    RunReactions(0.0);
+    Initialise();
 
     // EVENTS
 }
@@ -52,33 +27,98 @@ Goldbeter1991SbmlOdeSystem::~Goldbeter1991SbmlOdeSystem()
 std::vector<double> Goldbeter1991SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
 {
     std::vector<double> dqs;
-
-    RunModelRules(time, rY);
-
-    dqs.push_back(cell);
-    dqs.push_back(V1);
-    dqs.push_back(V3);
+    RunModelEquations(time, rY);
 
     // AMOUNTS
-    double amt__C = C * cell;
-    double amt__M = M * cell;
-    double amt__X = X * cell;
+    double amt__C = C * cell; //
+    double amt__M = M * cell; //
+    double amt__X = X * cell; //
 
+    dqs.push_back(cell);
     dqs.push_back(amt__C);
     dqs.push_back(amt__M);
     dqs.push_back(amt__X);
+    dqs.push_back(V1);
+    dqs.push_back(V3);
+
     return dqs;
 }
 
 void Goldbeter1991SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
-    RunModelRules(time, rY);
-
-    rDY[0] = (reaction1 - reaction2 - reaction3) / cell; // d[C]/dt
-    rDY[1] = (reaction4 - reaction5) / cell;             // d[M]/dt
-    rDY[2] = (reaction6 - reaction7) / cell;             // d[X]/dt
+    std::vector<double> derivatives = RunModelEquations(time, rY);
+    for (unsigned i = 0; i < rDY.size(); ++i)
+    {
+        rDY[i] = derivatives[i];
+    }
 
     // TODO: Scale time appropriately
+}
+
+void Goldbeter1991SbmlOdeSystem::Initialise(double time)
+{
+    cell = 1.0;                              //
+    C = 0.01;                                //
+    M = 0.01;                                //
+    X = 0.01;                                //
+    VM1 = 3.0;                               //
+    VM3 = 1.0;                               //
+    Kc = 0.5;                                //
+    V1 = C * VM1 * std::pow((C + Kc), -1.0); //
+    V3 = M * VM3;                            //
+    // reaction1:
+    {
+        double vi = 0.025;
+        reaction1 = cell * vi;
+    }
+    // reaction2:
+    {
+        double kd = 0.01;
+        reaction2 = C * cell * kd;
+    }
+    // reaction3:
+    {
+        double vd = 0.25;
+        double Kd = 0.02;
+        reaction3 = C * cell * vd * X * std::pow((C + Kd), -1.0);
+    }
+    // reaction4:
+    {
+        double K1 = 0.005;
+        reaction4 = cell * (1.0 + -1.0 * M) * V1 * std::pow((K1 + -1.0 * M + 1.0), -1.0);
+    }
+    // reaction5:
+    {
+        double V2 = 1.5;
+        double K2 = 0.005;
+        reaction5 = cell * M * V2 * std::pow((K2 + M), -1.0);
+    }
+    // reaction6:
+    {
+        double K3 = 0.005;
+        reaction6 = cell * V3 * (1.0 + -1.0 * X) * std::pow((K3 + -1.0 * X + 1.0), -1.0);
+    }
+    // reaction7:
+    {
+        double K4 = 0.005;
+        double V4 = 0.5;
+        reaction7 = cell * V4 * X * std::pow((K4 + X), -1.0);
+    }
+    d_C_dt = (reaction1 - reaction2 - reaction3) / cell; //
+    d_M_dt = (reaction4 - reaction5) / cell;             //
+    d_X_dt = (reaction6 - reaction7) / cell;             //
+
+    mStateVariables.push_back(C);
+    mStateVariables.push_back(M);
+    mStateVariables.push_back(X);
+
+    SetDefaultInitialCondition(0, C);
+    SetDefaultInitialCondition(1, M);
+    SetDefaultInitialCondition(2, X);
+
+    mParameters.push_back(VM1);
+    mParameters.push_back(VM3);
+    mParameters.push_back(Kc);
 }
 
 double Goldbeter1991SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double>& rY)
@@ -94,71 +134,77 @@ double Goldbeter1991SbmlOdeSystem::ProcessModelEvents(double time, const std::ve
 // ASSIGNMENT RULES
 void Goldbeter1991SbmlOdeSystem::RunAssignmentRules(double time)
 {
-    V1 = C * VM1 * std::pow(C + Kc, -1.0);
-    V3 = M * VM3;
 }
 
 // INITIAL ASSIGNMENTS
 void Goldbeter1991SbmlOdeSystem::RunInitialAssignments(double time)
 {
-    V1 = C * VM1 * std::pow(C + Kc, -1.0); //
-    V3 = M * VM3;                          //
+}
+
+std::vector<double> Goldbeter1991SbmlOdeSystem::RunModelEquations(double time, const std::vector<double>& rStateVariables)
+{
+    C = rStateVariables[0];
+    M = rStateVariables[1];
+    X = rStateVariables[2];
+
+    VM1 = GetParameter(0);
+    VM3 = GetParameter(1);
+    Kc = GetParameter(2);
+
+    V1 = C * VM1 * std::pow((C + Kc), -1.0); //
+    V3 = M * VM3;                            //
+    // reaction1:
+    {
+        double vi = 0.025;
+        reaction1 = cell * vi;
+    }
+    // reaction2:
+    {
+        double kd = 0.01;
+        reaction2 = C * cell * kd;
+    }
+    // reaction3:
+    {
+        double vd = 0.25;
+        double Kd = 0.02;
+        reaction3 = C * cell * vd * X * std::pow((C + Kd), -1.0);
+    }
+    // reaction4:
+    {
+        double K1 = 0.005;
+        reaction4 = cell * (1.0 + -1.0 * M) * V1 * std::pow((K1 + -1.0 * M + 1.0), -1.0);
+    }
+    // reaction5:
+    {
+        double V2 = 1.5;
+        double K2 = 0.005;
+        reaction5 = cell * M * V2 * std::pow((K2 + M), -1.0);
+    }
+    // reaction6:
+    {
+        double K3 = 0.005;
+        reaction6 = cell * V3 * (1.0 + -1.0 * X) * std::pow((K3 + -1.0 * X + 1.0), -1.0);
+    }
+    // reaction7:
+    {
+        double K4 = 0.005;
+        double V4 = 0.5;
+        reaction7 = cell * V4 * X * std::pow((K4 + X), -1.0);
+    }
+    d_C_dt = (reaction1 - reaction2 - reaction3) / cell; //
+    d_M_dt = (reaction4 - reaction5) / cell;             //
+    d_X_dt = (reaction6 - reaction7) / cell;             //
+
+    std::vector<double> derivatives(3);
+    derivatives[0] = d_C_dt;
+    derivatives[1] = d_M_dt;
+    derivatives[2] = d_X_dt;
+    return derivatives;
 }
 
 // REACTIONS
 void Goldbeter1991SbmlOdeSystem::RunReactions(double time)
 {
-    // creation of cyclin
-    reaction1 = 0.0;
-    {
-        double vi = 0.025;
-        reaction1 = cell * vi;
-    }
-
-    // default degradation of cyclin
-    reaction2 = 0.0;
-    {
-        double kd = 0.01;
-        reaction2 = C * cell * kd;
-    }
-
-    // cdc2 kinase triggered degration of cyclin
-    reaction3 = 0.0;
-    {
-        double vd = 0.25;
-        double Kd = 0.02;
-        reaction3 = C * cell * vd * X * std::pow(C + Kd, -1.0);
-    }
-
-    // activation of cdc2 kinase
-    reaction4 = 0.0;
-    {
-        double K1 = 0.005;
-        reaction4 = cell * (1.0 + -1.0 * M) * V1 * std::pow(K1 + -1.0 * M + 1.0, -1.0);
-    }
-
-    // deactivation of cdc2 kinase
-    reaction5 = 0.0;
-    {
-        double V2 = 1.5;
-        double K2 = 0.005;
-        reaction5 = cell * M * V2 * std::pow(K2 + M, -1.0);
-    }
-
-    // activation of cyclin protease
-    reaction6 = 0.0;
-    {
-        double K3 = 0.005;
-        reaction6 = cell * V3 * (1.0 + -1.0 * X) * std::pow(K3 + -1.0 * X + 1.0, -1.0);
-    }
-
-    // deactivation of cyclin protease
-    reaction7 = 0.0;
-    {
-        double K4 = 0.005;
-        double V4 = 0.5;
-        reaction7 = cell * V4 * X * std::pow(K4 + X, -1.0);
-    }
 }
 
 // VARIABLE PARAMETERS
@@ -196,12 +242,6 @@ void CellwiseOdeSystemInformation<Goldbeter1991SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityNames.push_back("cell");
     this->mDerivedQuantityUnits.push_back("volume");
 
-    this->mDerivedQuantityNames.push_back("V1");
-    this->mDerivedQuantityUnits.push_back("non-dim");
-
-    this->mDerivedQuantityNames.push_back("V3");
-    this->mDerivedQuantityUnits.push_back("non-dim");
-
     this->mDerivedQuantityNames.push_back("amt__C");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
@@ -211,7 +251,22 @@ void CellwiseOdeSystemInformation<Goldbeter1991SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityNames.push_back("amt__X");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
+    this->mDerivedQuantityNames.push_back("V1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("V3");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     // PARAMETERS
+    this->mParameterNames.push_back("VM1");
+    this->mParameterUnits.push_back("non-dim");
+
+    this->mParameterNames.push_back("VM3");
+    this->mParameterUnits.push_back("non-dim");
+
+    this->mParameterNames.push_back("Kc");
+    this->mParameterUnits.push_back("non-dim");
+
     this->mInitialised = true;
 }
 
