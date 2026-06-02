@@ -37,9 +37,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ABSTRACT_SBML_ODE_SYSTEM_HPP_
 
 #include <boost/serialization/base_object.hpp>
-#include "ChasteSerialization.hpp"
 
 #include "AbstractOdeSystem.hpp"
+#include "ChasteSerialization.hpp"
 #include "ClassIsAbstract.hpp"
 #include "SbmlEventType.hpp"
 
@@ -65,7 +65,7 @@ private:
     template <class Archive>
     void serialize(Archive& archive, const unsigned int version)
     {
-        archive & boost::serialization::base_object<AbstractOdeSystem>(*this);
+        archive& boost::serialization::base_object<AbstractOdeSystem>(*this);
         archive & mNumberOfParameters;
         archive & mNumberOfEvents;
         archive & mEventSatisfied;
@@ -76,6 +76,54 @@ private:
         archive & mEventAdjustedParameters;
         archive & mEventAdjustedParameterValues;
     }
+
+    /**
+     * Process the events in the model.
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     *
+     * @return How close we are to the time of the next event
+     */
+    virtual double ProcessModelEvents(double time, const std::vector<double>& rY) = 0;
+
+    /**
+     * Run the assignment rules to update state.
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     */
+    virtual void RunAssignmentRules(double time) = 0;
+
+    /**
+     * Run the initial assignments to set initial state.
+     *
+     * @param time The current time
+     */
+    virtual void RunInitialAssignments(double time) = 0;
+
+    /**
+     * Run the reactions to update state.
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     */
+    virtual void RunReactions(double time) = 0;
+
+    /**
+     * Update variable parameters from current ODE system parameter settings.
+     *
+     * @param time The current time
+     */
+    virtual void UpdateParameters(double time) = 0;
+
+    /**
+     * Update state variables from the given ODE system state.
+     *
+     * @param time The current time
+     * @param rStateVariables The state variables to use
+     */
+    virtual void UpdateStateVariables(double time, const std::vector<double>& rStateVariables) = 0;
 
 protected:
     /** The number of parameters in the model */
@@ -92,6 +140,14 @@ protected:
     std::vector<double> mEventAdjustedStateValues;
     std::vector<bool> mEventAdjustedParameters;
     std::vector<double> mEventAdjustedParameterValues;
+
+    /**
+     * Run the equations governing the model to update state.
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     */
+    void RunModelRules(double time, const std::vector<double>& rY);
 
 public:
     /**
@@ -146,27 +202,9 @@ public:
     bool HasEventOccurred(SbmlEventType eventType);
 
     /**
-     * Process the events in the model.
-     *
-     * @param time The current time
-     * @param rY The current state variables
-     *
-     * @return How close we are to the time of the next event
-     */
-    virtual double ProcessModelEvents(double time, const std::vector<double>& rY) = 0;
-
-    /**
      * Reset the flags that indicate which events have been triggered.
      */
     void ResetEventsOccurred();
-
-    /**
-     * Run the equations governing the model to update state.
-     *
-     * @param time The current time
-     * @param rY The current state variables
-     */
-    virtual void RunModelRules(double time, const std::vector<double>& rY) = 0;
 };
 
 // Register abstract class with Boost serialization

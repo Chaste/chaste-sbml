@@ -11,46 +11,11 @@
 namespace sm = sbmlmath;
 
 {{ ode_class_name }}::{{ ode_class_name }}()
-    : AbstractSbmlOdeSystem({{ state_variables|length }}, {{variable_parameters|length }}, {{ events|length }})
+    : AbstractSbmlOdeSystem({{ state_variables|length }}, {{parameters|length }}, {{ events|length }})
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<{{ ode_class_name }}>);
 
-    // STATE VARIABLES
-{% for var in state_variables %}
-    {{ var["id"] }} = {{ var["initial_value"] }};
-{% endfor %}
-
-{% for var in state_variables %}
-    SetDefaultInitialCondition({{ var["index"] }}, {{ var["id"] }});
-{% endfor %}
-
-{% for var in state_variables %}
-    mStateVariables.push_back({{ var["id"] }});
-{% endfor %}
-
-    // DERIVED QUANTITIES
-{% for dq in derived_quantities %}
-    {{ dq["id"] }} = 0.0;
-{% endfor %}
-
-    // VARIABLE PARAMETERS
-{% for param in variable_parameters %}
-    {{ param["id"] }} = {{ param["initial_value"] }};
-{% endfor %}
-
-{% for param in variable_parameters %}
-    mParameters.push_back({{ param["id"] }});
-{% endfor %}
-
-    // RULE-BASED PARAMETERS
-{% for var in rule_based_parameters %}
-    {{ var['id'] }} = 0.0;
-{% endfor %}
-
-    // REACTIONS
-{% for reaction in reactions %}
-    {{ reaction["id"] }} = 0.0;
-{% endfor %}
+    Initialise();
 
     // EVENTS
 {% if events %}
@@ -69,15 +34,12 @@ namespace sm = sbmlmath;
     mEventSatisfied.resize({{ events|length }}, true); // Prevent events from triggering at the start
     mEventTriggered.resize({{ events|length }}, false);
 
-    mEventAdjustedParameters.resize({{ variable_parameters|length }}, false);
-    mEventAdjustedParameterValues.resize({{ variable_parameters|length }}, 0.0);
+    mEventAdjustedParameters.resize({{ parameters|length }}, false);
+    mEventAdjustedParameterValues.resize({{ parameters|length }}, 0.0);
 
     mEventAdjustedStateVars.resize({{ state_variables|length }}, false);
     mEventAdjustedStateValues.resize({{ state_variables|length }}, 0.0);
 {% endif %} {# 'if events' #}
-
-    // Run model rules to complete state initialisation
-    RunModelRules(0.0, mStateVariables);
 }
 
 {{ ode_class_name }}::~{{ ode_class_name }}()
@@ -86,24 +48,65 @@ namespace sm = sbmlmath;
 
 std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, const std::vector<double> &rY)
 {
-    RunModelRules(time, rY);
-
     std::vector<double> dqs;
+{% if derived_quantities %}
+    RunModelEquations(time, rY);
+
+    // AMOUNTS
+{% for eq in equations %}
+{% if ( eq["type"] == EquationType.AMOUNT ) %}
+    double {{ eq["var"] }} = {{ eq["rhs"] }}; // {{ eq["label"] }}
+{% endif %}
+{% endfor %}
+
 {% for dq in derived_quantities %}
     dqs.push_back({{ dq["id"] }});
 {% endfor %}
+{% endif %} {# 'if derived_quantities' #}
+
     return dqs;
 }
 
 void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
-    RunModelRules(time, rY);
-
-{% for var in state_variables %}
-    rDY[{{ var["index"] }}] = {{ var["rhs"] }}; // d[{{ var["id"] }}]/dt
-{% endfor %}
+    std::vector<double> derivatives = RunModelEquations(time, rY);
+    for (unsigned i = 0; i < rDY.size(); ++i)
+    {
+        rDY[i] = derivatives[i];
+    }
 
     // TODO: Scale time appropriately
+}
+
+void {{ ode_class_name }}::Initialise(double time)
+{
+{% for eq in equations %}
+{% if ( eq["type"] != EquationType.AMOUNT ) %}
+{% if eq["local_parameters"] %}
+    // {{ eq["var"] }}: {{ eq["label"] }}
+    {
+{% for local_parameter in eq["local_parameters"] %}
+        double {{ local_parameter["id"] }} = {{ local_parameter["value"] }};
+{% endfor %}
+        {{ eq["var"] }} = {{ eq["rhs"] }};
+    }
+{% else %}
+    {{ eq["var"] }} = {{ eq["rhs"] }};  // {{ eq["label"] }}
+{% endif %}
+{% endif %}
+{% endfor %}
+
+{% for var in state_variables %}
+    mStateVariables.push_back({{ var["id"] }});
+{% endfor %}
+
+{% for var in state_variables %}
+    SetDefaultInitialCondition({{ var["index"] }}, {{ var["id"] }});
+{% endfor %}
+
+{% for param in parameters %}
+    mParameters.push_back({{ param["id"] }});
+{% endfor %}
 }
 
 double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<double> &rY)
@@ -175,40 +178,69 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
     return min_dist; // Distance to closest event
 }
 
-void {{ ode_class_name }}::RunModelRules(double time, const std::vector<double>& rY)
+// ASSIGNMENT RULES
+void {{ ode_class_name }}::RunAssignmentRules(double time)
 {
-    // STATE VARIABLES
+}
+
+// INITIAL ASSIGNMENTS
+void {{ ode_class_name }}::RunInitialAssignments(double time)
+{
+}
+
+std::vector<double> {{ ode_class_name }}::RunModelEquations(double time, const std::vector<double>& rStateVariables)
+{
 {% for var in state_variables %}
-    {{ var["id"] }} = rY[{{ var["index"] }}];
+    {{ var["id"] }} = rStateVariables[{{ var["index"] }}];
 {% endfor %}
 
-    // VARIABLE PARAMETERS
-{% for var in variable_parameters %}
-    {{ var["id"] }} = GetParameter({{ var['index'] }});
+{% for param in parameters %}
+    {{ param["id"] }} = GetParameter({{ param['index'] }});
 {% endfor %}
 
-    // ASSIGNMENT RULES
-{% for rule in assignment_rules %}
-    {{ rule["lhs"] }} = {{ rule["rhs"] }};
-{% endfor %}
-
-    // REACTIONS
-{% for reaction in reactions %}
-  {% if reaction["label"] %}
-    // {{ reaction["label"] }}
-  {% endif %}
-  {% if reaction["parameters"] %}
-    {{ reaction["id"] }} = 0.0;
+{% for eq in equations %}
+{% if ( eq["type"] not in [EquationType.INITIAL_VALUE, EquationType.INITIAL_ASSIGNMENT, EquationType.AMOUNT] ) %}
+{% if eq["local_parameters"] %}
+    // {{ eq["var"] }}: {{ eq["label"] }}
     {
-  {% for param in reaction["parameters"] %}
-        double {{ param["id"] }} = {{ param["value"] }};
-  {% endfor %}
-        {{ reaction["id"] }} = {{ reaction["rhs"] }};
+{% for local_parameter in eq["local_parameters"] %}
+        double {{ local_parameter["id"] }} = {{ local_parameter["value"] }};
+{% endfor %}
+        {{ eq["var"] }} = {{ eq["rhs"] }};
     }
-  {% else %}
-    {{ reaction["id"] }} = {{ reaction["rhs"] }};
-  {% endif %}
+{% else %}
+    {{ eq["var"] }} = {{ eq["rhs"] }};  // {{ eq["label"] }}
+{% endif %}
+{% endif %}
+{% endfor %}
 
+    std::vector<double> derivatives({{ state_variables|length }});
+{% for var in state_variables %}
+    derivatives[{{ var["index"] }}] = {{ var["derivative_id"] }};
+{% endfor %}
+    return derivatives;
+}
+
+// REACTIONS
+void {{ ode_class_name }}::RunReactions(double time)
+{
+}
+
+// VARIABLE PARAMETERS
+void {{ ode_class_name }}::UpdateParameters(double time)
+{
+{% for param in parameters %}
+{% if param["fixed"] is false() %}
+    {{ param["id"] }} = GetParameter({{ param['index'] }});
+{% endif %}
+{% endfor %}
+}
+
+// STATE VARIABLES
+void {{ ode_class_name }}::UpdateStateVariables(double time, const std::vector<double>& rStateVariables)
+{
+{% for var in state_variables %}
+    {{ var["id"] }} = rStateVariables[{{ var["index"] }}];
 {% endfor %}
 }
 
@@ -228,7 +260,11 @@ void CellwiseOdeSystemInformation<{{ ode_class_name }}>::Initialise()
 {% for var in state_variables %}
     this->mVariableNames.push_back("{{ var['id'] }}");
     this->mVariableUnits.push_back("{{ var['units'] }}");
+{% if var["initial_value"] is not none %}
     this->mInitialConditions.push_back({{ var['initial_value'] }});
+{% else %}
+    this->mInitialConditions.push_back(0.0);
+{% endif %}
 
 {% endfor %}
 
@@ -240,7 +276,7 @@ void CellwiseOdeSystemInformation<{{ ode_class_name }}>::Initialise()
 {% endfor %}
 
     // PARAMETERS
-{% for var in variable_parameters %}
+{% for var in parameters %}
     this->mParameterNames.push_back("{{ var['id'] }}");
     this->mParameterUnits.push_back("{{ var['units'] }}");
 

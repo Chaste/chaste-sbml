@@ -13,12 +13,13 @@ license = { file = "LICENSE" }
 
 authors = [{ name = "Kwabena Amponsah" }, { name = "James Osborne" }]
 
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 dependencies = ["clang-format", "Jinja2 >=3.0,<4", "python-libsbml >=5.20,<6"]
 
 [project.optional-dependencies]
 dev = [
+  "black",
   "flake8",
   "flake8-bugbear",
   "isort",
@@ -38,19 +39,18 @@ source = "https://github.com/Chaste/chaste-codegen-sbml"
 version_file = "chaste_codegen_sbml/_version.py"
 
 [tool.black]
-line-length = 100
+line-length = 120
 target-version = ["py39", "py310", "py311", "py312", "py313"]
 extend-exclude = """
 (
-  SbmlRefModels
-  | templates/
+  templates/
   | ^/venv/
 )
 """
 
 [tool.isort]
 known_first_party = "chaste_codegen_sbml"
-extend_skip = ["SbmlRefModels", "templates", "venv"]
+extend_skip = ["templates", "venv"]
 profile = "black"
 multi_line_output = 3
 include_trailing_comma = "True"

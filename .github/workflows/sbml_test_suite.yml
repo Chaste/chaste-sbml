@@ -1,0 +1,125 @@
+name: sbml_test_suite
+
+on: [pull_request]
+
+concurrency:
+  group: sbml_test_suite-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  semantic_tests:
+    runs-on: ubuntu-latest
+
+    env:
+      PROJ_ROOT: chaste_codegen_sbml/SbmlRefModels
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - first_case: "1"
+            last_case: "279"
+          - first_case: "280"
+            last_case: "785"
+          - first_case: "786"
+            last_case: "1183"
+          - first_case: "1184"
+            last_case: "1821"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.12
+
+      - name: Install SBML codegen
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install .[dev]
+
+      - name: Checkout SBML test suite
+        uses: actions/checkout@v6
+        with:
+          repository: sbmlteam/sbml-test-suite
+          path: sbml-test-suite
+
+      - name: Generate semantic test cases
+        run: |
+          mkdir -p ${PROJ_ROOT}/src/cases/semantic
+          python3 ${PROJ_ROOT}/generate_cases.py \
+            --sbml-test-suite-dir sbml-test-suite \
+            --gen-src-dir ${PROJ_ROOT}/src/cases/semantic \
+            --gen-test-dir ${PROJ_ROOT}/test/cases/semantic \
+            --test-pack-file ${PROJ_ROOT}/test/WeeklyTestPack.txt \
+            --first-case ${{ matrix.first_case }} \
+            --last-case ${{ matrix.last_case }}
+
+      - name: Check for generated src
+        run: |
+          ls -al ${PROJ_ROOT}/src/cases/semantic
+          [ "$(ls -A ${PROJ_ROOT}/src/cases/semantic)" ] && exit 0 || exit 1
+
+      - name: Check for generated tests
+        run: |
+          ls -al ${PROJ_ROOT}/test/cases/semantic
+          [ "$(ls -A ${PROJ_ROOT}/test/cases/semantic)" ] && exit 0 || exit 1
+
+      - name: Check WeeklyTestPack
+        run: |
+          cat ${PROJ_ROOT}/test/WeeklyTestPack.txt
+          [ -s ${PROJ_ROOT}/test/WeeklyTestPack.txt ] && exit 0 || exit 1
+
+      - name: Checkout Chaste
+        uses: actions/checkout@v6
+        with:
+          repository: Chaste/Chaste
+          path: Chaste
+
+      - name: Install Chaste dependencies
+        run: |
+          sudo wget -O /usr/share/keyrings/chaste.asc https://chaste.github.io/chaste.asc
+          codename="$(. /etc/os-release && echo ${VERSION_CODENAME} | sed 's/\.//')"
+          repo="deb [signed-by=/usr/share/keyrings/chaste.asc] https://chaste.github.io/ubuntu ${codename}/"
+          echo "${repo}" | sudo tee /etc/apt/sources.list.d/chaste.list
+          sudo apt-get update
+          sudo apt-get install -y chaste-dependencies lcov
+
+      - name: Setup Chaste paths
+        run: |
+          mkdir -p Chaste/build
+          ln -s $(pwd)/${PROJ_ROOT} $(pwd)/Chaste/projects/SbmlRefModels
+
+      - name: Configure Chaste
+        run: |
+          cmake -DCMAKE_BUILD_TYPE=Debug -DChaste_ERROR_ON_WARNING=OFF -DChaste_COVERAGE=ON ..
+        working-directory: Chaste/build
+
+      - name: Build SbmlRefModels
+        run: |
+          cmake --build . --target project_SbmlRefModels --parallel $(nproc)
+        working-directory: Chaste/build
+
+      - name: Select relevant semantic tests from status CSV
+        id: select_tests
+        run: |
+          filter_output="$(python3 "${PROJ_ROOT}/infra/filter_test_suite_cases.py" \
+            --status-csv "${PROJ_ROOT}/test/data/sbml_test_suite_status.csv" \
+            --first-case "${{ matrix.first_case }}" \
+            --last-case "${{ matrix.last_case }}")"
+
+          echo "${filter_output}"
+
+          selected_count="$(printf "%s\n" "${filter_output}" | grep '^selected_count=' | tail -n1 | cut -d'=' -f2-)"
+          test_regex="$(printf "%s\n" "${filter_output}" | grep '^test_regex=' | tail -n1 | cut -d'=' -f2-)"
+
+          echo "selected_count=${selected_count}" >> "${GITHUB_OUTPUT}"
+          echo "test_regex=${test_regex}" >> "${GITHUB_OUTPUT}"
+
+      - name: Run Semantic Tests
+        if: steps.select_tests.outputs.selected_count != '0'
+        run: |
+          ctest -j $(nproc) -R "${{ steps.select_tests.outputs.test_regex }}" --output-on-failure
+        working-directory: Chaste/build

@@ -22,9 +22,7 @@ def parse_args():
 
     parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
 
-    parser.add_argument(
-        "--output-dir", action="store", help="The directory to place output files in", default=None
-    )
+    parser.add_argument("--output-dir", action="store", help="The directory to place output files in", default=None)
 
     parser.add_argument(
         "--model-type",

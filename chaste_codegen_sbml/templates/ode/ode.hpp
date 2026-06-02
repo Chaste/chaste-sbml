@@ -26,9 +26,9 @@ private:
         archive & boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
     }
 
-    // CONSTANT PARAMETERS
-{% for param in constant_parameters %}
-    const double {{ param["id"] }} = {{ param["value"] }}; // {{ param["label"] }}
+    // PARAMETERS
+{% for param in parameters %}
+    double {{ param["id"] }}; // {{ param["label"] }}
 {% endfor %}
 
     // STATE VARIABLES
@@ -36,24 +36,78 @@ private:
     double {{ var["id"] }}; // {{ var["label"] }}
 {% endfor %}
 
+{% for var in state_variables %}
+   double {{ var["derivative_id"] }};
+{% endfor %}
+
     // DERIVED QUANTITIES
 {% for dq in derived_quantities %}
+{% if dq["is_amount"] is false() %}
     double {{ dq["id"] }}; // {{ dq["label"] }}
+{% endif %}
 {% endfor %}
 
-    // VARIABLE PARAMETERS
-{% for param in variable_parameters %}
-    double {{ param["id"] }}; // {{ param["label"] }}
-{% endfor %}
-
-    // RULE-BASED PARAMETERS
-{% for param in rule_based_parameters %}
-    double {{ param["id"] }}; // {{ param["label"] }}
+    // STOICHIOMETRY VARIABLES
+{% for var in stoichiometry_variables %}
+    double {{ var["id"] }}; // {{ var["label"] }}
 {% endfor %}
 
     // REACTIONS
 {% for reaction in reactions %}
     double {{ reaction["id"] }}; // {{ reaction["label"] }}
+{% endfor %}
+
+    /**
+     * Process the events in the model.
+     * 
+     * @param time The current time
+     * @param rY The current state variables
+     * 
+     * @return How close we are to the time of the next event
+     */
+    double ProcessModelEvents(double time, const std::vector<double>& rY) override;
+
+    /**
+     * Run the assignment rules to update state.
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     */
+    void RunAssignmentRules(double time) override;
+
+    /**
+     * Run the initial assignments to set initial state.
+     *
+     * @param time The current time
+     */
+    void RunInitialAssignments(double time) override;
+
+    /**
+     * Run the reactions to update state.
+     *
+     * @param time The current time
+     * @param rY The current state variables
+     */
+    void RunReactions(double time) override;
+
+    /**
+     * Update variable parameters from current ODE system parameter settings.
+     *
+     * @param time The current time
+     */
+    void UpdateParameters(double time) override;
+
+    /**
+     * Update state variables from the given ODE system state.
+     *
+     * @param time The current time
+     * @param rStateVariables The state variables to use
+     */
+    void UpdateStateVariables(double time, const std::vector<double>& rStateVariables) override;
+
+    // MODEL FUNCTIONS
+{% for func in functions %}
+    inline double {{ func["id"] }}({{ func["args"] }});
 {% endfor %}
 
 public:
@@ -88,28 +142,9 @@ public:
      */
     void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY) override;
 
-    /**
-     * Process the events in the model.
-     * 
-     * @param time The current time
-     * @param rY The current state variables
-     * 
-     * @return How close we are to the time of the next event
-     */
-    double ProcessModelEvents(double time, const std::vector<double>& rY) override;
+    void Initialise(double time = 0.0);
 
-    /** 
-     * Run the equations governing the model to update state.
-     * 
-     * @param time The current time
-     * @param rY The current state variables
-     */
-    void RunModelRules(double time, const std::vector<double>& rY) override;
-
-    // MODEL FUNCTIONS
-{% for func in functions %}
-    inline double {{ func["id"] }}({{ func["args"] }});
-{% endfor %}
+    std::vector<double> RunModelEquations(double time, const std::vector<double>& rStateVariables);
 };
 
 // Register the ODE system with Boost serialization

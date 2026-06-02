@@ -7,19 +7,25 @@ ROOT_DIR = pathlib.Path(__file__).parent.absolute()
 
 NON_DIM_UNITS = "non-dim"
 
+PREFIX_SEP = "__"
+AMOUNT_PREFIX = "amt"
+CHASTE_PREFIX = "chaste"
+INITIAL_ASSIGNMENT_PREFIX = "ia"
 
-class VarType(Enum):
-    """Enumeration of variable types in SBML models."""
+DERIVATIVE_PREFIX = "d_"
+DERIVATIVE_SUFFIX = "_dt"
 
-    STATE_VARIABLE = 1
-    DERIVED_QUANTITY = 2
-    VARIABLE_PARAMETER = 3
-    CONSTANT_PARAMETER = 4
-    RULE_BASED_PARAMETER = 5
-    ASSIGNMENT_RULE = 6
-    FUNCTION = 7
-    REACTION = 8
-    UNKNOWN = 9
+
+class EquationType(Enum):
+    """Enumeration of equation types for code generation."""
+
+    AMOUNT = 0
+    ASSIGNMENT_RULE = 1
+    DERIVATIVE = 2
+    INITIAL_ASSIGNMENT = 3
+    INITIAL_VALUE = 4
+    REACTION = 5
+    UNKNOWN = 6
 
 
 class EventType(Enum):
@@ -27,6 +33,18 @@ class EventType(Enum):
 
     CELL_DIVISION = 1
     UNKNOWN = 2
+
+
+class VarType(Enum):
+    """Enumeration of variable types in SBML models."""
+
+    AMOUNT = 0
+    DERIVED_QUANTITY = 1
+    FUNCTION = 2
+    PARAMETER = 3
+    REACTION = 4
+    STATE_VARIABLE = 5
+    UNKNOWN = 6
 
 
 class ModelType(Enum):

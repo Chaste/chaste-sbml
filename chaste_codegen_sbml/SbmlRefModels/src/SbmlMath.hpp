@@ -33,8 +33,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef SBMLMATH_HPP_
-#define SBMLMATH_HPP_
+#ifndef SBML_MATH_HPP_
+#define SBML_MATH_HPP_
 
 /**
  * SBML math functions.
@@ -307,4 +307,4 @@ constexpr double sbmlmath::piecewise(double value, bool condition, Args... rest)
     return condition ? value : sbmlmath::piecewise(rest...);
 }
 
-#endif // SBMLMATH_HPP_
+#endif // SBML_MATH_HPP_

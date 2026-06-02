@@ -1,31 +1,32 @@
-[![build_and_test](https://github.com/Chaste/chaste-codegen-sbml/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/Chaste/chaste-codegen-sbml/workflows/build_and_test.yml)
+![build_and_test]
+(https://github.com/Chaste/chaste-codegen-sbml/actions/workflows/build_and_test.yml/badge.svg?branch=develop)
 
 # Import SBML models into Chaste
 
-The `chaste_codegen_sbml` tool converts [SBML](https://sbml.org) models into C++
-Chaste code using [libSBML](https://github.com/sbmlteam/libsbml).
+This project is a Python code generator that reads an [SBML](https://sbml.org) model and emits C++ classes compatible
+with [Chaste](https://chaste.github.io), so you can run SBML-defined biology models inside Chaste simulations.
 
 ## Installation
 
-### Install using `pipx` (recommended)
+### Install with `pipx` (recommended)
 
 ```sh
 pipx install git+https://github.com/Chaste/chaste-codegen-sbml@develop
 ```
 
-### Install using `pip`
+### Install with `pip`
 
 Create and activate a virtual environment (optional)
 
 ```sh
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-Install
+Install the package
 
 ```sh
-pip install git+https://github.com/Chaste/chaste-codegen-sbml@develop
+python3 -m pip install git+https://github.com/Chaste/chaste-codegen-sbml@develop
 ```
 
 ## Development
@@ -42,20 +43,20 @@ cd chaste-codegen-sbml
 Create and activate a virtual environment
 
 ```sh
-python -m .venv .venv
+python3 -m .venv .venv
 source .venv/bin/activate
 ```
 
 Install in editable mode with development dependencies
 
 ```sh
-pip install -e ."[dev]"
+python3 -m pip install -e ."[dev]"
 ```
 
 Run tests
 
-```
-python -m pytest
+```sh
+python3 -m pytest
 ```
 
 ## Usage
