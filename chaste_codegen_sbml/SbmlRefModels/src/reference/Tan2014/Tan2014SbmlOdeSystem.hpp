@@ -26,17 +26,19 @@ private:
         archive& boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
     }
 
-    // FIXED PARAMETERS
-    const double kdegradation = 0.0163;         //
-    const double Bsyn = 1.306;                  //
-    const double K_n_active_k = 17.16;          //
-    const double kC_k1 = 1e-05;                 //
-    const double kC_k2 = 0.000647;              //
-    const double kN_k1 = 0.0001;                //
-    const double kN_k2 = 0.00349;               //
-    const double kdiffusion_k = 39.13;          //
-    const double K_c_active_k = 4.5;            //
-    const double ComplexTransitThreshold = 1.0; // ComplexTransitThreshold
+    // PARAMETERS
+    double wnt_level;               // wnt_level
+    double kdegradation;            //
+    double Bsyn;                    //
+    double K_n_active_k;            //
+    double kC_k1;                   //
+    double kC_k2;                   //
+    double kN_k1;                   //
+    double kN_k2;                   //
+    double kdiffusion_k;            //
+    double K_c_active_k;            //
+    double gamma;                   // gamma
+    double ComplexTransitThreshold; // ComplexTransitThreshold
 
     // STATE VARIABLES
     double bcat_cm;    //
@@ -46,15 +48,18 @@ private:
     double ligand_nu;  //
     double complex_nu; //
 
+    double d_bcat_cm_dt;
+    double d_ligand_cm_dt;
+    double d_complex_cm_dt;
+    double d_bcat_nu_dt;
+    double d_ligand_nu_dt;
+    double d_complex_nu_dt;
+
     // DERIVED QUANTITIES
     double compartment;     //
     double CytosolMembrane; //
     double nucleus;         //
     double drag;            // drag
-
-    // VARIABLE PARAMETERS
-    double wnt_level; // wnt_level
-    double gamma;     // gamma
 
     // STOICHIOMETRY VARIABLES
 
@@ -148,6 +153,10 @@ public:
      * @param rDY an output vector to be filled in with the resulting derivatives y' = [y1' ... yn'].
      */
     void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY) override;
+
+    void Initialise(double time = 0.0);
+
+    std::vector<double> RunModelEquations(double time, const std::vector<double>& rStateVariables);
 };
 
 // Register the ODE system with Boost serialization
