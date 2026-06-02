@@ -15,6 +15,7 @@ jobs:
 
     strategy:
       fail-fast: false
+      # matrix is split by number of supported test cases (~260 per batch)
       matrix:
         include:
           - first_case: "1"
