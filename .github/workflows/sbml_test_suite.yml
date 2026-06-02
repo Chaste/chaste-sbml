@@ -17,14 +17,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - first_case: "0"
-            last_case: "454"
-          - first_case: "455"
-            last_case: "909"
-          - first_case: "910"
-            last_case: "1364"
-          - first_case: "1365"
-            last_case: "1823"
+          - first_case: "1"
+            last_case: "279"
+          - first_case: "280"
+            last_case: "785"
+          - first_case: "786"
+            last_case: "1183"
+          - first_case: "1184"
+            last_case: "1821"
 
     steps:
       - name: Checkout
@@ -105,7 +105,7 @@ jobs:
       - name: Select relevant semantic tests from status CSV
         id: select_tests
         run: |
-          filter_output="$(bash "${PROJ_ROOT}/infra/filter_test_suite_cases.sh" \
+          filter_output="$(python3 "${PROJ_ROOT}/infra/filter_test_suite_cases.py" \
             --status-csv "${PROJ_ROOT}/test/data/sbml_test_suite_status.csv" \
             --first-case "${{ matrix.first_case }}" \
             --last-case "${{ matrix.last_case }}")"
