@@ -76,9 +76,7 @@ class ChasteSbmlModel:
 
     # -- PUBLIC --------------------------------------
 
-    def __init__(
-        self, sbml_file: str, model_name: str = "", model_type: ModelType = ModelType.GENERIC
-    ) -> None:
+    def __init__(self, sbml_file: str, model_name: str = "", model_type: ModelType = ModelType.GENERIC) -> None:
         """Initialise the ChasteSbmlModel.
 
         :param sbml: The SBML file.
@@ -351,9 +349,7 @@ class ChasteSbmlModel:
         )
         self._variable_types[id_] = VarType.FUNCTION
 
-    def _add_initial_assignment(
-        self, id_: str, label: str, var: str, math: Optional["ASTNode"] = None
-    ) -> None:
+    def _add_initial_assignment(self, id_: str, label: str, var: str, math: Optional["ASTNode"] = None) -> None:
         """Add an initial assignment to the template variables.
 
         :param id_: The rule ID.
@@ -692,9 +688,7 @@ class ChasteSbmlModel:
                     # neq(5.0    , 5.0    ) -> condition=false, dist=-eps
                     # neq(5.0+eps, 5.0    ) -> condition=true, dist=0.0
                     # neq(5.5    , 5.0    ) -> condition=true, dist=0.5-eps
-                    trigger_distance = (
-                        f"std::abs(({lc}) - ({rc})) - std::numeric_limits<double>::epsilon()"
-                    )
+                    trigger_distance = f"std::abs(({lc}) - ({rc})) - std::numeric_limits<double>::epsilon()"
 
                 # TODO: Distance calculation assumes two operands. Extend to more operands?
                 # e.g. trigger: geq(3.0, 6.0, 7.0, 9.0) -> condition=false, dist=min(3.0, 1.0, 2.0)=1.0
@@ -815,9 +809,7 @@ class ChasteSbmlModel:
                 for param in parameters:
                     param_id = param.getId()
                     if not param.isSetValue():
-                        raise ValueError(
-                            f"Local parameter {param_id} in reaction {id_} has no value."
-                        )
+                        raise ValueError(f"Local parameter {param_id} in reaction {id_} has no value.")
                     local_parameters.append(
                         {
                             "id": param_id,
@@ -876,9 +868,7 @@ class ChasteSbmlModel:
             compartment = self._sbml_compartments.get(compartment_id)
 
             units = NON_DIM_UNITS if compartment else species.getSubstanceUnits()
-            has_only_substance_units = (
-                species.isSetHasOnlySubstanceUnits() and species.getHasOnlySubstanceUnits()
-            )
+            has_only_substance_units = species.isSetHasOnlySubstanceUnits() and species.getHasOnlySubstanceUnits()
 
             initial_value = None
             if species.isSetInitialConcentration():
@@ -902,9 +892,7 @@ class ChasteSbmlModel:
                     ia_rhs = f"{species_id} * {compartment_id}"
                     ia_math = parseL3Formula(ia_rhs)
                     self._add_initial_assignment(ia_id, ia_label, ia_var, ia_math)
-                    self._add_equation(
-                        var=ia_var, math=ia_math, eq_type=EquationType.INITIAL_ASSIGNMENT
-                    )
+                    self._add_equation(var=ia_var, math=ia_math, eq_type=EquationType.INITIAL_ASSIGNMENT)
 
             elif species.isSetInitialAmount():
                 initial_value = species.getInitialAmount()
@@ -923,17 +911,13 @@ class ChasteSbmlModel:
                     ia_rhs = f"{species_id} / {compartment_id}"
                     ia_math = parseL3Formula(ia_rhs)
                     self._add_initial_assignment(ia_id, ia_label, ia_var, ia_math)
-                    self._add_equation(
-                        var=ia_var, math=ia_math, eq_type=EquationType.INITIAL_ASSIGNMENT
-                    )
+                    self._add_equation(var=ia_var, math=ia_math, eq_type=EquationType.INITIAL_ASSIGNMENT)
 
             is_bc = species.isSetBoundaryCondition() and species.getBoundaryCondition()
 
             if species_id in initial_assignments:
                 math = initial_assignments[species_id]
-                self._add_equation(
-                    var=species_id, math=math, eq_type=EquationType.INITIAL_ASSIGNMENT
-                )
+                self._add_equation(var=species_id, math=math, eq_type=EquationType.INITIAL_ASSIGNMENT)
 
             if species_id in assignment_rules:
                 # Derived quantity (includes boundary conditions with assignment rules)
@@ -951,9 +935,7 @@ class ChasteSbmlModel:
                         rhs = f"({rhs}) * {conversion_factor}"
                     math = parseL3Formula(rhs)
                     state_var = self._add_state_variable(species_id, label, initial_value, units)
-                    self._add_equation(
-                        var=state_var["derivative_id"], math=math, eq_type=EquationType.DERIVATIVE
-                    )
+                    self._add_equation(var=state_var["derivative_id"], math=math, eq_type=EquationType.DERIVATIVE)
                 else:
                     # Derived quantity
                     self._add_derived_quantity(species_id, label, initial_value, units)
@@ -1002,6 +984,124 @@ class ChasteSbmlModel:
                 # Add an extra "amount" derived quantity for the species
                 self._add_amount(species)
 
+    def _convert_infix_operator_to_function_syntax(self, formula: str, operator: str, function_name: str) -> str:
+        """Convert infix operator expressions to function syntax.
+
+        Example: with operator='^' and function_name='pow', rewrites
+        ``a ^ b`` to ``pow(a, b)``.
+
+        This parser handles parenthesized operands (including nested parentheses)
+        and simple symbolic/numeric tokens.
+
+        :param formula: Formula text in SBML infix style.
+        :param operator: Infix operator token to rewrite.
+        :param function_name: Function name used for the replacement.
+        :return: Formula text with infix operators rewritten as function calls.
+        """
+        if not operator:
+            raise ValueError("operator must be a non-empty string")
+        if not function_name:
+            raise ValueError("function_name must be a non-empty string")
+
+        token_chars = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_:.eE")
+
+        def read_left_operand(s: str, operator_index: int) -> tuple[int, int] | None:
+            i = operator_index - 1
+            while i >= 0 and s[i].isspace():
+                i -= 1
+            if i < 0:
+                return None
+
+            if s[i] == ")":
+                depth = 1
+                j = i - 1
+                while j >= 0:
+                    if s[j] == ")":
+                        depth += 1
+                    elif s[j] == "(":
+                        depth -= 1
+                        if depth == 0:
+                            return (j, i + 1)
+                    j -= 1
+                return None
+
+            j = i
+            while j >= 0 and s[j] in token_chars:
+                j -= 1
+
+            start = j + 1
+            end = i + 1
+            if start >= end:
+                return None
+            return (start, end)
+
+        def read_right_operand(s: str, operator_index: int) -> tuple[int, int] | None:
+            i = operator_index + len(operator)
+            n = len(s)
+            while i < n and s[i].isspace():
+                i += 1
+            if i >= n:
+                return None
+
+            if s[i] == "(":
+                depth = 1
+                j = i + 1
+                while j < n:
+                    if s[j] == "(":
+                        depth += 1
+                    elif s[j] == ")":
+                        depth -= 1
+                        if depth == 0:
+                            return (i, j + 1)
+                    j += 1
+                return None
+
+            j = i
+            if s[j] in "+-":
+                j += 1
+
+            while j < n and s[j] in token_chars:
+                j += 1
+
+            if j <= i:
+                return None
+            return (i, j)
+
+        max_rewrites = 500
+        rewrites = 0
+        search_start = 0
+        while rewrites < max_rewrites:
+            operator_index = formula.find(operator, search_start)
+            if operator_index < 0:
+                break
+
+            left = read_left_operand(formula, operator_index)
+            right = read_right_operand(formula, operator_index)
+            if left is None or right is None:
+                search_start = operator_index + len(operator)
+                continue
+
+            l_start, l_end = left
+            r_start, r_end = right
+
+            lhs = formula[l_start:l_end].strip()
+            rhs = formula[r_start:r_end].strip()
+            replacement = f"{function_name}({lhs}, {rhs})"
+
+            formula = formula[:l_start] + replacement + formula[r_end:]
+            search_start = l_start + len(replacement)
+            rewrites += 1
+
+        return formula
+
+    def _convert_infix_power_to_function_syntax(self, formula: str) -> str:
+        """Convert infix power expressions (a ^ b) to function syntax pow(a, b)."""
+        return self._convert_infix_operator_to_function_syntax(
+            formula=formula,
+            operator="^",
+            function_name="pow",
+        )
+
     def _formula_to_string(self, math: "ASTNode") -> str:
         """Convert an AST math formula to an equivalent C++ string.
 
@@ -1020,16 +1120,7 @@ class ChasteSbmlModel:
         # nodes to AST_REAL. This should only need to apply to numbers used in a division.
         formula = re.sub(r"(?<!\.)(?<!e-|E-)\b[0-9]+\b(?!\.)", lambda x: f"{x[0]}.0", formula)
 
-        # Convert infix power syntax (e.g. x^2) to function syntax (pow(x, 2)) for C++.
-        # Repeat to handle nested parenthesized terms from inside out.
-        power_expr_pattern = re.compile(
-            r"(\([^()]+\)|[A-Za-z_][A-Za-z0-9_\.]*)\s*\^\s*(\([^()]+\)|[-+]?[A-Za-z_0-9\.]+)"
-        )
-        for _ in range(50):
-            updated = power_expr_pattern.sub(r"pow(\1, \2)", formula)
-            if updated == formula:
-                break
-            formula = updated
+        formula = self._convert_infix_power_to_function_syntax(formula)
 
         # SBML contants to be replaced with C++ equivalents
         constants = {
@@ -1378,9 +1469,7 @@ class ChasteSbmlModel:
             EquationType.UNKNOWN,
         ]
 
-        sorted_equations = [
-            eq for eq_type in group_order for eq in self._equations if eq["type"] == eq_type
-        ]
+        sorted_equations = [eq for eq_type in group_order for eq in self._equations if eq["type"] == eq_type]
 
         # Sort equations by dependencies
         for _ in range(len(sorted_equations)):  # Max iterations for worst case

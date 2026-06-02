@@ -26,43 +26,43 @@ private:
         archive& boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
     }
 
-    // FIXED PARAMETERS
-    const double k1 = 0.04;      // k1
-    const double k2p = 0.04;     // k2p
-    const double k2pp = 1.0;     // k2pp
-    const double k2ppp = 1.0;    // k2ppp
-    const double k3p = 1.0;      // k3p
-    const double k3pp = 10.0;    // k3pp
-    const double J3 = 0.04;      // J3
-    const double k4 = 35.0;      // k4
-    const double k5p = 0.005;    // k5p
-    const double k5pp = 0.2;     // k5pp
-    const double J5 = 0.3;       // J5
-    const double k6 = 0.1;       // k6
-    const double n = 4.0;        // n
-    const double k7 = 1.0;       // k7
-    const double J7 = 0.001;     // J7
-    const double k8 = 0.5;       // k8
-    const double J8 = 0.001;     // J8
-    const double k9 = 0.1;       // k9
-    const double k10 = 0.02;     // k10
-    const double mu = 0.005;     // mu
-    const double k11 = 1.0;      // k11
-    const double k12p = 0.2;     // k12p
-    const double k12pp = 50.0;   // k12pp
-    const double mmax = 10.0;    // mmax
-    const double k12ppp = 100.0; // k12ppp
-    const double Keq = 1000.0;   // Keq
-    const double k13 = 1.0;      // k13
-    const double k14 = 1.0;      // k14
-    const double k15p = 1.5;     // k15p
-    const double k15pp = 0.05;   // k15pp
-    const double k16p = 1.0;     // k16p
-    const double k16pp = 3.0;    // k16pp
-    const double J15 = 0.01;     // J15
-    const double J16 = 0.01;     // J16
-    const double k4p = 2.0;      // k4p
-    const double J4 = 0.04;      // J4
+    // PARAMETERS
+    double k1;     // k1
+    double k2p;    // k2p
+    double k2pp;   // k2pp
+    double k2ppp;  // k2ppp
+    double k3p;    // k3p
+    double k3pp;   // k3pp
+    double J3;     // J3
+    double k4;     // k4
+    double k5p;    // k5p
+    double k5pp;   // k5pp
+    double J5;     // J5
+    double k6;     // k6
+    double n;      // n
+    double k7;     // k7
+    double J7;     // J7
+    double k8;     // k8
+    double J8;     // J8
+    double k9;     // k9
+    double k10;    // k10
+    double mu;     // mu
+    double k11;    // k11
+    double k12p;   // k12p
+    double k12pp;  // k12pp
+    double mmax;   // mmax
+    double k12ppp; // k12ppp
+    double Keq;    // Keq
+    double k13;    // k13
+    double k14;    // k14
+    double k15p;   // k15p
+    double k15pp;  // k15pp
+    double k16p;   // k16p
+    double k16pp;  // k16pp
+    double J15;    // J15
+    double J16;    // J16
+    double k4p;    // k4p
+    double J4;     // J4
 
     // STATE VARIABLES
     double CycBt;  // CycBt
@@ -74,14 +74,21 @@ private:
     double CKIt;   // CKIt
     double SK;     // SK
 
+    double d_CycBt_dt;
+    double d_Cdc20a_dt;
+    double d_Cdh1_dt;
+    double d_m_dt;
+    double d_Cdc20t_dt;
+    double d_IEP_dt;
+    double d_CKIt_dt;
+    double d_SK_dt;
+
     // DERIVED QUANTITIES
     double cell;   // cell
     double CycB;   // CycB
     double Trimer; // Trimer
     double Mad;    // Mad
     double TF;     // TF
-
-    // VARIABLE PARAMETERS
 
     // STOICHIOMETRY VARIABLES
 
@@ -189,6 +196,10 @@ public:
      * @param rDY an output vector to be filled in with the resulting derivatives y' = [y1' ... yn'].
      */
     void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY) override;
+
+    void Initialise(double time = 0.0);
+
+    std::vector<double> RunModelEquations(double time, const std::vector<double>& rStateVariables);
 };
 
 // Register the ODE system with Boost serialization
