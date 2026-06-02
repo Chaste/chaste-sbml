@@ -26,140 +26,150 @@ private:
         archive& boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
     }
 
-    // FIXED PARAMETERS
-    const double b0 = 0.054;         // b0
-    const double bub2h = 1.0;        // bub2h
-    const double C0 = 0.4;           // C0
-    const double Dn3 = 1.0;          // Dn3
-    const double ebudb5 = 1.0;       // ebudb5
-    const double ebudn2 = 0.25;      // ebudn2
-    const double ebudn3 = 0.05;      // ebudn3
-    const double ec1b2 = 0.45;       // ec1b2
-    const double ec1b5 = 0.1;        // ec1b5
-    const double ec1k2 = 0.03;       // ec1k2
-    const double ec1n2 = 0.06;       // ec1n2
-    const double ec1n3 = 0.3;        // ec1n3
-    const double ef6b2 = 0.55;       // ef6b2
-    const double ef6b5 = 0.1;        // ef6b5
-    const double ef6k2 = 0.03;       // ef6k2
-    const double ef6n2 = 0.06;       // ef6n2
-    const double ef6n3 = 0.3;        // ef6n3
-    const double eicdhb2 = 1.2;      // eicdhb2
-    const double eicdhb5 = 8.0;      // eicdhb5
-    const double eicdhn2 = 0.4;      // eicdhn2
-    const double eicdhn3 = 0.25;     // eicdhn3
-    const double eorib2 = 0.45;      // eorib2
-    const double eorib5 = 0.9;       // eorib5
-    const double esbfb5 = 2.0;       // esbfb5
-    const double esbfn2 = 2.0;       // esbfn2
-    const double esbfn3 = 10.0;      // esbfn3
-    const double J20ppx = 0.15;      // J20ppx
-    const double Jacdh = 0.03;       // Jacdh
-    const double Jaiep = 0.1;        // Jaiep
-    const double Jamcm = 0.1;        // Jamcm
-    const double Jasbf = 0.01;       // Jasbf
-    const double Jatem = 0.1;        // Jatem
-    const double Jd2c1 = 0.05;       // Jd2c1
-    const double Jd2f6 = 0.05;       // Jd2f6
-    const double Jicdh = 0.03;       // Jicdh
-    const double Jiiep = 0.1;        // Jiiep
-    const double Jimcm = 0.1;        // Jimcm
-    const double Jisbf = 0.01;       // Jisbf
-    const double Jitem = 0.1;        // Jitem
-    const double Jn3 = 6.0;          // Jn3
-    const double Jpds = 0.04;        // Jpds
-    const double Jspn = 0.14;        // Jspn
-    const double ka15_p = 0.002;     // ka15'
-    const double ka15_p_p = 1.0;     // ka15''
-    const double ka15p = 0.001;      // ka15p
-    const double ka20_p = 0.05;      // ka20'
-    const double ka20_p_p = 0.2;     // ka20''
-    const double kacdh_p = 0.01;     // kacdh'
-    const double kacdh_p_p = 0.8;    // kacdh''
-    const double kaiep = 0.1;        // kaiep
-    const double kamcm = 1.0;        // kamcm
-    const double kasb2 = 50.0;       // kasb2
-    const double kasb5 = 50.0;       // kasb5
-    const double kasbf = 0.38;       // kasbf
-    const double kasesp = 50.0;      // kasesp
-    const double kasf2 = 15.0;       // kasf2
-    const double kasf5 = 0.01;       // kasf5
-    const double kasrent = 200.0;    // kasrent
-    const double kasrentp = 1.0;     // kasrentp
-    const double kaswi = 2.0;        // kaswi
-    const double kd14 = 0.1;         // kd14
-    const double kd1c1 = 0.01;       // kd1c1
-    const double kd1f6 = 0.01;       // kd1f6
-    const double kd1pds_p = 0.01;    // kd1pds'
-    const double kd20 = 0.3;         // kd20
-    const double kd2c1 = 1.0;        // kd2c1
-    const double kd2f6 = 1.0;        // kd2f6
-    const double kd2pds_p_p = 0.2;   // kd2pds''
-    const double kd3c1 = 1.0;        // kd3c1
-    const double kd3f6 = 1.0;        // kd3f6
-    const double kd3pds_p_p = 0.04;  // kd3pds''
-    const double kdb2_p = 0.003;     // kdb2'
-    const double kdb2_p_p = 0.4;     // kdb2''
-    const double kdb2p = 0.15;       // kdb2p
-    const double kdb5_p = 0.01;      // kdb5'
-    const double kdb5_p_p = 0.16;    // kdb5''
-    const double kdbud = 0.06;       // kdbud
-    const double kdcdh = 0.01;       // kdcdh
-    const double kdib2 = 0.05;       // kdib2
-    const double kdib5 = 0.06;       // kdib5
-    const double kdiesp = 0.5;       // kdiesp
-    const double kdif2 = 0.5;        // kdif2
-    const double kdif5 = 0.01;       // kdif5
-    const double kdirent = 1.0;      // kdirent
-    const double kdirentp = 2.0;     // kdirentp
-    const double kdn2 = 0.12;        // kdn2
-    const double kdnet = 0.03;       // kdnet
-    const double kdori = 0.06;       // kdori
-    const double kdppx_p = 0.17;     // kdppx'
-    const double kdppx_p_p = 2.0;    // kdppx''
-    const double kdspn = 0.06;       // kdspn
-    const double kdswi = 0.08;       // kdswi
-    const double ki15 = 0.5;         // ki15
-    const double kicdh_p = 0.001;    // kicdh'
-    const double kicdh_p_p = 0.08;   // kicdh''
-    const double kiiep = 0.15;       // kiiep
-    const double kimcm = 0.15;       // kimcm
-    const double kisbf_p = 0.6;      // kisbf'
-    const double kisbf_p_p = 8.0;    // kisbf''
-    const double kiswi = 0.05;       // kiswi
-    const double kkpnet_p = 0.01;    // kkpnet'
-    const double kkpnet_p_p = 0.6;   // kkpnet''
-    const double kppc1 = 4.0;        // kppc1
-    const double kppf6 = 4.0;        // kppf6
-    const double kppnet_p = 0.05;    // kppnet'
-    const double kppnet_p_p = 3.0;   // kppnet''
-    const double ks14 = 0.2;         // ks14
-    const double ks1pds_p_p = 0.03;  // ks1pds''
-    const double ks20_p = 0.006;     // ks20'
-    const double ks20_p_p = 0.6;     // ks20''
-    const double ks2pds_p_p = 0.055; // ks2pds''
-    const double ksb2_p = 0.001;     // ksb2'
-    const double ksb2_p_p = 0.04;    // ksb2''
-    const double ksb5_p = 0.0008;    // ksb5'
-    const double ksb5_p_p = 0.005;   // ksb5''
-    const double ksbud = 0.2;        // ksbud
-    const double ksc1_p = 0.012;     // ksc1'
-    const double ksc1_p_p = 0.12;    // ksc1''
-    const double kscdh = 0.01;       // kscdh
-    const double ksf6_p = 0.024;     // ksf6'
-    const double ksf6_p_p = 0.12;    // ksf6''
-    const double ksf6_p_p_p = 0.004; // ksf6'''
-    const double ksn2_p = 0.0;       // ksn2'
-    const double ksn2_p_p = 0.15;    // ksn2''
-    const double ksnet = 0.084;      // ksnet
-    const double ksori = 2.0;        // ksori
-    const double kspds_p = 0.0;      // kspds'
-    const double ksppx = 0.1;        // ksppx
-    const double ksspn = 0.1;        // ksspn
-    const double ksswi_p = 0.005;    // ksswi'
-    const double ksswi_p_p = 0.08;   // ksswi''
-    const double mad2h = 8.0;        // mad2h
-    const double mdt = 90.0;         // mdt
+    // PARAMETERS
+    double b0;         // b0
+    double bub2h;      // bub2h
+    double bub2l;      // bub2l
+    double C0;         // C0
+    double CDC15T;     // CDC15T
+    double Dn3;        // Dn3
+    double ebudb5;     // ebudb5
+    double ebudn2;     // ebudn2
+    double ebudn3;     // ebudn3
+    double ec1b2;      // ec1b2
+    double ec1b5;      // ec1b5
+    double ec1k2;      // ec1k2
+    double ec1n2;      // ec1n2
+    double ec1n3;      // ec1n3
+    double ef6b2;      // ef6b2
+    double ef6b5;      // ef6b5
+    double ef6k2;      // ef6k2
+    double ef6n2;      // ef6n2
+    double ef6n3;      // ef6n3
+    double eicdhb2;    // eicdhb2
+    double eicdhb5;    // eicdhb5
+    double eicdhn2;    // eicdhn2
+    double eicdhn3;    // eicdhn3
+    double eorib2;     // eorib2
+    double eorib5;     // eorib5
+    double esbfb5;     // esbfb5
+    double esbfn2;     // esbfn2
+    double esbfn3;     // esbfn3
+    double ESP1T;      // ESP1T
+    double IET;        // IET
+    double J20ppx;     // J20ppx
+    double Jacdh;      // Jacdh
+    double Jaiep;      // Jaiep
+    double Jamcm;      // Jamcm
+    double Jasbf;      // Jasbf
+    double Jatem;      // Jatem
+    double Jd2c1;      // Jd2c1
+    double Jd2f6;      // Jd2f6
+    double Jicdh;      // Jicdh
+    double Jiiep;      // Jiiep
+    double Jimcm;      // Jimcm
+    double Jisbf;      // Jisbf
+    double Jitem;      // Jitem
+    double Jn3;        // Jn3
+    double Jpds;       // Jpds
+    double Jspn;       // Jspn
+    double ka15_p;     // ka15'
+    double ka15_p_p;   // ka15''
+    double ka15p;      // ka15p
+    double ka20_p;     // ka20'
+    double ka20_p_p;   // ka20''
+    double kacdh_p;    // kacdh'
+    double kacdh_p_p;  // kacdh''
+    double kaiep;      // kaiep
+    double kamcm;      // kamcm
+    double kasb2;      // kasb2
+    double kasb5;      // kasb5
+    double kasbf;      // kasbf
+    double kasesp;     // kasesp
+    double kasf2;      // kasf2
+    double kasf5;      // kasf5
+    double kasrent;    // kasrent
+    double kasrentp;   // kasrentp
+    double kaswi;      // kaswi
+    double kd14;       // kd14
+    double kd1c1;      // kd1c1
+    double kd1f6;      // kd1f6
+    double kd1pds_p;   // kd1pds'
+    double kd20;       // kd20
+    double kd2c1;      // kd2c1
+    double kd2f6;      // kd2f6
+    double kd2pds_p_p; // kd2pds''
+    double kd3c1;      // kd3c1
+    double kd3f6;      // kd3f6
+    double kd3pds_p_p; // kd3pds''
+    double kdb2_p;     // kdb2'
+    double kdb2_p_p;   // kdb2''
+    double kdb2p;      // kdb2p
+    double kdb5_p;     // kdb5'
+    double kdb5_p_p;   // kdb5''
+    double kdbud;      // kdbud
+    double kdcdh;      // kdcdh
+    double kdib2;      // kdib2
+    double kdib5;      // kdib5
+    double kdiesp;     // kdiesp
+    double kdif2;      // kdif2
+    double kdif5;      // kdif5
+    double kdirent;    // kdirent
+    double kdirentp;   // kdirentp
+    double kdn2;       // kdn2
+    double kdnet;      // kdnet
+    double kdori;      // kdori
+    double kdppx_p;    // kdppx'
+    double kdppx_p_p;  // kdppx''
+    double kdspn;      // kdspn
+    double kdswi;      // kdswi
+    double KEZ;        // KEZ
+    double KEZ2;       // KEZ2
+    double ki15;       // ki15
+    double kicdh_p;    // kicdh'
+    double kicdh_p_p;  // kicdh''
+    double kiiep;      // kiiep
+    double kimcm;      // kimcm
+    double kisbf_p;    // kisbf'
+    double kisbf_p_p;  // kisbf''
+    double kiswi;      // kiswi
+    double kkpnet_p;   // kkpnet'
+    double kkpnet_p_p; // kkpnet''
+    double kppc1;      // kppc1
+    double kppf6;      // kppf6
+    double kppnet_p;   // kppnet'
+    double kppnet_p_p; // kppnet''
+    double ks14;       // ks14
+    double ks1pds_p_p; // ks1pds''
+    double ks20_p;     // ks20'
+    double ks20_p_p;   // ks20''
+    double ks2pds_p_p; // ks2pds''
+    double ksb2_p;     // ksb2'
+    double ksb2_p_p;   // ksb2''
+    double ksb5_p;     // ksb5'
+    double ksb5_p_p;   // ksb5''
+    double ksbud;      // ksbud
+    double ksc1_p;     // ksc1'
+    double ksc1_p_p;   // ksc1''
+    double kscdh;      // kscdh
+    double ksf6_p;     // ksf6'
+    double ksf6_p_p;   // ksf6''
+    double ksf6_p_p_p; // ksf6'''
+    double ksn2_p;     // ksn2'
+    double ksn2_p_p;   // ksn2''
+    double ksnet;      // ksnet
+    double ksori;      // ksori
+    double kspds_p;    // kspds'
+    double ksppx;      // ksppx
+    double ksspn;      // ksspn
+    double ksswi_p;    // ksswi'
+    double ksswi_p_p;  // ksswi''
+    double lte1h;      // lte1h
+    double lte1l;      // lte1l
+    double mad2h;      // mad2h
+    double mad2l;      // mad2l
+    double mdt;        // mdt
+    double TEM1T;      // TEM1T
 
     // STATE VARIABLES
     double BUD;     // BUD
@@ -198,6 +208,43 @@ private:
     double SWI5;    // SWI5
     double SWI5P;   // SWI5P
     double TEM1GTP; // TEM1GTP
+
+    double d_BUD_dt;
+    double d_C2_dt;
+    double d_C2P_dt;
+    double d_C5_dt;
+    double d_C5P_dt;
+    double d_CDC14_dt;
+    double d_CDC15_dt;
+    double d_CDC20_dt;
+    double d_CDC20i_dt;
+    double d_CDC6_dt;
+    double d_CDC6P_dt;
+    double d_CDH1_dt;
+    double d_CDH1i_dt;
+    double d_CLB2_dt;
+    double d_CLB5_dt;
+    double d_CLN2_dt;
+    double d_ESP1_dt;
+    double d_F2_dt;
+    double d_F2P_dt;
+    double d_F5_dt;
+    double d_F5P_dt;
+    double d_IEP_dt;
+    double d_MASS_dt;
+    double d_NET1_dt;
+    double d_NET1P_dt;
+    double d_ORI_dt;
+    double d_PDS1_dt;
+    double d_PPX_dt;
+    double d_RENT_dt;
+    double d_RENTP_dt;
+    double d_SIC1_dt;
+    double d_SIC1P_dt;
+    double d_SPN_dt;
+    double d_SWI5_dt;
+    double d_SWI5P_dt;
+    double d_TEM1GTP_dt;
 
     // DERIVED QUANTITIES
     double cell;    // cell
@@ -239,18 +286,6 @@ private:
     double Vppc1;   // Vppc1
     double Vppf6;   // Vppf6
     double F;       // F
-
-    // VARIABLE PARAMETERS
-    double bub2l;  // bub2l
-    double CDC15T; // CDC15T
-    double ESP1T;  // ESP1T
-    double IET;    // IET
-    double KEZ;    // KEZ
-    double KEZ2;   // KEZ2
-    double lte1h;  // lte1h
-    double lte1l;  // lte1l
-    double mad2l;  // mad2l
-    double TEM1T;  // TEM1T
 
     // STOICHIOMETRY VARIABLES
 
@@ -436,6 +471,10 @@ public:
      * @param rDY an output vector to be filled in with the resulting derivatives y' = [y1' ... yn'].
      */
     void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY) override;
+
+    void Initialise(double time = 0.0);
+
+    std::vector<double> RunModelEquations(double time, const std::vector<double>& rStateVariables);
 };
 
 // Register the ODE system with Boost serialization
