@@ -26,34 +26,38 @@ private:
         archive& boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
     }
 
-    // FIXED PARAMETERS
-    const double K_T = 50.0;   // K_T
-    const double K_C = 200.0;  // K_C
-    const double K_D = 5.0;    // K_D
-    const double p_u = 100.0;  // p_u
-    const double xi_D = 5.0;   // xi_D
-    const double xi_Dx = 5.0;  // xi_Dx
-    const double xi_X = 200.0; // xi_X
-    const double xi_C = 0.0;   // xi_C
-    const double s_D = 100.0;  // s_D
-    const double d_Dx = 5.0;   // d_Dx
-    const double s_X = 10.0;   // s_X
-    const double d_X = 100.0;  // d_X
-    const double d_u = 50.0;   // d_u
-    const double s_c = 25.0;   // s_c
-    const double d_c = 1.0;    // d_c
-    const double s_CA = 250.0; // s_CA
-    const double d_CA = 350.0; // d_CA
-    const double s_CT = 30.0;  // s_CT
-    const double d_CT = 750.0; // d_CT
-    const double p_c = 0.0;    // p_c
-    const double s_A = 20.0;   // s_A
-    const double d_A = 2.0;    // d_A
-    const double s_T = 10.0;   // s_T
-    const double d_T = 0.4;    // d_T
-    const double s_Y = 10.0;   // s_Y
-    const double d_Y = 1.0;    // d_Y
-    const double d_D = 5.0;    // d_D
+    // PARAMETERS
+    double K_T;                     // K_T
+    double K_C;                     // K_C
+    double K_D;                     // K_D
+    double p_u;                     // p_u
+    double wnt_level;               // wnt_level
+    double gamma1;                  // gamma1
+    double gamma2;                  // gamma2
+    double xi_D;                    // xi_D
+    double xi_Dx;                   // xi_Dx
+    double xi_X;                    // xi_X
+    double xi_C;                    // xi_C
+    double s_D;                     // s_D
+    double d_Dx;                    // d_Dx
+    double s_X;                     // s_X
+    double d_X;                     // d_X
+    double d_u;                     // d_u
+    double s_c;                     // s_c
+    double d_c;                     // d_c
+    double s_CA;                    // s_CA
+    double d_CA;                    // d_CA
+    double s_CT;                    // s_CT
+    double d_CT;                    // d_CT
+    double p_c;                     // p_c
+    double s_A;                     // s_A
+    double d_A;                     // d_A
+    double s_T;                     // s_T
+    double d_T;                     // d_T
+    double s_Y;                     // s_Y
+    double d_Y;                     // d_Y
+    double d_D;                     // d_D
+    double ComplexTransitThreshold; // ComplexTransitThreshold
 
     // STATE VARIABLES
     double X;    // X
@@ -68,17 +72,23 @@ private:
     double C_cT; // C_cT
     double Y;    // Y
 
+    double d_X_dt;
+    double d_D_dt;
+    double d_C_o_dt;
+    double d_C_u_dt;
+    double d_C_c_dt;
+    double d_A_dt;
+    double d_C_A_dt;
+    double d_T_dt;
+    double d_C_oT_dt;
+    double d_C_cT_dt;
+    double d_Y_dt;
+
     // DERIVED QUANTITIES
     double cytosolmembraneandnucleus; // cytosolmembraneandnucleus
     double C_F;                       // C_F
     double C_T;                       // C_T
     double drag;                      // drag
-
-    // VARIABLE PARAMETERS
-    double wnt_level;               // wnt_level
-    double gamma1;                  // gamma1
-    double gamma2;                  // gamma2
-    double ComplexTransitThreshold; // ComplexTransitThreshold
 
     // STOICHIOMETRY VARIABLES
 
@@ -189,6 +199,10 @@ public:
      * @param rDY an output vector to be filled in with the resulting derivatives y' = [y1' ... yn'].
      */
     void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY) override;
+
+    void Initialise(double time = 0.0);
+
+    std::vector<double> RunModelEquations(double time, const std::vector<double>& rStateVariables);
 };
 
 // Register the ODE system with Boost serialization

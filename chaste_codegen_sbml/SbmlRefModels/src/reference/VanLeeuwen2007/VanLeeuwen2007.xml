@@ -244,19 +244,35 @@
       </assignmentRule>
       <assignmentRule variable="drag">
         <math xmlns="http://www.w3.org/1998/Math/MathML">
-          <apply>
-            <max />
-            <apply>
-              <divide />
+          <piecewise>
+            <piece>
               <apply>
-                <minus />
-                <ci> C_A </ci>
-                <cn type="integer"> 100 </cn>
+                <divide />
+                <apply>
+                  <minus />
+                  <ci> C_A </ci>
+                  <cn type="integer"> 100 </cn>
+                </apply>
+                <cn type="integer"> 3 </cn>
               </apply>
-              <cn type="integer"> 3 </cn>
-            </apply>
-            <cn type="integer"> 1 </cn>
-          </apply>
+              <apply>
+                <geq />
+                <apply>
+                  <divide />
+                  <apply>
+                    <minus />
+                    <ci> C_A </ci>
+                    <cn type="integer"> 100 </cn>
+                  </apply>
+                  <cn type="integer"> 3 </cn>
+                </apply>
+                <cn type="integer"> 1 </cn>
+              </apply>
+            </piece>
+            <otherwise>
+              <cn type="integer"> 1 </cn>
+            </otherwise>
+          </piecewise>
         </math>
       </assignmentRule>
     </listOfRules>
@@ -354,6 +370,9 @@
           <speciesReference species="C_u" stoichiometry="1" />
           <speciesReference species="D" stoichiometry="1" />
         </listOfProducts>
+        <listOfModifiers>
+          <modifierSpeciesReference species="C_c" />
+        </listOfModifiers>
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
@@ -385,6 +404,9 @@
           <speciesReference species="C_u" stoichiometry="1" />
           <speciesReference species="D" stoichiometry="1" />
         </listOfProducts>
+        <listOfModifiers>
+          <modifierSpeciesReference species="C_o" />
+        </listOfModifiers>
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
@@ -697,6 +719,9 @@
           <speciesReference species="Y" stoichiometry="1" />
           <speciesReference species="C_oT" stoichiometry="1" />
         </listOfProducts>
+        <listOfModifiers>
+          <modifierSpeciesReference species="C_cT" />
+        </listOfModifiers>
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
