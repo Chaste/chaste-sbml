@@ -6,9 +6,6 @@
     </SimBiology>
   </annotation>
   <model id="mw0664fb57_9856_4bf3_a551_560daa49df18" name="VanLeeuwen">
-    <listOfCompartments>
-      <compartment id="cytosolmembraneandnucleus" name="cytosolmembraneandnucleus" size="1" constant="true"/>
-    </listOfCompartments>
     <listOfUnitDefinitions>
       <unitDefinition name="hours" id="time">
         <listOfUnits>
@@ -16,6 +13,9 @@
         </listOfUnits>
       </unitDefinition>
     </listOfUnitDefinitions>
+    <listOfCompartments>
+      <compartment id="cytosolmembraneandnucleus" name="cytosolmembraneandnucleus" size="1" constant="true"/>
+    </listOfCompartments>
     <listOfSpecies>
       <species id="X" name="X" compartment="cytosolmembraneandnucleus" initialAmount="0.268" boundaryCondition="false" constant="false"/>
       <species id="D" name="D" compartment="cytosolmembraneandnucleus" initialAmount="2.68" boundaryCondition="false" constant="false"/>
@@ -86,19 +86,35 @@
       </assignmentRule>
       <assignmentRule variable="drag">
         <math xmlns="http://www.w3.org/1998/Math/MathML">
-          <apply>
-            <max />
-            <apply>
-              <divide/>
+          <piecewise>
+            <piece>
               <apply>
-                <minus/>
-                <ci> C_A </ci>
-                <cn type="integer"> 2300 </cn>
+                <divide/>
+                <apply>
+                  <minus/>
+                  <ci> C_A </ci>
+                  <cn type="integer"> 2300 </cn>
+                </apply>
+                <cn type="integer"> 36 </cn>
               </apply>
-              <cn type="integer"> 36 </cn>
-            </apply>
-            <cn type="integer"> 1 </cn>
-          </apply>
+              <apply>
+                <gt/>
+                <apply>
+                  <divide/>
+                  <apply>
+                    <minus/>
+                    <ci> C_A </ci>
+                    <cn type="integer"> 2300 </cn>
+                  </apply>
+                  <cn type="integer"> 36 </cn>
+                </apply>
+                <cn type="integer"> 1 </cn>
+              </apply>
+            </piece>
+            <otherwise>
+              <cn type="integer"> 1 </cn>
+            </otherwise>
+          </piecewise>
         </math>
       </assignmentRule>
     </listOfRules>
@@ -187,6 +203,9 @@
           <speciesReference species="C_u" stoichiometry="1"/>
           <speciesReference species="D" stoichiometry="1"/>
         </listOfProducts>
+        <listOfModifiers>
+          <modifierSpeciesReference species="C_c"/>
+        </listOfModifiers>
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
@@ -217,6 +236,9 @@
           <speciesReference species="C_u" stoichiometry="1"/>
           <speciesReference species="D" stoichiometry="1"/>
         </listOfProducts>
+        <listOfModifiers>
+          <modifierSpeciesReference species="C_o"/>
+        </listOfModifiers>
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
@@ -490,6 +512,9 @@
           <speciesReference species="Y" stoichiometry="1"/>
           <speciesReference species="C_oT" stoichiometry="1"/>
         </listOfProducts>
+        <listOfModifiers>
+          <modifierSpeciesReference species="C_cT"/>
+        </listOfModifiers>
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
