@@ -26,78 +26,78 @@ private:
         archive& boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
     }
 
-    // FIXED PARAMETERS
-    const double ks_n2 = 0.0;          // ks_n2
-    const double ks_n2_ = 0.05;        // ks_n2_
-    const double kd_n2 = 0.1;          // kd_n2
-    const double Hct1_T = 1.0;         // Hct1_T
-    const double ks_b2 = 0.002;        // ks_b2
-    const double ks_b2_ = 0.05;        // ks_b2_
-    const double kd_b2 = 0.01;         // kd_b2
-    const double kd_b2_ = 2.0;         // kd_b2_
-    const double kd_b2__ = 0.05;       // kd_b2__
-    const double ks_b5 = 0.006;        // ks_b5
-    const double ks_b5_ = 0.02;        // ks_b5_
-    const double kd_b5 = 0.1;          // kd_b5
-    const double kd_b5_ = 0.25;        // kd_b5_
-    const double Bck2_0 = 0.0027;      // Bck2_0
-    const double Jn3 = 6.0;            // Jn3
-    const double Dn3 = 1.0;            // Dn3
-    const double Cln3_max = 0.02;      // Cln3_max
-    const double ks_c1 = 0.02;         // ks_c1
-    const double ks_c1_ = 0.1;         // ks_c1_
-    const double kas_b2 = 50.0;        // kas_b2
-    const double kdi_b2 = 0.05;        // kdi_b2
-    const double kas_b5 = 50.0;        // kas_b5
-    const double kdi_b5 = 0.05;        // kdi_b5
-    const double kd2_c1 = 0.3;         // kd2_c1
-    const double epsilonc1_n3 = 20.0;  // epsilonc1_n3
-    const double epsilonc1_k2 = 2.0;   // epsilonc1_k2
-    const double epsilonc1_b5 = 1.0;   // epsilonc1_b5
-    const double epsilonc1_b2 = 0.067; // epsilonc1_b2
-    const double ks_20 = 0.005;        // ks_20
-    const double ks_20_ = 0.06;        // ks_20_
-    const double ka_20 = 1.0;          // ka_20
-    const double ki_20 = 0.1;          // ki_20
-    const double ki_20_ = 10.0;        // ki_20_
-    const double ka_t1 = 0.04;         // ka_t1
-    const double ka_t1_ = 2.0;         // ka_t1_
-    const double ki_t1 = 0.0;          // ki_t1
-    const double ki_t1_ = 0.64;        // ki_t1_
-    const double Ji_t1 = 0.05;         // Ji_t1
-    const double Ja_t1 = 0.05;         // Ja_t1
-    const double epsiloni_t1_n2 = 1.0; // epsiloni_t1_n2
-    const double epsiloni_t1_b5 = 0.5; // epsiloni_t1_b5
-    const double epsiloni_t1_b2 = 1.0; // epsiloni_t1_b2
-    const double mu = 0.005776;        // mu
-    const double ks_ori = 2.0;         // ks_ori
-    const double kd_ori = 0.06;        // kd_ori
-    const double epsilonori_b2 = 0.4;  // epsilonori_b2
-    const double ks_bud = 0.3;         // ks_bud
-    const double kd_bud = 0.06;        // kd_bud
-    const double epsilonbud_b5 = 1.0;  // epsilonbud_b5
-    const double ks_spn = 0.08;        // ks_spn
-    const double kd_spn = 0.06;        // kd_spn
-    const double J_spn = 0.2;          // J_spn
-    const double ka_sbf = 1.0;         // ka_sbf
-    const double ki_sbf = 0.5;         // ki_sbf
-    const double ki_sbf_ = 6.0;        // ki_sbf_
-    const double Ji_sbf = 0.01;        // Ji_sbf
-    const double Ja_sbf = 0.01;        // Ja_sbf
-    const double epsilonsbf_n3 = 75.0; // epsilonsbf_n3
-    const double epsilonsbf_b5 = 0.5;  // epsilonsbf_b5
-    const double ka_mcm = 1.0;         // ka_mcm
-    const double ki_mcm = 0.15;        // ki_mcm
-    const double Ji_mcm = 1.0;         // Ji_mcm
-    const double Ja_mcm = 1.0;         // Ja_mcm
-    const double ka_swi = 1.0;         // ka_swi
-    const double ki_swi = 0.3;         // ki_swi
-    const double ki_swi_ = 0.2;        // ki_swi_
-    const double Ji_swi = 0.1;         // Ji_swi
-    const double Ja_swi = 0.1;         // Ja_swi
-    const double kd1_c1 = 0.01;        // kd1_c1
-    const double kd_20 = 0.08;         // kd_20
-    const double Jd2_c1 = 0.05;        // Jd2_c1
+    // PARAMETERS
+    double ks_n2;          // ks_n2
+    double ks_n2_;         // ks_n2_
+    double kd_n2;          // kd_n2
+    double Hct1_T;         // Hct1_T
+    double ks_b2;          // ks_b2
+    double ks_b2_;         // ks_b2_
+    double kd_b2;          // kd_b2
+    double kd_b2_;         // kd_b2_
+    double kd_b2__;        // kd_b2__
+    double ks_b5;          // ks_b5
+    double ks_b5_;         // ks_b5_
+    double kd_b5;          // kd_b5
+    double kd_b5_;         // kd_b5_
+    double Bck2_0;         // Bck2_0
+    double Jn3;            // Jn3
+    double Dn3;            // Dn3
+    double Cln3_max;       // Cln3_max
+    double ks_c1;          // ks_c1
+    double ks_c1_;         // ks_c1_
+    double kas_b2;         // kas_b2
+    double kdi_b2;         // kdi_b2
+    double kas_b5;         // kas_b5
+    double kdi_b5;         // kdi_b5
+    double kd2_c1;         // kd2_c1
+    double epsilonc1_n3;   // epsilonc1_n3
+    double epsilonc1_k2;   // epsilonc1_k2
+    double epsilonc1_b5;   // epsilonc1_b5
+    double epsilonc1_b2;   // epsilonc1_b2
+    double ks_20;          // ks_20
+    double ks_20_;         // ks_20_
+    double ka_20;          // ka_20
+    double ki_20;          // ki_20
+    double ki_20_;         // ki_20_
+    double ka_t1;          // ka_t1
+    double ka_t1_;         // ka_t1_
+    double ki_t1;          // ki_t1
+    double ki_t1_;         // ki_t1_
+    double Ji_t1;          // Ji_t1
+    double Ja_t1;          // Ja_t1
+    double epsiloni_t1_n2; // epsiloni_t1_n2
+    double epsiloni_t1_b5; // epsiloni_t1_b5
+    double epsiloni_t1_b2; // epsiloni_t1_b2
+    double mu;             // mu
+    double ks_ori;         // ks_ori
+    double kd_ori;         // kd_ori
+    double epsilonori_b2;  // epsilonori_b2
+    double ks_bud;         // ks_bud
+    double kd_bud;         // kd_bud
+    double epsilonbud_b5;  // epsilonbud_b5
+    double ks_spn;         // ks_spn
+    double kd_spn;         // kd_spn
+    double J_spn;          // J_spn
+    double ka_sbf;         // ka_sbf
+    double ki_sbf;         // ki_sbf
+    double ki_sbf_;        // ki_sbf_
+    double Ji_sbf;         // Ji_sbf
+    double Ja_sbf;         // Ja_sbf
+    double epsilonsbf_n3;  // epsilonsbf_n3
+    double epsilonsbf_b5;  // epsilonsbf_b5
+    double ka_mcm;         // ka_mcm
+    double ki_mcm;         // ki_mcm
+    double Ji_mcm;         // Ji_mcm
+    double Ja_mcm;         // Ja_mcm
+    double ka_swi;         // ka_swi
+    double ki_swi;         // ki_swi
+    double ki_swi_;        // ki_swi_
+    double Ji_swi;         // Ji_swi
+    double Ja_swi;         // Ja_swi
+    double kd1_c1;         // kd1_c1
+    double kd_20;          // kd_20
+    double Jd2_c1;         // Jd2_c1
 
     // STATE VARIABLES
     double Cln2;      // Cln2
@@ -113,6 +113,20 @@ private:
     double ORI;       // ORI
     double BUD;       // BUD
     double SPN;       // SPN
+
+    double d_Cln2_dt;
+    double d_Clb2_T_dt;
+    double d_Clb5_T_dt;
+    double d_Sic1_T_dt;
+    double d_Clb2_Sic1_dt;
+    double d_Clb5_Sic1_dt;
+    double d_Cdc20_T_dt;
+    double d_Cdc20_dt;
+    double d_Hct1_dt;
+    double d_mass_dt;
+    double d_ORI_dt;
+    double d_BUD_dt;
+    double d_SPN_dt;
 
     // DERIVED QUANTITIES
     double COMpartment; //
@@ -131,8 +145,6 @@ private:
     double MBF;         // MBF
     double Mcm1;        // Mcm1
     double Swi5;        // Swi5
-
-    // VARIABLE PARAMETERS
 
     // STOICHIOMETRY VARIABLES
 
@@ -219,6 +231,10 @@ public:
      * @param rDY an output vector to be filled in with the resulting derivatives y' = [y1' ... yn'].
      */
     void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY) override;
+
+    void Initialise(double time = 0.0);
+
+    std::vector<double> RunModelEquations(double time, const std::vector<double>& rStateVariables);
 };
 
 // Register the ODE system with Boost serialization
