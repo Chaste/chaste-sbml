@@ -31,9 +31,7 @@ class TestType(Enum):
 class ChasteSbmlTestSuiteModel(ChasteSbmlModel):
     """Extended ChasteSbmlModel with additional functionality for test suite generation."""
 
-    def __init__(
-        self, sbml_file: str, sbml_version: str, test_params: dict[str, "Any"], **kwargs
-    ) -> None:
+    def __init__(self, sbml_file: str, sbml_version: str, test_params: dict[str, "Any"], **kwargs) -> None:
         test_type = test_params["type"]
         if test_type == TestType.SEMANTIC:
             prefix = "Semantic"
@@ -59,9 +57,7 @@ class ChasteSbmlTestSuiteModel(ChasteSbmlModel):
         test_amounts = ", ".join(f'"{amt.strip()}"' for amt in test_amounts if amt.strip())
 
         test_concentrations = test_params["settings"]["concentration"].split(",")
-        test_concentrations = ", ".join(
-            f'"{conc.strip()}"' for conc in test_concentrations if conc.strip()
-        )
+        test_concentrations = ", ".join(f'"{conc.strip()}"' for conc in test_concentrations if conc.strip())
 
         steady_state = test_params["settings"]["start"].strip() == ""
 

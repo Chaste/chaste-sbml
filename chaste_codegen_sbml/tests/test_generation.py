@@ -88,7 +88,7 @@ def test_generation(tmp_path, model_name, model_type):
 
     ref_dir = ROOT_DIR / "SbmlRefModels" / "src" / "reference" / model_name
     gen_dir = tmp_path
-    
+
     # import pathlib
     # gen_dir = pathlib.Path(".").absolute()
 

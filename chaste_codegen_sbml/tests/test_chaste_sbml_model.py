@@ -52,9 +52,7 @@ def test_convert_infix_operator_to_function_syntax_nested_and_repeated():
         ("^", "", "function_name must be a non-empty string"),
     ],
 )
-def test_convert_infix_operator_to_function_syntax_invalid_args(
-    operator: str, function_name: str, error_message: str
-):
+def test_convert_infix_operator_to_function_syntax_invalid_args(operator: str, function_name: str, error_message: str):
     """Validates required arguments for operator/function conversion."""
     model = _model_without_init()
 
