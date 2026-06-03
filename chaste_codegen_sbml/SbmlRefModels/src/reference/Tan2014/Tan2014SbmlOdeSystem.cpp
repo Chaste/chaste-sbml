@@ -11,32 +11,32 @@
 namespace sm = sbmlmath;
 
 Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem()
-    : AbstractSbmlOdeSystem(6, 12, 0)
+        : AbstractSbmlOdeSystem(6, 12, 0)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Tan2014SbmlOdeSystem>);
 
     Initialise();
 
     // EVENTS
- }
+}
 
 Tan2014SbmlOdeSystem::~Tan2014SbmlOdeSystem()
 {
 }
 
-std::vector<double> Tan2014SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double> &rY)
+std::vector<double> Tan2014SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
 {
     std::vector<double> dqs;
     RunModelEquations(time, rY);
 
     // AMOUNTS
-    double amt__bcat_cm = bcat_cm * CytosolMembrane; // 
-    double amt__ligand_cm = ligand_cm * CytosolMembrane; // 
-    double amt__complex_cm = complex_cm * CytosolMembrane; // 
-    double amt__bcat_nu = bcat_nu * nucleus; // 
-    double amt__ligand_nu = ligand_nu * nucleus; // 
-    double amt__complex_nu = complex_nu * nucleus; // 
-    double amt__drag = drag * CytosolMembrane; // 
+    double amt__bcat_cm = bcat_cm * CytosolMembrane;       //
+    double amt__ligand_cm = ligand_cm * CytosolMembrane;   //
+    double amt__complex_cm = complex_cm * CytosolMembrane; //
+    double amt__bcat_nu = bcat_nu * nucleus;               //
+    double amt__ligand_nu = ligand_nu * nucleus;           //
+    double amt__complex_nu = complex_nu * nucleus;         //
+    double amt__drag = drag * CytosolMembrane;             //
 
     dqs.push_back(compartment);
     dqs.push_back(CytosolMembrane);
@@ -49,11 +49,11 @@ std::vector<double> Tan2014SbmlOdeSystem::ComputeDerivedQuantities(double time, 
     dqs.push_back(amt__complex_nu);
     dqs.push_back(drag);
     dqs.push_back(amt__drag);
- 
+
     return dqs;
 }
 
-void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
+void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
     std::vector<double> derivatives = RunModelEquations(time, rY);
     for (unsigned i = 0; i < rDY.size(); ++i)
@@ -66,42 +66,42 @@ void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<d
 
 void Tan2014SbmlOdeSystem::Initialise(double time)
 {
-    compartment = 1.0;  // 
-    CytosolMembrane = 1.16;  // 
-    nucleus = 0.65;  // 
-    bcat_cm = 46.6;  // 
-    ligand_cm = 581.1;  // 
-    complex_cm = 418.9;  // 
-    bcat_nu = 32.6;  // 
-    ligand_nu = 516.8;  // 
-    complex_nu = 483.2;  // 
-    drag = 1.0;  // 
-    wnt_level = 0.0;  // 
-    kdegradation = 0.0163;  // 
-    Bsyn = 1.306;  // 
-    K_n_active_k = 17.16;  // 
-    kC_k1 = 1e-5;  // 
-    kC_k2 = 0.000647;  // 
-    kN_k1 = 0.0001;  // 
-    kN_k2 = 0.00349;  // 
-    kdiffusion_k = 39.13;  // 
-    K_c_active_k = 4.5;  // 
-    gamma = 1.0;  // 
-    ComplexTransitThreshold = 1.0;  // 
-    drag = sm::piecewise((complex_cm - 700.0) / 10.0, ((complex_cm - 700.0) / 10.0) > 1.0, 1.0);  // 
-    Bsynthesis = Bsyn * CytosolMembrane;  // 
-    kDegradation = CytosolMembrane * kdegradation * gamma * bcat_cm * (1.0 - 0.5 * wnt_level);  // 
-    kC = CytosolMembrane * (kC_k1 * bcat_cm * ligand_cm - kC_k2 * complex_cm);  // 
-    kN = nucleus * (kN_k1 * bcat_nu * ligand_nu - kN_k2 * complex_nu);  // 
-    kdiffusion = kdiffusion_k * (bcat_cm - bcat_nu);  // 
-    K_c_active = K_c_active_k * bcat_cm;  // 
-    K_n_active = K_n_active_k * bcat_nu;  // 
-    d_bcat_cm_dt = ((Bsynthesis - kDegradation - kC - kdiffusion - K_c_active) + K_n_active) / CytosolMembrane;  // 
-    d_ligand_cm_dt = -kC / CytosolMembrane;  // 
-    d_complex_cm_dt = kC / CytosolMembrane;  // 
-    d_bcat_nu_dt = (-kN + kdiffusion + K_c_active - K_n_active) / nucleus;  // 
-    d_ligand_nu_dt = -kN / nucleus;  // 
-    d_complex_nu_dt = kN / nucleus;  // 
+    compartment = 1.0;                                                                                          //
+    CytosolMembrane = 1.16;                                                                                     //
+    nucleus = 0.65;                                                                                             //
+    bcat_cm = 46.6;                                                                                             //
+    ligand_cm = 581.1;                                                                                          //
+    complex_cm = 418.9;                                                                                         //
+    bcat_nu = 32.6;                                                                                             //
+    ligand_nu = 516.8;                                                                                          //
+    complex_nu = 483.2;                                                                                         //
+    drag = 1.0;                                                                                                 //
+    wnt_level = 0.0;                                                                                            //
+    kdegradation = 0.0163;                                                                                      //
+    Bsyn = 1.306;                                                                                               //
+    K_n_active_k = 17.16;                                                                                       //
+    kC_k1 = 1e-5;                                                                                               //
+    kC_k2 = 0.000647;                                                                                           //
+    kN_k1 = 0.0001;                                                                                             //
+    kN_k2 = 0.00349;                                                                                            //
+    kdiffusion_k = 39.13;                                                                                       //
+    K_c_active_k = 4.5;                                                                                         //
+    gamma = 1.0;                                                                                                //
+    ComplexTransitThreshold = 1.0;                                                                              //
+    drag = sm::piecewise((complex_cm - 700.0) / 10.0, ((complex_cm - 700.0) / 10.0) > 1.0, 1.0);                //
+    Bsynthesis = Bsyn * CytosolMembrane;                                                                        //
+    kDegradation = CytosolMembrane * kdegradation * gamma * bcat_cm * (1.0 - 0.5 * wnt_level);                  //
+    kC = CytosolMembrane * (kC_k1 * bcat_cm * ligand_cm - kC_k2 * complex_cm);                                  //
+    kN = nucleus * (kN_k1 * bcat_nu * ligand_nu - kN_k2 * complex_nu);                                          //
+    kdiffusion = kdiffusion_k * (bcat_cm - bcat_nu);                                                            //
+    K_c_active = K_c_active_k * bcat_cm;                                                                        //
+    K_n_active = K_n_active_k * bcat_nu;                                                                        //
+    d_bcat_cm_dt = ((Bsynthesis - kDegradation - kC - kdiffusion - K_c_active) + K_n_active) / CytosolMembrane; //
+    d_ligand_cm_dt = -kC / CytosolMembrane;                                                                     //
+    d_complex_cm_dt = kC / CytosolMembrane;                                                                     //
+    d_bcat_nu_dt = (-kN + kdiffusion + K_c_active - K_n_active) / nucleus;                                      //
+    d_ligand_nu_dt = -kN / nucleus;                                                                             //
+    d_complex_nu_dt = kN / nucleus;                                                                             //
 
     mStateVariables.push_back(bcat_cm);
     mStateVariables.push_back(ligand_cm);
@@ -131,14 +131,13 @@ void Tan2014SbmlOdeSystem::Initialise(double time)
     mParameters.push_back(ComplexTransitThreshold);
 }
 
-double Tan2014SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double> &rY)
+double Tan2014SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double>& rY)
 {
     std::fill(std::begin(mEventAdjustedParameters), std::end(mEventAdjustedParameters), false);
     std::fill(std::begin(mEventAdjustedStateVars), std::end(mEventAdjustedStateVars), false);
 
     double min_dist = std::numeric_limits<double>::max();
 
- 
     return min_dist; // Distance to closest event
 }
 
@@ -174,20 +173,20 @@ std::vector<double> Tan2014SbmlOdeSystem::RunModelEquations(double time, const s
     gamma = GetParameter(10);
     ComplexTransitThreshold = GetParameter(11);
 
-    drag = sm::piecewise((complex_cm - 700.0) / 10.0, ((complex_cm - 700.0) / 10.0) > 1.0, 1.0);  // 
-    Bsynthesis = Bsyn * CytosolMembrane;  // 
-    kDegradation = CytosolMembrane * kdegradation * gamma * bcat_cm * (1.0 - 0.5 * wnt_level);  // 
-    kC = CytosolMembrane * (kC_k1 * bcat_cm * ligand_cm - kC_k2 * complex_cm);  // 
-    kN = nucleus * (kN_k1 * bcat_nu * ligand_nu - kN_k2 * complex_nu);  // 
-    kdiffusion = kdiffusion_k * (bcat_cm - bcat_nu);  // 
-    K_c_active = K_c_active_k * bcat_cm;  // 
-    K_n_active = K_n_active_k * bcat_nu;  // 
-    d_bcat_cm_dt = ((Bsynthesis - kDegradation - kC - kdiffusion - K_c_active) + K_n_active) / CytosolMembrane;  // 
-    d_ligand_cm_dt = -kC / CytosolMembrane;  // 
-    d_complex_cm_dt = kC / CytosolMembrane;  // 
-    d_bcat_nu_dt = (-kN + kdiffusion + K_c_active - K_n_active) / nucleus;  // 
-    d_ligand_nu_dt = -kN / nucleus;  // 
-    d_complex_nu_dt = kN / nucleus;  // 
+    drag = sm::piecewise((complex_cm - 700.0) / 10.0, ((complex_cm - 700.0) / 10.0) > 1.0, 1.0);                //
+    Bsynthesis = Bsyn * CytosolMembrane;                                                                        //
+    kDegradation = CytosolMembrane * kdegradation * gamma * bcat_cm * (1.0 - 0.5 * wnt_level);                  //
+    kC = CytosolMembrane * (kC_k1 * bcat_cm * ligand_cm - kC_k2 * complex_cm);                                  //
+    kN = nucleus * (kN_k1 * bcat_nu * ligand_nu - kN_k2 * complex_nu);                                          //
+    kdiffusion = kdiffusion_k * (bcat_cm - bcat_nu);                                                            //
+    K_c_active = K_c_active_k * bcat_cm;                                                                        //
+    K_n_active = K_n_active_k * bcat_nu;                                                                        //
+    d_bcat_cm_dt = ((Bsynthesis - kDegradation - kC - kdiffusion - K_c_active) + K_n_active) / CytosolMembrane; //
+    d_ligand_cm_dt = -kC / CytosolMembrane;                                                                     //
+    d_complex_cm_dt = kC / CytosolMembrane;                                                                     //
+    d_bcat_nu_dt = (-kN + kdiffusion + K_c_active - K_n_active) / nucleus;                                      //
+    d_ligand_nu_dt = -kN / nucleus;                                                                             //
+    d_complex_nu_dt = kN / nucleus;                                                                             //
 
     std::vector<double> derivatives(6);
     derivatives[0] = d_bcat_cm_dt;
@@ -250,7 +249,6 @@ void CellwiseOdeSystemInformation<Tan2014SbmlOdeSystem>::Initialise()
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(483.2);
 
-
     // DERIVED QUANTITIES
     this->mDerivedQuantityNames.push_back("compartment");
     this->mDerivedQuantityUnits.push_back("non-dim");
@@ -284,7 +282,6 @@ void CellwiseOdeSystemInformation<Tan2014SbmlOdeSystem>::Initialise()
 
     this->mDerivedQuantityNames.push_back("amt__drag");
     this->mDerivedQuantityUnits.push_back("non-dim");
-
 
     // PARAMETERS
     this->mParameterNames.push_back("wnt_level");

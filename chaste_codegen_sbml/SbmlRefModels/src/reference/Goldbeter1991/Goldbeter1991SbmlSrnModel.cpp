@@ -1,7 +1,7 @@
 #include "Goldbeter1991SbmlSrnModel.hpp"
 
 Goldbeter1991SbmlSrnModel::Goldbeter1991SbmlSrnModel(boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver)
-    : AbstractSbmlSrnModel(3, pOdeSolver)
+        : AbstractSbmlSrnModel(3, pOdeSolver)
 {
 }
 

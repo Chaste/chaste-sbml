@@ -1,7 +1,7 @@
 #include "Chen2000SbmlCellCycleModel.hpp"
 
 Chen2000SbmlCellCycleModel::Chen2000SbmlCellCycleModel(boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver)
-    : AbstractSbmlCellCycleModel(pOdeSolver)
+        : AbstractSbmlCellCycleModel(pOdeSolver)
 {
 }
 

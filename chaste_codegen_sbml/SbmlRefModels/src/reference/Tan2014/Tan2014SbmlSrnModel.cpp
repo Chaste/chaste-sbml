@@ -1,7 +1,7 @@
 #include "Tan2014SbmlSrnModel.hpp"
 
 Tan2014SbmlSrnModel::Tan2014SbmlSrnModel(boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver)
-    : AbstractSbmlSrnModel(6, pOdeSolver)
+        : AbstractSbmlSrnModel(6, pOdeSolver)
 {
 }
 

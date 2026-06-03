@@ -11,39 +11,39 @@
 namespace sm = sbmlmath;
 
 VanLeeuwen2007SbmlOdeSystem::VanLeeuwen2007SbmlOdeSystem()
-    : AbstractSbmlOdeSystem(11, 31, 0)
+        : AbstractSbmlOdeSystem(11, 31, 0)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<VanLeeuwen2007SbmlOdeSystem>);
 
     Initialise();
 
     // EVENTS
- }
+}
 
 VanLeeuwen2007SbmlOdeSystem::~VanLeeuwen2007SbmlOdeSystem()
 {
 }
 
-std::vector<double> VanLeeuwen2007SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double> &rY)
+std::vector<double> VanLeeuwen2007SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
 {
     std::vector<double> dqs;
     RunModelEquations(time, rY);
 
     // AMOUNTS
-    double amt__X = X * cytosolmembraneandnucleus; // 
-    double amt__D = D * cytosolmembraneandnucleus; // 
-    double amt__C_o = C_o * cytosolmembraneandnucleus; // 
-    double amt__C_u = C_u * cytosolmembraneandnucleus; // 
-    double amt__C_c = C_c * cytosolmembraneandnucleus; // 
-    double amt__A = A * cytosolmembraneandnucleus; // 
-    double amt__C_A = C_A * cytosolmembraneandnucleus; // 
-    double amt__T = T * cytosolmembraneandnucleus; // 
-    double amt__C_oT = C_oT * cytosolmembraneandnucleus; // 
-    double amt__C_cT = C_cT * cytosolmembraneandnucleus; // 
-    double amt__Y = Y * cytosolmembraneandnucleus; // 
-    double amt__C_F = C_F * cytosolmembraneandnucleus; // 
-    double amt__C_T = C_T * cytosolmembraneandnucleus; // 
-    double amt__drag = drag * cytosolmembraneandnucleus; // 
+    double amt__X = X * cytosolmembraneandnucleus;       //
+    double amt__D = D * cytosolmembraneandnucleus;       //
+    double amt__C_o = C_o * cytosolmembraneandnucleus;   //
+    double amt__C_u = C_u * cytosolmembraneandnucleus;   //
+    double amt__C_c = C_c * cytosolmembraneandnucleus;   //
+    double amt__A = A * cytosolmembraneandnucleus;       //
+    double amt__C_A = C_A * cytosolmembraneandnucleus;   //
+    double amt__T = T * cytosolmembraneandnucleus;       //
+    double amt__C_oT = C_oT * cytosolmembraneandnucleus; //
+    double amt__C_cT = C_cT * cytosolmembraneandnucleus; //
+    double amt__Y = Y * cytosolmembraneandnucleus;       //
+    double amt__C_F = C_F * cytosolmembraneandnucleus;   //
+    double amt__C_T = C_T * cytosolmembraneandnucleus;   //
+    double amt__drag = drag * cytosolmembraneandnucleus; //
 
     dqs.push_back(cytosolmembraneandnucleus);
     dqs.push_back(amt__X);
@@ -63,11 +63,11 @@ std::vector<double> VanLeeuwen2007SbmlOdeSystem::ComputeDerivedQuantities(double
     dqs.push_back(amt__C_T);
     dqs.push_back(drag);
     dqs.push_back(amt__drag);
- 
+
     return dqs;
 }
 
-void VanLeeuwen2007SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
+void VanLeeuwen2007SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
     std::vector<double> derivatives = RunModelEquations(time, rY);
     for (unsigned i = 0; i < rDY.size(); ++i)
@@ -80,90 +80,90 @@ void VanLeeuwen2007SbmlOdeSystem::EvaluateYDerivatives(double time, const std::v
 
 void VanLeeuwen2007SbmlOdeSystem::Initialise(double time)
 {
-    cytosolmembraneandnucleus = 1.0;  // 
-    X = 0.067;  // 
-    D = 0.67;  // 
-    C_o = 2.54;  // 
-    C_u = 0.45;  // 
-    C_c = 0.0;  // 
-    A = 10.0;  // 
-    C_A = 18.14;  // 
-    T = 25.0;  // 
-    C_oT = 2.54;  // 
-    C_cT = 0.0;  // 
-    Y = 0.48;  // 
-    C_F = 2.54;  // 
-    C_T = 2.54;  // 
-    drag = 1.0;  // 
-    K_T = 50.0;  // 
-    K_C = 200.0;  // 
-    K_D = 5.0;  // 
-    p_u = 100.0;  // 
-    wnt_level = 0.0;  // 
-    gamma1 = 1.0;  // 
-    gamma2 = 1.0;  // 
-    xi_D = 5.0;  // 
-    xi_Dx = 5.0;  // 
-    xi_X = 200.0;  // 
-    xi_C = 0.0;  // 
-    s_D = 100.0;  // 
-    d_Dx = 5.0;  // 
-    s_X = 10.0;  // 
-    d_X = 100.0;  // 
-    d_u = 50.0;  // 
-    s_c = 25.0;  // 
-    d_c = 1.0;  // 
-    s_CA = 250.0;  // 
-    d_CA = 350.0;  // 
-    s_CT = 30.0;  // 
-    d_CT = 750.0;  // 
-    p_c = 0.0;  // 
-    s_A = 20.0;  // 
-    d_A = 2.0;  // 
-    s_T = 10.0;  // 
-    d_T = 0.4;  // 
-    s_Y = 10.0;  // 
-    d_Y = 1.0;  // 
-    d_D = 5.0;  // 
-    ComplexTransitThreshold = 1.0;  // 
-    C_F = C_o + C_c;  // 
-    C_T = C_oT + C_cT;  // 
-    drag = sm::piecewise((C_A - 100.0) / 3.0, ((C_A - 100.0) / 3.0) >= 1.0, 1.0);  // 
-    mwd6b35759_f098_484c_9c65_e84e7e4b61e4 = s_D * gamma1 * X;  // 
-    mweddac6d0_231e_4c92_ba2a_c91edc682ff5 = (d_Dx + wnt_level * xi_Dx) * D;  // 
-    mwdf62dfed_ec88_4d81_bc9d_da0e10f41e4b = s_X * cytosolmembraneandnucleus;  // 
-    mwee9cc998_28e9_4173_a694_f3e278a639b7 = (d_X + wnt_level * xi_X) * X;  // 
-    mw661e341d_97d1_4e6f_8812_3be7ffc86d42 = p_u * gamma2 * C_o * D / (C_o + C_c + K_D);  // 
-    mw179aa33c_9a7e_43c0_9285_3d8f97719c60 = p_u * gamma2 * C_c * D / (C_c + C_o + K_D);  // 
-    mwff8d34f9_e036_49f1_b3b8_3706ecb98660 = d_u * C_u * cytosolmembraneandnucleus;  // 
-    mwd4fa317a_a484_4f38_b9b0_6ed404d9adcb = s_c * cytosolmembraneandnucleus;  // 
-    mwcb88a249_a200_4e95_9185_5654bf1ebfc0 = d_c * C_o * cytosolmembraneandnucleus;  // 
-    mw0aeac2fc_dd2f_4fe7_b60c_97f0b008ed89 = d_c * C_c * cytosolmembraneandnucleus;  // 
-    mw4b47c66d_37e6_4c33_b043_1f6b3b814449 = s_CA * C_o * A * cytosolmembraneandnucleus;  // 
-    mw69974db4_8ead_416c_a220_f6dc3be1f3b6 = d_CA * C_A * cytosolmembraneandnucleus;  // 
-    mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc = s_CT * C_o * T * cytosolmembraneandnucleus;  // 
-    mw581d69f1_60b3_4d21_9323_31b05ee89570 = s_CT * C_c * T * cytosolmembraneandnucleus;  // 
-    mwb17c2c57_279d_4e88_b9cf_896029135cc1 = d_CT * C_oT * cytosolmembraneandnucleus;  // 
-    mwe3236fc5_2118_40cb_8db3_ef9da29137cf = d_CT * C_cT * cytosolmembraneandnucleus;  // 
-    mw0be4a28b_e9c6_43da_8f95_d9c564a7caae = (p_c + wnt_level * xi_C) * C_o / (C_o + K_C);  // 
-    mwc360befb_07da_4d19_bbec_523fbef47dc9 = s_A * cytosolmembraneandnucleus;  // 
-    mw985b39ad_50ff_4d55_95f7_42e7f1bf6a3d = d_A * A * cytosolmembraneandnucleus;  // 
-    mwf27b65bb_38d6_44cf_aa66_9b38ae5885eb = s_T * cytosolmembraneandnucleus;  // 
-    mwd7a7bdbb_8f2e_42ed_bf97_48e33e45dafb = d_T * T * cytosolmembraneandnucleus;  // 
-    mw988a8caf_bd68_462b_86d7_51844c1dcfd3 = s_Y * (C_oT + C_cT) / (C_oT + C_cT + K_T);  // 
-    mw9ab26a4c_bd70_45e0_bacc_f830ab28abca = d_Y * Y * cytosolmembraneandnucleus;  // 
-    mw931baf8f_6572_46f6_96eb_cae40ee267b7 = (d_D + wnt_level * xi_D) * D;  // 
-    d_X_dt = (-mwd6b35759_f098_484c_9c65_e84e7e4b61e4 + mweddac6d0_231e_4c92_ba2a_c91edc682ff5 + mwdf62dfed_ec88_4d81_bc9d_da0e10f41e4b - mwee9cc998_28e9_4173_a694_f3e278a639b7) / cytosolmembraneandnucleus;  // 
-    d_D_dt = (((mwd6b35759_f098_484c_9c65_e84e7e4b61e4 - mweddac6d0_231e_4c92_ba2a_c91edc682ff5) + mw661e341d_97d1_4e6f_8812_3be7ffc86d42 - mw661e341d_97d1_4e6f_8812_3be7ffc86d42) + mw179aa33c_9a7e_43c0_9285_3d8f97719c60 - mw179aa33c_9a7e_43c0_9285_3d8f97719c60 - mw931baf8f_6572_46f6_96eb_cae40ee267b7) / cytosolmembraneandnucleus;  // 
-    d_C_o_dt = (((-mw661e341d_97d1_4e6f_8812_3be7ffc86d42 + mwd4fa317a_a484_4f38_b9b0_6ed404d9adcb - mwcb88a249_a200_4e95_9185_5654bf1ebfc0 - mw4b47c66d_37e6_4c33_b043_1f6b3b814449) + mw69974db4_8ead_416c_a220_f6dc3be1f3b6 - mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc) + mwb17c2c57_279d_4e88_b9cf_896029135cc1 - mw0be4a28b_e9c6_43da_8f95_d9c564a7caae) / cytosolmembraneandnucleus;  // 
-    d_C_u_dt = (mw661e341d_97d1_4e6f_8812_3be7ffc86d42 + mw179aa33c_9a7e_43c0_9285_3d8f97719c60 - mwff8d34f9_e036_49f1_b3b8_3706ecb98660) / cytosolmembraneandnucleus;  // 
-    d_C_c_dt = ((-mw179aa33c_9a7e_43c0_9285_3d8f97719c60 - mw0aeac2fc_dd2f_4fe7_b60c_97f0b008ed89 - mw581d69f1_60b3_4d21_9323_31b05ee89570) + mwe3236fc5_2118_40cb_8db3_ef9da29137cf + mw0be4a28b_e9c6_43da_8f95_d9c564a7caae) / cytosolmembraneandnucleus;  // 
-    d_A_dt = (-mw4b47c66d_37e6_4c33_b043_1f6b3b814449 + mw69974db4_8ead_416c_a220_f6dc3be1f3b6 + mwc360befb_07da_4d19_bbec_523fbef47dc9 - mw985b39ad_50ff_4d55_95f7_42e7f1bf6a3d) / cytosolmembraneandnucleus;  // 
-    d_C_A_dt = (mw4b47c66d_37e6_4c33_b043_1f6b3b814449 - mw69974db4_8ead_416c_a220_f6dc3be1f3b6) / cytosolmembraneandnucleus;  // 
-    d_T_dt = ((-mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc - mw581d69f1_60b3_4d21_9323_31b05ee89570) + mwb17c2c57_279d_4e88_b9cf_896029135cc1 + mwe3236fc5_2118_40cb_8db3_ef9da29137cf + mwf27b65bb_38d6_44cf_aa66_9b38ae5885eb - mwd7a7bdbb_8f2e_42ed_bf97_48e33e45dafb) / cytosolmembraneandnucleus;  // 
-    d_C_oT_dt = ((mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc - mwb17c2c57_279d_4e88_b9cf_896029135cc1) + mw988a8caf_bd68_462b_86d7_51844c1dcfd3 - mw988a8caf_bd68_462b_86d7_51844c1dcfd3) / cytosolmembraneandnucleus;  // 
-    d_C_cT_dt = (mw581d69f1_60b3_4d21_9323_31b05ee89570 - mwe3236fc5_2118_40cb_8db3_ef9da29137cf) / cytosolmembraneandnucleus;  // 
-    d_Y_dt = (mw988a8caf_bd68_462b_86d7_51844c1dcfd3 - mw9ab26a4c_bd70_45e0_bacc_f830ab28abca) / cytosolmembraneandnucleus;  // 
+    cytosolmembraneandnucleus = 1.0;                                                                                                                                                                                                                                                                                                                                                     //
+    X = 0.067;                                                                                                                                                                                                                                                                                                                                                                           //
+    D = 0.67;                                                                                                                                                                                                                                                                                                                                                                            //
+    C_o = 2.54;                                                                                                                                                                                                                                                                                                                                                                          //
+    C_u = 0.45;                                                                                                                                                                                                                                                                                                                                                                          //
+    C_c = 0.0;                                                                                                                                                                                                                                                                                                                                                                           //
+    A = 10.0;                                                                                                                                                                                                                                                                                                                                                                            //
+    C_A = 18.14;                                                                                                                                                                                                                                                                                                                                                                         //
+    T = 25.0;                                                                                                                                                                                                                                                                                                                                                                            //
+    C_oT = 2.54;                                                                                                                                                                                                                                                                                                                                                                         //
+    C_cT = 0.0;                                                                                                                                                                                                                                                                                                                                                                          //
+    Y = 0.48;                                                                                                                                                                                                                                                                                                                                                                            //
+    C_F = 2.54;                                                                                                                                                                                                                                                                                                                                                                          //
+    C_T = 2.54;                                                                                                                                                                                                                                                                                                                                                                          //
+    drag = 1.0;                                                                                                                                                                                                                                                                                                                                                                          //
+    K_T = 50.0;                                                                                                                                                                                                                                                                                                                                                                          //
+    K_C = 200.0;                                                                                                                                                                                                                                                                                                                                                                         //
+    K_D = 5.0;                                                                                                                                                                                                                                                                                                                                                                           //
+    p_u = 100.0;                                                                                                                                                                                                                                                                                                                                                                         //
+    wnt_level = 0.0;                                                                                                                                                                                                                                                                                                                                                                     //
+    gamma1 = 1.0;                                                                                                                                                                                                                                                                                                                                                                        //
+    gamma2 = 1.0;                                                                                                                                                                                                                                                                                                                                                                        //
+    xi_D = 5.0;                                                                                                                                                                                                                                                                                                                                                                          //
+    xi_Dx = 5.0;                                                                                                                                                                                                                                                                                                                                                                         //
+    xi_X = 200.0;                                                                                                                                                                                                                                                                                                                                                                        //
+    xi_C = 0.0;                                                                                                                                                                                                                                                                                                                                                                          //
+    s_D = 100.0;                                                                                                                                                                                                                                                                                                                                                                         //
+    d_Dx = 5.0;                                                                                                                                                                                                                                                                                                                                                                          //
+    s_X = 10.0;                                                                                                                                                                                                                                                                                                                                                                          //
+    d_X = 100.0;                                                                                                                                                                                                                                                                                                                                                                         //
+    d_u = 50.0;                                                                                                                                                                                                                                                                                                                                                                          //
+    s_c = 25.0;                                                                                                                                                                                                                                                                                                                                                                          //
+    d_c = 1.0;                                                                                                                                                                                                                                                                                                                                                                           //
+    s_CA = 250.0;                                                                                                                                                                                                                                                                                                                                                                        //
+    d_CA = 350.0;                                                                                                                                                                                                                                                                                                                                                                        //
+    s_CT = 30.0;                                                                                                                                                                                                                                                                                                                                                                         //
+    d_CT = 750.0;                                                                                                                                                                                                                                                                                                                                                                        //
+    p_c = 0.0;                                                                                                                                                                                                                                                                                                                                                                           //
+    s_A = 20.0;                                                                                                                                                                                                                                                                                                                                                                          //
+    d_A = 2.0;                                                                                                                                                                                                                                                                                                                                                                           //
+    s_T = 10.0;                                                                                                                                                                                                                                                                                                                                                                          //
+    d_T = 0.4;                                                                                                                                                                                                                                                                                                                                                                           //
+    s_Y = 10.0;                                                                                                                                                                                                                                                                                                                                                                          //
+    d_Y = 1.0;                                                                                                                                                                                                                                                                                                                                                                           //
+    d_D = 5.0;                                                                                                                                                                                                                                                                                                                                                                           //
+    ComplexTransitThreshold = 1.0;                                                                                                                                                                                                                                                                                                                                                       //
+    C_F = C_o + C_c;                                                                                                                                                                                                                                                                                                                                                                     //
+    C_T = C_oT + C_cT;                                                                                                                                                                                                                                                                                                                                                                   //
+    drag = sm::piecewise((C_A - 100.0) / 3.0, ((C_A - 100.0) / 3.0) >= 1.0, 1.0);                                                                                                                                                                                                                                                                                                        //
+    mwd6b35759_f098_484c_9c65_e84e7e4b61e4 = s_D * gamma1 * X;                                                                                                                                                                                                                                                                                                                           //
+    mweddac6d0_231e_4c92_ba2a_c91edc682ff5 = (d_Dx + wnt_level * xi_Dx) * D;                                                                                                                                                                                                                                                                                                             //
+    mwdf62dfed_ec88_4d81_bc9d_da0e10f41e4b = s_X * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                            //
+    mwee9cc998_28e9_4173_a694_f3e278a639b7 = (d_X + wnt_level * xi_X) * X;                                                                                                                                                                                                                                                                                                               //
+    mw661e341d_97d1_4e6f_8812_3be7ffc86d42 = p_u * gamma2 * C_o * D / (C_o + C_c + K_D);                                                                                                                                                                                                                                                                                                 //
+    mw179aa33c_9a7e_43c0_9285_3d8f97719c60 = p_u * gamma2 * C_c * D / (C_c + C_o + K_D);                                                                                                                                                                                                                                                                                                 //
+    mwff8d34f9_e036_49f1_b3b8_3706ecb98660 = d_u * C_u * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                      //
+    mwd4fa317a_a484_4f38_b9b0_6ed404d9adcb = s_c * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                            //
+    mwcb88a249_a200_4e95_9185_5654bf1ebfc0 = d_c * C_o * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                      //
+    mw0aeac2fc_dd2f_4fe7_b60c_97f0b008ed89 = d_c * C_c * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                      //
+    mw4b47c66d_37e6_4c33_b043_1f6b3b814449 = s_CA * C_o * A * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                 //
+    mw69974db4_8ead_416c_a220_f6dc3be1f3b6 = d_CA * C_A * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                     //
+    mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc = s_CT * C_o * T * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                 //
+    mw581d69f1_60b3_4d21_9323_31b05ee89570 = s_CT * C_c * T * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                 //
+    mwb17c2c57_279d_4e88_b9cf_896029135cc1 = d_CT * C_oT * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                    //
+    mwe3236fc5_2118_40cb_8db3_ef9da29137cf = d_CT * C_cT * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                    //
+    mw0be4a28b_e9c6_43da_8f95_d9c564a7caae = (p_c + wnt_level * xi_C) * C_o / (C_o + K_C);                                                                                                                                                                                                                                                                                               //
+    mwc360befb_07da_4d19_bbec_523fbef47dc9 = s_A * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                            //
+    mw985b39ad_50ff_4d55_95f7_42e7f1bf6a3d = d_A * A * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                        //
+    mwf27b65bb_38d6_44cf_aa66_9b38ae5885eb = s_T * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                            //
+    mwd7a7bdbb_8f2e_42ed_bf97_48e33e45dafb = d_T * T * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                        //
+    mw988a8caf_bd68_462b_86d7_51844c1dcfd3 = s_Y * (C_oT + C_cT) / (C_oT + C_cT + K_T);                                                                                                                                                                                                                                                                                                  //
+    mw9ab26a4c_bd70_45e0_bacc_f830ab28abca = d_Y * Y * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                        //
+    mw931baf8f_6572_46f6_96eb_cae40ee267b7 = (d_D + wnt_level * xi_D) * D;                                                                                                                                                                                                                                                                                                               //
+    d_X_dt = (-mwd6b35759_f098_484c_9c65_e84e7e4b61e4 + mweddac6d0_231e_4c92_ba2a_c91edc682ff5 + mwdf62dfed_ec88_4d81_bc9d_da0e10f41e4b - mwee9cc998_28e9_4173_a694_f3e278a639b7) / cytosolmembraneandnucleus;                                                                                                                                                                           //
+    d_D_dt = (((mwd6b35759_f098_484c_9c65_e84e7e4b61e4 - mweddac6d0_231e_4c92_ba2a_c91edc682ff5) + mw661e341d_97d1_4e6f_8812_3be7ffc86d42 - mw661e341d_97d1_4e6f_8812_3be7ffc86d42) + mw179aa33c_9a7e_43c0_9285_3d8f97719c60 - mw179aa33c_9a7e_43c0_9285_3d8f97719c60 - mw931baf8f_6572_46f6_96eb_cae40ee267b7) / cytosolmembraneandnucleus;                                             //
+    d_C_o_dt = (((-mw661e341d_97d1_4e6f_8812_3be7ffc86d42 + mwd4fa317a_a484_4f38_b9b0_6ed404d9adcb - mwcb88a249_a200_4e95_9185_5654bf1ebfc0 - mw4b47c66d_37e6_4c33_b043_1f6b3b814449) + mw69974db4_8ead_416c_a220_f6dc3be1f3b6 - mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc) + mwb17c2c57_279d_4e88_b9cf_896029135cc1 - mw0be4a28b_e9c6_43da_8f95_d9c564a7caae) / cytosolmembraneandnucleus; //
+    d_C_u_dt = (mw661e341d_97d1_4e6f_8812_3be7ffc86d42 + mw179aa33c_9a7e_43c0_9285_3d8f97719c60 - mwff8d34f9_e036_49f1_b3b8_3706ecb98660) / cytosolmembraneandnucleus;                                                                                                                                                                                                                   //
+    d_C_c_dt = ((-mw179aa33c_9a7e_43c0_9285_3d8f97719c60 - mw0aeac2fc_dd2f_4fe7_b60c_97f0b008ed89 - mw581d69f1_60b3_4d21_9323_31b05ee89570) + mwe3236fc5_2118_40cb_8db3_ef9da29137cf + mw0be4a28b_e9c6_43da_8f95_d9c564a7caae) / cytosolmembraneandnucleus;                                                                                                                              //
+    d_A_dt = (-mw4b47c66d_37e6_4c33_b043_1f6b3b814449 + mw69974db4_8ead_416c_a220_f6dc3be1f3b6 + mwc360befb_07da_4d19_bbec_523fbef47dc9 - mw985b39ad_50ff_4d55_95f7_42e7f1bf6a3d) / cytosolmembraneandnucleus;                                                                                                                                                                           //
+    d_C_A_dt = (mw4b47c66d_37e6_4c33_b043_1f6b3b814449 - mw69974db4_8ead_416c_a220_f6dc3be1f3b6) / cytosolmembraneandnucleus;                                                                                                                                                                                                                                                            //
+    d_T_dt = ((-mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc - mw581d69f1_60b3_4d21_9323_31b05ee89570) + mwb17c2c57_279d_4e88_b9cf_896029135cc1 + mwe3236fc5_2118_40cb_8db3_ef9da29137cf + mwf27b65bb_38d6_44cf_aa66_9b38ae5885eb - mwd7a7bdbb_8f2e_42ed_bf97_48e33e45dafb) / cytosolmembraneandnucleus;                                                                                       //
+    d_C_oT_dt = ((mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc - mwb17c2c57_279d_4e88_b9cf_896029135cc1) + mw988a8caf_bd68_462b_86d7_51844c1dcfd3 - mw988a8caf_bd68_462b_86d7_51844c1dcfd3) / cytosolmembraneandnucleus;                                                                                                                                                                       //
+    d_C_cT_dt = (mw581d69f1_60b3_4d21_9323_31b05ee89570 - mwe3236fc5_2118_40cb_8db3_ef9da29137cf) / cytosolmembraneandnucleus;                                                                                                                                                                                                                                                           //
+    d_Y_dt = (mw988a8caf_bd68_462b_86d7_51844c1dcfd3 - mw9ab26a4c_bd70_45e0_bacc_f830ab28abca) / cytosolmembraneandnucleus;                                                                                                                                                                                                                                                              //
 
     mStateVariables.push_back(X);
     mStateVariables.push_back(D);
@@ -222,14 +222,13 @@ void VanLeeuwen2007SbmlOdeSystem::Initialise(double time)
     mParameters.push_back(ComplexTransitThreshold);
 }
 
-double VanLeeuwen2007SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double> &rY)
+double VanLeeuwen2007SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double>& rY)
 {
     std::fill(std::begin(mEventAdjustedParameters), std::end(mEventAdjustedParameters), false);
     std::fill(std::begin(mEventAdjustedStateVars), std::end(mEventAdjustedStateVars), false);
 
     double min_dist = std::numeric_limits<double>::max();
 
- 
     return min_dist; // Distance to closest event
 }
 
@@ -289,44 +288,44 @@ std::vector<double> VanLeeuwen2007SbmlOdeSystem::RunModelEquations(double time, 
     d_D = GetParameter(29);
     ComplexTransitThreshold = GetParameter(30);
 
-    C_F = C_o + C_c;  // 
-    C_T = C_oT + C_cT;  // 
-    drag = sm::piecewise((C_A - 100.0) / 3.0, ((C_A - 100.0) / 3.0) >= 1.0, 1.0);  // 
-    mwd6b35759_f098_484c_9c65_e84e7e4b61e4 = s_D * gamma1 * X;  // 
-    mweddac6d0_231e_4c92_ba2a_c91edc682ff5 = (d_Dx + wnt_level * xi_Dx) * D;  // 
-    mwdf62dfed_ec88_4d81_bc9d_da0e10f41e4b = s_X * cytosolmembraneandnucleus;  // 
-    mwee9cc998_28e9_4173_a694_f3e278a639b7 = (d_X + wnt_level * xi_X) * X;  // 
-    mw661e341d_97d1_4e6f_8812_3be7ffc86d42 = p_u * gamma2 * C_o * D / (C_o + C_c + K_D);  // 
-    mw179aa33c_9a7e_43c0_9285_3d8f97719c60 = p_u * gamma2 * C_c * D / (C_c + C_o + K_D);  // 
-    mwff8d34f9_e036_49f1_b3b8_3706ecb98660 = d_u * C_u * cytosolmembraneandnucleus;  // 
-    mwd4fa317a_a484_4f38_b9b0_6ed404d9adcb = s_c * cytosolmembraneandnucleus;  // 
-    mwcb88a249_a200_4e95_9185_5654bf1ebfc0 = d_c * C_o * cytosolmembraneandnucleus;  // 
-    mw0aeac2fc_dd2f_4fe7_b60c_97f0b008ed89 = d_c * C_c * cytosolmembraneandnucleus;  // 
-    mw4b47c66d_37e6_4c33_b043_1f6b3b814449 = s_CA * C_o * A * cytosolmembraneandnucleus;  // 
-    mw69974db4_8ead_416c_a220_f6dc3be1f3b6 = d_CA * C_A * cytosolmembraneandnucleus;  // 
-    mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc = s_CT * C_o * T * cytosolmembraneandnucleus;  // 
-    mw581d69f1_60b3_4d21_9323_31b05ee89570 = s_CT * C_c * T * cytosolmembraneandnucleus;  // 
-    mwb17c2c57_279d_4e88_b9cf_896029135cc1 = d_CT * C_oT * cytosolmembraneandnucleus;  // 
-    mwe3236fc5_2118_40cb_8db3_ef9da29137cf = d_CT * C_cT * cytosolmembraneandnucleus;  // 
-    mw0be4a28b_e9c6_43da_8f95_d9c564a7caae = (p_c + wnt_level * xi_C) * C_o / (C_o + K_C);  // 
-    mwc360befb_07da_4d19_bbec_523fbef47dc9 = s_A * cytosolmembraneandnucleus;  // 
-    mw985b39ad_50ff_4d55_95f7_42e7f1bf6a3d = d_A * A * cytosolmembraneandnucleus;  // 
-    mwf27b65bb_38d6_44cf_aa66_9b38ae5885eb = s_T * cytosolmembraneandnucleus;  // 
-    mwd7a7bdbb_8f2e_42ed_bf97_48e33e45dafb = d_T * T * cytosolmembraneandnucleus;  // 
-    mw988a8caf_bd68_462b_86d7_51844c1dcfd3 = s_Y * (C_oT + C_cT) / (C_oT + C_cT + K_T);  // 
-    mw9ab26a4c_bd70_45e0_bacc_f830ab28abca = d_Y * Y * cytosolmembraneandnucleus;  // 
-    mw931baf8f_6572_46f6_96eb_cae40ee267b7 = (d_D + wnt_level * xi_D) * D;  // 
-    d_X_dt = (-mwd6b35759_f098_484c_9c65_e84e7e4b61e4 + mweddac6d0_231e_4c92_ba2a_c91edc682ff5 + mwdf62dfed_ec88_4d81_bc9d_da0e10f41e4b - mwee9cc998_28e9_4173_a694_f3e278a639b7) / cytosolmembraneandnucleus;  // 
-    d_D_dt = (((mwd6b35759_f098_484c_9c65_e84e7e4b61e4 - mweddac6d0_231e_4c92_ba2a_c91edc682ff5) + mw661e341d_97d1_4e6f_8812_3be7ffc86d42 - mw661e341d_97d1_4e6f_8812_3be7ffc86d42) + mw179aa33c_9a7e_43c0_9285_3d8f97719c60 - mw179aa33c_9a7e_43c0_9285_3d8f97719c60 - mw931baf8f_6572_46f6_96eb_cae40ee267b7) / cytosolmembraneandnucleus;  // 
-    d_C_o_dt = (((-mw661e341d_97d1_4e6f_8812_3be7ffc86d42 + mwd4fa317a_a484_4f38_b9b0_6ed404d9adcb - mwcb88a249_a200_4e95_9185_5654bf1ebfc0 - mw4b47c66d_37e6_4c33_b043_1f6b3b814449) + mw69974db4_8ead_416c_a220_f6dc3be1f3b6 - mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc) + mwb17c2c57_279d_4e88_b9cf_896029135cc1 - mw0be4a28b_e9c6_43da_8f95_d9c564a7caae) / cytosolmembraneandnucleus;  // 
-    d_C_u_dt = (mw661e341d_97d1_4e6f_8812_3be7ffc86d42 + mw179aa33c_9a7e_43c0_9285_3d8f97719c60 - mwff8d34f9_e036_49f1_b3b8_3706ecb98660) / cytosolmembraneandnucleus;  // 
-    d_C_c_dt = ((-mw179aa33c_9a7e_43c0_9285_3d8f97719c60 - mw0aeac2fc_dd2f_4fe7_b60c_97f0b008ed89 - mw581d69f1_60b3_4d21_9323_31b05ee89570) + mwe3236fc5_2118_40cb_8db3_ef9da29137cf + mw0be4a28b_e9c6_43da_8f95_d9c564a7caae) / cytosolmembraneandnucleus;  // 
-    d_A_dt = (-mw4b47c66d_37e6_4c33_b043_1f6b3b814449 + mw69974db4_8ead_416c_a220_f6dc3be1f3b6 + mwc360befb_07da_4d19_bbec_523fbef47dc9 - mw985b39ad_50ff_4d55_95f7_42e7f1bf6a3d) / cytosolmembraneandnucleus;  // 
-    d_C_A_dt = (mw4b47c66d_37e6_4c33_b043_1f6b3b814449 - mw69974db4_8ead_416c_a220_f6dc3be1f3b6) / cytosolmembraneandnucleus;  // 
-    d_T_dt = ((-mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc - mw581d69f1_60b3_4d21_9323_31b05ee89570) + mwb17c2c57_279d_4e88_b9cf_896029135cc1 + mwe3236fc5_2118_40cb_8db3_ef9da29137cf + mwf27b65bb_38d6_44cf_aa66_9b38ae5885eb - mwd7a7bdbb_8f2e_42ed_bf97_48e33e45dafb) / cytosolmembraneandnucleus;  // 
-    d_C_oT_dt = ((mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc - mwb17c2c57_279d_4e88_b9cf_896029135cc1) + mw988a8caf_bd68_462b_86d7_51844c1dcfd3 - mw988a8caf_bd68_462b_86d7_51844c1dcfd3) / cytosolmembraneandnucleus;  // 
-    d_C_cT_dt = (mw581d69f1_60b3_4d21_9323_31b05ee89570 - mwe3236fc5_2118_40cb_8db3_ef9da29137cf) / cytosolmembraneandnucleus;  // 
-    d_Y_dt = (mw988a8caf_bd68_462b_86d7_51844c1dcfd3 - mw9ab26a4c_bd70_45e0_bacc_f830ab28abca) / cytosolmembraneandnucleus;  // 
+    C_F = C_o + C_c;                                                                                                                                                                                                                                                                                                                                                                     //
+    C_T = C_oT + C_cT;                                                                                                                                                                                                                                                                                                                                                                   //
+    drag = sm::piecewise((C_A - 100.0) / 3.0, ((C_A - 100.0) / 3.0) >= 1.0, 1.0);                                                                                                                                                                                                                                                                                                        //
+    mwd6b35759_f098_484c_9c65_e84e7e4b61e4 = s_D * gamma1 * X;                                                                                                                                                                                                                                                                                                                           //
+    mweddac6d0_231e_4c92_ba2a_c91edc682ff5 = (d_Dx + wnt_level * xi_Dx) * D;                                                                                                                                                                                                                                                                                                             //
+    mwdf62dfed_ec88_4d81_bc9d_da0e10f41e4b = s_X * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                            //
+    mwee9cc998_28e9_4173_a694_f3e278a639b7 = (d_X + wnt_level * xi_X) * X;                                                                                                                                                                                                                                                                                                               //
+    mw661e341d_97d1_4e6f_8812_3be7ffc86d42 = p_u * gamma2 * C_o * D / (C_o + C_c + K_D);                                                                                                                                                                                                                                                                                                 //
+    mw179aa33c_9a7e_43c0_9285_3d8f97719c60 = p_u * gamma2 * C_c * D / (C_c + C_o + K_D);                                                                                                                                                                                                                                                                                                 //
+    mwff8d34f9_e036_49f1_b3b8_3706ecb98660 = d_u * C_u * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                      //
+    mwd4fa317a_a484_4f38_b9b0_6ed404d9adcb = s_c * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                            //
+    mwcb88a249_a200_4e95_9185_5654bf1ebfc0 = d_c * C_o * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                      //
+    mw0aeac2fc_dd2f_4fe7_b60c_97f0b008ed89 = d_c * C_c * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                      //
+    mw4b47c66d_37e6_4c33_b043_1f6b3b814449 = s_CA * C_o * A * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                 //
+    mw69974db4_8ead_416c_a220_f6dc3be1f3b6 = d_CA * C_A * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                     //
+    mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc = s_CT * C_o * T * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                 //
+    mw581d69f1_60b3_4d21_9323_31b05ee89570 = s_CT * C_c * T * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                 //
+    mwb17c2c57_279d_4e88_b9cf_896029135cc1 = d_CT * C_oT * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                    //
+    mwe3236fc5_2118_40cb_8db3_ef9da29137cf = d_CT * C_cT * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                    //
+    mw0be4a28b_e9c6_43da_8f95_d9c564a7caae = (p_c + wnt_level * xi_C) * C_o / (C_o + K_C);                                                                                                                                                                                                                                                                                               //
+    mwc360befb_07da_4d19_bbec_523fbef47dc9 = s_A * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                            //
+    mw985b39ad_50ff_4d55_95f7_42e7f1bf6a3d = d_A * A * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                        //
+    mwf27b65bb_38d6_44cf_aa66_9b38ae5885eb = s_T * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                            //
+    mwd7a7bdbb_8f2e_42ed_bf97_48e33e45dafb = d_T * T * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                        //
+    mw988a8caf_bd68_462b_86d7_51844c1dcfd3 = s_Y * (C_oT + C_cT) / (C_oT + C_cT + K_T);                                                                                                                                                                                                                                                                                                  //
+    mw9ab26a4c_bd70_45e0_bacc_f830ab28abca = d_Y * Y * cytosolmembraneandnucleus;                                                                                                                                                                                                                                                                                                        //
+    mw931baf8f_6572_46f6_96eb_cae40ee267b7 = (d_D + wnt_level * xi_D) * D;                                                                                                                                                                                                                                                                                                               //
+    d_X_dt = (-mwd6b35759_f098_484c_9c65_e84e7e4b61e4 + mweddac6d0_231e_4c92_ba2a_c91edc682ff5 + mwdf62dfed_ec88_4d81_bc9d_da0e10f41e4b - mwee9cc998_28e9_4173_a694_f3e278a639b7) / cytosolmembraneandnucleus;                                                                                                                                                                           //
+    d_D_dt = (((mwd6b35759_f098_484c_9c65_e84e7e4b61e4 - mweddac6d0_231e_4c92_ba2a_c91edc682ff5) + mw661e341d_97d1_4e6f_8812_3be7ffc86d42 - mw661e341d_97d1_4e6f_8812_3be7ffc86d42) + mw179aa33c_9a7e_43c0_9285_3d8f97719c60 - mw179aa33c_9a7e_43c0_9285_3d8f97719c60 - mw931baf8f_6572_46f6_96eb_cae40ee267b7) / cytosolmembraneandnucleus;                                             //
+    d_C_o_dt = (((-mw661e341d_97d1_4e6f_8812_3be7ffc86d42 + mwd4fa317a_a484_4f38_b9b0_6ed404d9adcb - mwcb88a249_a200_4e95_9185_5654bf1ebfc0 - mw4b47c66d_37e6_4c33_b043_1f6b3b814449) + mw69974db4_8ead_416c_a220_f6dc3be1f3b6 - mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc) + mwb17c2c57_279d_4e88_b9cf_896029135cc1 - mw0be4a28b_e9c6_43da_8f95_d9c564a7caae) / cytosolmembraneandnucleus; //
+    d_C_u_dt = (mw661e341d_97d1_4e6f_8812_3be7ffc86d42 + mw179aa33c_9a7e_43c0_9285_3d8f97719c60 - mwff8d34f9_e036_49f1_b3b8_3706ecb98660) / cytosolmembraneandnucleus;                                                                                                                                                                                                                   //
+    d_C_c_dt = ((-mw179aa33c_9a7e_43c0_9285_3d8f97719c60 - mw0aeac2fc_dd2f_4fe7_b60c_97f0b008ed89 - mw581d69f1_60b3_4d21_9323_31b05ee89570) + mwe3236fc5_2118_40cb_8db3_ef9da29137cf + mw0be4a28b_e9c6_43da_8f95_d9c564a7caae) / cytosolmembraneandnucleus;                                                                                                                              //
+    d_A_dt = (-mw4b47c66d_37e6_4c33_b043_1f6b3b814449 + mw69974db4_8ead_416c_a220_f6dc3be1f3b6 + mwc360befb_07da_4d19_bbec_523fbef47dc9 - mw985b39ad_50ff_4d55_95f7_42e7f1bf6a3d) / cytosolmembraneandnucleus;                                                                                                                                                                           //
+    d_C_A_dt = (mw4b47c66d_37e6_4c33_b043_1f6b3b814449 - mw69974db4_8ead_416c_a220_f6dc3be1f3b6) / cytosolmembraneandnucleus;                                                                                                                                                                                                                                                            //
+    d_T_dt = ((-mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc - mw581d69f1_60b3_4d21_9323_31b05ee89570) + mwb17c2c57_279d_4e88_b9cf_896029135cc1 + mwe3236fc5_2118_40cb_8db3_ef9da29137cf + mwf27b65bb_38d6_44cf_aa66_9b38ae5885eb - mwd7a7bdbb_8f2e_42ed_bf97_48e33e45dafb) / cytosolmembraneandnucleus;                                                                                       //
+    d_C_oT_dt = ((mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc - mwb17c2c57_279d_4e88_b9cf_896029135cc1) + mw988a8caf_bd68_462b_86d7_51844c1dcfd3 - mw988a8caf_bd68_462b_86d7_51844c1dcfd3) / cytosolmembraneandnucleus;                                                                                                                                                                       //
+    d_C_cT_dt = (mw581d69f1_60b3_4d21_9323_31b05ee89570 - mwe3236fc5_2118_40cb_8db3_ef9da29137cf) / cytosolmembraneandnucleus;                                                                                                                                                                                                                                                           //
+    d_Y_dt = (mw988a8caf_bd68_462b_86d7_51844c1dcfd3 - mw9ab26a4c_bd70_45e0_bacc_f830ab28abca) / cytosolmembraneandnucleus;                                                                                                                                                                                                                                                              //
 
     std::vector<double> derivatives(11);
     derivatives[0] = d_X_dt;
@@ -419,7 +418,6 @@ void CellwiseOdeSystemInformation<VanLeeuwen2007SbmlOdeSystem>::Initialise()
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.48);
 
-
     // DERIVED QUANTITIES
     this->mDerivedQuantityNames.push_back("cytosolmembraneandnucleus");
     this->mDerivedQuantityUnits.push_back("MWDERIVEDUNIT_meter___3");
@@ -474,7 +472,6 @@ void CellwiseOdeSystemInformation<VanLeeuwen2007SbmlOdeSystem>::Initialise()
 
     this->mDerivedQuantityNames.push_back("amt__drag");
     this->mDerivedQuantityUnits.push_back("non-dim");
-
 
     // PARAMETERS
     this->mParameterNames.push_back("K_T");

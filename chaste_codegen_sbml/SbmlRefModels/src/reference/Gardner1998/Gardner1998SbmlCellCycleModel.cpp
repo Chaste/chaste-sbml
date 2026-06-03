@@ -1,7 +1,7 @@
 #include "Gardner1998SbmlCellCycleModel.hpp"
 
 Gardner1998SbmlCellCycleModel::Gardner1998SbmlCellCycleModel(boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver)
-    : AbstractSbmlCellCycleModel(pOdeSolver)
+        : AbstractSbmlCellCycleModel(pOdeSolver)
 {
 }
 

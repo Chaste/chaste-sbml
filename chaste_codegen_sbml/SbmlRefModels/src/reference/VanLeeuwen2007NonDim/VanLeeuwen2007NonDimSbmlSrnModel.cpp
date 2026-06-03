@@ -1,7 +1,7 @@
 #include "VanLeeuwen2007NonDimSbmlSrnModel.hpp"
 
 VanLeeuwen2007NonDimSbmlSrnModel::VanLeeuwen2007NonDimSbmlSrnModel(boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver)
-    : AbstractSbmlSrnModel(11, pOdeSolver)
+        : AbstractSbmlSrnModel(11, pOdeSolver)
 {
 }
 

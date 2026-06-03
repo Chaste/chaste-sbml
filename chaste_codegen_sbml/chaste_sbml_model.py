@@ -6,6 +6,7 @@ import pathlib
 import re
 import shutil
 import subprocess
+import sys
 from typing import TYPE_CHECKING, Optional
 
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -199,8 +200,11 @@ class ChasteSbmlModel:
             with open(file_path, "w") as f:
                 f.write(code)
 
-        # Format with clang-format
-        clang_format = shutil.which("clang-format")
+        # Format with clang-format — search the current interpreter's bin/ first
+        # so the clang-format installed as a Python dependency is always found.
+        python_bin = os.path.dirname(sys.executable)
+        search_path = os.pathsep.join([python_bin, os.environ.get("PATH", "")])
+        clang_format = shutil.which("clang-format", path=search_path)
         if clang_format is not None:
             for filename in self._outputs:
                 file_path = str(root_dir / filename)
