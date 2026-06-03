@@ -1,7 +1,7 @@
 #include "TysonNovak2001SbmlCellCycleModel.hpp"
 
 TysonNovak2001SbmlCellCycleModel::TysonNovak2001SbmlCellCycleModel(boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver)
-        : AbstractSbmlCellCycleModel(pOdeSolver)
+    : AbstractSbmlCellCycleModel(pOdeSolver)
 {
 }
 

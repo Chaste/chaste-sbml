@@ -11,30 +11,30 @@
 namespace sm = sbmlmath;
 
 Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem()
-        : AbstractSbmlOdeSystem(5, 3, 0)
+    : AbstractSbmlOdeSystem(5, 3, 0)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Gardner1998SbmlOdeSystem>);
 
     Initialise();
 
     // EVENTS
-}
+ }
 
 Gardner1998SbmlOdeSystem::~Gardner1998SbmlOdeSystem()
 {
 }
 
-std::vector<double> Gardner1998SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
+std::vector<double> Gardner1998SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double> &rY)
 {
     std::vector<double> dqs;
     RunModelEquations(time, rY);
 
     // AMOUNTS
-    double amt__C = C * Cell; //
-    double amt__X = X * Cell; //
-    double amt__M = M * Cell; //
-    double amt__Y = Y * Cell; //
-    double amt__Z = Z * Cell; //
+    double amt__C = C * Cell; // 
+    double amt__X = X * Cell; // 
+    double amt__M = M * Cell; // 
+    double amt__Y = Y * Cell; // 
+    double amt__Z = Z * Cell; // 
 
     dqs.push_back(Cell);
     dqs.push_back(amt__C);
@@ -44,11 +44,11 @@ std::vector<double> Gardner1998SbmlOdeSystem::ComputeDerivedQuantities(double ti
     dqs.push_back(amt__Z);
     dqs.push_back(V1);
     dqs.push_back(V3);
-
+ 
     return dqs;
 }
 
-void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
+void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
     std::vector<double> derivatives = RunModelEquations(time, rY);
     for (unsigned i = 0; i < rDY.size(); ++i)
@@ -61,97 +61,97 @@ void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vect
 
 void Gardner1998SbmlOdeSystem::Initialise(double time)
 {
-    Cell = 1.0;                              //
-    C = 0.0;                                 //
-    X = 0.0;                                 //
-    M = 0.0;                                 //
-    Y = 1.0;                                 //
-    Z = 1.0;                                 //
-    K6 = 0.3;                                //
-    V1p = 0.75;                              //
-    V3p = 0.3;                               //
-    C = C / Cell;                            //
-    X = X / Cell;                            //
-    M = M / Cell;                            //
-    Y = Y / Cell;                            //
-    Z = Z / Cell;                            //
-    V1 = C * V1p * std::pow((C + K6), -1.0); //
-    V3 = M * V3p;                            //
-    // reaction1:
+    Cell = 1.0;  // 
+    C = 0.0;  // 
+    X = 0.0;  // 
+    M = 0.0;  // 
+    Y = 1.0;  // 
+    Z = 1.0;  // 
+    K6 = 0.3;  // 
+    V1p = 0.75;  // 
+    V3p = 0.3;  // 
+    C = C / Cell;  // 
+    X = X / Cell;  // 
+    M = M / Cell;  // 
+    Y = Y / Cell;  // 
+    Z = Z / Cell;  // 
+    V1 = C * V1p * std::pow((C + K6), -1.0);  // 
+    V3 = M * V3p;  // 
+    // reaction1: 
     {
         double vi = 0.1;
         reaction1 = vi;
     }
-    // reaction2:
+    // reaction2: 
     {
         double k1 = 0.5;
         double K5 = 0.02;
         reaction2 = C * k1 * X * std::pow((C + K5), -1.0);
     }
-    // reaction3:
+    // reaction3: 
     {
         double kd = 0.02;
         reaction3 = C * kd;
     }
-    // reaction4:
+    // reaction4: 
     {
         double K1 = 0.1;
         reaction4 = (1.0 + -1.0 * M) * V1 * std::pow((K1 + -1.0 * M + 1.0), -1.0);
     }
-    // reaction5:
+    // reaction5: 
     {
         double V2 = 0.25;
         double K2 = 0.1;
         reaction5 = M * V2 * std::pow((K2 + M), -1.0);
     }
-    // reaction6:
+    // reaction6: 
     {
         double K3 = 0.2;
         reaction6 = V3 * (1.0 + -1.0 * X) * std::pow((K3 + -1.0 * X + 1.0), -1.0);
     }
-    // reaction7:
+    // reaction7: 
     {
         double K4 = 0.1;
         double V4 = 0.1;
         reaction7 = V4 * X * std::pow((K4 + X), -1.0);
     }
-    // reaction8:
+    // reaction8: 
     {
         double a1 = 0.05;
         reaction8 = a1 * C * Y;
     }
-    // reaction9:
+    // reaction9: 
     {
         double a2 = 0.05;
         reaction9 = a2 * Z;
     }
-    // reaction10:
+    // reaction10: 
     {
         double alpha = 0.1;
         double d1 = 0.05;
         reaction10 = alpha * d1 * Z;
     }
-    // reaction11:
+    // reaction11: 
     {
         double kd = 0.02;
         double alpha = 0.1;
         reaction11 = alpha * kd * Z;
     }
-    // reaction12:
+    // reaction12: 
     {
         double vs = 0.2;
         reaction12 = vs;
     }
-    // reaction13:
+    // reaction13: 
     {
         double d1 = 0.05;
         reaction13 = d1 * Y;
     }
-    d_C_dt = ((reaction1 - reaction2 - reaction3 - reaction8) + reaction9 + reaction10) / Cell; //
-    d_X_dt = (reaction6 - reaction7) / Cell;                                                    //
-    d_M_dt = (reaction4 - reaction5) / Cell;                                                    //
-    d_Y_dt = (-reaction8 + reaction9 + reaction11 + reaction12 - reaction13) / Cell;            //
-    d_Z_dt = (reaction8 - reaction9 - reaction10 - reaction11) / Cell;                          //
+    d_C_dt = ((reaction1 - reaction2 - reaction3 - reaction8) + reaction9 + reaction10) / Cell;  // 
+    d_X_dt = (reaction6 - reaction7) / Cell;  // 
+    d_M_dt = (reaction4 - reaction5) / Cell;  // 
+    d_Y_dt = (-reaction8 + reaction9 + reaction11 + reaction12 - reaction13) / Cell;  // 
+    d_Z_dt = (reaction8 - reaction9 - reaction10 - reaction11) / Cell;  // 
 
     mStateVariables.push_back(C);
     mStateVariables.push_back(X);
@@ -170,13 +170,14 @@ void Gardner1998SbmlOdeSystem::Initialise(double time)
     mParameters.push_back(V3p);
 }
 
-double Gardner1998SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double>& rY)
+double Gardner1998SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double> &rY)
 {
     std::fill(std::begin(mEventAdjustedParameters), std::end(mEventAdjustedParameters), false);
     std::fill(std::begin(mEventAdjustedStateVars), std::end(mEventAdjustedStateVars), false);
 
     double min_dist = std::numeric_limits<double>::max();
 
+ 
     return min_dist; // Distance to closest event
 }
 
@@ -202,83 +203,83 @@ std::vector<double> Gardner1998SbmlOdeSystem::RunModelEquations(double time, con
     V1p = GetParameter(1);
     V3p = GetParameter(2);
 
-    V1 = C * V1p * std::pow((C + K6), -1.0); //
-    V3 = M * V3p;                            //
-    // reaction1:
+    V1 = C * V1p * std::pow((C + K6), -1.0);  // 
+    V3 = M * V3p;  // 
+    // reaction1: 
     {
         double vi = 0.1;
         reaction1 = vi;
     }
-    // reaction2:
+    // reaction2: 
     {
         double k1 = 0.5;
         double K5 = 0.02;
         reaction2 = C * k1 * X * std::pow((C + K5), -1.0);
     }
-    // reaction3:
+    // reaction3: 
     {
         double kd = 0.02;
         reaction3 = C * kd;
     }
-    // reaction4:
+    // reaction4: 
     {
         double K1 = 0.1;
         reaction4 = (1.0 + -1.0 * M) * V1 * std::pow((K1 + -1.0 * M + 1.0), -1.0);
     }
-    // reaction5:
+    // reaction5: 
     {
         double V2 = 0.25;
         double K2 = 0.1;
         reaction5 = M * V2 * std::pow((K2 + M), -1.0);
     }
-    // reaction6:
+    // reaction6: 
     {
         double K3 = 0.2;
         reaction6 = V3 * (1.0 + -1.0 * X) * std::pow((K3 + -1.0 * X + 1.0), -1.0);
     }
-    // reaction7:
+    // reaction7: 
     {
         double K4 = 0.1;
         double V4 = 0.1;
         reaction7 = V4 * X * std::pow((K4 + X), -1.0);
     }
-    // reaction8:
+    // reaction8: 
     {
         double a1 = 0.05;
         reaction8 = a1 * C * Y;
     }
-    // reaction9:
+    // reaction9: 
     {
         double a2 = 0.05;
         reaction9 = a2 * Z;
     }
-    // reaction10:
+    // reaction10: 
     {
         double alpha = 0.1;
         double d1 = 0.05;
         reaction10 = alpha * d1 * Z;
     }
-    // reaction11:
+    // reaction11: 
     {
         double kd = 0.02;
         double alpha = 0.1;
         reaction11 = alpha * kd * Z;
     }
-    // reaction12:
+    // reaction12: 
     {
         double vs = 0.2;
         reaction12 = vs;
     }
-    // reaction13:
+    // reaction13: 
     {
         double d1 = 0.05;
         reaction13 = d1 * Y;
     }
-    d_C_dt = ((reaction1 - reaction2 - reaction3 - reaction8) + reaction9 + reaction10) / Cell; //
-    d_X_dt = (reaction6 - reaction7) / Cell;                                                    //
-    d_M_dt = (reaction4 - reaction5) / Cell;                                                    //
-    d_Y_dt = (-reaction8 + reaction9 + reaction11 + reaction12 - reaction13) / Cell;            //
-    d_Z_dt = (reaction8 - reaction9 - reaction10 - reaction11) / Cell;                          //
+    d_C_dt = ((reaction1 - reaction2 - reaction3 - reaction8) + reaction9 + reaction10) / Cell;  // 
+    d_X_dt = (reaction6 - reaction7) / Cell;  // 
+    d_M_dt = (reaction4 - reaction5) / Cell;  // 
+    d_Y_dt = (-reaction8 + reaction9 + reaction11 + reaction12 - reaction13) / Cell;  // 
+    d_Z_dt = (reaction8 - reaction9 - reaction10 - reaction11) / Cell;  // 
 
     std::vector<double> derivatives(5);
     derivatives[0] = d_C_dt;
@@ -335,6 +336,7 @@ void CellwiseOdeSystemInformation<Gardner1998SbmlOdeSystem>::Initialise()
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(1.0);
 
+
     // DERIVED QUANTITIES
     this->mDerivedQuantityNames.push_back("Cell");
     this->mDerivedQuantityUnits.push_back("volume");
@@ -359,6 +361,7 @@ void CellwiseOdeSystemInformation<Gardner1998SbmlOdeSystem>::Initialise()
 
     this->mDerivedQuantityNames.push_back("V3");
     this->mDerivedQuantityUnits.push_back("non-dim");
+
 
     // PARAMETERS
     this->mParameterNames.push_back("K6");

@@ -21,13 +21,13 @@ private:
      * @param version the current version of this class
      */
     template <class Archive>
-    void serialize(Archive& archive, const unsigned int version)
+    void serialize(Archive &archive, const unsigned int version)
     {
-        archive& boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
+        archive & boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
     }
 
     // PARAMETERS
-    double K6;  // K6
+    double K6; // K6
     double V1p; // V1p
     double V3p; // V3p
 
@@ -38,29 +38,29 @@ private:
     double Y; // cyclin inhibitor
     double Z; // complex inhibitor-cyclin
 
-    double d_C_dt;
-    double d_X_dt;
-    double d_M_dt;
-    double d_Y_dt;
-    double d_Z_dt;
+   double d_C_dt;
+   double d_X_dt;
+   double d_M_dt;
+   double d_Y_dt;
+   double d_Z_dt;
 
     // DERIVED QUANTITIES
     double Cell; // Cell
-    double V1;   // V1
-    double V3;   // V3
+    double V1; // V1
+    double V3; // V3
 
     // STOICHIOMETRY VARIABLES
 
     // REACTIONS
-    double reaction1;  // creation of cyclin
-    double reaction2;  // cdc2 kinase triggered degration of cyclin
-    double reaction3;  // default degradation of cyclin
-    double reaction4;  // activation of cdc2 kinase
-    double reaction5;  // deactivation of cdc2 kinase
-    double reaction6;  // activation of cyclin protease
-    double reaction7;  // deactivation of cyclin protease
-    double reaction8;  // reaction8
-    double reaction9;  // reaction9
+    double reaction1; // creation of cyclin
+    double reaction2; // cdc2 kinase triggered degration of cyclin
+    double reaction3; // default degradation of cyclin
+    double reaction4; // activation of cdc2 kinase
+    double reaction5; // deactivation of cdc2 kinase
+    double reaction6; // activation of cyclin protease
+    double reaction7; // deactivation of cyclin protease
+    double reaction8; // reaction8
+    double reaction9; // reaction9
     double reaction10; // desinhibition of cyclin
     double reaction11; // degradation of inhibited cyclin
     double reaction12; // creation of cyclin inhibitor
@@ -68,10 +68,10 @@ private:
 
     /**
      * Process the events in the model.
-     *
+     * 
      * @param time The current time
      * @param rY The current state variables
-     *
+     * 
      * @return How close we are to the time of the next event
      */
     double ProcessModelEvents(double time, const std::vector<double>& rY) override;
@@ -117,7 +117,7 @@ private:
     // MODEL FUNCTIONS
 
 public:
-    /**
+    /** 
      * Default constructor
      */
     Gardner1998SbmlOdeSystem();
@@ -126,27 +126,27 @@ public:
      * Destructor
      */
     ~Gardner1998SbmlOdeSystem();
-
+    
     /**
      * Compute the derived quantities from the given system state.
      *
      * @param time  the time at which to compute the derived quantities
      * @param rY a vector of values for the state variables
-     *
+     * 
      * @return a vector of derived quantities
      */
-    std::vector<double> ComputeDerivedQuantities(double time, const std::vector<double>& rY) override;
+    std::vector<double> ComputeDerivedQuantities(double time, const std::vector<double> &rY) override;
 
     /**
      * Compute the RHS of the ODE system.
-     *
+     * 
      * An ODE solver will call this function repeatedly to solve for y = [y1 ... yn].
      *
      * @param time the time used to evaluate the RHS.
      * @param rY an input solution vector used to evaluate the RHS.
      * @param rDY an output vector to be filled in with the resulting derivatives y' = [y1' ... yn'].
      */
-    void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY) override;
+    void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY) override;
 
     void Initialise(double time = 0.0);
 

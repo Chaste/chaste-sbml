@@ -20,22 +20,22 @@ private:
      * @param version the current version of this class
      */
     template <class Archive>
-    void serialize(Archive& archive, const unsigned int version)
+    void serialize(Archive &archive, const unsigned int version)
     {
-        archive& boost::serialization::base_object<AbstractSbmlSrnModel>(*this);
+        archive & boost::serialization::base_object<AbstractSbmlSrnModel>(*this);
     }
 
 protected:
     /**
      * Protected copy-constructor for use by CreateSrnModel().
      * The only way to copy an instance of a subclass of AbstractSrnModel is
-     * by calling CreateSrnModel(), which ensures that the instance is copied
+     * by calling CreateSrnModel(), which ensures that the instance is copied 
      * correctly.
      *
      * This copy-constructor helps subclasses of AbstractSrnModel to
      * ensure that all their members are copied over correctly. It is primarily
      * used during cell division to set member variables for a daughter cell.
-     * Note that the SRN model of the parent cell will have run ResetForDivision()
+     * Note that the SRN model of the parent cell will have run ResetForDivision() 
      * just before calling CreateSrnModel(), so performing an exact copy of the
      * parent cell's SRN model is suitable behaviour. Any further initialisation
      * specific to the daughter cell can be completed via InitialiseDaughterCell().

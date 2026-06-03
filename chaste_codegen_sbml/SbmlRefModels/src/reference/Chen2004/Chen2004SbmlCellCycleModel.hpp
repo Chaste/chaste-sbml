@@ -20,22 +20,22 @@ private:
      * @param version the current version of this class
      */
     template <class Archive>
-    void serialize(Archive& archive, const unsigned int version)
+    void serialize(Archive &archive, const unsigned int version)
     {
-        archive& boost::serialization::base_object<AbstractSbmlCellCycleModel>(*this);
+        archive & boost::serialization::base_object<AbstractSbmlCellCycleModel>(*this);
     }
 
 protected:
     /**
      * Protected copy-constructor for use by CreateCellCycleModel().
      * The only way to copy an instance of a subclass of AbstractCellCycleModel is
-     * by calling CreateCellCycleModel(), which ensures that the instance is copied
+     * by calling CreateCellCycleModel(), which ensures that the instance is copied 
      * correctly.
      *
      * This copy-constructor helps subclasses of AbstractCellCycleModel to
      * ensure that all their members are copied over correctly. It is primarily
      * used during cell division to set member variables for a daughter cell.
-     * Note that the cell-cycle model of the parent cell will have run ResetForDivision()
+     * Note that the cell-cycle model of the parent cell will have run ResetForDivision() 
      * just before calling CreateCellCycleModel(), so performing an exact copy of the
      * parent cell's cell-cycle model is suitable behaviour. Any further initialisation
      * specific to the daughter cell can be completed via InitialiseDaughterCell().

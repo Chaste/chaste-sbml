@@ -21,29 +21,29 @@ private:
      * @param version the current version of this class
      */
     template <class Archive>
-    void serialize(Archive& archive, const unsigned int version)
+    void serialize(Archive &archive, const unsigned int version)
     {
-        archive& boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
+        archive & boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
     }
 
     // PARAMETERS
     double VM1; // VM1
     double VM3; // VM3
-    double Kc;  // Kc
+    double Kc; // Kc
 
     // STATE VARIABLES
     double C; // Cyclin
     double M; // cdc_2_kinase
     double X; // Cyclin Protease
 
-    double d_C_dt;
-    double d_M_dt;
-    double d_X_dt;
+   double d_C_dt;
+   double d_M_dt;
+   double d_X_dt;
 
     // DERIVED QUANTITIES
     double cell; // cell
-    double V1;   // V1
-    double V3;   // V3
+    double V1; // V1
+    double V3; // V3
 
     // STOICHIOMETRY VARIABLES
 
@@ -58,10 +58,10 @@ private:
 
     /**
      * Process the events in the model.
-     *
+     * 
      * @param time The current time
      * @param rY The current state variables
-     *
+     * 
      * @return How close we are to the time of the next event
      */
     double ProcessModelEvents(double time, const std::vector<double>& rY) override;
@@ -107,7 +107,7 @@ private:
     // MODEL FUNCTIONS
 
 public:
-    /**
+    /** 
      * Default constructor
      */
     Goldbeter1991SbmlOdeSystem();
@@ -116,27 +116,27 @@ public:
      * Destructor
      */
     ~Goldbeter1991SbmlOdeSystem();
-
+    
     /**
      * Compute the derived quantities from the given system state.
      *
      * @param time  the time at which to compute the derived quantities
      * @param rY a vector of values for the state variables
-     *
+     * 
      * @return a vector of derived quantities
      */
-    std::vector<double> ComputeDerivedQuantities(double time, const std::vector<double>& rY) override;
+    std::vector<double> ComputeDerivedQuantities(double time, const std::vector<double> &rY) override;
 
     /**
      * Compute the RHS of the ODE system.
-     *
+     * 
      * An ODE solver will call this function repeatedly to solve for y = [y1 ... yn].
      *
      * @param time the time used to evaluate the RHS.
      * @param rY an input solution vector used to evaluate the RHS.
      * @param rDY an output vector to be filled in with the resulting derivatives y' = [y1' ... yn'].
      */
-    void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY) override;
+    void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY) override;
 
     void Initialise(double time = 0.0);
 

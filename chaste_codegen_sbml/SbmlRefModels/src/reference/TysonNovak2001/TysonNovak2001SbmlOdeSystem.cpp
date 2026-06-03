@@ -11,7 +11,7 @@
 namespace sm = sbmlmath;
 
 TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem()
-        : AbstractSbmlOdeSystem(8, 36, 1)
+    : AbstractSbmlOdeSystem(8, 36, 1)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>);
 
@@ -32,13 +32,13 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem()
 
     mEventAdjustedStateVars.resize(8, false);
     mEventAdjustedStateValues.resize(8, 0.0);
-}
+ }
 
 TysonNovak2001SbmlOdeSystem::~TysonNovak2001SbmlOdeSystem()
 {
 }
 
-std::vector<double> TysonNovak2001SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
+std::vector<double> TysonNovak2001SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double> &rY)
 {
     std::vector<double> dqs;
     RunModelEquations(time, rY);
@@ -50,11 +50,11 @@ std::vector<double> TysonNovak2001SbmlOdeSystem::ComputeDerivedQuantities(double
     dqs.push_back(Trimer);
     dqs.push_back(Mad);
     dqs.push_back(TF);
-
+ 
     return dqs;
 }
 
-void TysonNovak2001SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
+void TysonNovak2001SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
     std::vector<double> derivatives = RunModelEquations(time, rY);
     for (unsigned i = 0; i < rDY.size(); ++i)
@@ -67,83 +67,83 @@ void TysonNovak2001SbmlOdeSystem::EvaluateYDerivatives(double time, const std::v
 
 void TysonNovak2001SbmlOdeSystem::Initialise(double time)
 {
-    cell = 1.0;                                                                                                                                               //
-    CycBt = 0.001;                                                                                                                                            //
-    Cdc20a = 0.001;                                                                                                                                           //
-    Cdh1 = 0.001;                                                                                                                                             //
-    m = 0.5;                                                                                                                                                  //
-    Cdc20t = 0.001;                                                                                                                                           //
-    IEP = 0.001;                                                                                                                                              //
-    CKIt = 0.001;                                                                                                                                             //
-    SK = 0.001;                                                                                                                                               //
-    k1 = 0.04;                                                                                                                                                //
-    k2p = 0.04;                                                                                                                                               //
-    k2pp = 1.0;                                                                                                                                               //
-    k2ppp = 1.0;                                                                                                                                              //
-    k3p = 1.0;                                                                                                                                                //
-    k3pp = 10.0;                                                                                                                                              //
-    J3 = 0.04;                                                                                                                                                //
-    k4 = 35.0;                                                                                                                                                //
-    k5p = 0.005;                                                                                                                                              //
-    k5pp = 0.2;                                                                                                                                               //
-    J5 = 0.3;                                                                                                                                                 //
-    k6 = 0.1;                                                                                                                                                 //
-    n = 4.0;                                                                                                                                                  //
-    k7 = 1.0;                                                                                                                                                 //
-    J7 = 0.001;                                                                                                                                               //
-    k8 = 0.5;                                                                                                                                                 //
-    J8 = 0.001;                                                                                                                                               //
-    k9 = 0.1;                                                                                                                                                 //
-    k10 = 0.02;                                                                                                                                               //
-    mu = 0.005;                                                                                                                                               //
-    k11 = 1.0;                                                                                                                                                //
-    k12p = 0.2;                                                                                                                                               //
-    k12pp = 50.0;                                                                                                                                             //
-    mmax = 10.0;                                                                                                                                              //
-    k12ppp = 100.0;                                                                                                                                           //
-    Keq = 1000.0;                                                                                                                                             //
-    k13 = 1.0;                                                                                                                                                //
-    k14 = 1.0;                                                                                                                                                //
-    k15p = 1.5;                                                                                                                                               //
-    k15pp = 0.05;                                                                                                                                             //
-    k16p = 1.0;                                                                                                                                               //
-    k16pp = 3.0;                                                                                                                                              //
-    J15 = 0.01;                                                                                                                                               //
-    J16 = 0.01;                                                                                                                                               //
-    k4p = 2.0;                                                                                                                                                //
-    J4 = 0.04;                                                                                                                                                //
-    CycB = CycBt - 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow((std::pow((CycBt + CKIt + 1.0 / Keq), 2.0) - 4.0 * CycBt * CKIt), (1.0 / 2.0))); //
-    Trimer = 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow((std::pow((CycBt + CKIt + 1.0 / Keq), 2.0) - 4.0 * CycBt * CKIt), (1.0 / 2.0)));       //
-    Mad = 1.0;                                                                                                                                                //
-    TF = GK(k15p * m + k15pp * SK, k16p + k16pp * m * CycB, J15, J16);                                                                                        //
-    CycBt_synthesis = k1;                                                                                                                                     //
-    CycBdegradation = k2p * CycBt;                                                                                                                            //
-    CycBdegradationviaCdh1 = k2pp * Cdh1 * CycBt;                                                                                                             //
-    CycBtdegradationviaCdc20a = k2ppp * Cdc20a * CycBt;                                                                                                       //
-    Cdh1synthesis = (k3p + k3pp * Cdc20a) * (1.0 - Cdh1) / (J3 + 1.0 - Cdh1);                                                                                 //
-    Cdh1degradation = (k4p * SK * Cdh1 + k4 * m * CycB * Cdh1) / (J4 + Cdh1);                                                                                 //
-    Cdc20tsynthesis = k5p + k5pp * std::pow((CycB * m / J5), n) / (1.0 + std::pow((CycB * m / J5), n));                                                       //
-    Cdc20t_deg = k6 * Cdc20t;                                                                                                                                 //
-    Cdc20activation = k7 * IEP * (Cdc20t - Cdc20a) / (J7 + Cdc20t - Cdc20a);                                                                                  //
-    Cdc20ainhibition = k8 * Mad * Cdc20a / (J8 + Cdc20a);                                                                                                     //
-    Cdc20adegradation = k6 * Cdc20a;                                                                                                                          //
-    IEPsynthesis = k9 * m * CycB * (1.0 - IEP);                                                                                                               //
-    IEPdegradation = k10 * IEP;                                                                                                                               //
-    growth = mu * m * (1.0 - m / mmax);                                                                                                                       //
-    CKItsynthesis = k11;                                                                                                                                      //
-    CKIdegradation = k12p * CKIt;                                                                                                                             //
-    CKItphosphorilationviaSK = k12pp * SK * CKIt;                                                                                                             //
-    eq_7 = k12ppp * m * CycB * CKIt;                                                                                                                          //
-    SKsynthesis = k13 * TF;                                                                                                                                   //
-    SKdegradation = k14 * SK;                                                                                                                                 //
-    d_CycBt_dt = CycBt_synthesis - CycBdegradation - CycBdegradationviaCdh1 - CycBtdegradationviaCdc20a;                                                      //
-    d_Cdc20a_dt = Cdc20activation - Cdc20ainhibition - Cdc20adegradation;                                                                                     //
-    d_Cdh1_dt = Cdh1synthesis - Cdh1degradation;                                                                                                              //
-    d_m_dt = growth;                                                                                                                                          //
-    d_Cdc20t_dt = Cdc20tsynthesis - Cdc20t_deg;                                                                                                               //
-    d_IEP_dt = IEPsynthesis - IEPdegradation;                                                                                                                 //
-    d_CKIt_dt = CKItsynthesis - CKIdegradation - CKItphosphorilationviaSK - eq_7;                                                                             //
-    d_SK_dt = SKsynthesis - SKdegradation;                                                                                                                    //
+    cell = 1.0;  // 
+    CycBt = 0.001;  // 
+    Cdc20a = 0.001;  // 
+    Cdh1 = 0.001;  // 
+    m = 0.5;  // 
+    Cdc20t = 0.001;  // 
+    IEP = 0.001;  // 
+    CKIt = 0.001;  // 
+    SK = 0.001;  // 
+    k1 = 0.04;  // 
+    k2p = 0.04;  // 
+    k2pp = 1.0;  // 
+    k2ppp = 1.0;  // 
+    k3p = 1.0;  // 
+    k3pp = 10.0;  // 
+    J3 = 0.04;  // 
+    k4 = 35.0;  // 
+    k5p = 0.005;  // 
+    k5pp = 0.2;  // 
+    J5 = 0.3;  // 
+    k6 = 0.1;  // 
+    n = 4.0;  // 
+    k7 = 1.0;  // 
+    J7 = 0.001;  // 
+    k8 = 0.5;  // 
+    J8 = 0.001;  // 
+    k9 = 0.1;  // 
+    k10 = 0.02;  // 
+    mu = 0.005;  // 
+    k11 = 1.0;  // 
+    k12p = 0.2;  // 
+    k12pp = 50.0;  // 
+    mmax = 10.0;  // 
+    k12ppp = 100.0;  // 
+    Keq = 1000.0;  // 
+    k13 = 1.0;  // 
+    k14 = 1.0;  // 
+    k15p = 1.5;  // 
+    k15pp = 0.05;  // 
+    k16p = 1.0;  // 
+    k16pp = 3.0;  // 
+    J15 = 0.01;  // 
+    J16 = 0.01;  // 
+    k4p = 2.0;  // 
+    J4 = 0.04;  // 
+    CycB = CycBt - 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow((std::pow((CycBt + CKIt + 1.0 / Keq), 2.0) - 4.0 * CycBt * CKIt), (1.0 / 2.0)));  // 
+    Trimer = 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow((std::pow((CycBt + CKIt + 1.0 / Keq), 2.0) - 4.0 * CycBt * CKIt), (1.0 / 2.0)));  // 
+    Mad = 1.0;  // 
+    TF = GK(k15p * m + k15pp * SK, k16p + k16pp * m * CycB, J15, J16);  // 
+    CycBt_synthesis = k1;  // 
+    CycBdegradation = k2p * CycBt;  // 
+    CycBdegradationviaCdh1 = k2pp * Cdh1 * CycBt;  // 
+    CycBtdegradationviaCdc20a = k2ppp * Cdc20a * CycBt;  // 
+    Cdh1synthesis = (k3p + k3pp * Cdc20a) * (1.0 - Cdh1) / (J3 + 1.0 - Cdh1);  // 
+    Cdh1degradation = (k4p * SK * Cdh1 + k4 * m * CycB * Cdh1) / (J4 + Cdh1);  // 
+    Cdc20tsynthesis = k5p + k5pp * std::pow((CycB * m / J5), n) / (1.0 + std::pow((CycB * m / J5), n));  // 
+    Cdc20t_deg = k6 * Cdc20t;  // 
+    Cdc20activation = k7 * IEP * (Cdc20t - Cdc20a) / (J7 + Cdc20t - Cdc20a);  // 
+    Cdc20ainhibition = k8 * Mad * Cdc20a / (J8 + Cdc20a);  // 
+    Cdc20adegradation = k6 * Cdc20a;  // 
+    IEPsynthesis = k9 * m * CycB * (1.0 - IEP);  // 
+    IEPdegradation = k10 * IEP;  // 
+    growth = mu * m * (1.0 - m / mmax);  // 
+    CKItsynthesis = k11;  // 
+    CKIdegradation = k12p * CKIt;  // 
+    CKItphosphorilationviaSK = k12pp * SK * CKIt;  // 
+    eq_7 = k12ppp * m * CycB * CKIt;  // 
+    SKsynthesis = k13 * TF;  // 
+    SKdegradation = k14 * SK;  // 
+    d_CycBt_dt = CycBt_synthesis - CycBdegradation - CycBdegradationviaCdh1 - CycBtdegradationviaCdc20a;  // 
+    d_Cdc20a_dt = Cdc20activation - Cdc20ainhibition - Cdc20adegradation;  // 
+    d_Cdh1_dt = Cdh1synthesis - Cdh1degradation;  // 
+    d_m_dt = growth;  // 
+    d_Cdc20t_dt = Cdc20tsynthesis - Cdc20t_deg;  // 
+    d_IEP_dt = IEPsynthesis - IEPdegradation;  // 
+    d_CKIt_dt = CKItsynthesis - CKIdegradation - CKItphosphorilationviaSK - eq_7;  // 
+    d_SK_dt = SKsynthesis - SKdegradation;  // 
 
     mStateVariables.push_back(CycBt);
     mStateVariables.push_back(Cdc20a);
@@ -201,7 +201,7 @@ void TysonNovak2001SbmlOdeSystem::Initialise(double time)
     mParameters.push_back(J4);
 }
 
-double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double>& rY)
+double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double> &rY)
 {
     std::fill(std::begin(mEventAdjustedParameters), std::end(mEventAdjustedParameters), false);
     std::fill(std::begin(mEventAdjustedStateVars), std::end(mEventAdjustedStateVars), false);
@@ -212,7 +212,7 @@ double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::v
     // EVENT: Cell division
     //========================================
     {
-        double event_dist = (0.1) - (CycB)-std::numeric_limits<double>::epsilon();
+        double event_dist = (0.1) - (CycB) - std::numeric_limits<double>::epsilon();
 
         // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
         if (std::abs(event_dist) < 1.0)
@@ -240,6 +240,8 @@ double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::v
                 // m = m / 2.0
                 mEventAdjustedStateVars[3] = true;
                 mEventAdjustedStateValues[3] = m / 2.0;
+
+ 
             }
             mEventSatisfied[0] = true;
         }
@@ -250,6 +252,7 @@ double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::v
         }
     }
 
+ 
     return min_dist; // Distance to closest event
 }
 
@@ -311,38 +314,38 @@ std::vector<double> TysonNovak2001SbmlOdeSystem::RunModelEquations(double time, 
     k4p = GetParameter(34);
     J4 = GetParameter(35);
 
-    CycB = CycBt - 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow((std::pow((CycBt + CKIt + 1.0 / Keq), 2.0) - 4.0 * CycBt * CKIt), (1.0 / 2.0))); //
-    Trimer = 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow((std::pow((CycBt + CKIt + 1.0 / Keq), 2.0) - 4.0 * CycBt * CKIt), (1.0 / 2.0)));       //
-    Mad = 1.0;                                                                                                                                                //
-    TF = GK(k15p * m + k15pp * SK, k16p + k16pp * m * CycB, J15, J16);                                                                                        //
-    CycBt_synthesis = k1;                                                                                                                                     //
-    CycBdegradation = k2p * CycBt;                                                                                                                            //
-    CycBdegradationviaCdh1 = k2pp * Cdh1 * CycBt;                                                                                                             //
-    CycBtdegradationviaCdc20a = k2ppp * Cdc20a * CycBt;                                                                                                       //
-    Cdh1synthesis = (k3p + k3pp * Cdc20a) * (1.0 - Cdh1) / (J3 + 1.0 - Cdh1);                                                                                 //
-    Cdh1degradation = (k4p * SK * Cdh1 + k4 * m * CycB * Cdh1) / (J4 + Cdh1);                                                                                 //
-    Cdc20tsynthesis = k5p + k5pp * std::pow((CycB * m / J5), n) / (1.0 + std::pow((CycB * m / J5), n));                                                       //
-    Cdc20t_deg = k6 * Cdc20t;                                                                                                                                 //
-    Cdc20activation = k7 * IEP * (Cdc20t - Cdc20a) / (J7 + Cdc20t - Cdc20a);                                                                                  //
-    Cdc20ainhibition = k8 * Mad * Cdc20a / (J8 + Cdc20a);                                                                                                     //
-    Cdc20adegradation = k6 * Cdc20a;                                                                                                                          //
-    IEPsynthesis = k9 * m * CycB * (1.0 - IEP);                                                                                                               //
-    IEPdegradation = k10 * IEP;                                                                                                                               //
-    growth = mu * m * (1.0 - m / mmax);                                                                                                                       //
-    CKItsynthesis = k11;                                                                                                                                      //
-    CKIdegradation = k12p * CKIt;                                                                                                                             //
-    CKItphosphorilationviaSK = k12pp * SK * CKIt;                                                                                                             //
-    eq_7 = k12ppp * m * CycB * CKIt;                                                                                                                          //
-    SKsynthesis = k13 * TF;                                                                                                                                   //
-    SKdegradation = k14 * SK;                                                                                                                                 //
-    d_CycBt_dt = CycBt_synthesis - CycBdegradation - CycBdegradationviaCdh1 - CycBtdegradationviaCdc20a;                                                      //
-    d_Cdc20a_dt = Cdc20activation - Cdc20ainhibition - Cdc20adegradation;                                                                                     //
-    d_Cdh1_dt = Cdh1synthesis - Cdh1degradation;                                                                                                              //
-    d_m_dt = growth;                                                                                                                                          //
-    d_Cdc20t_dt = Cdc20tsynthesis - Cdc20t_deg;                                                                                                               //
-    d_IEP_dt = IEPsynthesis - IEPdegradation;                                                                                                                 //
-    d_CKIt_dt = CKItsynthesis - CKIdegradation - CKItphosphorilationviaSK - eq_7;                                                                             //
-    d_SK_dt = SKsynthesis - SKdegradation;                                                                                                                    //
+    CycB = CycBt - 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow((std::pow((CycBt + CKIt + 1.0 / Keq), 2.0) - 4.0 * CycBt * CKIt), (1.0 / 2.0)));  // 
+    Trimer = 2.0 * CycBt * CKIt / (CycBt + CKIt + 1.0 / Keq + std::pow((std::pow((CycBt + CKIt + 1.0 / Keq), 2.0) - 4.0 * CycBt * CKIt), (1.0 / 2.0)));  // 
+    Mad = 1.0;  // 
+    TF = GK(k15p * m + k15pp * SK, k16p + k16pp * m * CycB, J15, J16);  // 
+    CycBt_synthesis = k1;  // 
+    CycBdegradation = k2p * CycBt;  // 
+    CycBdegradationviaCdh1 = k2pp * Cdh1 * CycBt;  // 
+    CycBtdegradationviaCdc20a = k2ppp * Cdc20a * CycBt;  // 
+    Cdh1synthesis = (k3p + k3pp * Cdc20a) * (1.0 - Cdh1) / (J3 + 1.0 - Cdh1);  // 
+    Cdh1degradation = (k4p * SK * Cdh1 + k4 * m * CycB * Cdh1) / (J4 + Cdh1);  // 
+    Cdc20tsynthesis = k5p + k5pp * std::pow((CycB * m / J5), n) / (1.0 + std::pow((CycB * m / J5), n));  // 
+    Cdc20t_deg = k6 * Cdc20t;  // 
+    Cdc20activation = k7 * IEP * (Cdc20t - Cdc20a) / (J7 + Cdc20t - Cdc20a);  // 
+    Cdc20ainhibition = k8 * Mad * Cdc20a / (J8 + Cdc20a);  // 
+    Cdc20adegradation = k6 * Cdc20a;  // 
+    IEPsynthesis = k9 * m * CycB * (1.0 - IEP);  // 
+    IEPdegradation = k10 * IEP;  // 
+    growth = mu * m * (1.0 - m / mmax);  // 
+    CKItsynthesis = k11;  // 
+    CKIdegradation = k12p * CKIt;  // 
+    CKItphosphorilationviaSK = k12pp * SK * CKIt;  // 
+    eq_7 = k12ppp * m * CycB * CKIt;  // 
+    SKsynthesis = k13 * TF;  // 
+    SKdegradation = k14 * SK;  // 
+    d_CycBt_dt = CycBt_synthesis - CycBdegradation - CycBdegradationviaCdh1 - CycBtdegradationviaCdc20a;  // 
+    d_Cdc20a_dt = Cdc20activation - Cdc20ainhibition - Cdc20adegradation;  // 
+    d_Cdh1_dt = Cdh1synthesis - Cdh1degradation;  // 
+    d_m_dt = growth;  // 
+    d_Cdc20t_dt = Cdc20tsynthesis - Cdc20t_deg;  // 
+    d_IEP_dt = IEPsynthesis - IEPdegradation;  // 
+    d_CKIt_dt = CKItsynthesis - CKIdegradation - CKItphosphorilationviaSK - eq_7;  // 
+    d_SK_dt = SKsynthesis - SKdegradation;  // 
 
     std::vector<double> derivatives(8);
     derivatives[0] = d_CycBt_dt;
@@ -385,6 +388,7 @@ inline double TysonNovak2001SbmlOdeSystem::GK(double A1, double A2, double A3, d
     return 2.0 * A4 * A1 / ((A2 - A1) + A3 * A2 + A4 * A1 + sm::root(2.0, std::pow(((A2 - A1) + A3 * A2 + A4 * A1), 2.0) - 4.0 * (A2 - A1) * A4 * A1));
 }
 
+
 template <>
 void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
 {
@@ -421,6 +425,7 @@ void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
     this->mVariableUnits.push_back("non-dim");
     this->mInitialConditions.push_back(0.001);
 
+
     // DERIVED QUANTITIES
     this->mDerivedQuantityNames.push_back("cell");
     this->mDerivedQuantityUnits.push_back("non-dim");
@@ -436,6 +441,7 @@ void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
 
     this->mDerivedQuantityNames.push_back("TF");
     this->mDerivedQuantityUnits.push_back("non-dim");
+
 
     // PARAMETERS
     this->mParameterNames.push_back("k1");

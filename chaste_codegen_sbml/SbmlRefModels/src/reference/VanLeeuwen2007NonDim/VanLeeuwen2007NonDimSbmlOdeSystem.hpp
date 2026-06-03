@@ -21,74 +21,74 @@ private:
      * @param version the current version of this class
      */
     template <class Archive>
-    void serialize(Archive& archive, const unsigned int version)
+    void serialize(Archive &archive, const unsigned int version)
     {
-        archive& boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
+        archive & boost::serialization::base_object<AbstractSbmlOdeSystem>(*this);
     }
 
     // PARAMETERS
-    double K_T;                     // K_T
-    double K_C;                     // K_C
-    double K_D;                     // K_D
-    double p_u;                     // p_u
-    double wnt_level;               // wnt_level
-    double xi_D;                    // xi_D
-    double xi_Dx;                   // xi_Dx
-    double xi_X;                    // xi_X
-    double xi_C;                    // xi_C
-    double d_Dx;                    // d_Dx
-    double d_X;                     // d_X
-    double d_D;                     // d_D
-    double p_c;                     // p_c
-    double gamma1;                  // gamma1
-    double gamma2;                  // gamma2
-    double s_D;                     // s_D
-    double s_X;                     // s_X
-    double d_u;                     // d_u
-    double s_c;                     // s_c
-    double d_c;                     // d_c
-    double s_CA;                    // s_CA
-    double d_CA;                    // d_CA
-    double s_CT;                    // s_CT
-    double d_CT;                    // d_CT
-    double s_A;                     // s_A
-    double d_A;                     // d_A
-    double s_T;                     // s_T
-    double d_T;                     // d_T
-    double s_Y;                     // s_Y
-    double d_Y;                     // d_Y
+    double K_T; // K_T
+    double K_C; // K_C
+    double K_D; // K_D
+    double p_u; // p_u
+    double wnt_level; // wnt_level
+    double xi_D; // xi_D
+    double xi_Dx; // xi_Dx
+    double xi_X; // xi_X
+    double xi_C; // xi_C
+    double d_Dx; // d_Dx
+    double d_X; // d_X
+    double d_D; // d_D
+    double p_c; // p_c
+    double gamma1; // gamma1
+    double gamma2; // gamma2
+    double s_D; // s_D
+    double s_X; // s_X
+    double d_u; // d_u
+    double s_c; // s_c
+    double d_c; // d_c
+    double s_CA; // s_CA
+    double d_CA; // d_CA
+    double s_CT; // s_CT
+    double d_CT; // d_CT
+    double s_A; // s_A
+    double d_A; // d_A
+    double s_T; // s_T
+    double d_T; // d_T
+    double s_Y; // s_Y
+    double d_Y; // d_Y
     double ComplexTransitThreshold; // ComplexTransitThreshold
 
     // STATE VARIABLES
-    double X;    // X
-    double D;    // D
-    double C_o;  // C_o
-    double C_u;  // C_u
-    double C_c;  // C_c
-    double A;    // A
-    double C_A;  // C_A
-    double T;    // T
+    double X; // X
+    double D; // D
+    double C_o; // C_o
+    double C_u; // C_u
+    double C_c; // C_c
+    double A; // A
+    double C_A; // C_A
+    double T; // T
     double C_oT; // C_oT
     double C_cT; // C_cT
-    double Y;    // Y
+    double Y; // Y
 
-    double d_X_dt;
-    double d_D_dt;
-    double d_C_o_dt;
-    double d_C_u_dt;
-    double d_C_c_dt;
-    double d_A_dt;
-    double d_C_A_dt;
-    double d_T_dt;
-    double d_C_oT_dt;
-    double d_C_cT_dt;
-    double d_Y_dt;
+   double d_X_dt;
+   double d_D_dt;
+   double d_C_o_dt;
+   double d_C_u_dt;
+   double d_C_c_dt;
+   double d_A_dt;
+   double d_C_A_dt;
+   double d_T_dt;
+   double d_C_oT_dt;
+   double d_C_cT_dt;
+   double d_Y_dt;
 
     // DERIVED QUANTITIES
     double cytosolmembraneandnucleus; // cytosolmembraneandnucleus
-    double C_F;                       // C_F
-    double C_T;                       // C_T
-    double drag;                      // drag
+    double C_F; // C_F
+    double C_T; // C_T
+    double drag; // drag
 
     // STOICHIOMETRY VARIABLES
 
@@ -120,10 +120,10 @@ private:
 
     /**
      * Process the events in the model.
-     *
+     * 
      * @param time The current time
      * @param rY The current state variables
-     *
+     * 
      * @return How close we are to the time of the next event
      */
     double ProcessModelEvents(double time, const std::vector<double>& rY) override;
@@ -169,7 +169,7 @@ private:
     // MODEL FUNCTIONS
 
 public:
-    /**
+    /** 
      * Default constructor
      */
     VanLeeuwen2007NonDimSbmlOdeSystem();
@@ -178,27 +178,27 @@ public:
      * Destructor
      */
     ~VanLeeuwen2007NonDimSbmlOdeSystem();
-
+    
     /**
      * Compute the derived quantities from the given system state.
      *
      * @param time  the time at which to compute the derived quantities
      * @param rY a vector of values for the state variables
-     *
+     * 
      * @return a vector of derived quantities
      */
-    std::vector<double> ComputeDerivedQuantities(double time, const std::vector<double>& rY) override;
+    std::vector<double> ComputeDerivedQuantities(double time, const std::vector<double> &rY) override;
 
     /**
      * Compute the RHS of the ODE system.
-     *
+     * 
      * An ODE solver will call this function repeatedly to solve for y = [y1 ... yn].
      *
      * @param time the time used to evaluate the RHS.
      * @param rY an input solution vector used to evaluate the RHS.
      * @param rDY an output vector to be filled in with the resulting derivatives y' = [y1' ... yn'].
      */
-    void EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY) override;
+    void EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY) override;
 
     void Initialise(double time = 0.0);
 
