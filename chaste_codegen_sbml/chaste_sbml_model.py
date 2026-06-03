@@ -6,6 +6,7 @@ import pathlib
 import re
 import shutil
 import subprocess
+import sys
 from typing import TYPE_CHECKING, Optional
 
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -199,8 +200,11 @@ class ChasteSbmlModel:
             with open(file_path, "w") as f:
                 f.write(code)
 
-        # Format with clang-format
-        clang_format = shutil.which("clang-format")
+        # Format with clang-format — search the current interpreter's bin/ first
+        # so the clang-format installed as a Python dependency is always found.
+        python_bin = os.path.dirname(sys.executable)
+        search_path = os.pathsep.join([python_bin, os.environ.get("PATH", "")])
+        clang_format = shutil.which("clang-format", path=search_path)
         if clang_format is not None:
             for filename in self._outputs:
                 file_path = str(root_dir / filename)
@@ -546,6 +550,26 @@ class ChasteSbmlModel:
             raise NotImplementedError("Models without ODEs are not supported.")
 
         self._odes = odes
+
+    def _total_time_derivative(self, ast_node: "ASTNode") -> str:
+        """Compute the total time derivative of an AST expression.
+
+        Returns a formula string for d(expr)/dt computed via the chain rule:
+          d(expr)/dt = sum_i (∂expr/∂s_i) * (ds_i/dt)
+        over all state variables s_i with ODEs.  Returns an empty string when
+        the expression has no time-varying dependencies on any state variable.
+        """
+        terms = []
+        for var_id, ode_ast in self._odes.items():
+            partial = ast_node.derivative(var_id)
+            if partial is None:
+                continue
+            partial_str = formulaToL3String(partial)
+            if partial_str == "0":
+                continue
+            ode_str = formulaToL3String(ode_ast)
+            terms.append(f"({partial_str}) * ({ode_str})")
+        return " + ".join(terms)
 
     def _format_compartments(self) -> None:
         """Add compartments to template variables."""
@@ -926,10 +950,16 @@ class ChasteSbmlModel:
                 self._add_equation(var=species_id, math=math, eq_type=EquationType.ASSIGNMENT_RULE)
 
             elif is_bc and (species_id not in rate_rules):
-                if compartment_id in self._odes and not has_only_substance_units:
+                if not has_only_substance_units:
+                    if compartment_id in self._odes:
+                        compartment_rhs = formulaToL3String(self._odes[compartment_id])
+                    elif compartment_id in assignment_rules:
+                        compartment_rhs = self._total_time_derivative(assignment_rules[compartment_id])
+                    else:
+                        compartment_rhs = ""
+
+                if not has_only_substance_units and compartment_rhs:
                     # State variable: boundary condition in changing compartment
-                    compartment_math = self._odes[compartment_id]
-                    compartment_rhs = formulaToL3String(compartment_math)
                     rhs = f"(-{species_id} * ({compartment_rhs})) / {compartment_id}"
                     if conversion_factor is not None:
                         rhs = f"({rhs}) * {conversion_factor}"
@@ -951,11 +981,16 @@ class ChasteSbmlModel:
 
                 # Add compartment scaling if defined by a reaction
                 if not (has_only_substance_units or species_id in rate_rules):
-                    # Add compartment ODE if there is one
+                    # Determine dC/dt for the dilution correction
                     if compartment_id in self._odes:
-                        compartment_math = self._odes[compartment_id]
-                        compartment_rhs = formulaToL3String(compartment_math)
-                        rhs = f"({rhs} - {species_id} * ({compartment_rhs}))"
+                        compartment_ddt = formulaToL3String(self._odes[compartment_id])
+                    elif compartment_id in assignment_rules:
+                        compartment_ddt = self._total_time_derivative(assignment_rules[compartment_id])
+                    else:
+                        compartment_ddt = ""
+
+                    if compartment_ddt:
+                        rhs = f"({rhs} - {species_id} * ({compartment_ddt}))"
 
                     # Scale by compartment volume
                     rhs = f"{rhs} / {compartment_id}"

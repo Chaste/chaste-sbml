@@ -33,6 +33,11 @@ def load_source_lines(source_file: str) -> list[str]:
         if line:
             # Merge whitespace sequences
             line = re.sub(r"\s+", " ", line)
+            # Normalise spacing around reference/pointer declarators so that
+            # "Archive& archive", "Archive &archive", and "Archive & archive"
+            # all compare equal.
+            line = re.sub(r"\s*([&*])\s*", r" \1 ", line)
+            line = re.sub(r"\s+", " ", line).strip()
             source_lines.append(line)
 
     return source_lines
