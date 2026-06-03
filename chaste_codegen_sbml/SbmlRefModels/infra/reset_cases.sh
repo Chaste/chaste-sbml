@@ -11,7 +11,7 @@ if [[ $# -ne 0 ]]; then
 fi
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-repo_root="$(cd -- "${script_dir}/.." && pwd)"
+repo_root="$(cd -- "${script_dir}/../../.." && pwd)"
 src_cases_dir="${repo_root}/chaste_codegen_sbml/SbmlRefModels/src/cases/semantic"
 test_cases_dir="${repo_root}/chaste_codegen_sbml/SbmlRefModels/test/cases/semantic"
 weekly_test_pack="${repo_root}/chaste_codegen_sbml/SbmlRefModels/test/WeeklyTestPack.txt"

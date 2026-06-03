@@ -32,7 +32,7 @@ if [[ "${first_case}" -gt "${last_case}" ]]; then
 fi
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-repo_root="$(cd -- "${script_dir}/.." && pwd)"
+repo_root="$(cd -- "${script_dir}/../../.." && pwd)"
 venv_dir="${VENV_DIR:-${repo_root}/venv}"
 python_bin="${venv_dir}/bin/python"
 generator="${repo_root}/chaste_codegen_sbml/SbmlRefModels/generate_cases.py"
