@@ -1076,9 +1076,15 @@ class ChasteSbmlModel:
                     elif s[j] == "(":
                         depth -= 1
                         if depth == 0:
-                            return (j, i + 1)
+                            break
                     j -= 1
-                return None
+                if depth != 0:
+                    return None
+                # j points to the matching '('; also include any function name before it
+                k = j - 1
+                while k >= 0 and s[k] in token_chars:
+                    k -= 1
+                return (k + 1, i + 1)
 
             j = i
             while j >= 0 and s[j] in token_chars:
