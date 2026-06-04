@@ -59,7 +59,11 @@ public:
                 end = start + (duration - (time_at_event - 0));
                 initial_conditions = ode_system.GetStateVariables();
 
+                // Force CVODE to reinitialize so BDF history from before the event
+                // does not pollute the first integration step after the restart.
+                solver.SetForceReset(true);
                 OdeSolution next_solution = solver.Solve(&ode_system, initial_conditions, start, end, timestep, sampling);
+                solver.SetForceReset(false);
 
                 // Append new solution to existing solution
                 sth::AppendOdeSolution(&ode_solution, &next_solution);

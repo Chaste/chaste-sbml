@@ -693,10 +693,11 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     {
         double event_dist = (0.0) - (CLB2 + CLB5 - KEZ2) - std::numeric_limits<double>::epsilon();
 
-        // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
-        if (std::abs(event_dist) < 1.0)
+        // Once an event has fired, force a large positive distance so CVODE does
+        // not keep detecting the same root at the satisfied boundary.
+        if (mEventSatisfied[0] && event_dist >= 0.0)
         {
-            event_dist = 1.0;
+            event_dist = std::abs(event_dist) + 1.0;
         }
 
         // Update min_dist
@@ -712,8 +713,6 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
             {
                 // The condition is transitioning from false -> true: trigger the event
                 mEventTriggered[0] = true;
-                event_dist = 0.0;
-                min_dist = 0.0;
 
                 // Adjust relevant state variables and parameters
                 // ORI = 0.0
@@ -735,10 +734,11 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     {
         double event_dist = (ORI - 1.0) - (0.0) - std::numeric_limits<double>::epsilon();
 
-        // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
-        if (std::abs(event_dist) < 1.0)
+        // Once an event has fired, force a large positive distance so CVODE does
+        // not keep detecting the same root at the satisfied boundary.
+        if (mEventSatisfied[1] && event_dist >= 0.0)
         {
-            event_dist = 1.0;
+            event_dist = std::abs(event_dist) + 1.0;
         }
 
         // Update min_dist
@@ -754,8 +754,6 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
             {
                 // The condition is transitioning from false -> true: trigger the event
                 mEventTriggered[1] = true;
-                event_dist = 0.0;
-                min_dist = 0.0;
 
                 // Adjust relevant state variables and parameters
                 MAD2 = mad2h;
@@ -776,10 +774,11 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     {
         double event_dist = (SPN - 1.0) - (0.0) - std::numeric_limits<double>::epsilon();
 
-        // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
-        if (std::abs(event_dist) < 1.0)
+        // Once an event has fired, force a large positive distance so CVODE does
+        // not keep detecting the same root at the satisfied boundary.
+        if (mEventSatisfied[2] && event_dist >= 0.0)
         {
-            event_dist = 1.0;
+            event_dist = std::abs(event_dist) + 1.0;
         }
 
         // Update min_dist
@@ -795,8 +794,6 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
             {
                 // The condition is transitioning from false -> true: trigger the event
                 mEventTriggered[2] = true;
-                event_dist = 0.0;
-                min_dist = 0.0;
 
                 // Adjust relevant state variables and parameters
                 MAD2 = mad2l;
@@ -818,10 +815,11 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     {
         double event_dist = (0.0) - (CLB2 - KEZ) - std::numeric_limits<double>::epsilon();
 
-        // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
-        if (std::abs(event_dist) < 1.0)
+        // Once an event has fired, force a large positive distance so CVODE does
+        // not keep detecting the same root at the satisfied boundary.
+        if (mEventSatisfied[3] && event_dist >= 0.0)
         {
-            event_dist = 1.0;
+            event_dist = std::abs(event_dist) + 1.0;
         }
 
         // Update min_dist
@@ -837,8 +835,6 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
             {
                 // The condition is transitioning from false -> true: trigger the event
                 mEventTriggered[3] = true;
-                event_dist = 0.0;
-                min_dist = 0.0;
 
                 // Adjust relevant state variables and parameters
                 // MASS = F * MASS

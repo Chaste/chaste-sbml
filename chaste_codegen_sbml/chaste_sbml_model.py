@@ -679,12 +679,12 @@ class ChasteSbmlModel:
                     # gt(5.5    , 5.0    ) -> condition=true, dist=0.5-eps
                     trigger_distance = f"({lc}) - ({rc}) - std::numeric_limits<double>::epsilon()"
                 elif node_type == AST_RELATIONAL_GEQ:
-                    # geq(4.5    , 5.0    ) -> condition=false, dist=-0.5
-                    # geq(5.0    , 5.0+eps) -> condition=false, dist=-eps
-                    # geq(5.0    , 5.0    ) -> condition=true, dist=0.0
-                    # geq(5.0+eps, 5.0    ) -> condition=true, dist=eps
-                    # geq(5.5    , 5.0    ) -> condition=true, dist=0.5
-                    trigger_distance = f"({lc}) - ({rc})"
+                    # geq(4.5    , 5.0    ) -> condition=false, dist=-0.5-eps
+                    # geq(5.0    , 5.0+eps) -> condition=false, dist=-eps-eps
+                    # geq(5.0    , 5.0    ) -> condition=true, dist=-eps
+                    # geq(5.0+eps, 5.0    ) -> condition=true, dist=0.0
+                    # geq(5.5    , 5.0    ) -> condition=true, dist=0.5-eps
+                    trigger_distance = f"({lc}) - ({rc}) - std::numeric_limits<double>::epsilon()"
                 elif node_type == AST_RELATIONAL_LT:
                     # lt(5.5    , 5.0    ) -> condition=false, dist=-0.5-eps
                     # lt(5.0+eps, 5.0    ) -> condition=false, dist=-eps-eps
@@ -693,12 +693,12 @@ class ChasteSbmlModel:
                     # lt(4.5    , 5.0    ) -> condition=true, dist=0.5-eps
                     trigger_distance = f"({rc}) - ({lc}) - std::numeric_limits<double>::epsilon()"
                 elif node_type == AST_RELATIONAL_LEQ:
-                    # leq(5.5    , 5.0    ) -> condition=false, dist=-0.5
-                    # leq(5.0+eps, 5.0    ) -> condition=false, dist=-eps
-                    # leq(5.0    , 5.0    ) -> condition=true, dist=0.0
-                    # leq(5.0    , 5.0+eps) -> condition=true, dist=eps
-                    # leq(4.5    , 5.0    ) -> condition=true, dist=0.5
-                    trigger_distance = f"({rc}) - ({lc})"
+                    # leq(5.5    , 5.0    ) -> condition=false, dist=-0.5-eps
+                    # leq(5.0+eps, 5.0    ) -> condition=false, dist=-eps-eps
+                    # leq(5.0    , 5.0    ) -> condition=true, dist=-eps
+                    # leq(5.0    , 5.0+eps) -> condition=true, dist=0.0
+                    # leq(4.5    , 5.0    ) -> condition=true, dist=0.5-eps
+                    trigger_distance = f"({rc}) - ({lc}) - std::numeric_limits<double>::epsilon()"
                 elif node_type == AST_RELATIONAL_EQ:
                     # eq(4.5    , 5.0    ) -> condition=false, dist=-0.5
                     # eq(5.0    , 5.0+eps) -> condition=false, dist=-eps

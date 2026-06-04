@@ -123,10 +123,11 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
     {
         double event_dist = {{ event["distance"] }};
 
-        // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
-        if (std::abs(event_dist) < 1.0)
+        // Once an event has fired, force a large positive distance so CVODE does
+        // not keep detecting the same root at the satisfied boundary.
+        if (mEventSatisfied[{{ event["index"] }}] && event_dist >= 0.0)
         {
-            event_dist = 1.0;
+            event_dist = std::abs(event_dist) + 1.0;
         }
 
         // Update min_dist
@@ -142,8 +143,6 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
             {
                 // The condition is transitioning from false -> true: trigger the event
                 mEventTriggered[{{ event["index"] }}] = true;
-                event_dist = 0.0;
-                min_dist = 0.0;
 
                 // Adjust relevant state variables and parameters
 {% for assignment in event["assignments"] %}
@@ -152,10 +151,11 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
                 mEventAdjustedStateVars[{{ assignment["index"] }}] = true;
                 mEventAdjustedStateValues[{{ assignment["index"] }}] = {{ assignment["rhs"] }};
 
-{% elif ( assignment["type"] == VarType.VARIABLE_PARAMETER ) %}
+{% elif ( assignment["type"] == VarType.PARAMETER ) %}
                 // {{ assignment["lhs"] }} = {{ assignment["rhs"] }}
                 mEventAdjustedParameters[{{ assignment["index"] }}] = true;
                 mEventAdjustedParameterValues[{{ assignment["index"] }}] = {{ assignment["rhs"] }};
+                SetParameter({{ assignment["index"] }}, {{ assignment["rhs"] }});
 
 {% else %}
                 {{ assignment["lhs"] }} = {{ assignment["rhs"] }}; {# TODO: does this case exist? #}

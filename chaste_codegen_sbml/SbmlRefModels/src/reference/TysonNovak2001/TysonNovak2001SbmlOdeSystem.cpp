@@ -214,10 +214,11 @@ double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::v
     {
         double event_dist = (0.1) - (CycB)-std::numeric_limits<double>::epsilon();
 
-        // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
-        if (std::abs(event_dist) < 1.0)
+        // Once an event has fired, force a large positive distance so CVODE does
+        // not keep detecting the same root at the satisfied boundary.
+        if (mEventSatisfied[0] && event_dist >= 0.0)
         {
-            event_dist = 1.0;
+            event_dist = std::abs(event_dist) + 1.0;
         }
 
         // Update min_dist
@@ -233,8 +234,6 @@ double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::v
             {
                 // The condition is transitioning from false -> true: trigger the event
                 mEventTriggered[0] = true;
-                event_dist = 0.0;
-                min_dist = 0.0;
 
                 // Adjust relevant state variables and parameters
                 // m = m / 2.0
