@@ -868,12 +868,12 @@ test,status,notes
 00867,pass,ok
 00868,pass,ok
 00869,pass,ok
-00870,fail_known,
-00871,fail_known,
-00872,fail_known,
-00873,fail_known,
-00874,fail_known,
-00875,fail_known,
+00870,unsupported,fast reaction
+00871,unsupported,fast reaction
+00872,unsupported,fast reaction
+00873,unsupported,fast reaction
+00874,unsupported,fast reaction
+00875,unsupported,fast reaction
 00876,unsupported,algebraic
 00877,pass,ok
 00878,pass,ok
@@ -984,8 +984,8 @@ test,status,notes
 00983,unsupported,algebraic
 00984,unsupported,
 00985,unsupported,
-00986,fail_known,
-00987,partly_supported,event
+00986,unsupported,fast reaction
+00987,unsupported,fast reaction
 00988,unsupported,delay
 00989,pass,ok
 00990,pass,ok
