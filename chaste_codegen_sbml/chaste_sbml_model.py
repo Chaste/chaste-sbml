@@ -1011,9 +1011,29 @@ class ChasteSbmlModel:
                 )
 
             else:
-                # Derived quantity (constant value)
-                rhs = str(initial_value)
-                self._add_derived_quantity(species_id, label, initial_value, units)
+                # Check whether the compartment is time-varying: a species in
+                # concentration with no reactions or rules still needs a dilution
+                # ODE (ds/dt = -s*(dC/dt)/C) to conserve its amount.
+                compartment_ddt = ""
+                if not has_only_substance_units:
+                    if compartment_id in self._odes:
+                        compartment_ddt = formulaToL3String(self._odes[compartment_id])
+                    elif compartment_id in assignment_rules:
+                        compartment_ddt = self._total_time_derivative(assignment_rules[compartment_id])
+
+                if compartment_ddt:
+                    rhs = f"(-{species_id} * ({compartment_ddt})) / {compartment_id}"
+                    if conversion_factor is not None:
+                        rhs = f"({rhs}) * {conversion_factor}"
+                    state_var = self._add_state_variable(species_id, label, initial_value, units)
+                    self._add_equation(
+                        var=state_var["derivative_id"],
+                        math=parseL3Formula(rhs),
+                        eq_type=EquationType.DERIVATIVE,
+                    )
+                else:
+                    # Truly constant: no reactions, no rules, constant compartment
+                    self._add_derived_quantity(species_id, label, initial_value, units)
 
             if not has_only_substance_units:
                 # Add an extra "amount" derived quantity for the species
@@ -1258,8 +1278,10 @@ class ChasteSbmlModel:
         for token in tokens:
             cpp_token = token
 
-            # Replace function names and constants.
-            if token in constants:
+            # Replace function names and constants, but only when the token is
+            # not an actual model variable (e.g. a species named "s" or "t" must
+            # not be replaced with the SBML time symbol).
+            if token in constants and token not in self._variable_types:
                 cpp_token = f"{constants[token]}"
 
             elif token in unchanged_functions:
