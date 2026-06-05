@@ -314,6 +314,7 @@ class ChasteSbmlModel:
         assignments: list[dict[str, "Any"]],
         distance: str,
         event_type: EventType,
+        initial_satisfied: bool = True,
     ) -> None:
         """Add an event to the template variables.
 
@@ -322,6 +323,7 @@ class ChasteSbmlModel:
         :param assignments: The event assignments.
         :param distance: The distance for the event trigger.
         :param event_type: The type of the event (e.g., cell division).
+        :param initial_satisfied: Whether the event starts as satisfied (from SBML trigger initialValue).
         """
         self._events.append(
             {
@@ -331,6 +333,7 @@ class ChasteSbmlModel:
                 "assignments": assignments,
                 "distance": distance,
                 "type": event_type,
+                "initial_satisfied": initial_satisfied,
             }
         )
 
@@ -733,7 +736,12 @@ class ChasteSbmlModel:
                     }
                 )
 
-            self._add_event(label, trigger_formula, assignments, trigger_distance, event_type)
+            # SBML trigger initialValue="false" means the trigger is treated as false just before
+            # t=0, allowing the event to fire immediately if the condition is true at t=0.
+            # initialValue="true" (the default) means the event won't fire at t=0.
+            initial_satisfied = event.getTrigger().getInitialValue()
+
+            self._add_event(label, trigger_formula, assignments, trigger_distance, event_type, initial_satisfied)
 
     def _format_function_definitions(self) -> None:
         """Add function definitions to template variables."""
@@ -1163,6 +1171,19 @@ class ChasteSbmlModel:
             function_name="pow",
         )
 
+    @staticmethod
+    def _strip_ast_units(node: "ASTNode") -> None:
+        """Recursively strip units annotations from AST nodes.
+
+        SBML allows numeric literals to carry units annotations (e.g. ``<cn sbml:units="mole">``).
+        ``formulaToL3String`` includes these in its output (e.g. ``0.00015 mole``), which is not
+        valid C++. Stripping them here is safe because the units carry no mathematical information.
+        """
+        if node.isSetUnits():
+            node.unsetUnits()
+        for i in range(node.getNumChildren()):
+            ChasteSbmlModel._strip_ast_units(node.getChild(i))
+
     def _formula_to_string(self, math: "ASTNode") -> str:
         """Convert an AST math formula to an equivalent C++ string.
 
@@ -1174,6 +1195,7 @@ class ChasteSbmlModel:
             if search_ast_type(math, AST_FUNCTION_DELAY):
                 raise NotImplementedError(f"SBML function not supported: '{func}'.")
 
+        self._strip_ast_units(math)
         formula = formulaToL3String(math)
 
         # Convert all integer literals to doubles to fix integer division.

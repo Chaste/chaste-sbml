@@ -31,7 +31,7 @@ namespace sm = sbmlmath;
 {% endif %}
 {% endfor %}
 
-    mEventSatisfied.resize({{ events|length }}, true); // Prevent events from triggering at the start
+    mEventSatisfied = { {% for event in events %}{{ "true" if event["initial_satisfied"] else "false" }}{% if not loop.last %}, {% endif %}{% endfor %} }; // From SBML trigger initialValue
     mEventTriggered.resize({{ events|length }}, false);
 
     mEventAdjustedParameters.resize({{ parameters|length }}, false);
@@ -39,6 +39,31 @@ namespace sm = sbmlmath;
 
     mEventAdjustedStateVars.resize({{ state_variables|length }}, false);
     mEventAdjustedStateValues.resize({{ state_variables|length }}, 0.0);
+
+{% for event in events %}
+{% if not event["initial_satisfied"] %}
+    // SBML trigger initialValue="false": fire this event at t=0 if its trigger is true.
+    {
+        double time = 0.0;
+        if ({{ event["trigger"] }})
+        {
+{% for assignment in event["assignments"] %}
+{% if ( assignment["type"] == VarType.STATE_VARIABLE ) %}
+            {{ assignment["lhs"] }} = {{ assignment["rhs"] }};
+            SetStateVariable({{ assignment["index"] }}, {{ assignment["lhs"] }});
+            SetDefaultInitialCondition({{ assignment["index"] }}, {{ assignment["lhs"] }});
+{% elif ( assignment["type"] == VarType.PARAMETER ) %}
+            {{ assignment["lhs"] }} = {{ assignment["rhs"] }};
+            SetParameter({{ assignment["index"] }}, {{ assignment["lhs"] }});
+{% else %}
+            {{ assignment["lhs"] }} = {{ assignment["rhs"] }};
+{% endif %}
+{% endfor %}
+            mEventSatisfied[{{ event["index"] }}] = true;
+        }
+    }
+{% endif %}
+{% endfor %}
 {% endif %} {# 'if events' #}
 }
 
@@ -123,9 +148,9 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
     {
         double event_dist = {{ event["distance"] }};
 
-        // Once an event has fired, force a large positive distance so CVODE does
-        // not keep detecting the same root at the satisfied boundary.
-        if (mEventSatisfied[{{ event["index"] }}] && event_dist >= 0.0)
+        // Once an event has fired and its trigger remains active, force a large positive
+        // distance so CVODE does not keep detecting the same root.
+        if (mEventSatisfied[{{ event["index"] }}] && ({{ event["trigger"] }}))
         {
             event_dist = std::abs(event_dist) + 1.0;
         }

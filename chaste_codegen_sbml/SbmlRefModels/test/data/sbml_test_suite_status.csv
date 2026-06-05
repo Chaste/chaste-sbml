@@ -926,7 +926,7 @@ test,status,notes
 00925,unsupported,no odes
 00926,fail_known,
 00927,fail_known,
-00928,partly_supported,event alignment
+00928,pass,ok
 00929,pass,ok
 00930,pass,ok
 00931,pass,ok

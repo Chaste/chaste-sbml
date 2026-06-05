@@ -24,7 +24,7 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem()
 
     mEventType[0] = SbmlEventType::CELL_DIVISION; // Cell division
 
-    mEventSatisfied.resize(1, true); // Prevent events from triggering at the start
+    mEventSatisfied = { true }; // From SBML trigger initialValue
     mEventTriggered.resize(1, false);
 
     mEventAdjustedParameters.resize(36, false);
@@ -214,9 +214,9 @@ double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::v
     {
         double event_dist = (0.1) - (CycB)-std::numeric_limits<double>::epsilon();
 
-        // Once an event has fired, force a large positive distance so CVODE does
-        // not keep detecting the same root at the satisfied boundary.
-        if (mEventSatisfied[0] && event_dist >= 0.0)
+        // Once an event has fired and its trigger remains active, force a large positive
+        // distance so CVODE does not keep detecting the same root.
+        if (mEventSatisfied[0] && (CycB < 0.1))
         {
             event_dist = std::abs(event_dist) + 1.0;
         }

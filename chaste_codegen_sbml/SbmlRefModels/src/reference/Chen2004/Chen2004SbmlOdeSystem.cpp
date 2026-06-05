@@ -27,7 +27,7 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
     // mEventType[2] = SbmlEventType::CELL_DIVISION; // spindle checkpoint
     mEventType[3] = SbmlEventType::CELL_DIVISION; // cell division
 
-    mEventSatisfied.resize(4, true); // Prevent events from triggering at the start
+    mEventSatisfied = { true, true, true, true }; // From SBML trigger initialValue
     mEventTriggered.resize(4, false);
 
     mEventAdjustedParameters.resize(143, false);
@@ -693,9 +693,9 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     {
         double event_dist = (0.0) - (CLB2 + CLB5 - KEZ2) - std::numeric_limits<double>::epsilon();
 
-        // Once an event has fired, force a large positive distance so CVODE does
-        // not keep detecting the same root at the satisfied boundary.
-        if (mEventSatisfied[0] && event_dist >= 0.0)
+        // Once an event has fired and its trigger remains active, force a large positive
+        // distance so CVODE does not keep detecting the same root.
+        if (mEventSatisfied[0] && ((CLB2 + CLB5 - KEZ2) < 0.0))
         {
             event_dist = std::abs(event_dist) + 1.0;
         }
@@ -734,9 +734,9 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     {
         double event_dist = (ORI - 1.0) - (0.0) - std::numeric_limits<double>::epsilon();
 
-        // Once an event has fired, force a large positive distance so CVODE does
-        // not keep detecting the same root at the satisfied boundary.
-        if (mEventSatisfied[1] && event_dist >= 0.0)
+        // Once an event has fired and its trigger remains active, force a large positive
+        // distance so CVODE does not keep detecting the same root.
+        if (mEventSatisfied[1] && ((ORI - 1.0) > 0.0))
         {
             event_dist = std::abs(event_dist) + 1.0;
         }
@@ -774,9 +774,9 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     {
         double event_dist = (SPN - 1.0) - (0.0) - std::numeric_limits<double>::epsilon();
 
-        // Once an event has fired, force a large positive distance so CVODE does
-        // not keep detecting the same root at the satisfied boundary.
-        if (mEventSatisfied[2] && event_dist >= 0.0)
+        // Once an event has fired and its trigger remains active, force a large positive
+        // distance so CVODE does not keep detecting the same root.
+        if (mEventSatisfied[2] && ((SPN - 1.0) > 0.0))
         {
             event_dist = std::abs(event_dist) + 1.0;
         }
@@ -815,9 +815,9 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     {
         double event_dist = (0.0) - (CLB2 - KEZ) - std::numeric_limits<double>::epsilon();
 
-        // Once an event has fired, force a large positive distance so CVODE does
-        // not keep detecting the same root at the satisfied boundary.
-        if (mEventSatisfied[3] && event_dist >= 0.0)
+        // Once an event has fired and its trigger remains active, force a large positive
+        // distance so CVODE does not keep detecting the same root.
+        if (mEventSatisfied[3] && ((CLB2 - KEZ) < 0.0))
         {
             event_dist = std::abs(event_dist) + 1.0;
         }
