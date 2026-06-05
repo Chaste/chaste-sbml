@@ -761,6 +761,7 @@ class ChasteSbmlModel:
 
     def _format_initial_assignments(self) -> None:
         """Add initial assignments to template variables."""
+        sbml_param_ids = {p.getId() for p in self._sbml_parameters}
         for ia in self._sbml_initial_assignments:
             if ia.getMath() is not None:
                 id_ = ia.getId()
@@ -768,6 +769,13 @@ class ChasteSbmlModel:
                 var = ia.getSymbol()
                 math = ia.getMath()
                 self._add_initial_assignment(id_, label, var, math)
+
+                # Species reference stoichiometry variables are not in _sbml_parameters,
+                # so _format_parameters won't apply their initial assignments.  Do it here.
+                if var not in sbml_param_ids:
+                    param_ids = {p["id"] for p in self._parameters}
+                    if var in param_ids:
+                        self._add_equation(var=var, math=math, eq_type=EquationType.INITIAL_ASSIGNMENT)
 
     def _format_parameters(self) -> None:
         """Add parameters to template variables."""

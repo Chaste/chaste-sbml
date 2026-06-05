@@ -967,7 +967,7 @@ test,status,notes
 00966,pass,ok
 00967,pass,ok
 00968,pass,ok
-00969,fail_known,
+00969,pass,ok
 00970,fail_known,
 00971,fail_known,
 00972,partly_supported,event alignment
