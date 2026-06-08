@@ -184,9 +184,15 @@ double Gardner1998SbmlOdeSystem::ProcessModelEvents(double time, const std::vect
     // lands in the clamped state (mEventSatisfied=true), causing the halving to be lost.
     // CalculateStoppingEvent (BackwardEuler path) clears these itself before calling.
 
-    double min_dist = std::numeric_limits<double>::max();
+    // Root function for CVODE: the maximum signed event distance, where each distance is
+    // positive exactly when its event's trigger condition holds. Taking the MAXIMUM (not the
+    // minimum absolute value) means the combined function crosses zero the moment ANY event
+    // becomes triggered, and cannot be masked by another event that happens to sit just below
+    // its own boundary (a small negative distance). A min-abs combination misses an event
+    // whose rising edge coincides with another event re-arming near its threshold.
+    double max_dist = -std::numeric_limits<double>::max();
 
-    return min_dist; // Distance to closest event
+    return max_dist; // Signed distance of the event closest to triggering
 }
 
 // ASSIGNMENT RULES

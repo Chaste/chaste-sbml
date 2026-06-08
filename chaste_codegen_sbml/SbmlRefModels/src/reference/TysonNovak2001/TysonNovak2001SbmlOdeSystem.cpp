@@ -215,7 +215,13 @@ double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::v
     // lands in the clamped state (mEventSatisfied=true), causing the halving to be lost.
     // CalculateStoppingEvent (BackwardEuler path) clears these itself before calling.
 
-    double min_dist = std::numeric_limits<double>::max();
+    // Root function for CVODE: the maximum signed event distance, where each distance is
+    // positive exactly when its event's trigger condition holds. Taking the MAXIMUM (not the
+    // minimum absolute value) means the combined function crosses zero the moment ANY event
+    // becomes triggered, and cannot be masked by another event that happens to sit just below
+    // its own boundary (a small negative distance). A min-abs combination misses an event
+    // whose rising edge coincides with another event re-arming near its threshold.
+    double max_dist = -std::numeric_limits<double>::max();
 
     //========================================
     // EVENT: Cell division
@@ -232,10 +238,10 @@ double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::v
             event_dist = -(std::abs(event_dist) + 1.0);
         }
 
-        // Update min_dist
-        if (std::abs(event_dist) < std::abs(min_dist))
+        // Update max_dist (closest event to triggering)
+        if (event_dist > max_dist)
         {
-            min_dist = event_dist;
+            max_dist = event_dist;
         }
 
         // Process the event
@@ -260,7 +266,7 @@ double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::v
         }
     }
 
-    return min_dist; // Distance to closest event
+    return max_dist; // Signed distance of the event closest to triggering
 }
 
 // ASSIGNMENT RULES
