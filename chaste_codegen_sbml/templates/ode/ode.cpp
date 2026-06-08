@@ -44,7 +44,7 @@ namespace sm = sbmlmath;
 {% if not event["initial_satisfied"] %}
     // SBML trigger initialValue="false": fire this event at t=0 if its trigger is true.
     {
-        double time = 0.0;
+        [[maybe_unused]] double time = 0.0; // May be unused if no expression references time
         if ({{ event["trigger"] }})
         {
 {% for assignment in event["assignments"] %}
