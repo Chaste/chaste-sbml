@@ -24,6 +24,7 @@ from libsbml import (
     SBML_RATE_RULE,
     ConversionProperties,
     SBMLReader,
+    SBMLTransforms,
     formulaToL3String,
     parseL3Formula,
 )
@@ -667,8 +668,16 @@ class ChasteSbmlModel:
             trigger_math = event.getTrigger().getMath()
             trigger_formula = self._formula_to_string(trigger_math)
 
+            # A trigger may be written using a function definition, e.g. lessthan(S1, 0.6).
+            # Expand function-definition calls in a copy so the underlying relational operator
+            # is visible to the distance calculation below; without this the trigger is opaque
+            # and falls back to a constant distance, so CVODE never detects the event. The
+            # original (unexpanded) trigger_formula is still used for the trigger condition.
+            distance_math = trigger_math.deepCopy()
+            SBMLTransforms.replaceFD(distance_math, self._sbml_model.getListOfFunctionDefinitions())
+
             trigger_distance = "1.0"
-            node_type = trigger_math.getType()
+            node_type = distance_math.getType()
             if node_type in [
                 AST_RELATIONAL_LT,
                 AST_RELATIONAL_GT,
@@ -677,8 +686,8 @@ class ChasteSbmlModel:
                 AST_RELATIONAL_GEQ,
                 AST_RELATIONAL_NEQ,
             ]:
-                lc = self._formula_to_string(trigger_math.getLeftChild())
-                rc = self._formula_to_string(trigger_math.getRightChild())
+                lc = self._formula_to_string(distance_math.getLeftChild())
+                rc = self._formula_to_string(distance_math.getRightChild())
 
                 # Distance is negative when the condition is false,
                 # zero at the point where the condition switches from false to true,
