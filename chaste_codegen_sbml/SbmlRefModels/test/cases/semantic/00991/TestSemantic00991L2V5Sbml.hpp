@@ -1,5 +1,5 @@
-#ifndef {{ test_header_guard }}
-#define {{ test_header_guard }}
+#ifndef TEST_SEMANTIC_00991_L2_V5_SBML_HPP_
+#define TEST_SEMANTIC_00991_L2_V5_SBML_HPP_
 
 #include <cmath>
 #include <string>
@@ -11,30 +11,30 @@
 #include "OdeSolution.hpp"
 #include "SbmlTestHelpers.hpp"
 
-#include "{{ ode_class_name }}.hpp"
+#include "Semantic00991L2V5SbmlOdeSystem.hpp"
 
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
 namespace sth = sbmltesthelpers;
 
-class Test{{ model_name }} : public CxxTest::TestSuite
+class Test : public CxxTest::TestSuite
 {
 public:
     void TestOdeSystem()
     {
         try
         {
-            {{ ode_class_name }} ode_system;
+            Semantic00991L2V5SbmlOdeSystem ode_system;
             OdeSolution ode_solution;
 
             CvodeAdaptor solver;
             solver.CheckForStoppingEvents();
 
             // Settings
-            double start = {{ test_settings["start"] }};
-            double duration = {{ test_settings["duration"] }};
-            double steps = {{ test_settings["steps"] }};
+            double start = 0;
+            double duration = 2;
+            double steps = 20;
 
             double end = start + duration;
             double sampling = duration / steps;
@@ -72,16 +72,36 @@ public:
             ode_solution.CalculateDerivedQuantitiesAndParameters(&ode_system);
 
             // Expected results
-            std::vector<std::string> expected_result_columns = { {{ test_result_columns }} };
-            std::set<std::string> expected_amounts{ {{ test_amounts }} };
+            std::vector<std::string> expected_result_columns = { "time", "X" };
+            std::set<std::string> expected_amounts{ "X" };
 
             std::vector<std::vector<double> > expected_result_data = {
-                {{ test_result_data }}
+                { 0, 1 },
+                { 0.1, 1.1 },
+                { 0.2, 1.2 },
+                { 0.3, 1.3 },
+                { 0.4, 1.4 },
+                { 0.5, 1.5 },
+                { 0.6, 1.6 },
+                { 0.7, 1.7 },
+                { 0.8, 1.8 },
+                { 0.9, 1.9 },
+                { 1, 2 },
+                { 1.1, 2.2 },
+                { 1.2, 2.4 },
+                { 1.3, 2.6 },
+                { 1.4, 2.8 },
+                { 1.5, 3 },
+                { 1.6, 3.2 },
+                { 1.7, 3.4 },
+                { 1.8, 3.6 },
+                { 1.9, 3.8 },
+                { 2, 4 }
             };
 
             // Check variable values
-            double tol_absolute = {{ test_settings["absolute"] }} * 10.0; // TODO: review tolerance values
-            double tol_relative = {{ test_settings["relative"] }} * 10.0;
+            double tol_absolute = 0.0001 * 10.0; // TODO: review tolerance values
+            double tol_relative = 0.0001 * 10.0;
 
             for (unsigned j = 1; j < expected_result_columns.size(); j++)
             {
@@ -91,9 +111,9 @@ public:
                 if (expected_amounts.find(var_name) != expected_amounts.end())
                 {
                     // Use amount variable
-                    if (ode_system.HasAnyVariable("{{ AMOUNT_PREFIX }}{{ PREFIX_SEP }}" + var_name))
+                    if (ode_system.HasAnyVariable("amt__" + var_name))
                     {
-                        var_name = "{{ AMOUNT_PREFIX }}{{ PREFIX_SEP }}" + var_name;
+                        var_name = "amt__" + var_name;
                     }
                 }
 
@@ -111,7 +131,7 @@ public:
             }
 
             // Exports results to csv
-            sth::ExportCsv("{{ ode_class_name }}.csv", ode_solution, ode_system);
+            sth::ExportCsv("Semantic00991L2V5SbmlOdeSystem.csv", ode_solution, ode_system);
         }
         catch (Exception& e)
         {
@@ -124,4 +144,4 @@ public:
     }
 };
 
-#endif // {{ test_header_guard }}
+#endif // TEST_SEMANTIC_00991_L2_V5_SBML_HPP_

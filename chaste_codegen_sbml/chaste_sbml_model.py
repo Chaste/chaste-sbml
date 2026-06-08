@@ -314,6 +314,7 @@ class ChasteSbmlModel:
         assignments: list[dict[str, "Any"]],
         distance: str,
         event_type: EventType,
+        initial_satisfied: bool = True,
     ) -> None:
         """Add an event to the template variables.
 
@@ -322,6 +323,7 @@ class ChasteSbmlModel:
         :param assignments: The event assignments.
         :param distance: The distance for the event trigger.
         :param event_type: The type of the event (e.g., cell division).
+        :param initial_satisfied: Whether the event starts as satisfied (from SBML trigger initialValue).
         """
         self._events.append(
             {
@@ -331,6 +333,7 @@ class ChasteSbmlModel:
                 "assignments": assignments,
                 "distance": distance,
                 "type": event_type,
+                "initial_satisfied": initial_satisfied,
             }
         )
 
@@ -679,12 +682,12 @@ class ChasteSbmlModel:
                     # gt(5.5    , 5.0    ) -> condition=true, dist=0.5-eps
                     trigger_distance = f"({lc}) - ({rc}) - std::numeric_limits<double>::epsilon()"
                 elif node_type == AST_RELATIONAL_GEQ:
-                    # geq(4.5    , 5.0    ) -> condition=false, dist=-0.5
-                    # geq(5.0    , 5.0+eps) -> condition=false, dist=-eps
-                    # geq(5.0    , 5.0    ) -> condition=true, dist=0.0
-                    # geq(5.0+eps, 5.0    ) -> condition=true, dist=eps
-                    # geq(5.5    , 5.0    ) -> condition=true, dist=0.5
-                    trigger_distance = f"({lc}) - ({rc})"
+                    # geq(4.5    , 5.0    ) -> condition=false, dist=-0.5-eps
+                    # geq(5.0    , 5.0+eps) -> condition=false, dist=-eps-eps
+                    # geq(5.0    , 5.0    ) -> condition=true, dist=-eps
+                    # geq(5.0+eps, 5.0    ) -> condition=true, dist=0.0
+                    # geq(5.5    , 5.0    ) -> condition=true, dist=0.5-eps
+                    trigger_distance = f"({lc}) - ({rc}) - std::numeric_limits<double>::epsilon()"
                 elif node_type == AST_RELATIONAL_LT:
                     # lt(5.5    , 5.0    ) -> condition=false, dist=-0.5-eps
                     # lt(5.0+eps, 5.0    ) -> condition=false, dist=-eps-eps
@@ -693,12 +696,12 @@ class ChasteSbmlModel:
                     # lt(4.5    , 5.0    ) -> condition=true, dist=0.5-eps
                     trigger_distance = f"({rc}) - ({lc}) - std::numeric_limits<double>::epsilon()"
                 elif node_type == AST_RELATIONAL_LEQ:
-                    # leq(5.5    , 5.0    ) -> condition=false, dist=-0.5
-                    # leq(5.0+eps, 5.0    ) -> condition=false, dist=-eps
-                    # leq(5.0    , 5.0    ) -> condition=true, dist=0.0
-                    # leq(5.0    , 5.0+eps) -> condition=true, dist=eps
-                    # leq(4.5    , 5.0    ) -> condition=true, dist=0.5
-                    trigger_distance = f"({rc}) - ({lc})"
+                    # leq(5.5    , 5.0    ) -> condition=false, dist=-0.5-eps
+                    # leq(5.0+eps, 5.0    ) -> condition=false, dist=-eps-eps
+                    # leq(5.0    , 5.0    ) -> condition=true, dist=-eps
+                    # leq(5.0    , 5.0+eps) -> condition=true, dist=0.0
+                    # leq(4.5    , 5.0    ) -> condition=true, dist=0.5-eps
+                    trigger_distance = f"({rc}) - ({lc}) - std::numeric_limits<double>::epsilon()"
                 elif node_type == AST_RELATIONAL_EQ:
                     # eq(4.5    , 5.0    ) -> condition=false, dist=-0.5
                     # eq(5.0    , 5.0+eps) -> condition=false, dist=-eps
@@ -733,7 +736,12 @@ class ChasteSbmlModel:
                     }
                 )
 
-            self._add_event(label, trigger_formula, assignments, trigger_distance, event_type)
+            # SBML trigger initialValue="false" means the trigger is treated as false just before
+            # t=0, allowing the event to fire immediately if the condition is true at t=0.
+            # initialValue="true" (the default) means the event won't fire at t=0.
+            initial_satisfied = event.getTrigger().getInitialValue()
+
+            self._add_event(label, trigger_formula, assignments, trigger_distance, event_type, initial_satisfied)
 
     def _format_function_definitions(self) -> None:
         """Add function definitions to template variables."""
@@ -753,6 +761,7 @@ class ChasteSbmlModel:
 
     def _format_initial_assignments(self) -> None:
         """Add initial assignments to template variables."""
+        sbml_param_ids = {p.getId() for p in self._sbml_parameters}
         for ia in self._sbml_initial_assignments:
             if ia.getMath() is not None:
                 id_ = ia.getId()
@@ -760,6 +769,13 @@ class ChasteSbmlModel:
                 var = ia.getSymbol()
                 math = ia.getMath()
                 self._add_initial_assignment(id_, label, var, math)
+
+                # Species reference stoichiometry variables are not in _sbml_parameters,
+                # so _format_parameters won't apply their initial assignments.  Do it here.
+                if var not in sbml_param_ids:
+                    param_ids = {p["id"] for p in self._parameters}
+                    if var in param_ids:
+                        self._add_equation(var=var, math=math, eq_type=EquationType.INITIAL_ASSIGNMENT)
 
     def _format_parameters(self) -> None:
         """Add parameters to template variables."""
@@ -1011,9 +1027,29 @@ class ChasteSbmlModel:
                 )
 
             else:
-                # Derived quantity (constant value)
-                rhs = str(initial_value)
-                self._add_derived_quantity(species_id, label, initial_value, units)
+                # Check whether the compartment is time-varying: a species in
+                # concentration with no reactions or rules still needs a dilution
+                # ODE (ds/dt = -s*(dC/dt)/C) to conserve its amount.
+                compartment_ddt = ""
+                if not has_only_substance_units:
+                    if compartment_id in self._odes:
+                        compartment_ddt = formulaToL3String(self._odes[compartment_id])
+                    elif compartment_id in assignment_rules:
+                        compartment_ddt = self._total_time_derivative(assignment_rules[compartment_id])
+
+                if compartment_ddt:
+                    rhs = f"(-{species_id} * ({compartment_ddt})) / {compartment_id}"
+                    if conversion_factor is not None:
+                        rhs = f"({rhs}) * {conversion_factor}"
+                    state_var = self._add_state_variable(species_id, label, initial_value, units)
+                    self._add_equation(
+                        var=state_var["derivative_id"],
+                        math=parseL3Formula(rhs),
+                        eq_type=EquationType.DERIVATIVE,
+                    )
+                else:
+                    # Truly constant: no reactions, no rules, constant compartment
+                    self._add_derived_quantity(species_id, label, initial_value, units)
 
             if not has_only_substance_units:
                 # Add an extra "amount" derived quantity for the species
@@ -1056,9 +1092,15 @@ class ChasteSbmlModel:
                     elif s[j] == "(":
                         depth -= 1
                         if depth == 0:
-                            return (j, i + 1)
+                            break
                     j -= 1
-                return None
+                if depth != 0:
+                    return None
+                # j points to the matching '('; also include any function name before it
+                k = j - 1
+                while k >= 0 and s[k] in token_chars:
+                    k -= 1
+                return (k + 1, i + 1)
 
             j = i
             while j >= 0 and s[j] in token_chars:
@@ -1137,6 +1179,19 @@ class ChasteSbmlModel:
             function_name="pow",
         )
 
+    @staticmethod
+    def _strip_ast_units(node: "ASTNode") -> None:
+        """Recursively strip units annotations from AST nodes.
+
+        SBML allows numeric literals to carry units annotations (e.g. ``<cn sbml:units="mole">``).
+        ``formulaToL3String`` includes these in its output (e.g. ``0.00015 mole``), which is not
+        valid C++. Stripping them here is safe because the units carry no mathematical information.
+        """
+        if node.isSetUnits():
+            node.unsetUnits()
+        for i in range(node.getNumChildren()):
+            ChasteSbmlModel._strip_ast_units(node.getChild(i))
+
     def _formula_to_string(self, math: "ASTNode") -> str:
         """Convert an AST math formula to an equivalent C++ string.
 
@@ -1148,6 +1203,7 @@ class ChasteSbmlModel:
             if search_ast_type(math, AST_FUNCTION_DELAY):
                 raise NotImplementedError(f"SBML function not supported: '{func}'.")
 
+        self._strip_ast_units(math)
         formula = formulaToL3String(math)
 
         # Convert all integer literals to doubles to fix integer division.
@@ -1258,8 +1314,10 @@ class ChasteSbmlModel:
         for token in tokens:
             cpp_token = token
 
-            # Replace function names and constants.
-            if token in constants:
+            # Replace function names and constants, but only when the token is
+            # not an actual model variable (e.g. a species named "s" or "t" must
+            # not be replaced with the SBML time symbol).
+            if token in constants and token not in self._variable_types:
                 cpp_token = f"{constants[token]}"
 
             elif token in unchanged_functions:

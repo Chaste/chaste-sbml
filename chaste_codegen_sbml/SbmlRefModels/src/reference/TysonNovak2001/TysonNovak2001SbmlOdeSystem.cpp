@@ -24,7 +24,7 @@ TysonNovak2001SbmlOdeSystem::TysonNovak2001SbmlOdeSystem()
 
     mEventType[0] = SbmlEventType::CELL_DIVISION; // Cell division
 
-    mEventSatisfied.resize(1, true); // Prevent events from triggering at the start
+    mEventSatisfied = { true }; // From SBML trigger initialValue
     mEventTriggered.resize(1, false);
 
     mEventAdjustedParameters.resize(36, false);
@@ -203,10 +203,25 @@ void TysonNovak2001SbmlOdeSystem::Initialise(double time)
 
 double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double>& rY)
 {
-    std::fill(std::begin(mEventAdjustedParameters), std::end(mEventAdjustedParameters), false);
-    std::fill(std::begin(mEventAdjustedStateVars), std::end(mEventAdjustedStateVars), false);
+    // Ensure all member variables (state vars, parameters, derived quantities) reflect
+    // the rY passed in. Without this, event triggers and assignments would use stale
+    // values from the last EvaluateYDerivatives call, which may differ from rY when
+    // called from CalculateRootFunction or CalculateStoppingEvent with a different state.
+    RunModelEquations(time, rY);
 
-    double min_dist = std::numeric_limits<double>::max();
+    // Do NOT clear mEventAdjustedStateVars/Parameters here. Once set by an event fire,
+    // they must persist across all CVODE bisection calls until AdjustParameters applies
+    // them. Clearing here would erase the stored assignment when a later bisection call
+    // lands in the clamped state (mEventSatisfied=true), causing the halving to be lost.
+    // CalculateStoppingEvent (BackwardEuler path) clears these itself before calling.
+
+    // Root function for CVODE: the maximum signed event distance, where each distance is
+    // positive exactly when its event's trigger condition holds. Taking the MAXIMUM (not the
+    // minimum absolute value) means the combined function crosses zero the moment ANY event
+    // becomes triggered, and cannot be masked by another event that happens to sit just below
+    // its own boundary (a small negative distance). A min-abs combination misses an event
+    // whose rising edge coincides with another event re-arming near its threshold.
+    double max_dist = -std::numeric_limits<double>::max();
 
     //========================================
     // EVENT: Cell division
@@ -214,16 +229,19 @@ double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::v
     {
         double event_dist = (0.1) - (CycB)-std::numeric_limits<double>::epsilon();
 
-        // Avoid oscillation by ensuring event_dist is not close to 0 unless triggered
-        if (std::abs(event_dist) < 1.0)
+        // Once an event has fired and its trigger remains active, force a large negative
+        // distance so CVODE sees no sign change and does not detect a spurious root when
+        // the trigger clears. A positive clamp would create a positive→negative crossing
+        // during CVODE bisection, corrupting event state via interleaved evaluations.
+        if (mEventSatisfied[0] && (CycB < 0.1))
         {
-            event_dist = 1.0;
+            event_dist = -(std::abs(event_dist) + 1.0);
         }
 
-        // Update min_dist
-        if (std::abs(event_dist) < std::abs(min_dist))
+        // Update max_dist (closest event to triggering)
+        if (event_dist > max_dist)
         {
-            min_dist = event_dist;
+            max_dist = event_dist;
         }
 
         // Process the event
@@ -233,8 +251,6 @@ double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::v
             {
                 // The condition is transitioning from false -> true: trigger the event
                 mEventTriggered[0] = true;
-                event_dist = 0.0;
-                min_dist = 0.0;
 
                 // Adjust relevant state variables and parameters
                 // m = m / 2.0
@@ -250,7 +266,7 @@ double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::v
         }
     }
 
-    return min_dist; // Distance to closest event
+    return max_dist; // Signed distance of the event closest to triggering
 }
 
 // ASSIGNMENT RULES

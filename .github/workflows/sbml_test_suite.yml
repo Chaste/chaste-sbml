@@ -15,21 +15,30 @@ jobs:
 
     strategy:
       fail-fast: false
-      # matrix is split by number of supported test cases (~260 per batch)
+      # matrix is split by number of supported test cases (~230 per batch)
       matrix:
         include:
           - first_case: "1"
-            last_case: "279"
-          - first_case: "280"
-            last_case: "785"
-          - first_case: "786"
-            last_case: "1183"
-          - first_case: "1184"
+            last_case: "248"
+          - first_case: "249"
+            last_case: "584"
+          - first_case: "585"
+            last_case: "897"
+          - first_case: "898"
+            last_case: "1309"
+          - first_case: "1310"
             last_case: "1821"
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Empty reference tests
+        run: |
+          rm -rf ${PROJ_ROOT}/src/reference
+          rm -rf ${PROJ_ROOT}/test/reference
+          echo "" > ${PROJ_ROOT}/test/ContinuousTestPack.txt
+          echo "" > ${PROJ_ROOT}/test/WeeklyTestPack.txt
 
       - name: Setup Python 3.12
         uses: actions/setup-python@v6

@@ -281,12 +281,27 @@ void Chen2000SbmlOdeSystem::Initialise(double time)
 
 double Chen2000SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double>& rY)
 {
-    std::fill(std::begin(mEventAdjustedParameters), std::end(mEventAdjustedParameters), false);
-    std::fill(std::begin(mEventAdjustedStateVars), std::end(mEventAdjustedStateVars), false);
+    // Ensure all member variables (state vars, parameters, derived quantities) reflect
+    // the rY passed in. Without this, event triggers and assignments would use stale
+    // values from the last EvaluateYDerivatives call, which may differ from rY when
+    // called from CalculateRootFunction or CalculateStoppingEvent with a different state.
+    RunModelEquations(time, rY);
 
-    double min_dist = std::numeric_limits<double>::max();
+    // Do NOT clear mEventAdjustedStateVars/Parameters here. Once set by an event fire,
+    // they must persist across all CVODE bisection calls until AdjustParameters applies
+    // them. Clearing here would erase the stored assignment when a later bisection call
+    // lands in the clamped state (mEventSatisfied=true), causing the halving to be lost.
+    // CalculateStoppingEvent (BackwardEuler path) clears these itself before calling.
 
-    return min_dist; // Distance to closest event
+    // Root function for CVODE: the maximum signed event distance, where each distance is
+    // positive exactly when its event's trigger condition holds. Taking the MAXIMUM (not the
+    // minimum absolute value) means the combined function crosses zero the moment ANY event
+    // becomes triggered, and cannot be masked by another event that happens to sit just below
+    // its own boundary (a small negative distance). A min-abs combination misses an event
+    // whose rising edge coincides with another event re-arming near its threshold.
+    double max_dist = -std::numeric_limits<double>::max();
+
+    return max_dist; // Signed distance of the event closest to triggering
 }
 
 // ASSIGNMENT RULES

@@ -95,7 +95,19 @@ double AbstractSbmlOdeSystem::CalculateRootFunction(double time, const std::vect
 
 bool AbstractSbmlOdeSystem::CalculateStoppingEvent(double time, const std::vector<double>& rY)
 {
-    return ProcessModelEvents(time, rY) == 0.0;
+    // Clear all event flags before a fresh BackwardEuler evaluation. ProcessModelEvents
+    // no longer resets these itself (so CVODE bisection doesn't erase a stored halving),
+    // so we must do it here to avoid stale flags from prior detections causing false
+    // positives on the initial-condition check at the start of the next Solve() call.
+    std::fill(mEventTriggered.begin(), mEventTriggered.end(), false);
+    std::fill(mEventAdjustedStateVars.begin(), mEventAdjustedStateVars.end(), false);
+    std::fill(mEventAdjustedParameters.begin(), mEventAdjustedParameters.end(), false);
+    ProcessModelEvents(time, rY);
+    for (unsigned i = 0; i < mEventTriggered.size(); ++i)
+    {
+        if (mEventTriggered[i]) return true;
+    }
+    return false;
 }
 
 bool AbstractSbmlOdeSystem::HasEventOccurred(SbmlEventType eventType)
