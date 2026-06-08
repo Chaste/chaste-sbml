@@ -1025,6 +1025,13 @@ class ChasteSbmlModel:
                 if "+" in rhs or "-" in rhs[1:]:
                     rhs = f"({rhs})"
 
+                # The conversion factor relates reaction extent to the change in species
+                # amount, so it multiplies the reaction flux only. Apply it before the dilution
+                # term below: that term conserves amount in a time-varying compartment and is
+                # independent of the conversion factor.
+                if conversion_factor is not None:
+                    rhs = f"({rhs}) * {conversion_factor}"
+
                 # Add compartment scaling if defined by a reaction
                 if not (has_only_substance_units or species_id in rate_rules):
                     # Determine dC/dt for the dilution correction
@@ -1045,9 +1052,6 @@ class ChasteSbmlModel:
                 # time_multiplier = self._get_timescale_multiplier()
                 # if time_multiplier != 1.0:
                 #     f"rDY[{state_variable_index}] *= {time_multiplier};"
-
-                if conversion_factor is not None:
-                    rhs = f"({rhs}) * {conversion_factor}"
 
                 state_var = self._add_state_variable(species_id, label, initial_value, units)
                 self._add_equation(
