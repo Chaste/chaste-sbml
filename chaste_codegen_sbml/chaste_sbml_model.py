@@ -473,7 +473,16 @@ class ChasteSbmlModel:
             math = parseL3Formula(f"{initial_value}")
             self._add_equation(var=id_, math=math, eq_type=EquationType.INITIAL_VALUE)
 
-        self._add_parameter(id_, label, initial_value, NON_DIM_UNITS)  # TODO: Use correct units
+        # A speciesReference's stoichiometry may be driven by an assignment rule (L3) rather
+        # than a constant `stoichiometry` attribute. Rules are processed before ODE
+        # extraction, so treat such a variable as a derived quantity recomputed each step
+        # (mirroring _format_parameters), otherwise it stays an unset constant parameter.
+        assignment_rules = {rule["var"]: rule["math"] for rule in self._assignment_rules}
+        if id_ in assignment_rules:
+            self._add_derived_quantity(id_, label, initial_value, NON_DIM_UNITS)  # TODO: Use correct units
+            self._add_equation(var=id_, math=assignment_rules[id_], eq_type=EquationType.ASSIGNMENT_RULE)
+        else:
+            self._add_parameter(id_, label, initial_value, NON_DIM_UNITS)  # TODO: Use correct units
 
         if species_reference.isSetStoichiometryMath():
             math = species_reference.getStoichiometryMath().getMath()
