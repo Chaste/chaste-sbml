@@ -491,6 +491,12 @@ class ChasteSbmlModel:
 
     def _extract_odes(self) -> None:
         """Extract the ODEs equations for each species."""
+        # Fast reactions require solving the fast subsystem to equilibrium as an algebraic
+        # constraint (a DAE / quasi-steady-state problem) rather than as an ordinary ODE term.
+        # This is not implemented, so reject such models instead of emitting incorrect ODEs.
+        if any(r.isSetFast() and r.getFast() for r in self._sbml_reactions):
+            raise NotImplementedError("Fast reactions are not supported.")
+
         # Note: rules must be processed before ODE extraction
         odes = {}
 
