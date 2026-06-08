@@ -474,12 +474,18 @@ class ChasteSbmlModel:
             math = parseL3Formula(f"{initial_value}")
             self._add_equation(var=id_, math=math, eq_type=EquationType.INITIAL_VALUE)
 
-        # A speciesReference's stoichiometry may be driven by an assignment rule (L3) rather
-        # than a constant `stoichiometry` attribute. Rules are processed before ODE
-        # extraction, so treat such a variable as a derived quantity recomputed each step
-        # (mirroring _format_parameters), otherwise it stays an unset constant parameter.
+        # A speciesReference's stoichiometry may be driven by a rate rule or an assignment
+        # rule rather than a constant `stoichiometry` attribute (rules are processed before
+        # ODE extraction). A rate-rule stoichiometry is integrated as a state variable; an
+        # assignment-rule stoichiometry is a derived quantity recomputed each step (mirroring
+        # _format_parameters). Otherwise it stays a constant parameter. Note these are not in
+        # _sbml_parameters, so _format_parameters does not handle them.
+        rate_rules = {rule["var"]: rule["math"] for rule in self._rate_rules}
         assignment_rules = {rule["var"]: rule["math"] for rule in self._assignment_rules}
-        if id_ in assignment_rules:
+        if id_ in rate_rules:
+            state_var = self._add_state_variable(id_, label, initial_value, NON_DIM_UNITS)  # TODO: Use correct units
+            self._add_equation(var=state_var["derivative_id"], math=rate_rules[id_], eq_type=EquationType.DERIVATIVE)
+        elif id_ in assignment_rules:
             self._add_derived_quantity(id_, label, initial_value, NON_DIM_UNITS)  # TODO: Use correct units
             self._add_equation(var=id_, math=assignment_rules[id_], eq_type=EquationType.ASSIGNMENT_RULE)
         else:
