@@ -682,8 +682,17 @@ void Chen2004SbmlOdeSystem::Initialise(double time)
 
 double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double>& rY)
 {
-    std::fill(std::begin(mEventAdjustedParameters), std::end(mEventAdjustedParameters), false);
-    std::fill(std::begin(mEventAdjustedStateVars), std::end(mEventAdjustedStateVars), false);
+    // Ensure all member variables (state vars, parameters, derived quantities) reflect
+    // the rY passed in. Without this, event triggers and assignments would use stale
+    // values from the last EvaluateYDerivatives call, which may differ from rY when
+    // called from CalculateRootFunction or CalculateStoppingEvent with a different state.
+    RunModelEquations(time, rY);
+
+    // Do NOT clear mEventAdjustedStateVars/Parameters here. Once set by an event fire,
+    // they must persist across all CVODE bisection calls until AdjustParameters applies
+    // them. Clearing here would erase the stored assignment when a later bisection call
+    // lands in the clamped state (mEventSatisfied=true), causing the halving to be lost.
+    // CalculateStoppingEvent (BackwardEuler path) clears these itself before calling.
 
     double min_dist = std::numeric_limits<double>::max();
 
@@ -693,11 +702,13 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     {
         double event_dist = (0.0) - (CLB2 + CLB5 - KEZ2) - std::numeric_limits<double>::epsilon();
 
-        // Once an event has fired and its trigger remains active, force a large positive
-        // distance so CVODE does not keep detecting the same root.
+        // Once an event has fired and its trigger remains active, force a large negative
+        // distance so CVODE sees no sign change and does not detect a spurious root when
+        // the trigger clears. A positive clamp would create a positive→negative crossing
+        // during CVODE bisection, corrupting event state via interleaved evaluations.
         if (mEventSatisfied[0] && ((CLB2 + CLB5 - KEZ2) < 0.0))
         {
-            event_dist = std::abs(event_dist) + 1.0;
+            event_dist = -(std::abs(event_dist) + 1.0);
         }
 
         // Update min_dist
@@ -734,11 +745,13 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     {
         double event_dist = (ORI - 1.0) - (0.0) - std::numeric_limits<double>::epsilon();
 
-        // Once an event has fired and its trigger remains active, force a large positive
-        // distance so CVODE does not keep detecting the same root.
+        // Once an event has fired and its trigger remains active, force a large negative
+        // distance so CVODE sees no sign change and does not detect a spurious root when
+        // the trigger clears. A positive clamp would create a positive→negative crossing
+        // during CVODE bisection, corrupting event state via interleaved evaluations.
         if (mEventSatisfied[1] && ((ORI - 1.0) > 0.0))
         {
-            event_dist = std::abs(event_dist) + 1.0;
+            event_dist = -(std::abs(event_dist) + 1.0);
         }
 
         // Update min_dist
@@ -774,11 +787,13 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     {
         double event_dist = (SPN - 1.0) - (0.0) - std::numeric_limits<double>::epsilon();
 
-        // Once an event has fired and its trigger remains active, force a large positive
-        // distance so CVODE does not keep detecting the same root.
+        // Once an event has fired and its trigger remains active, force a large negative
+        // distance so CVODE sees no sign change and does not detect a spurious root when
+        // the trigger clears. A positive clamp would create a positive→negative crossing
+        // during CVODE bisection, corrupting event state via interleaved evaluations.
         if (mEventSatisfied[2] && ((SPN - 1.0) > 0.0))
         {
-            event_dist = std::abs(event_dist) + 1.0;
+            event_dist = -(std::abs(event_dist) + 1.0);
         }
 
         // Update min_dist
@@ -815,11 +830,13 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     {
         double event_dist = (0.0) - (CLB2 - KEZ) - std::numeric_limits<double>::epsilon();
 
-        // Once an event has fired and its trigger remains active, force a large positive
-        // distance so CVODE does not keep detecting the same root.
+        // Once an event has fired and its trigger remains active, force a large negative
+        // distance so CVODE sees no sign change and does not detect a spurious root when
+        // the trigger clears. A positive clamp would create a positive→negative crossing
+        // during CVODE bisection, corrupting event state via interleaved evaluations.
         if (mEventSatisfied[3] && ((CLB2 - KEZ) < 0.0))
         {
-            event_dist = std::abs(event_dist) + 1.0;
+            event_dist = -(std::abs(event_dist) + 1.0);
         }
 
         // Update min_dist

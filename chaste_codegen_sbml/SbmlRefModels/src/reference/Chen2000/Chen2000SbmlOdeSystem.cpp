@@ -281,8 +281,17 @@ void Chen2000SbmlOdeSystem::Initialise(double time)
 
 double Chen2000SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double>& rY)
 {
-    std::fill(std::begin(mEventAdjustedParameters), std::end(mEventAdjustedParameters), false);
-    std::fill(std::begin(mEventAdjustedStateVars), std::end(mEventAdjustedStateVars), false);
+    // Ensure all member variables (state vars, parameters, derived quantities) reflect
+    // the rY passed in. Without this, event triggers and assignments would use stale
+    // values from the last EvaluateYDerivatives call, which may differ from rY when
+    // called from CalculateRootFunction or CalculateStoppingEvent with a different state.
+    RunModelEquations(time, rY);
+
+    // Do NOT clear mEventAdjustedStateVars/Parameters here. Once set by an event fire,
+    // they must persist across all CVODE bisection calls until AdjustParameters applies
+    // them. Clearing here would erase the stored assignment when a later bisection call
+    // lands in the clamped state (mEventSatisfied=true), causing the halving to be lost.
+    // CalculateStoppingEvent (BackwardEuler path) clears these itself before calling.
 
     double min_dist = std::numeric_limits<double>::max();
 
