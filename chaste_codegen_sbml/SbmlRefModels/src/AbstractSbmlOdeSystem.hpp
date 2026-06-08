@@ -69,6 +69,7 @@ private:
         archive & mNumberOfParameters;
         archive & mNumberOfEvents;
         archive & mEventSatisfied;
+        archive & mEventClampActive;
         archive & mEventTriggered;
         archive & mEventType;
         archive & mEventAdjustedStateVars;
@@ -134,6 +135,17 @@ protected:
 
     // Event handling
     std::vector<bool> mEventSatisfied;
+    /**
+     * Per-event clamp flag used only by the CVODE root function. Frozen at the start of each
+     * Solve segment (a snapshot of mEventSatisfied in CalculateStoppingEvent) and cleared
+     * permanently the instant an event's trigger first goes false (the event re-arms). While
+     * set, the event's root distance is forced large-negative so CVODE reports no spurious
+     * root for a trigger already active at the initial condition. Being monotonic within a
+     * segment (only ever cleared, never re-set) it stays constant across CVODE's in-step root
+     * bracketing, so events localize at the true crossing instead of the step endpoint, while
+     * an event that re-arms and re-fires within the same segment is still detected.
+     */
+    std::vector<bool> mEventClampActive;
     std::vector<bool> mEventTriggered;
     std::vector<SbmlEventType> mEventType;
     std::vector<bool> mEventAdjustedStateVars;

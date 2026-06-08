@@ -48,6 +48,7 @@ AbstractSbmlOdeSystem::AbstractSbmlOdeSystem(unsigned numberOfStateVariables, un
         mEventType.resize(mNumberOfEvents, SbmlEventType::UNKNOWN);
 
         mEventSatisfied.resize(mNumberOfEvents, true); // Prevent events from triggering at the start
+        mEventClampActive.resize(mNumberOfEvents, true); // Re-derived at each Solve segment start
         mEventTriggered.resize(mNumberOfEvents, false);
 
         if (mNumberOfStateVariables > 0)
@@ -102,7 +103,16 @@ bool AbstractSbmlOdeSystem::CalculateStoppingEvent(double time, const std::vecto
     std::fill(mEventTriggered.begin(), mEventTriggered.end(), false);
     std::fill(mEventAdjustedStateVars.begin(), mEventAdjustedStateVars.end(), false);
     std::fill(mEventAdjustedParameters.begin(), mEventAdjustedParameters.end(), false);
+
     ProcessModelEvents(time, rY);
+
+    // Freeze the clamp set for this Solve segment: clamp exactly those events whose trigger
+    // is active here (carried over from a previous segment) so CVODE reports no spurious root
+    // at the initial condition. ProcessModelEvents then clears each flag the instant its
+    // trigger first goes false, leaving the clamp stable across CVODE's in-step root
+    // bracketing so events localize at the true crossing rather than the step endpoint.
+    mEventClampActive = mEventSatisfied;
+
     for (unsigned i = 0; i < mEventTriggered.size(); ++i)
     {
         if (mEventTriggered[i]) return true;

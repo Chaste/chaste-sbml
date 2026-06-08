@@ -163,11 +163,14 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
     {
         double event_dist = {{ event["distance"] }};
 
-        // Once an event has fired and its trigger remains active, force a large negative
-        // distance so CVODE sees no sign change and does not detect a spurious root when
-        // the trigger clears. A positive clamp would create a positive→negative crossing
-        // during CVODE bisection, corrupting event state via interleaved evaluations.
-        if (mEventSatisfied[{{ event["index"] }}] && ({{ event["trigger"] }}))
+        // Suppress an event whose trigger was already active when this Solve segment started
+        // (a carried-over trigger) by forcing a large negative distance, so CVODE reports no
+        // spurious root at the initial condition. mEventClampActive is frozen at segment start
+        // (CalculateStoppingEvent) and cleared below the instant the trigger first goes false.
+        // Using this monotonic per-segment flag rather than the live, in-step-mutated
+        // mEventSatisfied keeps the root function stable across CVODE's root bracketing, so an
+        // event localizes at its true crossing instead of the integration step endpoint.
+        if (mEventClampActive[{{ event["index"] }}] && ({{ event["trigger"] }}))
         {
             event_dist = -(std::abs(event_dist) + 1.0);
         }
@@ -208,10 +211,17 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
             }
             mEventSatisfied[{{ event["index"] }}] = true;
         }
-        else
+        else if (!mEventTriggered[{{ event["index"] }}])
         {
+            // Trigger is false and the event has not fired in this segment, so it (re-)arms:
+            // clear the satisfied latch and the clamp (the clamp permanently, monotonically,
+            // so it stays stable across CVODE's in-step root bracketing and the next rising
+            // edge is detected). Once the event HAS fired this segment we leave these sticky,
+            // so a later root-bracketing evaluation that lands on the trigger-false side cannot
+            // undo the fire and leave the event spuriously unsatisfied (which would re-fire it
+            // at the next segment's initial condition).
             mEventSatisfied[{{ event["index"] }}] = false;
-            mEventTriggered[{{ event["index"] }}] = false;
+            mEventClampActive[{{ event["index"] }}] = false;
         }
     }
 

@@ -97,7 +97,7 @@ private:
 
             std::vector<double> expected_stop_times = {
                 103.80, // Cell division
-                250.32  // Cell division
+                250.31  // Cell division
             };
 
             initial_conditions = ode_system.GetInitialConditions();

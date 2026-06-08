@@ -708,11 +708,14 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     {
         double event_dist = (0.0) - (CLB2 + CLB5 - KEZ2) - std::numeric_limits<double>::epsilon();
 
-        // Once an event has fired and its trigger remains active, force a large negative
-        // distance so CVODE sees no sign change and does not detect a spurious root when
-        // the trigger clears. A positive clamp would create a positive→negative crossing
-        // during CVODE bisection, corrupting event state via interleaved evaluations.
-        if (mEventSatisfied[0] && ((CLB2 + CLB5 - KEZ2) < 0.0))
+        // Suppress an event whose trigger was already active when this Solve segment started
+        // (a carried-over trigger) by forcing a large negative distance, so CVODE reports no
+        // spurious root at the initial condition. mEventClampActive is frozen at segment start
+        // (CalculateStoppingEvent) and cleared below the instant the trigger first goes false.
+        // Using this monotonic per-segment flag rather than the live, in-step-mutated
+        // mEventSatisfied keeps the root function stable across CVODE's root bracketing, so an
+        // event localizes at its true crossing instead of the integration step endpoint.
+        if (mEventClampActive[0] && ((CLB2 + CLB5 - KEZ2) < 0.0))
         {
             event_dist = -(std::abs(event_dist) + 1.0);
         }
@@ -738,10 +741,17 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
             }
             mEventSatisfied[0] = true;
         }
-        else
+        else if (!mEventTriggered[0])
         {
+            // Trigger is false and the event has not fired in this segment, so it (re-)arms:
+            // clear the satisfied latch and the clamp (the clamp permanently, monotonically,
+            // so it stays stable across CVODE's in-step root bracketing and the next rising
+            // edge is detected). Once the event HAS fired this segment we leave these sticky,
+            // so a later root-bracketing evaluation that lands on the trigger-false side cannot
+            // undo the fire and leave the event spuriously unsatisfied (which would re-fire it
+            // at the next segment's initial condition).
             mEventSatisfied[0] = false;
-            mEventTriggered[0] = false;
+            mEventClampActive[0] = false;
         }
     }
 
@@ -751,11 +761,14 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     {
         double event_dist = (ORI - 1.0) - (0.0) - std::numeric_limits<double>::epsilon();
 
-        // Once an event has fired and its trigger remains active, force a large negative
-        // distance so CVODE sees no sign change and does not detect a spurious root when
-        // the trigger clears. A positive clamp would create a positive→negative crossing
-        // during CVODE bisection, corrupting event state via interleaved evaluations.
-        if (mEventSatisfied[1] && ((ORI - 1.0) > 0.0))
+        // Suppress an event whose trigger was already active when this Solve segment started
+        // (a carried-over trigger) by forcing a large negative distance, so CVODE reports no
+        // spurious root at the initial condition. mEventClampActive is frozen at segment start
+        // (CalculateStoppingEvent) and cleared below the instant the trigger first goes false.
+        // Using this monotonic per-segment flag rather than the live, in-step-mutated
+        // mEventSatisfied keeps the root function stable across CVODE's root bracketing, so an
+        // event localizes at its true crossing instead of the integration step endpoint.
+        if (mEventClampActive[1] && ((ORI - 1.0) > 0.0))
         {
             event_dist = -(std::abs(event_dist) + 1.0);
         }
@@ -780,10 +793,17 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
             }
             mEventSatisfied[1] = true;
         }
-        else
+        else if (!mEventTriggered[1])
         {
+            // Trigger is false and the event has not fired in this segment, so it (re-)arms:
+            // clear the satisfied latch and the clamp (the clamp permanently, monotonically,
+            // so it stays stable across CVODE's in-step root bracketing and the next rising
+            // edge is detected). Once the event HAS fired this segment we leave these sticky,
+            // so a later root-bracketing evaluation that lands on the trigger-false side cannot
+            // undo the fire and leave the event spuriously unsatisfied (which would re-fire it
+            // at the next segment's initial condition).
             mEventSatisfied[1] = false;
-            mEventTriggered[1] = false;
+            mEventClampActive[1] = false;
         }
     }
 
@@ -793,11 +813,14 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     {
         double event_dist = (SPN - 1.0) - (0.0) - std::numeric_limits<double>::epsilon();
 
-        // Once an event has fired and its trigger remains active, force a large negative
-        // distance so CVODE sees no sign change and does not detect a spurious root when
-        // the trigger clears. A positive clamp would create a positive→negative crossing
-        // during CVODE bisection, corrupting event state via interleaved evaluations.
-        if (mEventSatisfied[2] && ((SPN - 1.0) > 0.0))
+        // Suppress an event whose trigger was already active when this Solve segment started
+        // (a carried-over trigger) by forcing a large negative distance, so CVODE reports no
+        // spurious root at the initial condition. mEventClampActive is frozen at segment start
+        // (CalculateStoppingEvent) and cleared below the instant the trigger first goes false.
+        // Using this monotonic per-segment flag rather than the live, in-step-mutated
+        // mEventSatisfied keeps the root function stable across CVODE's root bracketing, so an
+        // event localizes at its true crossing instead of the integration step endpoint.
+        if (mEventClampActive[2] && ((SPN - 1.0) > 0.0))
         {
             event_dist = -(std::abs(event_dist) + 1.0);
         }
@@ -823,10 +846,17 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
             }
             mEventSatisfied[2] = true;
         }
-        else
+        else if (!mEventTriggered[2])
         {
+            // Trigger is false and the event has not fired in this segment, so it (re-)arms:
+            // clear the satisfied latch and the clamp (the clamp permanently, monotonically,
+            // so it stays stable across CVODE's in-step root bracketing and the next rising
+            // edge is detected). Once the event HAS fired this segment we leave these sticky,
+            // so a later root-bracketing evaluation that lands on the trigger-false side cannot
+            // undo the fire and leave the event spuriously unsatisfied (which would re-fire it
+            // at the next segment's initial condition).
             mEventSatisfied[2] = false;
-            mEventTriggered[2] = false;
+            mEventClampActive[2] = false;
         }
     }
 
@@ -836,11 +866,14 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     {
         double event_dist = (0.0) - (CLB2 - KEZ) - std::numeric_limits<double>::epsilon();
 
-        // Once an event has fired and its trigger remains active, force a large negative
-        // distance so CVODE sees no sign change and does not detect a spurious root when
-        // the trigger clears. A positive clamp would create a positive→negative crossing
-        // during CVODE bisection, corrupting event state via interleaved evaluations.
-        if (mEventSatisfied[3] && ((CLB2 - KEZ) < 0.0))
+        // Suppress an event whose trigger was already active when this Solve segment started
+        // (a carried-over trigger) by forcing a large negative distance, so CVODE reports no
+        // spurious root at the initial condition. mEventClampActive is frozen at segment start
+        // (CalculateStoppingEvent) and cleared below the instant the trigger first goes false.
+        // Using this monotonic per-segment flag rather than the live, in-step-mutated
+        // mEventSatisfied keeps the root function stable across CVODE's root bracketing, so an
+        // event localizes at its true crossing instead of the integration step endpoint.
+        if (mEventClampActive[3] && ((CLB2 - KEZ) < 0.0))
         {
             event_dist = -(std::abs(event_dist) + 1.0);
         }
@@ -875,10 +908,17 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
             }
             mEventSatisfied[3] = true;
         }
-        else
+        else if (!mEventTriggered[3])
         {
+            // Trigger is false and the event has not fired in this segment, so it (re-)arms:
+            // clear the satisfied latch and the clamp (the clamp permanently, monotonically,
+            // so it stays stable across CVODE's in-step root bracketing and the next rising
+            // edge is detected). Once the event HAS fired this segment we leave these sticky,
+            // so a later root-bracketing evaluation that lands on the trigger-false side cannot
+            // undo the fire and leave the event spuriously unsatisfied (which would re-fire it
+            // at the next segment's initial condition).
             mEventSatisfied[3] = false;
-            mEventTriggered[3] = false;
+            mEventClampActive[3] = false;
         }
     }
 
