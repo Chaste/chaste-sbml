@@ -968,8 +968,8 @@ test,status,notes
 00967,pass,ok
 00968,pass,ok
 00969,pass,ok
-00970,fail_known,
-00971,fail_known,
+00970,pass,ok
+00971,pass,ok
 00972,partly_supported,event alignment
 00973,pass,ok
 00974,pass,ok
@@ -989,15 +989,15 @@ test,status,notes
 00988,unsupported,delay
 00989,pass,ok
 00990,pass,ok
-00991,fail_known,
+00991,pass,ok
 00992,pass,ok
 00993,unsupported,algebraic rule
 00994,pass,ok
 00995,pass,ok
-00996,fail_known,
+00996,pass,ok
 00997,pass,ok
 00998,pass,ok
-00999,fail_known,
+00999,pass,ok
 01000,unsupported,delay
 01001,pass,ok
 01002,pass,ok
@@ -1049,9 +1049,9 @@ test,status,notes
 01048,unsupported,delay
 01049,unsupported,delay
 01050,unsupported,delay
-01051,fail_known,
-01052,fail_known,
-01053,fail_known,
+01051,unsupported,fast reaction
+01052,unsupported,fast reaction
+01053,unsupported,fast reaction
 01054,unsupported,algebraic rule
 01055,pass,ok
 01056,pass,ok
@@ -1101,7 +1101,7 @@ test,status,notes
 01100,pass,ok
 01101,pass,ok
 01102,pass,ok
-01103,fail_known,
+01103,pass,ok
 01104,pass,ok
 01105,pass,ok
 01106,partly_supported,event alignment
@@ -1115,11 +1115,11 @@ test,status,notes
 01114,unsupported,no odes
 01115,unsupported,no odes
 01116,unsupported,no odes
-01117,fail_known,
+01117,pass,ok
 01118,pass,ok
 01119,unsupported,no odes
 01120,unsupported,delay
-01121,fail_known,
+01121,pass,ok
 01122,pass,ok
 01123,pass,ok
 01124,unsupported,no odes
