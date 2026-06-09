@@ -44,7 +44,7 @@ namespace sm = sbmlmath;
 {% if not event["initial_satisfied"] %}
     // SBML trigger initialValue="false": fire this event at t=0 if its trigger is true.
     {
-        double time = 0.0;
+        [[maybe_unused]] double time = 0.0; // May be unused if no expression references time
         if ({{ event["trigger"] }})
         {
 {% for assignment in event["assignments"] %}
@@ -77,9 +77,9 @@ std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, 
 {% if derived_quantities %}
     RunModelEquations(time, rY);
 
-    // AMOUNTS
+    // AMOUNT / CONCENTRATION CONVERSIONS
 {% for eq in equations %}
-{% if ( eq["type"] == EquationType.AMOUNT ) %}
+{% if ( eq["type"] == EquationType.CONVERSION ) %}
     double {{ eq["var"] }} = {{ eq["rhs"] }}; // {{ eq["label"] }}
 {% endif %}
 {% endfor %}
@@ -106,7 +106,7 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
 void {{ ode_class_name }}::Initialise(double time)
 {
 {% for eq in equations %}
-{% if ( eq["type"] != EquationType.AMOUNT ) %}
+{% if ( eq["type"] != EquationType.CONVERSION ) %}
 {% if eq["local_parameters"] %}
     // {{ eq["var"] }}: {{ eq["label"] }}
     {
@@ -163,11 +163,14 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
     {
         double event_dist = {{ event["distance"] }};
 
-        // Once an event has fired and its trigger remains active, force a large negative
-        // distance so CVODE sees no sign change and does not detect a spurious root when
-        // the trigger clears. A positive clamp would create a positive→negative crossing
-        // during CVODE bisection, corrupting event state via interleaved evaluations.
-        if (mEventSatisfied[{{ event["index"] }}] && ({{ event["trigger"] }}))
+        // Suppress an event whose trigger was already active when this Solve segment started
+        // (a carried-over trigger) by forcing a large negative distance, so CVODE reports no
+        // spurious root at the initial condition. mEventClampActive is frozen at segment start
+        // (CalculateStoppingEvent) and cleared below the instant the trigger first goes false.
+        // Using this monotonic per-segment flag rather than the live, in-step-mutated
+        // mEventSatisfied keeps the root function stable across CVODE's root bracketing, so an
+        // event localizes at its true crossing instead of the integration step endpoint.
+        if (mEventClampActive[{{ event["index"] }}] && ({{ event["trigger"] }}))
         {
             event_dist = -(std::abs(event_dist) + 1.0);
         }
@@ -195,9 +198,12 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
 
 {% elif ( assignment["type"] == VarType.PARAMETER ) %}
                 // {{ assignment["lhs"] }} = {{ assignment["rhs"] }}
+                // Defer the assignment (do NOT SetParameter here): this runs inside the CVODE
+                // root function, so applying it immediately would change the parameter during
+                // root bracketing - before the solver commits to the event - corrupting the
+                // current segment. AdjustParameters applies it at the committed event point.
                 mEventAdjustedParameters[{{ assignment["index"] }}] = true;
                 mEventAdjustedParameterValues[{{ assignment["index"] }}] = {{ assignment["rhs"] }};
-                SetParameter({{ assignment["index"] }}, {{ assignment["rhs"] }});
 
 {% else %}
                 {{ assignment["lhs"] }} = {{ assignment["rhs"] }}; {# TODO: does this case exist? #}
@@ -208,10 +214,17 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
             }
             mEventSatisfied[{{ event["index"] }}] = true;
         }
-        else
+        else if (!mEventTriggered[{{ event["index"] }}])
         {
+            // Trigger is false and the event has not fired in this segment, so it (re-)arms:
+            // clear the satisfied latch and the clamp (the clamp permanently, monotonically,
+            // so it stays stable across CVODE's in-step root bracketing and the next rising
+            // edge is detected). Once the event HAS fired this segment we leave these sticky,
+            // so a later root-bracketing evaluation that lands on the trigger-false side cannot
+            // undo the fire and leave the event spuriously unsatisfied (which would re-fire it
+            // at the next segment's initial condition).
             mEventSatisfied[{{ event["index"] }}] = false;
-            mEventTriggered[{{ event["index"] }}] = false;
+            mEventClampActive[{{ event["index"] }}] = false;
         }
     }
 
@@ -241,7 +254,7 @@ std::vector<double> {{ ode_class_name }}::RunModelEquations(double time, const s
 {% endfor %}
 
 {% for eq in equations %}
-{% if ( eq["type"] not in [EquationType.INITIAL_VALUE, EquationType.INITIAL_ASSIGNMENT, EquationType.AMOUNT] ) %}
+{% if ( eq["type"] not in [EquationType.INITIAL_VALUE, EquationType.INITIAL_ASSIGNMENT, EquationType.CONVERSION] ) %}
 {% if eq["local_parameters"] %}
     // {{ eq["var"] }}: {{ eq["label"] }}
     {

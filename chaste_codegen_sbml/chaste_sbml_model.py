@@ -24,12 +24,14 @@ from libsbml import (
     SBML_RATE_RULE,
     ConversionProperties,
     SBMLReader,
+    SBMLTransforms,
     formulaToL3String,
     parseL3Formula,
 )
 
 from ._config import (
     AMOUNT_PREFIX,
+    CONCENTRATION_PREFIX,
     CHASTE_PREFIX,
     DERIVATIVE_PREFIX,
     DERIVATIVE_SUFFIX,
@@ -70,6 +72,7 @@ class ChasteSbmlModel:
         lstrip_blocks=True,
     )
     _jinja_env.globals["AMOUNT_PREFIX"] = AMOUNT_PREFIX
+    _jinja_env.globals["CONCENTRATION_PREFIX"] = CONCENTRATION_PREFIX
     _jinja_env.globals["EquationType"] = EquationType
     _jinja_env.globals["EventType"] = EventType
     _jinja_env.globals["PREFIX_SEP"] = PREFIX_SEP
@@ -125,6 +128,16 @@ class ChasteSbmlModel:
             doc.printErrors()
             raise ValueError(f"Errors found while reading SBML file: {self._sbml_file}")
 
+        # Flatten hierarchical (comp package) models - composing their submodels into a single
+        # model with flattened submodelId__element names - before any further processing.
+        if doc.getPlugin("comp") is not None:
+            flatten_props = ConversionProperties()
+            flatten_props.addOption("flatten comp", True, "flatten comp")
+            flatten_props.addOption("leave_ports", False)
+            if doc.convert(flatten_props) != LIBSBML_OPERATION_SUCCESS:
+                doc.printErrors()
+                raise ValueError("Errors during comp flattening")
+
         # Run required conversions
         config = ConversionProperties()
         # Sort assignment rules in order of dependence.
@@ -158,7 +171,6 @@ class ChasteSbmlModel:
         self._rate_rules = []  # [ { id: str, label: str, ... } ]
         self._state_variables = []  # [ { id: str, label: str, ... } ]
         self._derived_quantities = []  # [ { id: str, label: str, ... } ]
-        self._amounts = []  # [ { id: str, label: str, ... } ]
         self._parameters = []  # [ { id: str, label: str, ... } ]
         self._initial_assignments = []  # [ { id: str, label: str, ... } ]
         self._reactions = []  # [ { id: str, label: str, ... } ]
@@ -234,8 +246,29 @@ class ChasteSbmlModel:
         amt_rhs = f"{species_id} * {compartment_id}"
         amt_math = parseL3Formula(amt_rhs)
 
-        self._add_derived_quantity(amt_id, amt_label, None, amt_units, is_amount=True)
-        self._add_equation(var=amt_id, math=amt_math, eq_type=EquationType.AMOUNT)
+        self._add_derived_quantity(amt_id, amt_label, None, amt_units, is_conversion=True)
+        self._add_equation(var=amt_id, math=amt_math, eq_type=EquationType.CONVERSION)
+
+    def _add_concentration(self, species: "Species") -> None:
+        """Add a concentration derived quantity variable to the template variables.
+
+        For a species stored as an amount (hasOnlySubstanceUnits), the concentration is the
+        amount divided by its compartment size. Mirrors _add_amount and reuses the same
+        conversion machinery (computed in ComputeDerivedQuantities, not stored as a member).
+
+        :param species: The related Species.
+        """
+        species_id = species.getId()
+        compartment_id = species.getCompartment()
+
+        conc_id = CONCENTRATION_PREFIX + PREFIX_SEP + species_id
+        conc_label = f"Concentration of {species_id}"
+        conc_units = NON_DIM_UNITS  # TODO: Use correct units
+        conc_rhs = f"{species_id} / {compartment_id}"
+        conc_math = parseL3Formula(conc_rhs)
+
+        self._add_derived_quantity(conc_id, conc_label, None, conc_units, is_conversion=True)
+        self._add_equation(var=conc_id, math=conc_math, eq_type=EquationType.CONVERSION)
 
     def _add_assignment_rule(self, id_: str, label: str, var: str, math: "ASTNode") -> None:
         """Add an assignment rule to the template variables.
@@ -260,7 +293,7 @@ class ChasteSbmlModel:
         label: str,
         initial_value: Optional[float],
         units: str = NON_DIM_UNITS,
-        is_amount: bool = False,
+        is_conversion: bool = False,
     ) -> None:
         """Add a derived quantity to the template variables.
 
@@ -268,7 +301,8 @@ class ChasteSbmlModel:
         :param label: The variable description.
         :param initial_value: The variable initial value.
         :param units: The variable units.
-        :param is_amount: True if the derived quantity is an amount conversion.
+        :param is_conversion: True if the derived quantity is an amount/concentration
+            conversion (computed in ComputeDerivedQuantities rather than stored as a member).
         """
         self._derived_quantities.append(
             {
@@ -276,7 +310,7 @@ class ChasteSbmlModel:
                 "label": label,
                 "index": len(self._derived_quantities),
                 "initial_value": initial_value,
-                "is_amount": is_amount,
+                "is_conversion": is_conversion,
                 "units": units,
             }
         )
@@ -473,7 +507,22 @@ class ChasteSbmlModel:
             math = parseL3Formula(f"{initial_value}")
             self._add_equation(var=id_, math=math, eq_type=EquationType.INITIAL_VALUE)
 
-        self._add_parameter(id_, label, initial_value, NON_DIM_UNITS)  # TODO: Use correct units
+        # A speciesReference's stoichiometry may be driven by a rate rule or an assignment
+        # rule rather than a constant `stoichiometry` attribute (rules are processed before
+        # ODE extraction). A rate-rule stoichiometry is integrated as a state variable; an
+        # assignment-rule stoichiometry is a derived quantity recomputed each step (mirroring
+        # _format_parameters). Otherwise it stays a constant parameter. Note these are not in
+        # _sbml_parameters, so _format_parameters does not handle them.
+        rate_rules = {rule["var"]: rule["math"] for rule in self._rate_rules}
+        assignment_rules = {rule["var"]: rule["math"] for rule in self._assignment_rules}
+        if id_ in rate_rules:
+            state_var = self._add_state_variable(id_, label, initial_value, NON_DIM_UNITS)  # TODO: Use correct units
+            self._add_equation(var=state_var["derivative_id"], math=rate_rules[id_], eq_type=EquationType.DERIVATIVE)
+        elif id_ in assignment_rules:
+            self._add_derived_quantity(id_, label, initial_value, NON_DIM_UNITS)  # TODO: Use correct units
+            self._add_equation(var=id_, math=assignment_rules[id_], eq_type=EquationType.ASSIGNMENT_RULE)
+        else:
+            self._add_parameter(id_, label, initial_value, NON_DIM_UNITS)  # TODO: Use correct units
 
         if species_reference.isSetStoichiometryMath():
             math = species_reference.getStoichiometryMath().getMath()
@@ -481,6 +530,12 @@ class ChasteSbmlModel:
 
     def _extract_odes(self) -> None:
         """Extract the ODEs equations for each species."""
+        # Fast reactions require solving the fast subsystem to equilibrium as an algebraic
+        # constraint (a DAE / quasi-steady-state problem) rather than as an ordinary ODE term.
+        # This is not implemented, so reject such models instead of emitting incorrect ODEs.
+        if any(r.isSetFast() and r.getFast() for r in self._sbml_reactions):
+            raise NotImplementedError("Fast reactions are not supported.")
+
         # Note: rules must be processed before ODE extraction
         odes = {}
 
@@ -658,8 +713,16 @@ class ChasteSbmlModel:
             trigger_math = event.getTrigger().getMath()
             trigger_formula = self._formula_to_string(trigger_math)
 
+            # A trigger may be written using a function definition, e.g. lessthan(S1, 0.6).
+            # Expand function-definition calls in a copy so the underlying relational operator
+            # is visible to the distance calculation below; without this the trigger is opaque
+            # and falls back to a constant distance, so CVODE never detects the event. The
+            # original (unexpanded) trigger_formula is still used for the trigger condition.
+            distance_math = trigger_math.deepCopy()
+            SBMLTransforms.replaceFD(distance_math, self._sbml_model.getListOfFunctionDefinitions())
+
             trigger_distance = "1.0"
-            node_type = trigger_math.getType()
+            node_type = distance_math.getType()
             if node_type in [
                 AST_RELATIONAL_LT,
                 AST_RELATIONAL_GT,
@@ -668,8 +731,8 @@ class ChasteSbmlModel:
                 AST_RELATIONAL_GEQ,
                 AST_RELATIONAL_NEQ,
             ]:
-                lc = self._formula_to_string(trigger_math.getLeftChild())
-                rc = self._formula_to_string(trigger_math.getRightChild())
+                lc = self._formula_to_string(distance_math.getLeftChild())
+                rc = self._formula_to_string(distance_math.getRightChild())
 
                 # Distance is negative when the condition is false,
                 # zero at the point where the condition switches from false to true,
@@ -995,6 +1058,13 @@ class ChasteSbmlModel:
                 if "+" in rhs or "-" in rhs[1:]:
                     rhs = f"({rhs})"
 
+                # The conversion factor relates reaction extent to the change in species
+                # amount, so it multiplies the reaction flux only. Apply it before the dilution
+                # term below: that term conserves amount in a time-varying compartment and is
+                # independent of the conversion factor.
+                if conversion_factor is not None:
+                    rhs = f"({rhs}) * {conversion_factor}"
+
                 # Add compartment scaling if defined by a reaction
                 if not (has_only_substance_units or species_id in rate_rules):
                     # Determine dC/dt for the dilution correction
@@ -1015,9 +1085,6 @@ class ChasteSbmlModel:
                 # time_multiplier = self._get_timescale_multiplier()
                 # if time_multiplier != 1.0:
                 #     f"rDY[{state_variable_index}] *= {time_multiplier};"
-
-                if conversion_factor is not None:
-                    rhs = f"({rhs}) * {conversion_factor}"
 
                 state_var = self._add_state_variable(species_id, label, initial_value, units)
                 self._add_equation(
@@ -1052,8 +1119,11 @@ class ChasteSbmlModel:
                     self._add_derived_quantity(species_id, label, initial_value, units)
 
             if not has_only_substance_units:
-                # Add an extra "amount" derived quantity for the species
+                # Concentration species: add an "amount" derived quantity (amount = conc * volume)
                 self._add_amount(species)
+            else:
+                # Amount species: add a "concentration" derived quantity (conc = amount / volume)
+                self._add_concentration(species)
 
     def _convert_infix_operator_to_function_syntax(self, formula: str, operator: str, function_name: str) -> str:
         """Convert infix operator expressions to function syntax.
@@ -1405,12 +1475,7 @@ class ChasteSbmlModel:
         # TODO: Make this more generic
         var_type = self._get_variable_type(id_)
 
-        if var_type == VarType.AMOUNT:
-            for amount in self._amounts:
-                if amount["id"] == id_:
-                    return amount["index"]
-
-        elif var_type == VarType.DERIVED_QUANTITY:
+        if var_type == VarType.DERIVED_QUANTITY:
             for dq in self._derived_quantities:
                 if dq["id"] == id_:
                     return dq["index"]
@@ -1444,10 +1509,21 @@ class ChasteSbmlModel:
         """
         return self._variable_types.get(var_id, VarType.UNKNOWN)
 
+    def _order_derived_quantities(self) -> None:
+        """Order derived quantities so the amount/concentration conversions come last.
+
+        The conversions (amt__/conc__) are added while processing species, interleaved with
+        the other derived quantities. Moving them to the end keeps the model-intrinsic derived
+        quantities at stable, contiguous indices. The sort is stable, so the relative order
+        within each group is preserved; indices are then renumbered to match.
+        """
+        self._derived_quantities.sort(key=lambda dq: dq["is_conversion"])
+        for index, dq in enumerate(self._derived_quantities):
+            dq["index"] = index
+
     def _populate_template_vars(self) -> None:
         """Populate the template variables for generating C++ code."""
         template_vars: dict[str, "Any"] = dict(
-            amounts=self._amounts,
             assignment_rules=self._assignment_rules,
             derived_quantities=self._derived_quantities,
             equations=self._equations,
@@ -1491,7 +1567,6 @@ class ChasteSbmlModel:
 
         self._state_variables = []
         self._derived_quantities = []
-        self._amounts = []
         self._parameters = []
         self._stoichiometry_variables = []
         self._equations = []
@@ -1518,6 +1593,7 @@ class ChasteSbmlModel:
         self._format_events()
 
         self._format_equations()
+        self._order_derived_quantities()
 
         self._populate_template_vars()
 
@@ -1558,7 +1634,7 @@ class ChasteSbmlModel:
             EquationType.ASSIGNMENT_RULE,
             EquationType.REACTION,
             EquationType.DERIVATIVE,
-            EquationType.AMOUNT,
+            EquationType.CONVERSION,
             EquationType.UNKNOWN,
         ]
 

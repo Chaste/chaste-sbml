@@ -61,7 +61,10 @@ class TestTysonNovak2001SbmlOdeSystem : public AbstractCellBasedTestSuite
 {
 private:
     const unsigned ODE_SIZE = 8u;
-    const unsigned NUM_DERIVED_QUANTITIES = 5u;
+    const unsigned NUM_DERIVED_QUANTITIES = 16u;
+    // Derived quantities collected/checked by the solver runs below (the conc__ concentration
+    // conversions are part of NUM_DERIVED_QUANTITIES but are not checked here).
+    const unsigned NUM_OUTPUT_DERIVED_QUANTITIES = 5u;
 
     std::vector<double> default_initial_conditions = {
         0.001, // CycBt
@@ -93,11 +96,11 @@ private:
 
             std::vector<double> times;
             std::vector<std::vector<double> > solutions;
-            std::vector<std::vector<double> > derived_quantities(NUM_DERIVED_QUANTITIES);
+            std::vector<std::vector<double> > derived_quantities(NUM_OUTPUT_DERIVED_QUANTITIES);
 
             std::vector<double> expected_stop_times = {
                 103.80, // Cell division
-                250.32  // Cell division
+                250.31  // Cell division
             };
 
             initial_conditions = ode_system.GetInitialConditions();
@@ -162,7 +165,7 @@ private:
                 { { 0.008768, 0.465541, 0.071366, 0.095678, 0.017268, 0.033871, 0.074606 }, { 1e-4, 1e-2, 1e-3, 1e-3, 1e-3, 1e-3, 1e-3 } }, // TF
             };
 
-            for (unsigned i = 0; i < ODE_SIZE + NUM_DERIVED_QUANTITIES; i++)
+            for (unsigned i = 0; i < ODE_SIZE + NUM_OUTPUT_DERIVED_QUANTITIES; i++)
             {
                 std::string var_name;
                 std::vector<double> values;
@@ -231,7 +234,7 @@ private:
                 {
                     (*file) << ", " << solutions[i][j];
                 }
-                for (unsigned j = 0; j < NUM_DERIVED_QUANTITIES; j++)
+                for (unsigned j = 0; j < NUM_OUTPUT_DERIVED_QUANTITIES; j++)
                 {
                     (*file) << ", " << derived_quantities[j][i];
                 }
@@ -348,6 +351,8 @@ public:
         }
 
         // Check derived quantities
+        // The conc__ concentration conversions (added for amount-only species) come after
+        // these model-intrinsic derived quantities, so the latter keep contiguous indices.
         TS_ASSERT_EQUALS(ode_system.GetNumberOfDerivedQuantities(), NUM_DERIVED_QUANTITIES);
         TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("cell"), 0u);
         TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("CycB"), 1u);

@@ -130,14 +130,14 @@ public:
         // Check CVODE vs BackwardEuler solution
         std::vector<double> proteins_0 = p_ccm_0->GetProteinConcentrations();
         TS_ASSERT_EQUALS(proteins_0.size(), ODE_SIZE);
-        TS_ASSERT_DELTA(proteins_0[0], 0.1789, 1e-4); // CycBt
+        TS_ASSERT_DELTA(proteins_0[0], 0.1791, 1e-4); // CycBt
         TS_ASSERT_DELTA(proteins_0[1], 0.3039, 1e-4); // Cdc20a
-        TS_ASSERT_DELTA(proteins_0[2], 0.4455, 1e-4); // Cdh1
+        TS_ASSERT_DELTA(proteins_0[2], 0.4435, 1e-4); // Cdh1
         TS_ASSERT_DELTA(proteins_0[3], 0.8125, 1e-4); // m
-        TS_ASSERT_DELTA(proteins_0[4], 1.1626, 1e-4); // Cdc20t
+        TS_ASSERT_DELTA(proteins_0[4], 1.1628, 1e-4); // Cdc20t
         TS_ASSERT_DELTA(proteins_0[5], 0.5465, 1e-4); // IEP
         TS_ASSERT_DELTA(proteins_0[6], 0.0800, 1e-4); // CKIt
-        TS_ASSERT_DELTA(proteins_0[7], 0.0816, 1e-4); // SK
+        TS_ASSERT_DELTA(proteins_0[7], 0.0811, 1e-4); // SK
 
         std::vector<double> proteins_1 = p_ccm_1->GetProteinConcentrations();
         TS_ASSERT_EQUALS(proteins_1.size(), ODE_SIZE);
@@ -188,14 +188,14 @@ public:
         // Check ODE solution
         proteins_0 = p_ccm_0->GetProteinConcentrations();
         TS_ASSERT_EQUALS(proteins_0.size(), ODE_SIZE);
-        TS_ASSERT_DELTA(proteins_0[0], 0.1794, 1e-4); // CycBt
+        TS_ASSERT_DELTA(proteins_0[0], 0.1797, 1e-4); // CycBt
         TS_ASSERT_DELTA(proteins_0[1], 0.2977, 1e-4); // Cdc20a
-        TS_ASSERT_DELTA(proteins_0[2], 0.4349, 1e-4); // Cdh1
+        TS_ASSERT_DELTA(proteins_0[2], 0.4312, 1e-4); // Cdh1
         TS_ASSERT_DELTA(proteins_0[3], 0.8096, 1e-4); // m
-        TS_ASSERT_DELTA(proteins_0[4], 1.1308, 1e-4); // Cdc20t
-        TS_ASSERT_DELTA(proteins_0[5], 0.5447, 1e-4); // IEP
+        TS_ASSERT_DELTA(proteins_0[4], 1.1312, 1e-4); // Cdc20t
+        TS_ASSERT_DELTA(proteins_0[5], 0.5448, 1e-4); // IEP
         TS_ASSERT_DELTA(proteins_0[6], 0.0806, 1e-4); // CKIt
-        TS_ASSERT_DELTA(proteins_0[7], 0.0799, 1e-4); // SK
+        TS_ASSERT_DELTA(proteins_0[7], 0.0791, 1e-4); // SK
 
         std::vector<double> proteins_2 = p_ccm_2->GetProteinConcentrations();
         TS_ASSERT_EQUALS(proteins_2.size(), ODE_SIZE);

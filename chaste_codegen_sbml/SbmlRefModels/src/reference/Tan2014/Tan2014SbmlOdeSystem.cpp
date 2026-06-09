@@ -29,7 +29,7 @@ std::vector<double> Tan2014SbmlOdeSystem::ComputeDerivedQuantities(double time, 
     std::vector<double> dqs;
     RunModelEquations(time, rY);
 
-    // AMOUNTS
+    // AMOUNT / CONCENTRATION CONVERSIONS
     double amt__bcat_cm = bcat_cm * CytosolMembrane;       //
     double amt__ligand_cm = ligand_cm * CytosolMembrane;   //
     double amt__complex_cm = complex_cm * CytosolMembrane; //
@@ -41,13 +41,13 @@ std::vector<double> Tan2014SbmlOdeSystem::ComputeDerivedQuantities(double time, 
     dqs.push_back(compartment);
     dqs.push_back(CytosolMembrane);
     dqs.push_back(nucleus);
+    dqs.push_back(drag);
     dqs.push_back(amt__bcat_cm);
     dqs.push_back(amt__ligand_cm);
     dqs.push_back(amt__complex_cm);
     dqs.push_back(amt__bcat_nu);
     dqs.push_back(amt__ligand_nu);
     dqs.push_back(amt__complex_nu);
-    dqs.push_back(drag);
     dqs.push_back(amt__drag);
 
     return dqs;
@@ -274,6 +274,9 @@ void CellwiseOdeSystemInformation<Tan2014SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityNames.push_back("nucleus");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
+    this->mDerivedQuantityNames.push_back("drag");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     this->mDerivedQuantityNames.push_back("amt__bcat_cm");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
@@ -290,9 +293,6 @@ void CellwiseOdeSystemInformation<Tan2014SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("amt__complex_nu");
-    this->mDerivedQuantityUnits.push_back("non-dim");
-
-    this->mDerivedQuantityNames.push_back("drag");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("amt__drag");

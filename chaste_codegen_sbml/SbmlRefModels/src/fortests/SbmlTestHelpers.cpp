@@ -10,49 +10,29 @@
 
 #include "SbmlTestHelpers.hpp"
 
-void sbmltesthelpers::AppendOdeSolution(OdeSolution* existing_solution, OdeSolution* new_solution)
-{
-    if (!existing_solution || !new_solution)
-    {
-        throw std::invalid_argument("Null OdeSolution pointer provided.");
-    }
-
-    existing_solution->rGetTimes().pop_back();
-    existing_solution->rGetSolutions().pop_back();
-
-    existing_solution->rGetSolutions().insert(existing_solution->rGetSolutions().end(),
-                                              new_solution->rGetSolutions().begin()+1,
-                                              new_solution->rGetSolutions().end());
-
-    existing_solution->rGetTimes().insert(existing_solution->rGetTimes().end(),
-                                          new_solution->rGetTimes().begin()+1,
-                                          new_solution->rGetTimes().end());
-
-    existing_solution->SetNumberOfTimeSteps(existing_solution->rGetTimes().size());
-}
-
-void sbmltesthelpers::ExportCsv(const std::string& filename,
-                                OdeSolution& ode_solution,
-                                AbstractOdeSystem& ode_system)
+void sbmltesthelpers::ExportCsv(const std::string& rFilename,
+                                OdeSolution& rOdeSolution,
+                                AbstractOdeSystem& rOdeSystem,
+                                const std::vector<std::vector<double> >* pParamsPerStep)
 {
     OutputFileHandler handler("");
-    out_stream file = handler.OpenOutputFile(filename);
+    out_stream file = handler.OpenOutputFile(rFilename);
 
     // Times
-    const std::vector<double>& time_data = ode_solution.rGetTimes();
+    const std::vector<double>& time_data = rOdeSolution.rGetTimes();
 
     // State variables
-    const std::vector<std::string>& svar_names = ode_system.rGetStateVariableNames();
-    const std::vector<std::vector<double> >& svar_data = ode_solution.rGetSolutions();
+    const std::vector<std::string>& svar_names = rOdeSystem.rGetStateVariableNames();
+    const std::vector<std::vector<double> >& svar_data = rOdeSolution.rGetSolutions();
 
     // Derived quantities
-    ode_solution.CalculateDerivedQuantitiesAndParameters(&ode_system);
-    const std::vector<std::string>& dq_names = ode_system.rGetDerivedQuantityNames();
-    const std::vector<std::vector<double> >& dq_data = ode_solution.rGetDerivedQuantities(&ode_system);
+    rOdeSolution.CalculateDerivedQuantitiesAndParameters(&rOdeSystem);
+    const std::vector<std::string>& dq_names = rOdeSystem.rGetDerivedQuantityNames();
+    const std::vector<std::vector<double> >& dq_data = rOdeSolution.rGetDerivedQuantities(&rOdeSystem);
 
     // Parameters
-    const std::vector<std::string>& param_names = ode_system.rGetParameterNames();
-    const std::vector<double>& param_data = ode_solution.rGetParameters(&ode_system);
+    const std::vector<std::string>& param_names = rOdeSystem.rGetParameterNames();
+    const std::vector<double>& param_data = rOdeSolution.rGetParameters(&rOdeSystem);
 
     // Sanity checks
     if (time_data.empty())
@@ -134,7 +114,15 @@ void sbmltesthelpers::ExportCsv(const std::string& filename,
                 (*file) << "," << dq_data[i][j];
             }
         }
-        if (!param_data.empty())
+        if (pParamsPerStep != nullptr && i < pParamsPerStep->size())
+        {
+            // Time-resolved parameters (e.g. a parameter changed by an event).
+            for (unsigned j = 0; j < (*pParamsPerStep)[i].size(); j++)
+            {
+                (*file) << "," << (*pParamsPerStep)[i][j];
+            }
+        }
+        else if (!param_data.empty())
         {
             for (unsigned j = 0; j < param_data.size(); j++)
             {

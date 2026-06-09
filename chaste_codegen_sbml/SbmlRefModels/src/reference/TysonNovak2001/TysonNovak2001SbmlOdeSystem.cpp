@@ -43,13 +43,35 @@ std::vector<double> TysonNovak2001SbmlOdeSystem::ComputeDerivedQuantities(double
     std::vector<double> dqs;
     RunModelEquations(time, rY);
 
-    // AMOUNTS
+    // AMOUNT / CONCENTRATION CONVERSIONS
+    double conc__CycBt = CycBt / cell;   //
+    double conc__CycB = CycB / cell;     //
+    double conc__Cdc20a = Cdc20a / cell; //
+    double conc__Trimer = Trimer / cell; //
+    double conc__Cdh1 = Cdh1 / cell;     //
+    double conc__m = m / cell;           //
+    double conc__Cdc20t = Cdc20t / cell; //
+    double conc__IEP = IEP / cell;       //
+    double conc__Mad = Mad / cell;       //
+    double conc__CKIt = CKIt / cell;     //
+    double conc__SK = SK / cell;         //
 
     dqs.push_back(cell);
     dqs.push_back(CycB);
     dqs.push_back(Trimer);
     dqs.push_back(Mad);
     dqs.push_back(TF);
+    dqs.push_back(conc__CycBt);
+    dqs.push_back(conc__CycB);
+    dqs.push_back(conc__Cdc20a);
+    dqs.push_back(conc__Trimer);
+    dqs.push_back(conc__Cdh1);
+    dqs.push_back(conc__m);
+    dqs.push_back(conc__Cdc20t);
+    dqs.push_back(conc__IEP);
+    dqs.push_back(conc__Mad);
+    dqs.push_back(conc__CKIt);
+    dqs.push_back(conc__SK);
 
     return dqs;
 }
@@ -229,11 +251,14 @@ double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::v
     {
         double event_dist = (0.1) - (CycB)-std::numeric_limits<double>::epsilon();
 
-        // Once an event has fired and its trigger remains active, force a large negative
-        // distance so CVODE sees no sign change and does not detect a spurious root when
-        // the trigger clears. A positive clamp would create a positive→negative crossing
-        // during CVODE bisection, corrupting event state via interleaved evaluations.
-        if (mEventSatisfied[0] && (CycB < 0.1))
+        // Suppress an event whose trigger was already active when this Solve segment started
+        // (a carried-over trigger) by forcing a large negative distance, so CVODE reports no
+        // spurious root at the initial condition. mEventClampActive is frozen at segment start
+        // (CalculateStoppingEvent) and cleared below the instant the trigger first goes false.
+        // Using this monotonic per-segment flag rather than the live, in-step-mutated
+        // mEventSatisfied keeps the root function stable across CVODE's root bracketing, so an
+        // event localizes at its true crossing instead of the integration step endpoint.
+        if (mEventClampActive[0] && (CycB < 0.1))
         {
             event_dist = -(std::abs(event_dist) + 1.0);
         }
@@ -259,10 +284,17 @@ double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::v
             }
             mEventSatisfied[0] = true;
         }
-        else
+        else if (!mEventTriggered[0])
         {
+            // Trigger is false and the event has not fired in this segment, so it (re-)arms:
+            // clear the satisfied latch and the clamp (the clamp permanently, monotonically,
+            // so it stays stable across CVODE's in-step root bracketing and the next rising
+            // edge is detected). Once the event HAS fired this segment we leave these sticky,
+            // so a later root-bracketing evaluation that lands on the trigger-false side cannot
+            // undo the fire and leave the event spuriously unsatisfied (which would re-fire it
+            // at the next segment's initial condition).
             mEventSatisfied[0] = false;
-            mEventTriggered[0] = false;
+            mEventClampActive[0] = false;
         }
     }
 
@@ -451,6 +483,39 @@ void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("TF");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__CycBt");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__CycB");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__Cdc20a");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__Trimer");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__Cdh1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__m");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__Cdc20t");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__IEP");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__Mad");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__CKIt");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__SK");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     // PARAMETERS

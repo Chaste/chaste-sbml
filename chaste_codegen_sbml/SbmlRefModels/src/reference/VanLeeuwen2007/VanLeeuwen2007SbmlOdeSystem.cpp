@@ -29,7 +29,7 @@ std::vector<double> VanLeeuwen2007SbmlOdeSystem::ComputeDerivedQuantities(double
     std::vector<double> dqs;
     RunModelEquations(time, rY);
 
-    // AMOUNTS
+    // AMOUNT / CONCENTRATION CONVERSIONS
     double amt__X = X * cytosolmembraneandnucleus;       //
     double amt__D = D * cytosolmembraneandnucleus;       //
     double amt__C_o = C_o * cytosolmembraneandnucleus;   //
@@ -46,6 +46,9 @@ std::vector<double> VanLeeuwen2007SbmlOdeSystem::ComputeDerivedQuantities(double
     double amt__drag = drag * cytosolmembraneandnucleus; //
 
     dqs.push_back(cytosolmembraneandnucleus);
+    dqs.push_back(C_F);
+    dqs.push_back(C_T);
+    dqs.push_back(drag);
     dqs.push_back(amt__X);
     dqs.push_back(amt__D);
     dqs.push_back(amt__C_o);
@@ -57,11 +60,8 @@ std::vector<double> VanLeeuwen2007SbmlOdeSystem::ComputeDerivedQuantities(double
     dqs.push_back(amt__C_oT);
     dqs.push_back(amt__C_cT);
     dqs.push_back(amt__Y);
-    dqs.push_back(C_F);
     dqs.push_back(amt__C_F);
-    dqs.push_back(C_T);
     dqs.push_back(amt__C_T);
-    dqs.push_back(drag);
     dqs.push_back(amt__drag);
 
     return dqs;
@@ -437,6 +437,15 @@ void CellwiseOdeSystemInformation<VanLeeuwen2007SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityNames.push_back("cytosolmembraneandnucleus");
     this->mDerivedQuantityUnits.push_back("MWDERIVEDUNIT_meter___3");
 
+    this->mDerivedQuantityNames.push_back("C_F");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("C_T");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("drag");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     this->mDerivedQuantityNames.push_back("amt__X");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
@@ -470,19 +479,10 @@ void CellwiseOdeSystemInformation<VanLeeuwen2007SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityNames.push_back("amt__Y");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
-    this->mDerivedQuantityNames.push_back("C_F");
-    this->mDerivedQuantityUnits.push_back("non-dim");
-
     this->mDerivedQuantityNames.push_back("amt__C_F");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
-    this->mDerivedQuantityNames.push_back("C_T");
-    this->mDerivedQuantityUnits.push_back("non-dim");
-
     this->mDerivedQuantityNames.push_back("amt__C_T");
-    this->mDerivedQuantityUnits.push_back("non-dim");
-
-    this->mDerivedQuantityNames.push_back("drag");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("amt__drag");

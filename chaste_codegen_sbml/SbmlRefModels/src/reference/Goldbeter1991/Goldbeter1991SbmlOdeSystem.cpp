@@ -29,17 +29,17 @@ std::vector<double> Goldbeter1991SbmlOdeSystem::ComputeDerivedQuantities(double 
     std::vector<double> dqs;
     RunModelEquations(time, rY);
 
-    // AMOUNTS
+    // AMOUNT / CONCENTRATION CONVERSIONS
     double amt__C = C * cell; //
     double amt__M = M * cell; //
     double amt__X = X * cell; //
 
     dqs.push_back(cell);
+    dqs.push_back(V1);
+    dqs.push_back(V3);
     dqs.push_back(amt__C);
     dqs.push_back(amt__M);
     dqs.push_back(amt__X);
-    dqs.push_back(V1);
-    dqs.push_back(V3);
 
     return dqs;
 }
@@ -257,6 +257,12 @@ void CellwiseOdeSystemInformation<Goldbeter1991SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityNames.push_back("cell");
     this->mDerivedQuantityUnits.push_back("volume");
 
+    this->mDerivedQuantityNames.push_back("V1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("V3");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     this->mDerivedQuantityNames.push_back("amt__C");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
@@ -264,12 +270,6 @@ void CellwiseOdeSystemInformation<Goldbeter1991SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("amt__X");
-    this->mDerivedQuantityUnits.push_back("non-dim");
-
-    this->mDerivedQuantityNames.push_back("V1");
-    this->mDerivedQuantityUnits.push_back("non-dim");
-
-    this->mDerivedQuantityNames.push_back("V3");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     // PARAMETERS

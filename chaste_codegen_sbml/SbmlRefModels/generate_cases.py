@@ -137,6 +137,12 @@ def generate_semantic_cases(
                     key, value = line.strip().split(":")
                     settings[key.strip()] = value.strip()
 
+        # Skip cases that define no time course to simulate. Flux-balance / steady-state
+        # cases (e.g. 01186) leave start, duration and steps blank in settings.txt.
+        if any(not settings.get(key, "").strip() for key in ("start", "duration", "steps")):
+            logger.warning(f"Skipping semantic {case_}: no start/duration/steps in settings")
+            continue
+
         test_params["settings"] = settings
 
         # Load results from results file

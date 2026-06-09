@@ -9,6 +9,7 @@ NON_DIM_UNITS = "non-dim"
 
 PREFIX_SEP = "__"
 AMOUNT_PREFIX = "amt"
+CONCENTRATION_PREFIX = "conc"
 CHASTE_PREFIX = "chaste"
 INITIAL_ASSIGNMENT_PREFIX = "ia"
 
@@ -19,8 +20,8 @@ DERIVATIVE_SUFFIX = "_dt"
 class EquationType(Enum):
     """Enumeration of equation types for code generation."""
 
-    AMOUNT = 0
-    ASSIGNMENT_RULE = 1
+    ASSIGNMENT_RULE = 0
+    CONVERSION = 1
     DERIVATIVE = 2
     INITIAL_ASSIGNMENT = 3
     INITIAL_VALUE = 4
@@ -38,13 +39,12 @@ class EventType(Enum):
 class VarType(Enum):
     """Enumeration of variable types in SBML models."""
 
-    AMOUNT = 0
-    DERIVED_QUANTITY = 1
-    FUNCTION = 2
-    PARAMETER = 3
-    REACTION = 4
-    STATE_VARIABLE = 5
-    UNKNOWN = 6
+    DERIVED_QUANTITY = 0
+    FUNCTION = 1
+    PARAMETER = 2
+    REACTION = 3
+    STATE_VARIABLE = 4
+    UNKNOWN = 5
 
 
 class ModelType(Enum):

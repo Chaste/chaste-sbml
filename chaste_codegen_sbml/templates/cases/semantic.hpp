@@ -1,6 +1,7 @@
 #ifndef {{ test_header_guard }}
 #define {{ test_header_guard }}
 
+#include <algorithm>
 #include <cmath>
 #include <string>
 #include <vector>
@@ -9,6 +10,7 @@
 
 #include "CvodeAdaptor.hpp"
 #include "OdeSolution.hpp"
+#include "SbmlTestOdeSolution.hpp"
 #include "SbmlTestHelpers.hpp"
 
 #include "{{ ode_class_name }}.hpp"
@@ -26,7 +28,7 @@ public:
         try
         {
             {{ ode_class_name }} ode_system;
-            OdeSolution ode_solution;
+            SbmlTestOdeSolution ode_solution;
 
             CvodeAdaptor solver;
             solver.CheckForStoppingEvents();
@@ -36,37 +38,61 @@ public:
             double duration = {{ test_settings["duration"] }};
             double steps = {{ test_settings["steps"] }};
 
-            double end = start + duration;
             double sampling = duration / steps;
             double timestep = sampling / 10.0;
 
-            // Solve
-            std::vector<double> initial_conditions = ode_system.GetInitialConditions();
-            ode_solution = solver.Solve(&ode_system, initial_conditions, start, end, timestep, sampling);
+            // Solve to each sample-grid point in turn. An event stops the integration early and
+            // is applied, but only grid points are recorded - so the solution stays aligned with
+            // the expected grid even when an event fires between grid points. Consecutive Solve
+            // calls that start where the previous one ended reuse CVODE's state (no reset), so
+            // continuity is preserved within a segment; CVODE is reset only after an event.
+            // RecordPoint also stores the parameters at each grid point, so event-modified
+            // parameters are time-resolved.
+            const double grid_tol = sampling * 1e-6;
+            const unsigned num_steps = static_cast<unsigned>(steps + 0.5);
 
-            while (solver.StoppingEventOccurred() && ode_solution.rGetTimes().back() < end)
+            std::vector<double> y = ode_system.GetInitialConditions();
+            ode_solution.RecordPoint(start, y, &ode_system);
+
+            double current = start;
+            for (unsigned k = 1; k <= num_steps; k++)
             {
-                // Get state at stopping time
-                std::vector<double> state_at_event = ode_solution.rGetSolutions().back();
-                double time_at_event = ode_solution.rGetTimes().back();
+                double target = start + k * sampling;
+                bool event_at_target = false;
 
-                // Update ODE system
-                ode_system.SetStateVariables(state_at_event);
-                ode_system.AdjustParameters(time_at_event);
+                while (current < target - grid_tol)
+                {
+                    OdeSolution segment = solver.Solve(&ode_system, y, current, target, timestep, target - current);
+                    solver.SetForceReset(false); // chained Solves continue without re-initialising
+                    y = segment.rGetSolutions().back();
+                    double reached = segment.rGetTimes().back();
 
-                // Continue solve
-                start = time_at_event;
-                end = start + (duration - (time_at_event - 0));
-                initial_conditions = ode_system.GetStateVariables();
+                    if (solver.StoppingEventOccurred() && reached < target - grid_tol)
+                    {
+                        // Event before the grid point: apply it and keep integrating to the grid point.
+                        ode_system.SetStateVariables(y);
+                        ode_system.AdjustParameters(reached);
+                        y = ode_system.GetStateVariables();
+                        solver.SetForceReset(true); // event changed the state/parameters: reset CVODE
+                        current = reached;
+                    }
+                    else
+                    {
+                        event_at_target = solver.StoppingEventOccurred();
+                        current = target;
+                    }
+                }
 
-                // Force CVODE to reinitialize so BDF history from before the event
-                // does not pollute the first integration step after the restart.
-                solver.SetForceReset(true);
-                OdeSolution next_solution = solver.Solve(&ode_system, initial_conditions, start, end, timestep, sampling);
-                solver.SetForceReset(false);
+                ode_solution.RecordPoint(target, y, &ode_system);
 
-                // Append new solution to existing solution
-                sth::AppendOdeSolution(&ode_solution, &next_solution);
+                if (event_at_target)
+                {
+                    // Event exactly on the grid point: the pre-event value is recorded above, then apply it.
+                    ode_system.SetStateVariables(y);
+                    ode_system.AdjustParameters(target);
+                    y = ode_system.GetStateVariables();
+                    solver.SetForceReset(true);
+                }
             }
 
             ode_solution.CalculateDerivedQuantitiesAndParameters(&ode_system);
@@ -74,6 +100,7 @@ public:
             // Expected results
             std::vector<std::string> expected_result_columns = { {{ test_result_columns }} };
             std::set<std::string> expected_amounts{ {{ test_amounts }} };
+            std::set<std::string> expected_concentrations{ {{ test_concentrations }} };
 
             std::vector<std::vector<double> > expected_result_data = {
                 {{ test_result_data }}
@@ -90,14 +117,28 @@ public:
 
                 if (expected_amounts.find(var_name) != expected_amounts.end())
                 {
-                    // Use amount variable
+                    // Use the amount variable (present for concentration-stored species).
                     if (ode_system.HasAnyVariable("{{ AMOUNT_PREFIX }}{{ PREFIX_SEP }}" + var_name))
                     {
                         var_name = "{{ AMOUNT_PREFIX }}{{ PREFIX_SEP }}" + var_name;
                     }
                 }
+                else if (expected_concentrations.find(var_name) != expected_concentrations.end())
+                {
+                    // Use the concentration variable (present for amount-stored species).
+                    if (ode_system.HasAnyVariable("{{ CONCENTRATION_PREFIX }}{{ PREFIX_SEP }}" + var_name))
+                    {
+                        var_name = "{{ CONCENTRATION_PREFIX }}{{ PREFIX_SEP }}" + var_name;
+                    }
+                }
 
-                std::vector<double> values = ode_solution.GetAnyVariable(var_name);
+                // Parameters changed by events vary in time, but OdeSolution stores only a
+                // single parameter snapshot, so read those from the per-step record instead.
+                const std::vector<std::string>& param_names = ode_system.rGetParameterNames();
+                bool is_parameter = std::find(param_names.begin(), param_names.end(), var_name) != param_names.end();
+                std::vector<double> values = is_parameter
+                    ? ode_solution.GetParameterSeries(var_name, &ode_system)
+                    : ode_solution.GetAnyVariable(var_name);
                 TS_ASSERT_EQUALS(values.size(), expected_result_data.size());
                 for (unsigned i = 0; i < expected_result_data.size(); i++)
                 {
@@ -110,8 +151,8 @@ public:
                 }
             }
 
-            // Exports results to csv
-            sth::ExportCsv("{{ ode_class_name }}.csv", ode_solution, ode_system);
+            // Exports results to csv (with time-resolved parameters)
+            sth::ExportCsv("{{ ode_class_name }}.csv", ode_solution, ode_system, &ode_solution.rGetParametersPerStep());
         }
         catch (Exception& e)
         {
