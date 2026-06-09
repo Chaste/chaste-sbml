@@ -126,6 +126,16 @@ class ChasteSbmlModel:
             doc.printErrors()
             raise ValueError(f"Errors found while reading SBML file: {self._sbml_file}")
 
+        # Flatten hierarchical (comp package) models - composing their submodels into a single
+        # model with flattened submodelId__element names - before any further processing.
+        if doc.getPlugin("comp") is not None:
+            flatten_props = ConversionProperties()
+            flatten_props.addOption("flatten comp", True, "flatten comp")
+            flatten_props.addOption("leave_ports", False)
+            if doc.convert(flatten_props) != LIBSBML_OPERATION_SUCCESS:
+                doc.printErrors()
+                raise ValueError("Errors during comp flattening")
+
         # Run required conversions
         config = ConversionProperties()
         # Sort assignment rules in order of dependence.
