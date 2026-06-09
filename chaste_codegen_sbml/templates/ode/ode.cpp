@@ -111,7 +111,7 @@ void {{ ode_class_name }}::Initialise(double time)
     // {{ eq["var"] }}: {{ eq["label"] }}
     {
 {% for local_parameter in eq["local_parameters"] %}
-        double {{ local_parameter["id"] }} = {{ local_parameter["value"] }};
+        [[maybe_unused]] double {{ local_parameter["id"] }} = {{ local_parameter["value"] }};
 {% endfor %}
         {{ eq["var"] }} = {{ eq["rhs"] }};
     }
@@ -259,7 +259,7 @@ std::vector<double> {{ ode_class_name }}::RunModelEquations(double time, const s
     // {{ eq["var"] }}: {{ eq["label"] }}
     {
 {% for local_parameter in eq["local_parameters"] %}
-        double {{ local_parameter["id"] }} = {{ local_parameter["value"] }};
+        [[maybe_unused]] double {{ local_parameter["id"] }} = {{ local_parameter["value"] }};
 {% endfor %}
         {{ eq["var"] }} = {{ eq["rhs"] }};
     }

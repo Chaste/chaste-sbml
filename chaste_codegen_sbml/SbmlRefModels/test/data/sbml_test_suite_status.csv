@@ -1343,14 +1343,14 @@ test,status,notes
 01342,unsupported,no odes
 01343,unsupported,no odes
 01344,pass,ok
-01345,fail_known,
+01345,pass,ok
 01346,partly_supported,event alignment
 01347,partly_supported,event alignment
 01348,partly_supported,event alignment
 01349,partly_supported,event alignment
-01350,fail_known,
-01351,fail_known,
-01352,fail_known,
+01350,unsupported,algebraic rule
+01351,pass,ok
+01352,pass,ok
 01353,unsupported,no odes
 01354,unsupported,no odes
 01355,unsupported,no odes
@@ -1378,15 +1378,15 @@ test,status,notes
 01377,unsupported,no odes
 01378,unsupported,no odes
 01379,unsupported,no odes
-01380,fail_known,
-01381,fail_known,
+01380,pass,ok
+01381,pass,ok
 01382,partly_supported,event alignment
 01383,partly_supported,event alignment
 01384,partly_supported,event alignment
 01385,partly_supported,event alignment
-01386,fail_known,
-01387,fail_known,
-01388,fail_known,
+01386,unsupported,algebraic rule
+01387,pass,ok
+01388,pass,ok
 01389,partly_supported,
 01390,unsupported,no odes
 01391,unsupported,no odes
@@ -1394,10 +1394,10 @@ test,status,notes
 01393,unsupported,no odes
 01394,unsupported,no odes
 01395,pass,ok
-01396,fail_known,
-01397,fail_known,
+01396,unsupported,fast reaction
+01397,unsupported,fast reaction
 01398,partly_supported,event alignment
-01399,fail_known,
+01399,unsupported,fast reaction
 01400,unsupported,
 01401,unsupported,
 01402,pass,ok
@@ -1457,7 +1457,7 @@ test,status,notes
 01456,pass,ok
 01457,pass,ok
 01458,pass,ok
-01459,fail_known,
+01459,pass,ok
 01460,fail_known,
 01461,unsupported,no odes
 01462,pass,ok
