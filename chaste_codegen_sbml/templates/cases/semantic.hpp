@@ -1,6 +1,7 @@
 #ifndef {{ test_header_guard }}
 #define {{ test_header_guard }}
 
+#include <algorithm>
 #include <cmath>
 #include <string>
 #include <vector>
@@ -9,6 +10,7 @@
 
 #include "CvodeAdaptor.hpp"
 #include "OdeSolution.hpp"
+#include "SbmlTestOdeSolution.hpp"
 #include "SbmlTestHelpers.hpp"
 
 #include "{{ ode_class_name }}.hpp"
@@ -26,7 +28,7 @@ public:
         try
         {
             {{ ode_class_name }} ode_system;
-            OdeSolution ode_solution;
+            SbmlTestOdeSolution ode_solution;
 
             CvodeAdaptor solver;
             solver.CheckForStoppingEvents();
@@ -40,9 +42,12 @@ public:
             double sampling = duration / steps;
             double timestep = sampling / 10.0;
 
-            // Solve
+            // Solve. Each segment is appended via AppendSegment, which also records the
+            // current parameters for every step so that parameters changed by events are
+            // time-resolved (plain OdeSolution keeps only a single parameter snapshot).
             std::vector<double> initial_conditions = ode_system.GetInitialConditions();
-            ode_solution = solver.Solve(&ode_system, initial_conditions, start, end, timestep, sampling);
+            OdeSolution segment = solver.Solve(&ode_system, initial_conditions, start, end, timestep, sampling);
+            ode_solution.AppendSegment(segment, &ode_system);
 
             while (solver.StoppingEventOccurred() && ode_solution.rGetTimes().back() < end)
             {
@@ -66,7 +71,7 @@ public:
                 solver.SetForceReset(false);
 
                 // Append new solution to existing solution
-                sth::AppendOdeSolution(&ode_solution, &next_solution);
+                ode_solution.AppendSegment(next_solution, &ode_system);
             }
 
             ode_solution.CalculateDerivedQuantitiesAndParameters(&ode_system);
@@ -97,7 +102,13 @@ public:
                     }
                 }
 
-                std::vector<double> values = ode_solution.GetAnyVariable(var_name);
+                // Parameters changed by events vary in time, but OdeSolution stores only a
+                // single parameter snapshot, so read those from the per-step record instead.
+                const std::vector<std::string>& param_names = ode_system.rGetParameterNames();
+                bool is_parameter = std::find(param_names.begin(), param_names.end(), var_name) != param_names.end();
+                std::vector<double> values = is_parameter
+                    ? ode_solution.GetParameterSeries(var_name, &ode_system)
+                    : ode_solution.GetAnyVariable(var_name);
                 TS_ASSERT_EQUALS(values.size(), expected_result_data.size());
                 for (unsigned i = 0; i < expected_result_data.size(); i++)
                 {
@@ -110,8 +121,8 @@ public:
                 }
             }
 
-            // Exports results to csv
-            sth::ExportCsv("{{ ode_class_name }}.csv", ode_solution, ode_system);
+            // Exports results to csv (with time-resolved parameters)
+            sth::ExportCsv("{{ ode_class_name }}.csv", ode_solution, ode_system, &ode_solution.rGetParametersPerStep());
         }
         catch (Exception& e)
         {

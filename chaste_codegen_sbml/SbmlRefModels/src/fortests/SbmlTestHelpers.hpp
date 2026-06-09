@@ -50,24 +50,22 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace sbmltesthelpers
 {
-/** Append one OdeSolution to another.
- *
- * @param existing_solution The OdeSolution to append to.
- * @param new_solution The OdeSolution to append from.
- */
-void AppendOdeSolution(OdeSolution* existing_solution, OdeSolution* new_solution);
-
 /** Export results to a CSV file.
  *
- * The first column is time, and subsequent column names are given by var_names.
+ * The first column is time, followed by the state variables, derived quantities and
+ * parameters.
  *
- * @param filename The name of the file to create.
- * @param var_names The names of the variables (for the header row).
- * @param solutions The OdeSolution containing the results.
+ * @param rFilename The name of the file to create.
+ * @param rOdeSolution The OdeSolution containing the results.
+ * @param rOdeSystem The ODE system (for variable names and derived quantities).
+ * @param pParamsPerStep Optional time-resolved parameter values (one row per time step,
+ *        as recorded by SbmlTestOdeSolution). When null the parameters are written from the
+ *        system's single current snapshot, repeated on every row.
  */
-void ExportCsv(const std::string& filename,
-               OdeSolution& ode_solution,
-               AbstractOdeSystem& ode_system);
+void ExportCsv(const std::string& rFilename,
+               OdeSolution& rOdeSolution,
+               AbstractOdeSystem& rOdeSystem,
+               const std::vector<std::vector<double> >* pParamsPerStep = nullptr);
 
 /** Calculate the maximum of a vector of doubles.
  * @param vec The vector of doubles.
