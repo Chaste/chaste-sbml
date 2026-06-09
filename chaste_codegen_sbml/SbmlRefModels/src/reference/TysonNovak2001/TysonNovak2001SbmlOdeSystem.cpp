@@ -57,21 +57,21 @@ std::vector<double> TysonNovak2001SbmlOdeSystem::ComputeDerivedQuantities(double
     double conc__SK = SK / cell;         //
 
     dqs.push_back(cell);
-    dqs.push_back(conc__CycBt);
     dqs.push_back(CycB);
+    dqs.push_back(Trimer);
+    dqs.push_back(Mad);
+    dqs.push_back(TF);
+    dqs.push_back(conc__CycBt);
     dqs.push_back(conc__CycB);
     dqs.push_back(conc__Cdc20a);
-    dqs.push_back(Trimer);
     dqs.push_back(conc__Trimer);
     dqs.push_back(conc__Cdh1);
     dqs.push_back(conc__m);
     dqs.push_back(conc__Cdc20t);
     dqs.push_back(conc__IEP);
-    dqs.push_back(Mad);
     dqs.push_back(conc__Mad);
     dqs.push_back(conc__CKIt);
     dqs.push_back(conc__SK);
-    dqs.push_back(TF);
 
     return dqs;
 }
@@ -473,19 +473,25 @@ void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityNames.push_back("cell");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
-    this->mDerivedQuantityNames.push_back("conc__CycBt");
+    this->mDerivedQuantityNames.push_back("CycB");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
-    this->mDerivedQuantityNames.push_back("CycB");
+    this->mDerivedQuantityNames.push_back("Trimer");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Mad");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("TF");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__CycBt");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("conc__CycB");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("conc__Cdc20a");
-    this->mDerivedQuantityUnits.push_back("non-dim");
-
-    this->mDerivedQuantityNames.push_back("Trimer");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("conc__Trimer");
@@ -503,9 +509,6 @@ void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityNames.push_back("conc__IEP");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
-    this->mDerivedQuantityNames.push_back("Mad");
-    this->mDerivedQuantityUnits.push_back("non-dim");
-
     this->mDerivedQuantityNames.push_back("conc__Mad");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
@@ -513,9 +516,6 @@ void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("conc__SK");
-    this->mDerivedQuantityUnits.push_back("non-dim");
-
-    this->mDerivedQuantityNames.push_back("TF");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     // PARAMETERS

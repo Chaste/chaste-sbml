@@ -37,13 +37,13 @@ std::vector<double> Gardner1998SbmlOdeSystem::ComputeDerivedQuantities(double ti
     double amt__Z = Z * Cell; //
 
     dqs.push_back(Cell);
+    dqs.push_back(V1);
+    dqs.push_back(V3);
     dqs.push_back(amt__C);
     dqs.push_back(amt__X);
     dqs.push_back(amt__M);
     dqs.push_back(amt__Y);
     dqs.push_back(amt__Z);
-    dqs.push_back(V1);
-    dqs.push_back(V3);
 
     return dqs;
 }
@@ -354,6 +354,12 @@ void CellwiseOdeSystemInformation<Gardner1998SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityNames.push_back("Cell");
     this->mDerivedQuantityUnits.push_back("volume");
 
+    this->mDerivedQuantityNames.push_back("V1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("V3");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     this->mDerivedQuantityNames.push_back("amt__C");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
@@ -367,12 +373,6 @@ void CellwiseOdeSystemInformation<Gardner1998SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("amt__Z");
-    this->mDerivedQuantityUnits.push_back("non-dim");
-
-    this->mDerivedQuantityNames.push_back("V1");
-    this->mDerivedQuantityUnits.push_back("non-dim");
-
-    this->mDerivedQuantityNames.push_back("V3");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     // PARAMETERS

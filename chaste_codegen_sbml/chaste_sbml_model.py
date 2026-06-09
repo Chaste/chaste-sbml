@@ -1509,6 +1509,18 @@ class ChasteSbmlModel:
         """
         return self._variable_types.get(var_id, VarType.UNKNOWN)
 
+    def _order_derived_quantities(self) -> None:
+        """Order derived quantities so the amount/concentration conversions come last.
+
+        The conversions (amt__/conc__) are added while processing species, interleaved with
+        the other derived quantities. Moving them to the end keeps the model-intrinsic derived
+        quantities at stable, contiguous indices. The sort is stable, so the relative order
+        within each group is preserved; indices are then renumbered to match.
+        """
+        self._derived_quantities.sort(key=lambda dq: dq["is_conversion"])
+        for index, dq in enumerate(self._derived_quantities):
+            dq["index"] = index
+
     def _populate_template_vars(self) -> None:
         """Populate the template variables for generating C++ code."""
         template_vars: dict[str, "Any"] = dict(
@@ -1581,6 +1593,7 @@ class ChasteSbmlModel:
         self._format_events()
 
         self._format_equations()
+        self._order_derived_quantities()
 
         self._populate_template_vars()
 

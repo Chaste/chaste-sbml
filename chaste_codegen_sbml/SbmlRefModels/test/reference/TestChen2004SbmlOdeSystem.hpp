@@ -509,16 +509,11 @@ public:
             "F"
         };
 
-        // Indices of the above (non-conversion) derived quantities; the conc__ concentration
-        // conversions added for amount-only species are interleaved between them.
-        std::vector<unsigned> dq_indices = {
-            0, 1, 3, 11, 14, 20, 24, 27, 30, 33, 40, 43, 45, 48, 52, 56, 61, 65, 70, 73,
-            74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92
-        };
-
+        // The conc__ concentration conversions (added for amount-only species) come after
+        // these model-intrinsic derived quantities, so the latter keep contiguous indices.
         for (unsigned i = 0; i < dq_names.size(); i++)
         {
-            TSM_ASSERT_EQUALS(dq_names[i].c_str(), ode_system.GetDerivedQuantityIndex(dq_names[i]), dq_indices[i]);
+            TSM_ASSERT_EQUALS(dq_names[i].c_str(), ode_system.GetDerivedQuantityIndex(dq_names[i]), i);
         }
 
         // Compare derived quantities with Tellurium values
@@ -569,7 +564,7 @@ public:
 
         for (unsigned i = 0; i < dq_names.size(); i++)
         {
-            TSM_ASSERT_DELTA(dq_names[i].c_str(), dqs[dq_indices[i]], dqs_expected[i], 1e-3);
+            TSM_ASSERT_DELTA(dq_names[i].c_str(), dqs[i], dqs_expected[i], 1e-3);
         }
     }
 

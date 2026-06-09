@@ -351,19 +351,21 @@ public:
         }
 
         // Check derived quantities
+        // The conc__ concentration conversions (added for amount-only species) come after
+        // these model-intrinsic derived quantities, so the latter keep contiguous indices.
         TS_ASSERT_EQUALS(ode_system.GetNumberOfDerivedQuantities(), NUM_DERIVED_QUANTITIES);
         TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("cell"), 0u);
-        TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("CycB"), 2u);
-        TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("Trimer"), 5u);
-        TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("Mad"), 11u);
-        TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("TF"), 15u);
+        TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("CycB"), 1u);
+        TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("Trimer"), 2u);
+        TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("Mad"), 3u);
+        TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("TF"), 4u);
         std::vector<double> derived_quantities = ode_system.ComputeDerivedQuantities(0.0, default_initial_conditions);
         TS_ASSERT_EQUALS(derived_quantities.size(), NUM_DERIVED_QUANTITIES);
-        TS_ASSERT_DELTA(derived_quantities[0], 1.000, 1e-3);           // cell
-        TS_ASSERT_DELTA(derived_quantities[2], 0.001, 1e-3);          // CycB
-        TS_ASSERT_DELTA(derived_quantities[5], 0.001, 1e-3);          // Trimer
-        TS_ASSERT_DELTA(derived_quantities[11], 1.0, 1e-3);           // Mad
-        TS_ASSERT_DELTA(derived_quantities[15], 2.87174939e-02, 1e-3); // TF
+        TS_ASSERT_DELTA(derived_quantities[0], 1.000, 1e-3);          // cell
+        TS_ASSERT_DELTA(derived_quantities[1], 0.001, 1e-3);          // CycB
+        TS_ASSERT_DELTA(derived_quantities[2], 0.001, 1e-3);          // Trimer
+        TS_ASSERT_DELTA(derived_quantities[3], 1.0, 1e-3);            // Mad
+        TS_ASSERT_DELTA(derived_quantities[4], 2.87174939e-02, 1e-3); // TF
     }
 
     void TestOdeWithChasteSolver()
