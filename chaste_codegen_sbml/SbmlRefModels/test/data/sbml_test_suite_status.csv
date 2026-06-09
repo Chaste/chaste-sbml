@@ -308,15 +308,15 @@ test,status,notes
 00307,pass,ok
 00308,pass,ok
 00309,pass,ok
-00310,fail_known,
-00311,fail_known,
-00312,fail_known,
-00313,fail_known,
-00314,fail_known,
-00315,fail_known,
-00316,fail_known,
-00317,fail_known,
-00318,fail_known,
+00310,pass,ok
+00311,pass,ok
+00312,pass,ok
+00313,pass,ok
+00314,pass,ok
+00315,pass,ok
+00316,pass,ok
+00317,pass,ok
+00318,pass,ok
 00319,pass,ok
 00320,pass,ok
 00321,pass,ok
@@ -924,8 +924,8 @@ test,status,notes
 00923,unsupported,no odes
 00924,unsupported,no odes
 00925,unsupported,no odes
-00926,fail_known,
-00927,fail_known,
+00926,pass,ok
+00927,pass,ok
 00928,pass,ok
 00929,pass,ok
 00930,pass,ok
@@ -1180,8 +1180,8 @@ test,status,notes
 01179,unsupported,no odes
 01180,unsupported,no odes
 01181,unsupported,no odes
-01182,fail_known,
-01183,fail_known,
+01182,pass,ok
+01183,pass,ok
 01184,pass,ok
 01185,pass,ok
 01186,unsupported,flux balance
@@ -1204,7 +1204,7 @@ test,status,notes
 01203,pass,ok
 01204,pass,ok
 01205,pass,ok
-01206,fail_known,
+01206,pass,ok
 01207,pass,ok
 01208,pass,ok
 01209,unsupported,no odes
@@ -1220,9 +1220,9 @@ test,status,notes
 01219,pass,ok
 01220,pass,ok
 01221,pass,ok
-01222,fail_known,
+01222,pass,ok
 01223,pass,ok
-01224,fail_known,
+01224,pass,ok
 01225,pass,ok
 01226,pass,ok
 01227,partly_supported,event alignment
@@ -1231,7 +1231,7 @@ test,status,notes
 01230,unsupported,delay
 01231,pass,ok
 01232,pass,ok
-01233,fail_known,
+01233,pass,ok
 01234,unsupported,no odes
 01235,unsupported,no odes
 01236,unsupported,no odes
@@ -1306,8 +1306,8 @@ test,status,notes
 01305,unsupported,no odes
 01306,unsupported,no odes
 01307,pass,ok
-01308,fail_known,
-01309,fail_known,
+01308,pass,ok
+01309,pass,ok
 01310,unsupported,no odes
 01311,unsupported,no odes
 01312,unsupported,no odes
