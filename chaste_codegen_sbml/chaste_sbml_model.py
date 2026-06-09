@@ -549,6 +549,12 @@ class ChasteSbmlModel:
             :param rxn: The reaction.
             :param add: True if the species reference is a product, False if a reactant.
             """
+            # A boundary-condition species' amount is not changed by reactions (its value is
+            # held constant or set by a rule), so reactions contribute nothing to its ODE.
+            species = self._sbml_model.getSpecies(species_ref.getSpecies())
+            if species is not None and species.getBoundaryCondition():
+                return
+
             rhs = rxn.getId()
 
             # Account for stoichiometry
@@ -596,12 +602,11 @@ class ChasteSbmlModel:
         for var, rhs in odes.items():
             odes[var] = parseL3Formula(f"({rhs})")
 
-        # Extract ODEs from rate rules
+        # Extract ODEs from rate rules. A rate rule fully determines its variable's derivative,
+        # taking precedence over any reaction contribution.
         for rule in self._rate_rules:
             var = rule["var"]
             math = rule["math"]
-            if var in odes:
-                raise ValueError(f"{var} has more than one rate rule and/or reaction.")
             odes[var] = math
 
         if not odes:
