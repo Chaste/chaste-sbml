@@ -35,43 +35,25 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "SbmlTestOdeSolution.hpp"
 
-void SbmlTestOdeSolution::AppendSegment(OdeSolution& rSegment, AbstractOdeSystem* pSystem)
+void SbmlTestOdeSolution::RecordPoint(double time, const std::vector<double>& rY, AbstractOdeSystem* pSystem)
 {
-    // Snapshot the system's current parameters (constant within this segment).
+    if (rGetTimes().empty())
+    {
+        SetOdeSystemInformation(pSystem->GetSystemInformation());
+    }
+
+    // Snapshot the system's current parameters for this point.
     std::vector<double> params(pSystem->GetNumberOfParameters());
     for (unsigned i = 0; i < params.size(); ++i)
     {
         params[i] = pSystem->GetParameter(i);
     }
 
-    std::vector<double>& r_times = rGetTimes();
-    std::vector<std::vector<double> >& r_solutions = rGetSolutions();
+    rGetTimes().push_back(time);
+    rGetSolutions().push_back(rY);
+    mParametersPerStep.push_back(params);
 
-    if (r_times.empty())
-    {
-        // First segment: seed the solution and record one parameter set per step.
-        SetOdeSystemInformation(pSystem->GetSystemInformation());
-        r_times = rSegment.rGetTimes();
-        r_solutions = rSegment.rGetSolutions();
-        mParametersPerStep.assign(r_times.size(), params);
-    }
-    else
-    {
-        // Later segment: drop the duplicated restart point shared with the previous
-        // segment's end, then append the rest.
-        r_times.pop_back();
-        r_solutions.pop_back();
-        mParametersPerStep.pop_back();
-
-        const std::vector<double>& r_seg_times = rSegment.rGetTimes();
-        const std::vector<std::vector<double> >& r_seg_solutions = rSegment.rGetSolutions();
-
-        r_times.insert(r_times.end(), r_seg_times.begin() + 1, r_seg_times.end());
-        r_solutions.insert(r_solutions.end(), r_seg_solutions.begin() + 1, r_seg_solutions.end());
-        mParametersPerStep.insert(mParametersPerStep.end(), r_seg_times.size() - 1, params);
-    }
-
-    SetNumberOfTimeSteps(r_times.size());
+    SetNumberOfTimeSteps(rGetTimes().size());
 }
 
 std::vector<double> SbmlTestOdeSolution::GetParameterSeries(const std::string& rName, AbstractOdeSystem* pSystem) const

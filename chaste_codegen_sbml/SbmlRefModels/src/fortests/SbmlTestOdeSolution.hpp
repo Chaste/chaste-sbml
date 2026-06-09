@@ -51,10 +51,10 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * compartment resized by an event assignment) is therefore reported with its final
  * value at every time step.
  *
- * An SBML model is solved segment by segment, stopping at each event; the parameters
- * are constant within a segment and change (via AdjustParameters) at the boundaries.
- * AppendSegment records the system's current parameters once per step as each segment
- * is appended, so GetParameterSeries can return a genuinely time-resolved series.
+ * An SBML model is solved one sample-grid point at a time, stopping at each event; the
+ * parameters are constant between events and change (via AdjustParameters) at them.
+ * RecordPoint stores the system's current parameters alongside each grid point, so
+ * GetParameterSeries can return a genuinely time-resolved series.
  */
 class SbmlTestOdeSolution : public OdeSolution
 {
@@ -64,15 +64,15 @@ private:
 
 public:
     /**
-     * Append a freshly solved segment, recording the system's current parameter values
-     * for each of the segment's time steps. The first call seeds the solution; later
-     * calls drop the duplicated restart point (shared with the previous segment's end)
-     * before appending, so the times, solutions and per-step parameters stay in step.
+     * Append a single solution point, recording the system's current parameter values for it.
+     * Building the solution one grid point at a time (rather than one segment at a time) keeps
+     * the output on the requested sample grid even when an event fires between grid points.
      *
-     * @param rSegment the solved segment to append
+     * @param time the time of the point
+     * @param rY the state variables at this point
      * @param pSystem the ODE system, queried for its current parameter values
      */
-    void AppendSegment(OdeSolution& rSegment, AbstractOdeSystem* pSystem);
+    void RecordPoint(double time, const std::vector<double>& rY, AbstractOdeSystem* pSystem);
 
     /**
      * @param rName the parameter name

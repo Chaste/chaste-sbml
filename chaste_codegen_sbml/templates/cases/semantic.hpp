@@ -38,40 +38,61 @@ public:
             double duration = {{ test_settings["duration"] }};
             double steps = {{ test_settings["steps"] }};
 
-            double end = start + duration;
             double sampling = duration / steps;
             double timestep = sampling / 10.0;
 
-            // Solve. Each segment is appended via AppendSegment, which also records the
-            // current parameters for every step so that parameters changed by events are
-            // time-resolved (plain OdeSolution keeps only a single parameter snapshot).
-            std::vector<double> initial_conditions = ode_system.GetInitialConditions();
-            OdeSolution segment = solver.Solve(&ode_system, initial_conditions, start, end, timestep, sampling);
-            ode_solution.AppendSegment(segment, &ode_system);
+            // Solve to each sample-grid point in turn. An event stops the integration early and
+            // is applied, but only grid points are recorded - so the solution stays aligned with
+            // the expected grid even when an event fires between grid points. Consecutive Solve
+            // calls that start where the previous one ended reuse CVODE's state (no reset), so
+            // continuity is preserved within a segment; CVODE is reset only after an event.
+            // RecordPoint also stores the parameters at each grid point, so event-modified
+            // parameters are time-resolved.
+            const double grid_tol = sampling * 1e-6;
+            const unsigned num_steps = static_cast<unsigned>(steps + 0.5);
 
-            while (solver.StoppingEventOccurred() && ode_solution.rGetTimes().back() < end)
+            std::vector<double> y = ode_system.GetInitialConditions();
+            ode_solution.RecordPoint(start, y, &ode_system);
+
+            double current = start;
+            for (unsigned k = 1; k <= num_steps; k++)
             {
-                // Get state at stopping time
-                std::vector<double> state_at_event = ode_solution.rGetSolutions().back();
-                double time_at_event = ode_solution.rGetTimes().back();
+                double target = start + k * sampling;
+                bool event_at_target = false;
 
-                // Update ODE system
-                ode_system.SetStateVariables(state_at_event);
-                ode_system.AdjustParameters(time_at_event);
+                while (current < target - grid_tol)
+                {
+                    OdeSolution segment = solver.Solve(&ode_system, y, current, target, timestep, target - current);
+                    solver.SetForceReset(false); // chained Solves continue without re-initialising
+                    y = segment.rGetSolutions().back();
+                    double reached = segment.rGetTimes().back();
 
-                // Continue solve
-                start = time_at_event;
-                end = start + (duration - (time_at_event - 0));
-                initial_conditions = ode_system.GetStateVariables();
+                    if (solver.StoppingEventOccurred() && reached < target - grid_tol)
+                    {
+                        // Event before the grid point: apply it and keep integrating to the grid point.
+                        ode_system.SetStateVariables(y);
+                        ode_system.AdjustParameters(reached);
+                        y = ode_system.GetStateVariables();
+                        solver.SetForceReset(true); // event changed the state/parameters: reset CVODE
+                        current = reached;
+                    }
+                    else
+                    {
+                        event_at_target = solver.StoppingEventOccurred();
+                        current = target;
+                    }
+                }
 
-                // Force CVODE to reinitialize so BDF history from before the event
-                // does not pollute the first integration step after the restart.
-                solver.SetForceReset(true);
-                OdeSolution next_solution = solver.Solve(&ode_system, initial_conditions, start, end, timestep, sampling);
-                solver.SetForceReset(false);
+                ode_solution.RecordPoint(target, y, &ode_system);
 
-                // Append new solution to existing solution
-                ode_solution.AppendSegment(next_solution, &ode_system);
+                if (event_at_target)
+                {
+                    // Event exactly on the grid point: the pre-event value is recorded above, then apply it.
+                    ode_system.SetStateVariables(y);
+                    ode_system.AdjustParameters(target);
+                    y = ode_system.GetStateVariables();
+                    solver.SetForceReset(true);
+                }
             }
 
             ode_solution.CalculateDerivedQuantitiesAndParameters(&ode_system);
