@@ -61,9 +61,10 @@ class TestTysonNovak2001SbmlOdeSystem : public AbstractCellBasedTestSuite
 {
 private:
     const unsigned ODE_SIZE = 8u;
-    const unsigned NUM_DERIVED_QUANTITIES = 16u;
-    // Derived quantities collected/checked by the solver runs below (the conc__ concentration
-    // conversions are part of NUM_DERIVED_QUANTITIES but are not checked here).
+    const unsigned NUM_DERIVED_QUANTITIES = 36u;
+    // Derived quantities collected/checked by the solver runs below (the reaction fluxes and
+    // conc__ concentration conversions are part of NUM_DERIVED_QUANTITIES but are not checked
+    // here).
     const unsigned NUM_OUTPUT_DERIVED_QUANTITIES = 5u;
 
     std::vector<double> default_initial_conditions = {
@@ -351,8 +352,9 @@ public:
         }
 
         // Check derived quantities
-        // The conc__ concentration conversions (added for amount-only species) come after
-        // these model-intrinsic derived quantities, so the latter keep contiguous indices.
+        // The reaction fluxes and the conc__ concentration conversions (added for amount-only
+        // species) come after these model-intrinsic derived quantities, so the latter keep
+        // contiguous indices.
         TS_ASSERT_EQUALS(ode_system.GetNumberOfDerivedQuantities(), NUM_DERIVED_QUANTITIES);
         TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("cell"), 0u);
         TS_ASSERT_EQUALS(ode_system.GetDerivedQuantityIndex("CycB"), 1u);

@@ -37,6 +37,13 @@ std::vector<double> Goldbeter1991SbmlOdeSystem::ComputeDerivedQuantities(double 
     dqs.push_back(cell);
     dqs.push_back(V1);
     dqs.push_back(V3);
+    dqs.push_back(reaction1);
+    dqs.push_back(reaction2);
+    dqs.push_back(reaction3);
+    dqs.push_back(reaction4);
+    dqs.push_back(reaction5);
+    dqs.push_back(reaction6);
+    dqs.push_back(reaction7);
     dqs.push_back(amt__C);
     dqs.push_back(amt__M);
     dqs.push_back(amt__X);
@@ -261,6 +268,27 @@ void CellwiseOdeSystemInformation<Goldbeter1991SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("V3");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("reaction1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("reaction2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("reaction3");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("reaction4");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("reaction5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("reaction6");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("reaction7");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("amt__C");

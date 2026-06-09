@@ -141,6 +141,100 @@ std::vector<double> Chen2004SbmlOdeSystem::ComputeDerivedQuantities(double time,
     dqs.push_back(Vppc1);
     dqs.push_back(Vppf6);
     dqs.push_back(F);
+    dqs.push_back(Growth);
+    dqs.push_back(Synthesis_of_CLN2);
+    dqs.push_back(Degradation_of_CLN2);
+    dqs.push_back(Synthesis_of_CLB2);
+    dqs.push_back(Degradation_of_CLB2);
+    dqs.push_back(Synthesis_of_CLB5);
+    dqs.push_back(Degradation_of_CLB5);
+    dqs.push_back(Synthesis_of_SIC1);
+    dqs.push_back(Phosphorylation_of_SIC1);
+    dqs.push_back(Dephosphorylation_of_SIC1);
+    dqs.push_back(Fast_Degradation_of_SIC1P);
+    dqs.push_back(Assoc_of_CLB2_and_SIC1);
+    dqs.push_back(Dissoc_of_CLB2SIC1_complex);
+    dqs.push_back(Assoc_of_CLB5_and_SIC1);
+    dqs.push_back(Dissoc_of_CLB5SIC1);
+    dqs.push_back(Phosphorylation_of_C2);
+    dqs.push_back(Dephosphorylation_of_C2P);
+    dqs.push_back(Phosphorylation_of_C5);
+    dqs.push_back(Dephosphorylation_of_C5P);
+    dqs.push_back(Degradation_of_CLB2_in_C2);
+    dqs.push_back(Degradation_of_CLB5_in_C5);
+    dqs.push_back(Degradation_of_SIC1_in_C2P);
+    dqs.push_back(Degradation_of_SIC1P_in_C5P_);
+    dqs.push_back(Degradation_of_CLB2_in_C2P);
+    dqs.push_back(Degradation_of_CLB5_in_C5P);
+    dqs.push_back(CDC6_synthesis);
+    dqs.push_back(Phosphorylation_of_CDC6);
+    dqs.push_back(Dephosphorylation_of_CDC6);
+    dqs.push_back(Degradation_of_CDC6P);
+    dqs.push_back(CLB2CDC6_complex_formation);
+    dqs.push_back(CLB2CDC6_dissociation);
+    dqs.push_back(CLB5CDC6_complex_formation);
+    dqs.push_back(CLB5CDC6_dissociation);
+    dqs.push_back(F2_phosphorylation);
+    dqs.push_back(F2P_dephosphorylation);
+    dqs.push_back(F5_phosphorylation);
+    dqs.push_back(F5P_dephosphorylation);
+    dqs.push_back(CLB2_degradation_in_F2);
+    dqs.push_back(CLB5_degradation_in_F5);
+    dqs.push_back(CDC6_degradation_in_F2P);
+    dqs.push_back(CDC6_degradation_in_F5P);
+    dqs.push_back(CLB2_degradation_in_F2P);
+    dqs.push_back(CLB5_degradation_in_F5P);
+    dqs.push_back(Synthesis_of_SWI5);
+    dqs.push_back(Degradation_of_SWI5);
+    dqs.push_back(Degradation_of_SWI5P);
+    dqs.push_back(Activation_of_SWI5);
+    dqs.push_back(Inactivation_of_SWI5);
+    dqs.push_back(Activation_of_IEP);
+    dqs.push_back(Inactivation_1);
+    dqs.push_back(Synthesis_of_inactive_CDC20);
+    dqs.push_back(Degradation_of_inactiveCDC20);
+    dqs.push_back(Degradation_of_active_CDC20);
+    dqs.push_back(Activation_of_CDC20);
+    dqs.push_back(Inactivation_2);
+    dqs.push_back(CDH1_synthesis);
+    dqs.push_back(CDH1_degradation);
+    dqs.push_back(CDH1i_degradation);
+    dqs.push_back(CDH1i_activation);
+    dqs.push_back(Inactivation_3);
+    dqs.push_back(CDC14_synthesis);
+    dqs.push_back(CDC14_degradation);
+    dqs.push_back(Assoc_with_NET1_to_form_RENT);
+    dqs.push_back(Dissoc_from_RENT);
+    dqs.push_back(Assoc_with_NET1P_to_form_RENTP);
+    dqs.push_back(Dissoc_from_RENP);
+    dqs.push_back(Net1_synthesis);
+    dqs.push_back(Net1_degradation);
+    dqs.push_back(Net1P_degradation);
+    dqs.push_back(NET1_phosphorylation);
+    dqs.push_back(dephosphorylation_1);
+    dqs.push_back(RENT_phosphorylation);
+    dqs.push_back(dephosphorylation_2);
+    dqs.push_back(Degradation_of_NET1_in_RENT);
+    dqs.push_back(Degradation_of_NET1P_in_RENTP);
+    dqs.push_back(Degradation_of_CDC14_in_RENT);
+    dqs.push_back(Degradation_of_CDC14_in_RENTP);
+    dqs.push_back(TEM1_activation);
+    dqs.push_back(inactivation_1);
+    dqs.push_back(CDC15_activation);
+    dqs.push_back(inactivation_2);
+    dqs.push_back(PPX_synthesis);
+    dqs.push_back(degradation_1);
+    dqs.push_back(PDS1_synthesis);
+    dqs.push_back(degradation_2);
+    dqs.push_back(Degradation_of_PDS1_in_PE);
+    dqs.push_back(Assoc_with_ESP1_to_form_PE);
+    dqs.push_back(Disso_from_PE);
+    dqs.push_back(DNA_synthesis);
+    dqs.push_back(Negative_regulation_of_DNA_synthesis);
+    dqs.push_back(Budding);
+    dqs.push_back(Negative_regulation_of_Cell_budding);
+    dqs.push_back(Spindle_formation);
+    dqs.push_back(Spindle_disassembly);
     dqs.push_back(conc__BCK2);
     dqs.push_back(conc__BUB2);
     dqs.push_back(conc__BUD);
@@ -1777,6 +1871,288 @@ void CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("F");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Growth");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Synthesis_of_CLN2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_CLN2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Synthesis_of_CLB2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_CLB2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Synthesis_of_CLB5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_CLB5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Synthesis_of_SIC1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Phosphorylation_of_SIC1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Dephosphorylation_of_SIC1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Fast_Degradation_of_SIC1P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Assoc_of_CLB2_and_SIC1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Dissoc_of_CLB2SIC1_complex");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Assoc_of_CLB5_and_SIC1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Dissoc_of_CLB5SIC1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Phosphorylation_of_C2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Dephosphorylation_of_C2P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Phosphorylation_of_C5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Dephosphorylation_of_C5P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_CLB2_in_C2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_CLB5_in_C5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_SIC1_in_C2P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_SIC1P_in_C5P_");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_CLB2_in_C2P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_CLB5_in_C5P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CDC6_synthesis");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Phosphorylation_of_CDC6");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Dephosphorylation_of_CDC6");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_CDC6P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CLB2CDC6_complex_formation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CLB2CDC6_dissociation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CLB5CDC6_complex_formation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CLB5CDC6_dissociation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("F2_phosphorylation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("F2P_dephosphorylation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("F5_phosphorylation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("F5P_dephosphorylation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CLB2_degradation_in_F2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CLB5_degradation_in_F5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CDC6_degradation_in_F2P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CDC6_degradation_in_F5P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CLB2_degradation_in_F2P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CLB5_degradation_in_F5P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Synthesis_of_SWI5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_SWI5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_SWI5P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Activation_of_SWI5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Inactivation_of_SWI5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Activation_of_IEP");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Inactivation_1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Synthesis_of_inactive_CDC20");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_inactiveCDC20");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_active_CDC20");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Activation_of_CDC20");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Inactivation_2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CDH1_synthesis");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CDH1_degradation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CDH1i_degradation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CDH1i_activation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Inactivation_3");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CDC14_synthesis");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CDC14_degradation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Assoc_with_NET1_to_form_RENT");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Dissoc_from_RENT");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Assoc_with_NET1P_to_form_RENTP");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Dissoc_from_RENP");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Net1_synthesis");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Net1_degradation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Net1P_degradation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("NET1_phosphorylation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("dephosphorylation_1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("RENT_phosphorylation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("dephosphorylation_2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_NET1_in_RENT");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_NET1P_in_RENTP");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_CDC14_in_RENT");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_CDC14_in_RENTP");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("TEM1_activation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("inactivation_1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CDC15_activation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("inactivation_2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("PPX_synthesis");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("degradation_1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("PDS1_synthesis");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("degradation_2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_PDS1_in_PE");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Assoc_with_ESP1_to_form_PE");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Disso_from_PE");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("DNA_synthesis");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Negative_regulation_of_DNA_synthesis");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Budding");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Negative_regulation_of_Cell_budding");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Spindle_formation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Spindle_disassembly");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("conc__BCK2");

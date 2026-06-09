@@ -1319,8 +1319,8 @@ test,status,notes
 01318,unsupported,
 01319,unsupported,
 01320,unsupported,
-01321,fail_known,
-01322,fail_known,
+01321,pass,ok
+01322,pass,ok
 01323,unsupported,no odes
 01324,unsupported,delay
 01325,unsupported,delay
@@ -1342,7 +1342,7 @@ test,status,notes
 01341,unsupported,no odes
 01342,unsupported,no odes
 01343,unsupported,no odes
-01344,fail_known,
+01344,pass,ok
 01345,fail_known,
 01346,partly_supported,event alignment
 01347,partly_supported,event alignment

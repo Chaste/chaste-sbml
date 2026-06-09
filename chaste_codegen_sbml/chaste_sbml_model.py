@@ -294,6 +294,7 @@ class ChasteSbmlModel:
         initial_value: Optional[float],
         units: str = NON_DIM_UNITS,
         is_conversion: bool = False,
+        is_reaction: bool = False,
     ) -> None:
         """Add a derived quantity to the template variables.
 
@@ -303,6 +304,9 @@ class ChasteSbmlModel:
         :param units: The variable units.
         :param is_conversion: True if the derived quantity is an amount/concentration
             conversion (computed in ComputeDerivedQuantities rather than stored as a member).
+        :param is_reaction: True if the derived quantity is a reaction flux exposed as an
+            output. Its member is already declared by the reaction loop, so it is not
+            re-declared, and its variable type stays VarType.REACTION.
         """
         self._derived_quantities.append(
             {
@@ -311,10 +315,12 @@ class ChasteSbmlModel:
                 "index": len(self._derived_quantities),
                 "initial_value": initial_value,
                 "is_conversion": is_conversion,
+                "is_reaction": is_reaction,
                 "units": units,
             }
         )
-        self._variable_types[id_] = VarType.DERIVED_QUANTITY
+        if not is_reaction:
+            self._variable_types[id_] = VarType.DERIVED_QUANTITY
 
     def _add_equation(
         self,
@@ -898,6 +904,12 @@ class ChasteSbmlModel:
             id_ = reaction.getId()
             label = reaction.getName().strip()
             self._add_reaction(id_, label)
+
+            # A reaction's ID denotes its rate (flux), an observable that rules, events and
+            # test outputs can read. Expose it as a derived quantity. The flux member is
+            # already declared and computed by the reaction machinery, so it keeps its
+            # VarType.REACTION type and is not re-declared (is_reaction=True).
+            self._add_derived_quantity(id_, label, None, NON_DIM_UNITS, is_reaction=True)
 
             kinetic_law = reaction.getKineticLaw()
             if kinetic_law is None:
@@ -1515,14 +1527,23 @@ class ChasteSbmlModel:
         return self._variable_types.get(var_id, VarType.UNKNOWN)
 
     def _order_derived_quantities(self) -> None:
-        """Order derived quantities so the amount/concentration conversions come last.
+        """Order derived quantities: normal quantities, then reactions, then conversions.
 
-        The conversions (amt__/conc__) are added while processing species, interleaved with
-        the other derived quantities. Moving them to the end keeps the model-intrinsic derived
-        quantities at stable, contiguous indices. The sort is stable, so the relative order
-        within each group is preserved; indices are then renumbered to match.
+        Reaction fluxes and the amount/concentration conversions (amt__/conc__) are added
+        while processing reactions and species, interleaved with the other derived quantities.
+        Grouping them after the model-intrinsic quantities keeps the latter at stable,
+        contiguous indices. The sort is stable, so the relative order within each group is
+        preserved; indices are then renumbered to match.
         """
-        self._derived_quantities.sort(key=lambda dq: dq["is_conversion"])
+
+        def group(dq: dict) -> int:
+            if dq["is_conversion"]:
+                return 2
+            if dq["is_reaction"]:
+                return 1
+            return 0
+
+        self._derived_quantities.sort(key=group)
         for index, dq in enumerate(self._derived_quantities):
             dq["index"] = index
 

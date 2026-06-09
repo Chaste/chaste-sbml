@@ -39,6 +39,19 @@ std::vector<double> Gardner1998SbmlOdeSystem::ComputeDerivedQuantities(double ti
     dqs.push_back(Cell);
     dqs.push_back(V1);
     dqs.push_back(V3);
+    dqs.push_back(reaction1);
+    dqs.push_back(reaction2);
+    dqs.push_back(reaction3);
+    dqs.push_back(reaction4);
+    dqs.push_back(reaction5);
+    dqs.push_back(reaction6);
+    dqs.push_back(reaction7);
+    dqs.push_back(reaction8);
+    dqs.push_back(reaction9);
+    dqs.push_back(reaction10);
+    dqs.push_back(reaction11);
+    dqs.push_back(reaction12);
+    dqs.push_back(reaction13);
     dqs.push_back(amt__C);
     dqs.push_back(amt__X);
     dqs.push_back(amt__M);
@@ -358,6 +371,45 @@ void CellwiseOdeSystemInformation<Gardner1998SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("V3");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("reaction1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("reaction2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("reaction3");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("reaction4");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("reaction5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("reaction6");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("reaction7");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("reaction8");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("reaction9");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("reaction10");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("reaction11");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("reaction12");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("reaction13");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("amt__C");

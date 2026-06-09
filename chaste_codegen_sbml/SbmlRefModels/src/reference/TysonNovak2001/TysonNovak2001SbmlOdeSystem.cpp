@@ -61,6 +61,26 @@ std::vector<double> TysonNovak2001SbmlOdeSystem::ComputeDerivedQuantities(double
     dqs.push_back(Trimer);
     dqs.push_back(Mad);
     dqs.push_back(TF);
+    dqs.push_back(CycBt_synthesis);
+    dqs.push_back(CycBdegradation);
+    dqs.push_back(CycBdegradationviaCdh1);
+    dqs.push_back(CycBtdegradationviaCdc20a);
+    dqs.push_back(Cdh1synthesis);
+    dqs.push_back(Cdh1degradation);
+    dqs.push_back(Cdc20tsynthesis);
+    dqs.push_back(Cdc20t_deg);
+    dqs.push_back(Cdc20activation);
+    dqs.push_back(Cdc20ainhibition);
+    dqs.push_back(Cdc20adegradation);
+    dqs.push_back(IEPsynthesis);
+    dqs.push_back(IEPdegradation);
+    dqs.push_back(growth);
+    dqs.push_back(CKItsynthesis);
+    dqs.push_back(CKIdegradation);
+    dqs.push_back(CKItphosphorilationviaSK);
+    dqs.push_back(eq_7);
+    dqs.push_back(SKsynthesis);
+    dqs.push_back(SKdegradation);
     dqs.push_back(conc__CycBt);
     dqs.push_back(conc__CycB);
     dqs.push_back(conc__Cdc20a);
@@ -483,6 +503,66 @@ void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("TF");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CycBt_synthesis");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CycBdegradation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CycBdegradationviaCdh1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CycBtdegradationviaCdc20a");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Cdh1synthesis");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Cdh1degradation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Cdc20tsynthesis");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Cdc20t_deg");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Cdc20activation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Cdc20ainhibition");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Cdc20adegradation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("IEPsynthesis");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("IEPdegradation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("growth");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CKItsynthesis");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CKIdegradation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CKItphosphorilationviaSK");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("eq_7");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("SKsynthesis");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("SKdegradation");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("conc__CycBt");
