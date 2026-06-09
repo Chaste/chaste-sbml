@@ -1458,7 +1458,7 @@ test,status,notes
 01457,pass,ok
 01458,pass,ok
 01459,pass,ok
-01460,fail_known,
+01460,pass,ok
 01461,unsupported,no odes
 01462,pass,ok
 01463,pass,ok

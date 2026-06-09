@@ -690,7 +690,7 @@ class ChasteSbmlModel:
         """Convert and sort equations."""
         for eq in self._equations:
             if eq["math"]:
-                eq["rhs"] = self._formula_to_string(eq["math"])
+                eq["rhs"] = self._formula_to_string(eq["math"], eq["local_parameters"])
 
         self._sort_equations()
 
@@ -1284,10 +1284,13 @@ class ChasteSbmlModel:
         for i in range(node.getNumChildren()):
             ChasteSbmlModel._strip_ast_units(node.getChild(i))
 
-    def _formula_to_string(self, math: "ASTNode") -> str:
+    def _formula_to_string(self, math: "ASTNode", local_parameters: Optional[list[dict[str, str]]] = None) -> str:
         """Convert an AST math formula to an equivalent C++ string.
 
         :param math: The AST math formula.
+        :param local_parameters: Local parameters in scope (e.g. a reaction's kinetic-law
+            parameters). These shadow global symbols of the same name and are constant, so
+            ``rateOf`` applied to one is zero.
         :return: The equivalent C++ string.
         """
         unsupported_functions = ["delay"]
@@ -1426,13 +1429,18 @@ class ChasteSbmlModel:
 
         results = re.findall(r"rateOf\(([^)]+)\)", cpp_formula)
         if results:
+            local_param_ids = {param["id"] for param in (local_parameters or [])}
             for var in results:
                 rate = "0.0"
-                var_type = self._get_variable_type(var)
-                if var_type == VarType.STATE_VARIABLE:
-                    i = self._get_variable_index(var)
-                    state_var = self._state_variables[i]
-                    rate = state_var["derivative_id"]
+                # A local parameter shadows any global symbol of the same name and is
+                # constant, so its rate of change is zero. Only fall back to the global
+                # variable when the name is not a local parameter.
+                if var not in local_param_ids:
+                    var_type = self._get_variable_type(var)
+                    if var_type == VarType.STATE_VARIABLE:
+                        i = self._get_variable_index(var)
+                        state_var = self._state_variables[i]
+                        rate = state_var["derivative_id"]
                 cpp_formula = cpp_formula.replace(f"rateOf({var})", rate)
         return cpp_formula
 
