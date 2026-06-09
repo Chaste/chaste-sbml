@@ -29,7 +29,7 @@ std::vector<double> Chen2000SbmlOdeSystem::ComputeDerivedQuantities(double time,
     std::vector<double> dqs;
     RunModelEquations(time, rY);
 
-    // AMOUNTS
+    // AMOUNT / CONCENTRATION CONVERSIONS
 
     dqs.push_back(COMpartment);
     dqs.push_back(Vd_b2);

@@ -46,27 +46,135 @@ std::vector<double> Chen2004SbmlOdeSystem::ComputeDerivedQuantities(double time,
     std::vector<double> dqs;
     RunModelEquations(time, rY);
 
-    // AMOUNTS
+    // AMOUNT / CONCENTRATION CONVERSIONS
+    double conc__BCK2 = BCK2 / cell;       //
+    double conc__BUB2 = BUB2 / cell;       //
+    double conc__BUD = BUD / cell;         //
+    double conc__C2 = C2 / cell;           //
+    double conc__C2P = C2P / cell;         //
+    double conc__C5 = C5 / cell;           //
+    double conc__C5P = C5P / cell;         //
+    double conc__CDC14 = CDC14 / cell;     //
+    double conc__CDC14T = CDC14T / cell;   //
+    double conc__CDC15 = CDC15 / cell;     //
+    double conc__CDC15i = CDC15i / cell;   //
+    double conc__CDC20 = CDC20 / cell;     //
+    double conc__CDC20i = CDC20i / cell;   //
+    double conc__CDC6 = CDC6 / cell;       //
+    double conc__CDC6P = CDC6P / cell;     //
+    double conc__CDC6T = CDC6T / cell;     //
+    double conc__CDH1 = CDH1 / cell;       //
+    double conc__CDH1i = CDH1i / cell;     //
+    double conc__CKIT = CKIT / cell;       //
+    double conc__CLB2 = CLB2 / cell;       //
+    double conc__CLB2T = CLB2T / cell;     //
+    double conc__CLB5 = CLB5 / cell;       //
+    double conc__CLB5T = CLB5T / cell;     //
+    double conc__CLN2 = CLN2 / cell;       //
+    double conc__CLN3 = CLN3 / cell;       //
+    double conc__ESP1 = ESP1 / cell;       //
+    double conc__F2 = F2 / cell;           //
+    double conc__F2P = F2P / cell;         //
+    double conc__F5 = F5 / cell;           //
+    double conc__F5P = F5P / cell;         //
+    double conc__IE = IE / cell;           //
+    double conc__IEP = IEP / cell;         //
+    double conc__LTE1 = LTE1 / cell;       //
+    double conc__MAD2 = MAD2 / cell;       //
+    double conc__MASS = MASS / cell;       //
+    double conc__MCM1 = MCM1 / cell;       //
+    double conc__NET1 = NET1 / cell;       //
+    double conc__NET1P = NET1P / cell;     //
+    double conc__NET1T = NET1T / cell;     //
+    double conc__ORI = ORI / cell;         //
+    double conc__PDS1 = PDS1 / cell;       //
+    double conc__PE = PE / cell;           //
+    double conc__PPX = PPX / cell;         //
+    double conc__RENT = RENT / cell;       //
+    double conc__RENTP = RENTP / cell;     //
+    double conc__SBF = SBF / cell;         //
+    double conc__SIC1 = SIC1 / cell;       //
+    double conc__SIC1P = SIC1P / cell;     //
+    double conc__SIC1T = SIC1T / cell;     //
+    double conc__SPN = SPN / cell;         //
+    double conc__SWI5 = SWI5 / cell;       //
+    double conc__SWI5P = SWI5P / cell;     //
+    double conc__TEM1GDP = TEM1GDP / cell; //
+    double conc__TEM1GTP = TEM1GTP / cell; //
 
     dqs.push_back(cell);
     dqs.push_back(BCK2);
+    dqs.push_back(conc__BCK2);
     dqs.push_back(BUB2);
+    dqs.push_back(conc__BUB2);
+    dqs.push_back(conc__BUD);
+    dqs.push_back(conc__C2);
+    dqs.push_back(conc__C2P);
+    dqs.push_back(conc__C5);
+    dqs.push_back(conc__C5P);
+    dqs.push_back(conc__CDC14);
     dqs.push_back(CDC14T);
+    dqs.push_back(conc__CDC14T);
+    dqs.push_back(conc__CDC15);
     dqs.push_back(CDC15i);
+    dqs.push_back(conc__CDC15i);
+    dqs.push_back(conc__CDC20);
+    dqs.push_back(conc__CDC20i);
+    dqs.push_back(conc__CDC6);
+    dqs.push_back(conc__CDC6P);
     dqs.push_back(CDC6T);
+    dqs.push_back(conc__CDC6T);
+    dqs.push_back(conc__CDH1);
+    dqs.push_back(conc__CDH1i);
     dqs.push_back(CKIT);
+    dqs.push_back(conc__CKIT);
+    dqs.push_back(conc__CLB2);
     dqs.push_back(CLB2T);
+    dqs.push_back(conc__CLB2T);
+    dqs.push_back(conc__CLB5);
     dqs.push_back(CLB5T);
+    dqs.push_back(conc__CLB5T);
+    dqs.push_back(conc__CLN2);
     dqs.push_back(CLN3);
+    dqs.push_back(conc__CLN3);
+    dqs.push_back(conc__ESP1);
+    dqs.push_back(conc__F2);
+    dqs.push_back(conc__F2P);
+    dqs.push_back(conc__F5);
+    dqs.push_back(conc__F5P);
     dqs.push_back(IE);
+    dqs.push_back(conc__IE);
+    dqs.push_back(conc__IEP);
     dqs.push_back(LTE1);
+    dqs.push_back(conc__LTE1);
     dqs.push_back(MAD2);
+    dqs.push_back(conc__MAD2);
+    dqs.push_back(conc__MASS);
     dqs.push_back(MCM1);
+    dqs.push_back(conc__MCM1);
+    dqs.push_back(conc__NET1);
+    dqs.push_back(conc__NET1P);
     dqs.push_back(NET1T);
+    dqs.push_back(conc__NET1T);
+    dqs.push_back(conc__ORI);
+    dqs.push_back(conc__PDS1);
     dqs.push_back(PE);
+    dqs.push_back(conc__PE);
+    dqs.push_back(conc__PPX);
+    dqs.push_back(conc__RENT);
+    dqs.push_back(conc__RENTP);
     dqs.push_back(SBF);
+    dqs.push_back(conc__SBF);
+    dqs.push_back(conc__SIC1);
+    dqs.push_back(conc__SIC1P);
     dqs.push_back(SIC1T);
+    dqs.push_back(conc__SIC1T);
+    dqs.push_back(conc__SPN);
+    dqs.push_back(conc__SWI5);
+    dqs.push_back(conc__SWI5P);
     dqs.push_back(TEM1GDP);
+    dqs.push_back(conc__TEM1GDP);
+    dqs.push_back(conc__TEM1GTP);
     dqs.push_back(D);
     dqs.push_back(mu);
     dqs.push_back(Vdb5);
@@ -1560,55 +1668,217 @@ void CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityNames.push_back("BCK2");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
+    this->mDerivedQuantityNames.push_back("conc__BCK2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     this->mDerivedQuantityNames.push_back("BUB2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__BUB2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__BUD");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__C2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__C2P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__C5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__C5P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__CDC14");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("CDC14T");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
+    this->mDerivedQuantityNames.push_back("conc__CDC14T");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__CDC15");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     this->mDerivedQuantityNames.push_back("CDC15i");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__CDC15i");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__CDC20");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__CDC20i");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__CDC6");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__CDC6P");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("CDC6T");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
+    this->mDerivedQuantityNames.push_back("conc__CDC6T");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__CDH1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__CDH1i");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     this->mDerivedQuantityNames.push_back("CKIT");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__CKIT");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__CLB2");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("CLB2T");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
+    this->mDerivedQuantityNames.push_back("conc__CLB2T");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__CLB5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     this->mDerivedQuantityNames.push_back("CLB5T");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__CLB5T");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__CLN2");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("CLN3");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
+    this->mDerivedQuantityNames.push_back("conc__CLN3");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__ESP1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__F2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__F2P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__F5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__F5P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     this->mDerivedQuantityNames.push_back("IE");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__IE");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__IEP");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("LTE1");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
+    this->mDerivedQuantityNames.push_back("conc__LTE1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     this->mDerivedQuantityNames.push_back("MAD2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__MAD2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__MASS");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("MCM1");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
+    this->mDerivedQuantityNames.push_back("conc__MCM1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__NET1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__NET1P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     this->mDerivedQuantityNames.push_back("NET1T");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__NET1T");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__ORI");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__PDS1");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("PE");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
+    this->mDerivedQuantityNames.push_back("conc__PE");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__PPX");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__RENT");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__RENTP");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     this->mDerivedQuantityNames.push_back("SBF");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__SBF");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__SIC1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__SIC1P");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("SIC1T");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
+    this->mDerivedQuantityNames.push_back("conc__SIC1T");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__SPN");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__SWI5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__SWI5P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     this->mDerivedQuantityNames.push_back("TEM1GDP");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__TEM1GDP");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__TEM1GTP");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("D");

@@ -29,7 +29,7 @@ std::vector<double> Tan2014SbmlOdeSystem::ComputeDerivedQuantities(double time, 
     std::vector<double> dqs;
     RunModelEquations(time, rY);
 
-    // AMOUNTS
+    // AMOUNT / CONCENTRATION CONVERSIONS
     double amt__bcat_cm = bcat_cm * CytosolMembrane;       //
     double amt__ligand_cm = ligand_cm * CytosolMembrane;   //
     double amt__complex_cm = complex_cm * CytosolMembrane; //

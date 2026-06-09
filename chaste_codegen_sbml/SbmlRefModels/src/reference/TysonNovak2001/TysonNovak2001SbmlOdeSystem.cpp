@@ -43,12 +43,34 @@ std::vector<double> TysonNovak2001SbmlOdeSystem::ComputeDerivedQuantities(double
     std::vector<double> dqs;
     RunModelEquations(time, rY);
 
-    // AMOUNTS
+    // AMOUNT / CONCENTRATION CONVERSIONS
+    double conc__CycBt = CycBt / cell;   //
+    double conc__CycB = CycB / cell;     //
+    double conc__Cdc20a = Cdc20a / cell; //
+    double conc__Trimer = Trimer / cell; //
+    double conc__Cdh1 = Cdh1 / cell;     //
+    double conc__m = m / cell;           //
+    double conc__Cdc20t = Cdc20t / cell; //
+    double conc__IEP = IEP / cell;       //
+    double conc__Mad = Mad / cell;       //
+    double conc__CKIt = CKIt / cell;     //
+    double conc__SK = SK / cell;         //
 
     dqs.push_back(cell);
+    dqs.push_back(conc__CycBt);
     dqs.push_back(CycB);
+    dqs.push_back(conc__CycB);
+    dqs.push_back(conc__Cdc20a);
     dqs.push_back(Trimer);
+    dqs.push_back(conc__Trimer);
+    dqs.push_back(conc__Cdh1);
+    dqs.push_back(conc__m);
+    dqs.push_back(conc__Cdc20t);
+    dqs.push_back(conc__IEP);
     dqs.push_back(Mad);
+    dqs.push_back(conc__Mad);
+    dqs.push_back(conc__CKIt);
+    dqs.push_back(conc__SK);
     dqs.push_back(TF);
 
     return dqs;
@@ -451,13 +473,46 @@ void CellwiseOdeSystemInformation<TysonNovak2001SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityNames.push_back("cell");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
+    this->mDerivedQuantityNames.push_back("conc__CycBt");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     this->mDerivedQuantityNames.push_back("CycB");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__CycB");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__Cdc20a");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("Trimer");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
+    this->mDerivedQuantityNames.push_back("conc__Trimer");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__Cdh1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__m");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__Cdc20t");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__IEP");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
     this->mDerivedQuantityNames.push_back("Mad");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__Mad");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__CKIt");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("conc__SK");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("TF");

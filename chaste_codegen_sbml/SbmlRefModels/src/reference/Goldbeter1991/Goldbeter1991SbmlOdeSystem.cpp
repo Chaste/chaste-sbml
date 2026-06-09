@@ -29,7 +29,7 @@ std::vector<double> Goldbeter1991SbmlOdeSystem::ComputeDerivedQuantities(double 
     std::vector<double> dqs;
     RunModelEquations(time, rY);
 
-    // AMOUNTS
+    // AMOUNT / CONCENTRATION CONVERSIONS
     double amt__C = C * cell; //
     double amt__M = M * cell; //
     double amt__X = X * cell; //

@@ -100,6 +100,7 @@ public:
             // Expected results
             std::vector<std::string> expected_result_columns = { {{ test_result_columns }} };
             std::set<std::string> expected_amounts{ {{ test_amounts }} };
+            std::set<std::string> expected_concentrations{ {{ test_concentrations }} };
 
             std::vector<std::vector<double> > expected_result_data = {
                 {{ test_result_data }}
@@ -116,10 +117,18 @@ public:
 
                 if (expected_amounts.find(var_name) != expected_amounts.end())
                 {
-                    // Use amount variable
+                    // Use the amount variable (present for concentration-stored species).
                     if (ode_system.HasAnyVariable("{{ AMOUNT_PREFIX }}{{ PREFIX_SEP }}" + var_name))
                     {
                         var_name = "{{ AMOUNT_PREFIX }}{{ PREFIX_SEP }}" + var_name;
+                    }
+                }
+                else if (expected_concentrations.find(var_name) != expected_concentrations.end())
+                {
+                    // Use the concentration variable (present for amount-stored species).
+                    if (ode_system.HasAnyVariable("{{ CONCENTRATION_PREFIX }}{{ PREFIX_SEP }}" + var_name))
+                    {
+                        var_name = "{{ CONCENTRATION_PREFIX }}{{ PREFIX_SEP }}" + var_name;
                     }
                 }
 

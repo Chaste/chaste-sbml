@@ -31,6 +31,7 @@ from libsbml import (
 
 from ._config import (
     AMOUNT_PREFIX,
+    CONCENTRATION_PREFIX,
     CHASTE_PREFIX,
     DERIVATIVE_PREFIX,
     DERIVATIVE_SUFFIX,
@@ -71,6 +72,7 @@ class ChasteSbmlModel:
         lstrip_blocks=True,
     )
     _jinja_env.globals["AMOUNT_PREFIX"] = AMOUNT_PREFIX
+    _jinja_env.globals["CONCENTRATION_PREFIX"] = CONCENTRATION_PREFIX
     _jinja_env.globals["EquationType"] = EquationType
     _jinja_env.globals["EventType"] = EventType
     _jinja_env.globals["PREFIX_SEP"] = PREFIX_SEP
@@ -169,7 +171,6 @@ class ChasteSbmlModel:
         self._rate_rules = []  # [ { id: str, label: str, ... } ]
         self._state_variables = []  # [ { id: str, label: str, ... } ]
         self._derived_quantities = []  # [ { id: str, label: str, ... } ]
-        self._amounts = []  # [ { id: str, label: str, ... } ]
         self._parameters = []  # [ { id: str, label: str, ... } ]
         self._initial_assignments = []  # [ { id: str, label: str, ... } ]
         self._reactions = []  # [ { id: str, label: str, ... } ]
@@ -245,8 +246,29 @@ class ChasteSbmlModel:
         amt_rhs = f"{species_id} * {compartment_id}"
         amt_math = parseL3Formula(amt_rhs)
 
-        self._add_derived_quantity(amt_id, amt_label, None, amt_units, is_amount=True)
-        self._add_equation(var=amt_id, math=amt_math, eq_type=EquationType.AMOUNT)
+        self._add_derived_quantity(amt_id, amt_label, None, amt_units, is_conversion=True)
+        self._add_equation(var=amt_id, math=amt_math, eq_type=EquationType.CONVERSION)
+
+    def _add_concentration(self, species: "Species") -> None:
+        """Add a concentration derived quantity variable to the template variables.
+
+        For a species stored as an amount (hasOnlySubstanceUnits), the concentration is the
+        amount divided by its compartment size. Mirrors _add_amount and reuses the same
+        conversion machinery (computed in ComputeDerivedQuantities, not stored as a member).
+
+        :param species: The related Species.
+        """
+        species_id = species.getId()
+        compartment_id = species.getCompartment()
+
+        conc_id = CONCENTRATION_PREFIX + PREFIX_SEP + species_id
+        conc_label = f"Concentration of {species_id}"
+        conc_units = NON_DIM_UNITS  # TODO: Use correct units
+        conc_rhs = f"{species_id} / {compartment_id}"
+        conc_math = parseL3Formula(conc_rhs)
+
+        self._add_derived_quantity(conc_id, conc_label, None, conc_units, is_conversion=True)
+        self._add_equation(var=conc_id, math=conc_math, eq_type=EquationType.CONVERSION)
 
     def _add_assignment_rule(self, id_: str, label: str, var: str, math: "ASTNode") -> None:
         """Add an assignment rule to the template variables.
@@ -271,7 +293,7 @@ class ChasteSbmlModel:
         label: str,
         initial_value: Optional[float],
         units: str = NON_DIM_UNITS,
-        is_amount: bool = False,
+        is_conversion: bool = False,
     ) -> None:
         """Add a derived quantity to the template variables.
 
@@ -279,7 +301,8 @@ class ChasteSbmlModel:
         :param label: The variable description.
         :param initial_value: The variable initial value.
         :param units: The variable units.
-        :param is_amount: True if the derived quantity is an amount conversion.
+        :param is_conversion: True if the derived quantity is an amount/concentration
+            conversion (computed in ComputeDerivedQuantities rather than stored as a member).
         """
         self._derived_quantities.append(
             {
@@ -287,7 +310,7 @@ class ChasteSbmlModel:
                 "label": label,
                 "index": len(self._derived_quantities),
                 "initial_value": initial_value,
-                "is_amount": is_amount,
+                "is_conversion": is_conversion,
                 "units": units,
             }
         )
@@ -1096,8 +1119,11 @@ class ChasteSbmlModel:
                     self._add_derived_quantity(species_id, label, initial_value, units)
 
             if not has_only_substance_units:
-                # Add an extra "amount" derived quantity for the species
+                # Concentration species: add an "amount" derived quantity (amount = conc * volume)
                 self._add_amount(species)
+            else:
+                # Amount species: add a "concentration" derived quantity (conc = amount / volume)
+                self._add_concentration(species)
 
     def _convert_infix_operator_to_function_syntax(self, formula: str, operator: str, function_name: str) -> str:
         """Convert infix operator expressions to function syntax.
@@ -1449,12 +1475,7 @@ class ChasteSbmlModel:
         # TODO: Make this more generic
         var_type = self._get_variable_type(id_)
 
-        if var_type == VarType.AMOUNT:
-            for amount in self._amounts:
-                if amount["id"] == id_:
-                    return amount["index"]
-
-        elif var_type == VarType.DERIVED_QUANTITY:
+        if var_type == VarType.DERIVED_QUANTITY:
             for dq in self._derived_quantities:
                 if dq["id"] == id_:
                     return dq["index"]
@@ -1491,7 +1512,6 @@ class ChasteSbmlModel:
     def _populate_template_vars(self) -> None:
         """Populate the template variables for generating C++ code."""
         template_vars: dict[str, "Any"] = dict(
-            amounts=self._amounts,
             assignment_rules=self._assignment_rules,
             derived_quantities=self._derived_quantities,
             equations=self._equations,
@@ -1535,7 +1555,6 @@ class ChasteSbmlModel:
 
         self._state_variables = []
         self._derived_quantities = []
-        self._amounts = []
         self._parameters = []
         self._stoichiometry_variables = []
         self._equations = []
@@ -1602,7 +1621,7 @@ class ChasteSbmlModel:
             EquationType.ASSIGNMENT_RULE,
             EquationType.REACTION,
             EquationType.DERIVATIVE,
-            EquationType.AMOUNT,
+            EquationType.CONVERSION,
             EquationType.UNKNOWN,
         ]
 

@@ -77,9 +77,9 @@ std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, 
 {% if derived_quantities %}
     RunModelEquations(time, rY);
 
-    // AMOUNTS
+    // AMOUNT / CONCENTRATION CONVERSIONS
 {% for eq in equations %}
-{% if ( eq["type"] == EquationType.AMOUNT ) %}
+{% if ( eq["type"] == EquationType.CONVERSION ) %}
     double {{ eq["var"] }} = {{ eq["rhs"] }}; // {{ eq["label"] }}
 {% endif %}
 {% endfor %}
@@ -106,7 +106,7 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
 void {{ ode_class_name }}::Initialise(double time)
 {
 {% for eq in equations %}
-{% if ( eq["type"] != EquationType.AMOUNT ) %}
+{% if ( eq["type"] != EquationType.CONVERSION ) %}
 {% if eq["local_parameters"] %}
     // {{ eq["var"] }}: {{ eq["label"] }}
     {
@@ -254,7 +254,7 @@ std::vector<double> {{ ode_class_name }}::RunModelEquations(double time, const s
 {% endfor %}
 
 {% for eq in equations %}
-{% if ( eq["type"] not in [EquationType.INITIAL_VALUE, EquationType.INITIAL_ASSIGNMENT, EquationType.AMOUNT] ) %}
+{% if ( eq["type"] not in [EquationType.INITIAL_VALUE, EquationType.INITIAL_ASSIGNMENT, EquationType.CONVERSION] ) %}
 {% if eq["local_parameters"] %}
     // {{ eq["var"] }}: {{ eq["label"] }}
     {

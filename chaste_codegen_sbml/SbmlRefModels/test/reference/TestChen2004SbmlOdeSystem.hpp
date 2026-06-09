@@ -66,7 +66,7 @@ class TestChen2004SbmlOdeSystem : public AbstractCellBasedTestSuite
 {
 private:
     const unsigned ODE_SIZE = 36u;
-    const unsigned NUM_DERIVED_QUANTITIES = 39u;
+    const unsigned NUM_DERIVED_QUANTITIES = 93u;
 
     std::vector<double> default_initial_conditions = {
         0.008473,  // BUD
@@ -509,9 +509,16 @@ public:
             "F"
         };
 
-        for (unsigned i = 0; i < NUM_DERIVED_QUANTITIES; i++)
+        // Indices of the above (non-conversion) derived quantities; the conc__ concentration
+        // conversions added for amount-only species are interleaved between them.
+        std::vector<unsigned> dq_indices = {
+            0, 1, 3, 11, 14, 20, 24, 27, 30, 33, 40, 43, 45, 48, 52, 56, 61, 65, 70, 73,
+            74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92
+        };
+
+        for (unsigned i = 0; i < dq_names.size(); i++)
         {
-            TSM_ASSERT_EQUALS(dq_names[i].c_str(), ode_system.GetDerivedQuantityIndex(dq_names[i]), i);
+            TSM_ASSERT_EQUALS(dq_names[i].c_str(), ode_system.GetDerivedQuantityIndex(dq_names[i]), dq_indices[i]);
         }
 
         // Compare derived quantities with Tellurium values
@@ -560,9 +567,9 @@ public:
             0.4586134093959288,   // F
         };
 
-        for (unsigned i = 0; i < NUM_DERIVED_QUANTITIES; i++)
+        for (unsigned i = 0; i < dq_names.size(); i++)
         {
-            TSM_ASSERT_DELTA(dq_names[i].c_str(), dqs[i], dqs_expected[i], 1e-3);
+            TSM_ASSERT_DELTA(dq_names[i].c_str(), dqs[dq_indices[i]], dqs_expected[i], 1e-3);
         }
     }
 

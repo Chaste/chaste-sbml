@@ -29,7 +29,7 @@ std::vector<double> VanLeeuwen2007SbmlOdeSystem::ComputeDerivedQuantities(double
     std::vector<double> dqs;
     RunModelEquations(time, rY);
 
-    // AMOUNTS
+    // AMOUNT / CONCENTRATION CONVERSIONS
     double amt__X = X * cytosolmembraneandnucleus;       //
     double amt__D = D * cytosolmembraneandnucleus;       //
     double amt__C_o = C_o * cytosolmembraneandnucleus;   //
