@@ -198,9 +198,12 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
 
 {% elif ( assignment["type"] == VarType.PARAMETER ) %}
                 // {{ assignment["lhs"] }} = {{ assignment["rhs"] }}
+                // Defer the assignment (do NOT SetParameter here): this runs inside the CVODE
+                // root function, so applying it immediately would change the parameter during
+                // root bracketing - before the solver commits to the event - corrupting the
+                // current segment. AdjustParameters applies it at the committed event point.
                 mEventAdjustedParameters[{{ assignment["index"] }}] = true;
                 mEventAdjustedParameterValues[{{ assignment["index"] }}] = {{ assignment["rhs"] }};
-                SetParameter({{ assignment["index"] }}, {{ assignment["rhs"] }});
 
 {% else %}
                 {{ assignment["lhs"] }} = {{ assignment["rhs"] }}; {# TODO: does this case exist? #}
