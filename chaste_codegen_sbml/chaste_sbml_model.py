@@ -796,6 +796,11 @@ class ChasteSbmlModel:
 
             assignments = []
             for assignment in event.getListOfEventAssignments():
+                # An event assignment with no MathML assigns nothing, leaving its target
+                # unchanged, so skip it rather than dereferencing a null math node.
+                if assignment.getMath() is None:
+                    continue
+
                 lhs = assignment.getVariable()
                 type_ = self._get_variable_type(lhs)
                 index = self._get_variable_index(lhs)

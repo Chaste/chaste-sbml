@@ -1603,7 +1603,7 @@ test,status,notes
 01602,unsupported,no odes
 01603,unsupported,no odes
 01604,unsupported,no odes
-01605,fail_known,
+01605,unsupported,random event execution
 01606,unsupported,flux balance
 01607,unsupported,flux balance
 01608,unsupported,flux balance
