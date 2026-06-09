@@ -584,7 +584,7 @@ void Chen2004SbmlOdeSystem::Initialise(double time)
     Activation_of_CDC20 = Mass_Action_1_222(ka20_p + ka20_p_p * IEP, CDC20i);                          //
     // Inactivation_2:
     {
-        double k = 1.0;
+        [[maybe_unused]] double k = 1.0;
         Inactivation_2 = k * Mass_Action_1_222(MAD2, CDC20);
     }
     CDH1_synthesis = kscdh;                                                                                                                                                                                                                                //
@@ -1411,7 +1411,7 @@ std::vector<double> Chen2004SbmlOdeSystem::RunModelEquations(double time, const 
     Activation_of_CDC20 = Mass_Action_1_222(ka20_p + ka20_p_p * IEP, CDC20i);                          //
     // Inactivation_2:
     {
-        double k = 1.0;
+        [[maybe_unused]] double k = 1.0;
         Inactivation_2 = k * Mass_Action_1_222(MAD2, CDC20);
     }
     CDH1_synthesis = kscdh;                                                                                                                                                                                                                                //
