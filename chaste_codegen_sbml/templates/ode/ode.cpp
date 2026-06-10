@@ -163,17 +163,16 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
     {
         double event_dist = {{ event["distance"] }};
 
-        // The trigger is active exactly when its signed distance is non-negative, matching the
-        // zero-crossing CVODE roots on. Deciding the fire from this (rather than the raw SBML
-        // condition, which for a >=/<= trigger turns true an epsilon before the distance reaches
-        // zero) keeps the fire decision consistent with detection: an event whose crossing lands
-        // on a sample grid point is then not latched as satisfied by an uncommitted evaluation at
-        // the grid point before it can actually be applied. Computed from the unclamped distance.
-{% if event["has_distance"] %}
-        bool triggered = event_dist >= 0.0;
-{% else %}
-        bool triggered = {{ event["trigger"] }};
-{% endif %}
+        // active: the raw SBML trigger condition. detected: the signed distance has reached zero,
+        // the point CVODE roots on. For a >=/<= trigger detected lags active by an epsilon at the
+        // boundary; for a non-relational trigger the distance is a constant >= 0 so detected is
+        // always true and the logic below reduces to the raw condition.
+        // The fire is gated on detected so an event whose crossing lands on a sample grid point is
+        // not latched by an uncommitted evaluation at the grid point before it can be applied. The
+        // satisfied/re-arm state tracks active, so a trigger that is already true at the initial
+        // condition (initialValue=true) stays satisfied and does not spuriously fire.
+        bool active = {{ event["trigger"] }};
+        bool detected = event_dist >= 0.0;
 
         // Suppress an event whose trigger was already active when this Solve segment started
         // (a carried-over trigger) by forcing a large negative distance, so CVODE reports no
@@ -182,7 +181,7 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
         // Using this monotonic per-segment flag rather than the live, in-step-mutated
         // mEventSatisfied keeps the root function stable across CVODE's root bracketing, so an
         // event localizes at its true crossing instead of the integration step endpoint.
-        if (mEventClampActive[{{ event["index"] }}] && triggered)
+        if (mEventClampActive[{{ event["index"] }}] && active)
         {
             event_dist = -(std::abs(event_dist) + 1.0);
         }
@@ -194,9 +193,9 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
         }
 
         // Process the event
-        if (triggered)
+        if (active)
         {
-            if (!mEventSatisfied[{{ event["index"] }}])
+            if (!mEventSatisfied[{{ event["index"] }}] && detected)
             {
                 // The condition is transitioning from false -> true: trigger the event
                 mEventTriggered[{{ event["index"] }}] = true;
@@ -243,7 +242,14 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
 {% endfor %} {# 'for assignment in event["assignments"]' #}
 
             }
-            mEventSatisfied[{{ event["index"] }}] = true;
+            // Latch only once the distance has crossed zero. Until then (active but not yet
+            // detected, i.e. within the epsilon boundary) leave the satisfied state untouched, so
+            // a crossing exactly on a grid point is neither prematurely latched nor, when the
+            // trigger is already true at t=0, re-armed.
+            if (detected)
+            {
+                mEventSatisfied[{{ event["index"] }}] = true;
+            }
         }
         else if (!mEventTriggered[{{ event["index"] }}])
         {
