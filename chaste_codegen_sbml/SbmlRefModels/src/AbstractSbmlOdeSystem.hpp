@@ -74,8 +74,10 @@ private:
         archive & mEventType;
         archive & mEventAdjustedStateVars;
         archive & mEventAdjustedStateValues;
+        archive & mEventAdjustedStatePriority;
         archive & mEventAdjustedParameters;
         archive & mEventAdjustedParameterValues;
+        archive & mEventAdjustedParameterPriority;
     }
 
     /**
@@ -150,8 +152,10 @@ protected:
     std::vector<SbmlEventType> mEventType;
     std::vector<bool> mEventAdjustedStateVars;
     std::vector<double> mEventAdjustedStateValues;
+    std::vector<double> mEventAdjustedStatePriority;
     std::vector<bool> mEventAdjustedParameters;
     std::vector<double> mEventAdjustedParameterValues;
+    std::vector<double> mEventAdjustedParameterPriority;
 
     /**
      * Run the equations governing the model to update state.

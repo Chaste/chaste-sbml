@@ -356,6 +356,7 @@ class ChasteSbmlModel:
         event_type: EventType,
         initial_satisfied: bool = True,
         has_distance: bool = False,
+        priority: Optional[str] = None,
     ) -> None:
         """Add an event to the template variables.
 
@@ -369,6 +370,7 @@ class ChasteSbmlModel:
             so the trigger is "active" exactly when ``distance >= 0``. This keeps the fire decision
             consistent with CVODE's root detection; otherwise (compound/opaque triggers) the raw
             ``trigger`` condition is used.
+        :param priority: The event priority formula, or None if the event has no priority.
         """
         self._events.append(
             {
@@ -380,6 +382,7 @@ class ChasteSbmlModel:
                 "type": event_type,
                 "initial_satisfied": initial_satisfied,
                 "has_distance": has_distance,
+                "priority": priority,
             }
         )
 
@@ -878,8 +881,21 @@ class ChasteSbmlModel:
             # initialValue="true" (the default) means the event won't fire at t=0.
             initial_satisfied = event.getTrigger().getInitialValue()
 
+            # An event priority orders simultaneously-firing events: higher priority executes
+            # first, so a lower-priority event executes last and its assignment wins any conflict.
+            priority = None
+            if event.isSetPriority() and event.getPriority().getMath() is not None:
+                priority = self._formula_to_string(event.getPriority().getMath())
+
             self._add_event(
-                label, trigger_formula, assignments, trigger_distance, event_type, initial_satisfied, has_distance
+                label,
+                trigger_formula,
+                assignments,
+                trigger_distance,
+                event_type,
+                initial_satisfied,
+                has_distance,
+                priority,
             )
 
     def _format_function_definitions(self) -> None:

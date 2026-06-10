@@ -305,10 +305,20 @@ double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::v
                 // The condition is transitioning from false -> true: trigger the event
                 mEventTriggered[0] = true;
 
-                // Adjust relevant state variables and parameters
+                // Adjust relevant state variables and parameters. event_priority orders
+                // simultaneously-firing events: an assignment only overwrites one already made
+                // this firing if its event has lower-or-equal priority, so the lowest-priority
+                // event - which SBML executes last - wins a conflict. Events with no priority use
+                // +inf, reducing to last-writer-wins (the previous behaviour).
+                [[maybe_unused]] double event_priority = std::numeric_limits<double>::max();
                 // m = m / 2.0
-                mEventAdjustedStateVars[3] = true;
-                mEventAdjustedStateValues[3] = m / 2.0;
+                if (!mEventAdjustedStateVars[3]
+                    || event_priority <= mEventAdjustedStatePriority[3])
+                {
+                    mEventAdjustedStateVars[3] = true;
+                    mEventAdjustedStateValues[3] = m / 2.0;
+                    mEventAdjustedStatePriority[3] = event_priority;
+                }
             }
             mEventSatisfied[0] = true;
         }

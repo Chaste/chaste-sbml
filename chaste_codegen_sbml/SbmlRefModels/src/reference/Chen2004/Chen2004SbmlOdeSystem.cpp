@@ -944,10 +944,20 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
                 // The condition is transitioning from false -> true: trigger the event
                 mEventTriggered[0] = true;
 
-                // Adjust relevant state variables and parameters
+                // Adjust relevant state variables and parameters. event_priority orders
+                // simultaneously-firing events: an assignment only overwrites one already made
+                // this firing if its event has lower-or-equal priority, so the lowest-priority
+                // event - which SBML executes last - wins a conflict. Events with no priority use
+                // +inf, reducing to last-writer-wins (the previous behaviour).
+                [[maybe_unused]] double event_priority = std::numeric_limits<double>::max();
                 // ORI = 0.0
-                mEventAdjustedStateVars[25] = true;
-                mEventAdjustedStateValues[25] = 0.0;
+                if (!mEventAdjustedStateVars[25]
+                    || event_priority <= mEventAdjustedStatePriority[25])
+                {
+                    mEventAdjustedStateVars[25] = true;
+                    mEventAdjustedStateValues[25] = 0.0;
+                    mEventAdjustedStatePriority[25] = event_priority;
+                }
             }
             mEventSatisfied[0] = true;
         }
@@ -1005,7 +1015,12 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
                 // The condition is transitioning from false -> true: trigger the event
                 mEventTriggered[1] = true;
 
-                // Adjust relevant state variables and parameters
+                // Adjust relevant state variables and parameters. event_priority orders
+                // simultaneously-firing events: an assignment only overwrites one already made
+                // this firing if its event has lower-or-equal priority, so the lowest-priority
+                // event - which SBML executes last - wins a conflict. Events with no priority use
+                // +inf, reducing to last-writer-wins (the previous behaviour).
+                [[maybe_unused]] double event_priority = std::numeric_limits<double>::max();
                 MAD2 = mad2h;
                 BUB2 = bub2h;
             }
@@ -1065,7 +1080,12 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
                 // The condition is transitioning from false -> true: trigger the event
                 mEventTriggered[2] = true;
 
-                // Adjust relevant state variables and parameters
+                // Adjust relevant state variables and parameters. event_priority orders
+                // simultaneously-firing events: an assignment only overwrites one already made
+                // this firing if its event has lower-or-equal priority, so the lowest-priority
+                // event - which SBML executes last - wins a conflict. Events with no priority use
+                // +inf, reducing to last-writer-wins (the previous behaviour).
+                [[maybe_unused]] double event_priority = std::numeric_limits<double>::max();
                 MAD2 = mad2l;
                 LTE1 = lte1h;
                 BUB2 = bub2l;
@@ -1126,19 +1146,39 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
                 // The condition is transitioning from false -> true: trigger the event
                 mEventTriggered[3] = true;
 
-                // Adjust relevant state variables and parameters
+                // Adjust relevant state variables and parameters. event_priority orders
+                // simultaneously-firing events: an assignment only overwrites one already made
+                // this firing if its event has lower-or-equal priority, so the lowest-priority
+                // event - which SBML executes last - wins a conflict. Events with no priority use
+                // +inf, reducing to last-writer-wins (the previous behaviour).
+                [[maybe_unused]] double event_priority = std::numeric_limits<double>::max();
                 // MASS = F * MASS
-                mEventAdjustedStateVars[22] = true;
-                mEventAdjustedStateValues[22] = F * MASS;
+                if (!mEventAdjustedStateVars[22]
+                    || event_priority <= mEventAdjustedStatePriority[22])
+                {
+                    mEventAdjustedStateVars[22] = true;
+                    mEventAdjustedStateValues[22] = F * MASS;
+                    mEventAdjustedStatePriority[22] = event_priority;
+                }
 
                 LTE1 = lte1l;
                 // BUD = 0.0
-                mEventAdjustedStateVars[0] = true;
-                mEventAdjustedStateValues[0] = 0.0;
+                if (!mEventAdjustedStateVars[0]
+                    || event_priority <= mEventAdjustedStatePriority[0])
+                {
+                    mEventAdjustedStateVars[0] = true;
+                    mEventAdjustedStateValues[0] = 0.0;
+                    mEventAdjustedStatePriority[0] = event_priority;
+                }
 
                 // SPN = 0.0
-                mEventAdjustedStateVars[32] = true;
-                mEventAdjustedStateValues[32] = 0.0;
+                if (!mEventAdjustedStateVars[32]
+                    || event_priority <= mEventAdjustedStatePriority[32])
+                {
+                    mEventAdjustedStateVars[32] = true;
+                    mEventAdjustedStateValues[32] = 0.0;
+                    mEventAdjustedStatePriority[32] = event_priority;
+                }
             }
             mEventSatisfied[3] = true;
         }

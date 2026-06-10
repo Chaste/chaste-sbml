@@ -1167,7 +1167,7 @@ test,status,notes
 01166,pass,ok
 01167,unsupported,no odes
 01168,unsupported,no odes
-01169,partly_supported,conversion factor
+01169,pass,ok
 01170,unsupported,no odes
 01171,unsupported,no odes
 01172,unsupported,no odes
@@ -1265,7 +1265,7 @@ test,status,notes
 01264,pass,ok
 01265,pass,ok
 01266,pass,ok
-01267,partly_supported,event priority
+01267,pass,ok
 01268,unsupported,delay
 01269,unsupported,delay
 01270,unsupported,delay
@@ -1296,7 +1296,7 @@ test,status,notes
 01295,unsupported,delay
 01296,pass,ok
 01297,pass,ok
-01298,partly_supported,event priority
+01298,pass,ok
 01299,unsupported,delay
 01300,unsupported,no odes
 01301,unsupported,no odes
