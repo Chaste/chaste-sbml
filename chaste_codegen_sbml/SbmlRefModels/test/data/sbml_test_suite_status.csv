@@ -775,10 +775,10 @@ test,status,notes
 00774,unsupported,delay
 00775,unsupported,delay
 00776,unsupported,delay
-00777,unsupported,delay
-00778,unsupported,delay
-00779,unsupported,delay
-00780,unsupported,delay
+00777,unsupported,algebraic rule
+00778,unsupported,algebraic rule
+00779,unsupported,algebraic rule
+00780,unsupported,algebraic rule
 00781,pass,ok
 00782,pass,ok
 00783,pass,ok
@@ -931,12 +931,12 @@ test,status,notes
 00930,pass,ok
 00931,pass,ok
 00932,pass,ok
-00933,unsupported,
+00933,unsupported,delay
 00934,pass,ok
 00935,pass,ok
 00936,unsupported,no odes
 00937,unsupported,no odes
-00938,unsupported,
+00938,unsupported,delay
 00939,pass,ok
 00940,unsupported,no odes
 00941,unsupported,no odes
@@ -979,14 +979,14 @@ test,status,notes
 00978,pass,ok
 00979,unsupported,no odes
 00980,unsupported,no odes
-00981,unsupported,
-00982,unsupported,
+00981,unsupported,delay
+00982,unsupported,delay
 00983,unsupported,algebraic rule
-00984,unsupported,
-00985,unsupported,
+00984,unsupported,delay
+00985,unsupported,delay
 00986,unsupported,fast reaction
 00987,unsupported,fast reaction
-00988,unsupported,delay
+00988,unsupported,fast reaction
 00989,pass,ok
 00990,pass,ok
 00991,pass,ok
@@ -1125,7 +1125,7 @@ test,status,notes
 01124,unsupported,no odes
 01125,unsupported,no odes
 01126,unsupported,no odes
-01127,unsupported,no odes
+01127,pass,ok
 01128,unsupported,no odes
 01129,unsupported,no odes
 01130,unsupported,no odes
@@ -1137,16 +1137,16 @@ test,status,notes
 01136,unsupported,no odes
 01137,unsupported,no odes
 01138,unsupported,no odes
-01139,unsupported,no odes
-01140,unsupported,no odes
-01141,unsupported,no odes
-01142,unsupported,no odes
-01143,unsupported,no odes
-01144,unsupported,no odes
-01145,unsupported,no odes
+01139,pass,ok
+01140,pass,ok
+01141,pass,ok
+01142,unsupported,algebraic rule
+01143,pass,ok
+01144,pass,ok
+01145,pass,ok
 01146,unsupported,no odes
 01147,unsupported,no odes
-01148,unsupported,no odes
+01148,pass,ok
 01149,unsupported,no odes
 01150,pass,ok
 01151,pass,ok
@@ -1157,29 +1157,29 @@ test,status,notes
 01156,unsupported,no odes
 01157,unsupported,no odes
 01158,unsupported,no odes
-01159,unsupported,no odes
-01160,unsupported,no odes
-01161,unsupported,no odes
+01159,pass,ok
+01160,pass,ok
+01161,pass,ok
 01162,unsupported,no odes
 01163,pass,ok
-01164,unsupported,no odes
-01165,unsupported,no odes
+01164,pass,ok
+01165,pass,ok
 01166,pass,ok
-01167,unsupported,no odes
-01168,unsupported,no odes
+01167,pass,ok
+01168,pass,ok
 01169,pass,ok
-01170,unsupported,no odes
+01170,pass,ok
 01171,unsupported,no odes
-01172,unsupported,no odes
+01172,pass,ok
 01173,unsupported,no odes
-01174,unsupported,no odes
-01175,unsupported,no odes
-01176,unsupported,no odes
+01174,unsupported,algebraic rule
+01175,pass,ok
+01176,unsupported,delay
 01177,unsupported,no odes
-01178,unsupported,no odes
-01179,unsupported,no odes
-01180,unsupported,no odes
-01181,unsupported,no odes
+01178,pass,ok
+01179,pass,ok
+01180,pass,ok
+01181,pass,ok
 01182,pass,ok
 01183,pass,ok
 01184,pass,ok
@@ -1316,9 +1316,9 @@ test,status,notes
 01315,unsupported,no odes
 01316,unsupported,no odes
 01317,unsupported,no odes
-01318,unsupported,
-01319,unsupported,
-01320,unsupported,
+01318,unsupported,no odes
+01319,unsupported,no odes
+01320,unsupported,delay
 01321,pass,ok
 01322,pass,ok
 01323,unsupported,no odes
@@ -1357,27 +1357,27 @@ test,status,notes
 01356,unsupported,no odes
 01357,unsupported,no odes
 01358,unsupported,no odes
-01359,unsupported,no odes
-01360,unsupported,no odes
-01361,unsupported,no odes
+01359,unsupported,algebraic rule
+01360,pass,ok
+01361,pass,ok
 01362,unsupported,no odes
 01363,unsupported,no odes
 01364,unsupported,no odes
 01365,unsupported,no odes
 01366,unsupported,no odes
 01367,unsupported,no odes
-01368,unsupported,no odes
-01369,unsupported,no odes
-01370,unsupported,no odes
+01368,unsupported,algebraic rule
+01369,pass,ok
+01370,pass,ok
 01371,unsupported,no odes
 01372,unsupported,no odes
 01373,unsupported,no odes
 01374,unsupported,no odes
 01375,unsupported,no odes
 01376,unsupported,no odes
-01377,unsupported,no odes
-01378,unsupported,no odes
-01379,unsupported,no odes
+01377,unsupported,algebraic rule
+01378,pass,ok
+01379,pass,ok
 01380,pass,ok
 01381,pass,ok
 01382,pass,ok
@@ -1398,26 +1398,26 @@ test,status,notes
 01397,unsupported,fast reaction
 01398,unsupported,fast reaction
 01399,unsupported,fast reaction
-01400,unsupported,
-01401,unsupported,
+01400,unsupported,delay
+01401,unsupported,delay
 01402,pass,ok
-01403,unsupported,
-01404,unsupported,
+01403,unsupported,delay
+01404,unsupported,delay
 01405,pass,ok
-01406,unsupported,
-01407,unsupported,
+01406,unsupported,delay
+01407,unsupported,delay
 01408,pass,ok
-01409,unsupported,
-01410,unsupported,
-01411,unsupported,
-01412,unsupported,
-01413,unsupported,
-01414,unsupported,
-01415,unsupported,
-01416,unsupported,
-01417,unsupported,
-01418,unsupported,
-01419,unsupported,
+01409,unsupported,delay
+01410,unsupported,delay
+01411,unsupported,delay
+01412,unsupported,delay
+01413,unsupported,delay
+01414,unsupported,delay
+01415,unsupported,delay
+01416,unsupported,no odes
+01417,unsupported,delay
+01418,unsupported,delay
+01419,unsupported,delay
 01420,pass,ok
 01421,pass,ok
 01422,pass,ok
@@ -1452,7 +1452,7 @@ test,status,notes
 01451,pass,ok
 01452,pass,ok
 01453,pass,ok
-01454,unsupported,
+01454,unsupported,delay
 01455,pass,ok
 01456,pass,ok
 01457,pass,ok
@@ -1466,20 +1466,20 @@ test,status,notes
 01465,pass,ok
 01466,unsupported,no odes
 01467,unsupported,no odes
-01468,unsupported,no odes
-01469,unsupported,no odes
-01470,unsupported,no odes
-01471,unsupported,no odes
-01472,unsupported,no odes
-01473,unsupported,no odes
-01474,unsupported,no odes
-01475,unsupported,no odes
-01476,unsupported,no odes
-01477,unsupported,no odes
+01468,pass,ok
+01469,pass,ok
+01470,pass,ok
+01471,pass,ok
+01472,pass,ok
+01473,pass,ok
+01474,pass,ok
+01475,pass,ok
+01476,pass,ok
+01477,pass,ok
 01478,pass,ok
 01479,unsupported,algebraic rule
-01480,unsupported,
-01481,unsupported,
+01480,unsupported,delay
+01481,unsupported,delay
 01482,unsupported,algebraic rule
 01483,unsupported,algebraic rule
 01484,unsupported,algebraic rule
@@ -1521,10 +1521,10 @@ test,status,notes
 01520,unsupported,delay
 01521,pass,ok
 01522,unsupported,no odes
-01523,unsupported,no odes
-01524,unsupported,no odes
-01525,unsupported,no odes
-01526,unsupported,no odes
+01523,unsupported,delay
+01524,unsupported,delay
+01525,unsupported,delay
+01526,unsupported,delay
 01527,pass,ok
 01528,unsupported,delay
 01529,unsupported,delay
@@ -1532,12 +1532,12 @@ test,status,notes
 01531,partly_supported,clustered events
 01532,unsupported,delay
 01533,unsupported,no odes
-01534,unsupported,
-01535,unsupported,
-01536,unsupported,
-01537,unsupported,
+01534,unsupported,delay
+01535,unsupported,delay
+01536,unsupported,delay
+01537,unsupported,delay
 01538,unsupported,delay
-01539,unsupported,
+01539,unsupported,fast reaction
 01540,pass,ok
 01541,pass,ok
 01542,pass,ok
@@ -1582,21 +1582,21 @@ test,status,notes
 01581,unsupported,delay
 01582,unsupported,delay
 01583,pass,ok
-01584,unsupported,
-01585,unsupported,
-01586,unsupported,
-01587,unsupported,
-01588,unsupported,
-01589,unsupported,
-01590,unsupported,
+01584,unsupported,delay
+01585,unsupported,delay
+01586,unsupported,delay
+01587,unsupported,delay
+01588,unsupported,no odes
+01589,unsupported,algebraic rule
+01590,unsupported,no odes
 01591,unsupported,random event execution
-01592,unsupported,
-01593,unsupported,
-01594,unsupported,
-01595,unsupported,
-01596,unsupported,
-01597,unsupported,
-01598,unsupported,
+01592,unsupported,delay
+01593,unsupported,delay
+01594,unsupported,no odes
+01595,unsupported,no odes
+01596,unsupported,no odes
+01597,unsupported,no odes
+01598,unsupported,no odes
 01599,unsupported,random event execution
 01600,unsupported,no odes
 01601,unsupported,no odes
@@ -1776,7 +1776,7 @@ test,status,notes
 01775,pass,ok
 01776,pass,ok
 01777,pass,ok
-01778,unsupported,no odes
+01778,pass,ok
 01779,unsupported,no odes
 01780,unsupported,no odes
 01781,unsupported,no odes
