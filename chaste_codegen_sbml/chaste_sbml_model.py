@@ -1165,11 +1165,12 @@ class ChasteSbmlModel:
                 if "+" in rhs or "-" in rhs[1:]:
                     rhs = f"({rhs})"
 
-                # The conversion factor relates reaction extent to the change in species
-                # amount, so it multiplies the reaction flux only. Apply it before the dilution
-                # term below: that term conserves amount in a time-varying compartment and is
-                # independent of the conversion factor.
-                if conversion_factor is not None:
+                # The conversion factor relates reaction extent to the change in species amount,
+                # so it multiplies the reaction flux only - not a rate rule, which gives the
+                # species' rate of change directly. Apply it before the dilution term below: that
+                # term conserves amount in a time-varying compartment and is independent of the
+                # conversion factor.
+                if conversion_factor is not None and species_id not in rate_rules:
                     rhs = f"({rhs}) * {conversion_factor}"
 
                 # Add compartment scaling if defined by a reaction

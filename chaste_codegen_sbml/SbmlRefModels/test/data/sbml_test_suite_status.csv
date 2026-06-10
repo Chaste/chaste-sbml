@@ -1664,9 +1664,9 @@ test,status,notes
 01663,unsupported,no odes
 01664,unsupported,no odes
 01665,pass,ok
-01666,fail_unknown,
-01667,fail_unknown,
-01668,fail_unknown,
+01666,pass,ok
+01667,pass,ok
+01668,pass,ok
 01669,pass,ok
 01670,pass,ok
 01671,pass,ok
