@@ -882,7 +882,7 @@ test,status,notes
 00881,pass,ok
 00882,pass,ok
 00883,pass,ok
-00884,partly_supported,event at grid point
+00884,pass,ok
 00885,pass,ok
 00886,unsupported,delay
 00887,unsupported,delay
