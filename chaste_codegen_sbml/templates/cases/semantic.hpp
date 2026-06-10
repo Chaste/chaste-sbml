@@ -134,10 +134,17 @@ public:
 
                 // Parameters changed by events vary in time, but OdeSolution stores only a
                 // single parameter snapshot, so read those from the per-step record instead.
+                // A derived quantity that depends on such a parameter (e.g. amt__X for a
+                // boundary species X changed by an event) must likewise be evaluated with the
+                // per-step parameters restored, not the parameter's final value.
                 const std::vector<std::string>& param_names = ode_system.rGetParameterNames();
+                const std::vector<std::string>& dq_names = ode_system.rGetDerivedQuantityNames();
                 bool is_parameter = std::find(param_names.begin(), param_names.end(), var_name) != param_names.end();
+                bool is_derived = std::find(dq_names.begin(), dq_names.end(), var_name) != dq_names.end();
                 std::vector<double> values = is_parameter
                     ? ode_solution.GetParameterSeries(var_name, &ode_system)
+                    : is_derived
+                    ? ode_solution.GetDerivedQuantitySeries(var_name, &ode_system)
                     : ode_solution.GetAnyVariable(var_name);
                 TS_ASSERT_EQUALS(values.size(), expected_result_data.size());
                 for (unsigned i = 0; i < expected_result_data.size(); i++)

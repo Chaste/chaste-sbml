@@ -1072,8 +1072,12 @@ class ChasteSbmlModel:
                     state_var = self._add_state_variable(species_id, label, initial_value, units)
                     self._add_equation(var=state_var["derivative_id"], math=math, eq_type=EquationType.DERIVATIVE)
                 else:
-                    # Derived quantity
-                    self._add_derived_quantity(species_id, label, initial_value, units)
+                    # Constant boundary species (no rule, non-time-varying compartment): its value
+                    # is fixed except when an event changes it. Model it as a (variable) parameter
+                    # rather than a derived quantity so the value is stored per step (time-resolved
+                    # in the recorded solution) and event assignments go through the deferred
+                    # parameter mechanism instead of mutating a member that is never recorded.
+                    self._add_parameter(species_id, label, initial_value, units)
 
             elif species_id in self._odes:
                 # State variable

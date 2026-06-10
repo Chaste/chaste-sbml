@@ -373,15 +373,15 @@ test,status,notes
 00372,pass,ok
 00373,pass,ok
 00374,pass,ok
-00375,partly_supported,event alignment
+00375,pass,ok
 00376,pass,ok
-00377,partly_supported,event alignment
-00378,partly_supported,event alignment
+00377,pass,ok
+00378,pass,ok
 00379,pass,ok
-00380,partly_supported,event alignment
-00381,partly_supported,event alignment
+00380,pass,ok
+00381,pass,ok
 00382,partly_supported,event alignment
-00383,partly_supported,event alignment
+00383,pass,ok
 00384,pass,ok
 00385,pass,ok
 00386,pass,ok
