@@ -271,6 +271,14 @@ double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::v
     {
         double event_dist = (0.1) - (CycB)-std::numeric_limits<double>::epsilon();
 
+        // The trigger is active exactly when its signed distance is non-negative, matching the
+        // zero-crossing CVODE roots on. Deciding the fire from this (rather than the raw SBML
+        // condition, which for a >=/<= trigger turns true an epsilon before the distance reaches
+        // zero) keeps the fire decision consistent with detection: an event whose crossing lands
+        // on a sample grid point is then not latched as satisfied by an uncommitted evaluation at
+        // the grid point before it can actually be applied. Computed from the unclamped distance.
+        bool triggered = event_dist >= 0.0;
+
         // Suppress an event whose trigger was already active when this Solve segment started
         // (a carried-over trigger) by forcing a large negative distance, so CVODE reports no
         // spurious root at the initial condition. mEventClampActive is frozen at segment start
@@ -278,7 +286,7 @@ double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::v
         // Using this monotonic per-segment flag rather than the live, in-step-mutated
         // mEventSatisfied keeps the root function stable across CVODE's root bracketing, so an
         // event localizes at its true crossing instead of the integration step endpoint.
-        if (mEventClampActive[0] && (CycB < 0.1))
+        if (mEventClampActive[0] && triggered)
         {
             event_dist = -(std::abs(event_dist) + 1.0);
         }
@@ -290,7 +298,7 @@ double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::v
         }
 
         // Process the event
-        if (CycB < 0.1)
+        if (triggered)
         {
             if (!mEventSatisfied[0])
             {

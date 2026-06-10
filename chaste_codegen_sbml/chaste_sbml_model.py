@@ -355,6 +355,7 @@ class ChasteSbmlModel:
         distance: str,
         event_type: EventType,
         initial_satisfied: bool = True,
+        has_distance: bool = False,
     ) -> None:
         """Add an event to the template variables.
 
@@ -364,6 +365,10 @@ class ChasteSbmlModel:
         :param distance: The distance for the event trigger.
         :param event_type: The type of the event (e.g., cell division).
         :param initial_satisfied: Whether the event starts as satisfied (from SBML trigger initialValue).
+        :param has_distance: True if ``distance`` is a real signed distance (a relational trigger),
+            so the trigger is "active" exactly when ``distance >= 0``. This keeps the fire decision
+            consistent with CVODE's root detection; otherwise (compound/opaque triggers) the raw
+            ``trigger`` condition is used.
         """
         self._events.append(
             {
@@ -374,6 +379,7 @@ class ChasteSbmlModel:
                 "distance": distance,
                 "type": event_type,
                 "initial_satisfied": initial_satisfied,
+                "has_distance": has_distance,
             }
         )
 
@@ -734,14 +740,15 @@ class ChasteSbmlModel:
 
             trigger_distance = "1.0"
             node_type = distance_math.getType()
-            if node_type in [
+            has_distance = node_type in [
                 AST_RELATIONAL_LT,
                 AST_RELATIONAL_GT,
                 AST_RELATIONAL_EQ,
                 AST_RELATIONAL_LEQ,
                 AST_RELATIONAL_GEQ,
                 AST_RELATIONAL_NEQ,
-            ]:
+            ]
+            if has_distance:
                 lc = self._formula_to_string(distance_math.getLeftChild())
                 rc = self._formula_to_string(distance_math.getRightChild())
 
@@ -820,7 +827,9 @@ class ChasteSbmlModel:
             # initialValue="true" (the default) means the event won't fire at t=0.
             initial_satisfied = event.getTrigger().getInitialValue()
 
-            self._add_event(label, trigger_formula, assignments, trigger_distance, event_type, initial_satisfied)
+            self._add_event(
+                label, trigger_formula, assignments, trigger_distance, event_type, initial_satisfied, has_distance
+            )
 
     def _format_function_definitions(self) -> None:
         """Add function definitions to template variables."""

@@ -380,7 +380,7 @@ test,status,notes
 00379,pass,ok
 00380,pass,ok
 00381,pass,ok
-00382,partly_supported,event alignment
+00382,partly_supported,event at grid point
 00383,pass,ok
 00384,pass,ok
 00385,pass,ok
@@ -882,7 +882,7 @@ test,status,notes
 00881,pass,ok
 00882,pass,ok
 00883,pass,ok
-00884,partly_supported,event alignment
+00884,partly_supported,event at grid point
 00885,pass,ok
 00886,unsupported,delay
 00887,unsupported,delay
@@ -943,10 +943,10 @@ test,status,notes
 00942,unsupported,no odes
 00943,unsupported,no odes
 00944,pass,ok
-00945,partly_supported,event alignment
-00946,partly_supported,event alignment
-00947,partly_supported,event alignment
-00948,partly_supported,event alignment
+00945,partly_supported,event resizes compartment
+00946,partly_supported,event resizes compartment
+00947,partly_supported,event resizes compartment
+00948,partly_supported,event resizes compartment
 00949,unsupported,no odes
 00950,unsupported,no odes
 00951,unsupported,no odes
@@ -1167,7 +1167,7 @@ test,status,notes
 01166,pass,ok
 01167,unsupported,no odes
 01168,unsupported,no odes
-01169,partly_supported,event alignment
+01169,partly_supported,conversion factor
 01170,unsupported,no odes
 01171,unsupported,no odes
 01172,unsupported,no odes
@@ -1265,7 +1265,7 @@ test,status,notes
 01264,pass,ok
 01265,pass,ok
 01266,pass,ok
-01267,partly_supported,event alignment
+01267,partly_supported,event priority
 01268,unsupported,delay
 01269,unsupported,delay
 01270,unsupported,delay
@@ -1296,7 +1296,7 @@ test,status,notes
 01295,unsupported,delay
 01296,pass,ok
 01297,pass,ok
-01298,partly_supported,event alignment
+01298,partly_supported,event priority
 01299,unsupported,delay
 01300,unsupported,no odes
 01301,unsupported,no odes
@@ -1442,11 +1442,11 @@ test,status,notes
 01441,pass,ok
 01442,pass,ok
 01443,pass,ok
-01444,partly_supported,event alignment
-01445,partly_supported,event alignment
-01446,partly_supported,event alignment
-01447,partly_supported,event alignment
-01448,partly_supported,event alignment
+01444,pass,ok
+01445,pass,ok
+01446,pass,ok
+01447,pass,ok
+01448,pass,ok
 01449,pass,ok
 01450,pass,ok
 01451,pass,ok
