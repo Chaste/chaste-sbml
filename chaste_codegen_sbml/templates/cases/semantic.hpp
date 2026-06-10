@@ -32,11 +32,13 @@ public:
 
             CvodeAdaptor solver;
             solver.CheckForStoppingEvents();
-            // Tighten CVODE's tolerances well below the test tolerances (1e-4). The defaults
+            // Tighten CVODE's tolerances below the test tolerances (1e-4). The defaults
             // (rtol 1e-4) leave an integration error comparable to the test bound, which fails
             // in stiff transients (e.g. case 976, where J = k * S1 / S2 is sensitive to a small
-            // S2). Tighter tolerances only make passing cases more accurate.
-            solver.SetTolerances(1e-7, 1e-9);
+            // S2). Do not go tighter than this: a too-tight tolerance makes CVODE resolve a
+            // discontinuous rate (e.g. case 28's ceil/factorial) differently from the reference
+            // integrator and diverge from it.
+            solver.SetTolerances(1e-6, 1e-8);
 
             // Settings
             double start = {{ test_settings["start"] }};
