@@ -822,6 +822,57 @@ class ChasteSbmlModel:
                     }
                 )
 
+            # An event that resizes a compartment conserves the amount of each concentration
+            # species in it (SBML semantics), so the species' concentration must be rescaled by
+            # old_size / new_size. The codegen tracks such species as concentration, so without
+            # this their amount (concentration * size) would jump with the compartment. Append
+            # compensating assignments; like all event assignments they are evaluated from the
+            # pre-event state, so the compartment id still reads its old size here.
+            compartment_ids = {compartment.getId() for compartment in self._sbml_compartments}
+            explicitly_assigned = {assignment["lhs"] for assignment in assignments}
+            resized = {a["lhs"]: a["rhs"] for a in assignments if a["lhs"] in compartment_ids}
+
+            # A compartment may also be resized indirectly: an assignment rule sets it from a
+            # variable the event assigns (e.g. C = fakeC with the event assigning fakeC). Its new
+            # size is the rule expression with the event's assignments substituted in.
+            event_assignment_math = {
+                ea.getVariable(): ea.getMath()
+                for ea in event.getListOfEventAssignments()
+                if ea.getMath() is not None
+            }
+            assignment_rule_math = {ar["var"]: ar["math"] for ar in self._assignment_rules}
+            for compartment_id, rule_math in assignment_rule_math.items():
+                if compartment_id not in compartment_ids or compartment_id in resized:
+                    continue
+                referenced = set()
+                self._collect_ast_names(rule_math, referenced)
+                if referenced & set(event_assignment_math):
+                    substituted = self._substitute_ast_names(rule_math, event_assignment_math)
+                    resized[compartment_id] = self._formula_to_string(substituted)
+
+            for compartment_id, new_size in resized.items():
+                for species in self._sbml_species:
+                    species_id = species.getId()
+                    if species.getCompartment() != compartment_id or species_id in explicitly_assigned:
+                        continue
+                    has_only_substance_units = (
+                        species.isSetHasOnlySubstanceUnits() and species.getHasOnlySubstanceUnits()
+                    )
+                    species_type = self._get_variable_type(species_id)
+                    # Amount-tracked species need no rescale (their amount is unchanged, and the
+                    # concentration = amount / size follows automatically). Assignment-rule species
+                    # are recomputed each step, so they cannot be assigned here.
+                    if has_only_substance_units or species_type not in (VarType.STATE_VARIABLE, VarType.PARAMETER):
+                        continue
+                    assignments.append(
+                        {
+                            "index": self._get_variable_index(species_id),
+                            "lhs": species_id,
+                            "rhs": f"{species_id} * {compartment_id} / ({new_size})",
+                            "type": species_type,
+                        }
+                    )
+
             # SBML trigger initialValue="false" means the trigger is treated as false just before
             # t=0, allowing the event to fire immediately if the condition is true at t=0.
             # initialValue="true" (the default) means the event won't fire at t=0.
@@ -1287,6 +1338,42 @@ class ChasteSbmlModel:
             operator="^",
             function_name="pow",
         )
+
+    @staticmethod
+    def _collect_ast_names(node: "ASTNode", names: set) -> None:
+        """Recursively collect the identifiers referenced by name in an AST.
+
+        :param node: The root AST node.
+        :param names: A set to accumulate referenced identifiers into.
+        """
+        if node is None:
+            return
+        if node.isName():
+            names.add(node.getName())
+        for i in range(node.getNumChildren()):
+            ChasteSbmlModel._collect_ast_names(node.getChild(i), names)
+
+    @staticmethod
+    def _substitute_ast_names(node: "ASTNode", replacements: dict) -> "ASTNode":
+        """Return a copy of an AST with each named node replaced by a replacement AST.
+
+        :param node: The AST to copy and substitute into.
+        :param replacements: A mapping of identifier to replacement ASTNode.
+        :return: A new ASTNode with the substitutions applied.
+        """
+        if node.isName() and node.getName() in replacements:
+            return replacements[node.getName()].deepCopy()
+        result = node.deepCopy()
+        stack = [result]
+        while stack:
+            current = stack.pop()
+            for i in range(current.getNumChildren()):
+                child = current.getChild(i)
+                if child.isName() and child.getName() in replacements:
+                    current.replaceChild(i, replacements[child.getName()].deepCopy())
+                else:
+                    stack.append(child)
+        return result
 
     @staticmethod
     def _strip_ast_units(node: "ASTNode") -> None:

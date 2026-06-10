@@ -943,10 +943,10 @@ test,status,notes
 00942,unsupported,no odes
 00943,unsupported,no odes
 00944,pass,ok
-00945,partly_supported,event resizes compartment
-00946,partly_supported,event resizes compartment
-00947,partly_supported,event resizes compartment
-00948,partly_supported,event resizes compartment
+00945,pass,ok
+00946,pass,ok
+00947,pass,ok
+00948,pass,ok
 00949,unsupported,no odes
 00950,unsupported,no odes
 00951,unsupported,no odes
