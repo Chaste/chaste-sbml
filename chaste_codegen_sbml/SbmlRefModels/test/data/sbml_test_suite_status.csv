@@ -1525,11 +1525,11 @@ test,status,notes
 01524,unsupported,no odes
 01525,unsupported,no odes
 01526,unsupported,no odes
-01527,fail_known,
+01527,pass,ok
 01528,unsupported,delay
 01529,unsupported,delay
 01530,unsupported,no odes
-01531,fail_known,event detection misses early/clustered events on a monotonic trigger
+01531,fail_known,clustered events
 01532,unsupported,delay
 01533,unsupported,no odes
 01534,unsupported,
@@ -1538,10 +1538,10 @@ test,status,notes
 01537,unsupported,
 01538,unsupported,delay
 01539,unsupported,
-01540,fail_known,
+01540,pass,ok
 01541,pass,ok
-01542,fail_known,
-01543,fail_known,
+01542,pass,ok
+01543,pass,ok
 01544,fail_unknown,
 01545,fail_unknown,
 01546,fail_unknown,

@@ -849,11 +849,15 @@ class ChasteSbmlModel:
                 math = ia.getMath()
                 self._add_initial_assignment(id_, label, var, math)
 
-                # Species reference stoichiometry variables are not in _sbml_parameters,
-                # so _format_parameters won't apply their initial assignments.  Do it here.
+                # Species reference stoichiometry variables are not in _sbml_parameters, so
+                # _format_parameters won't apply their initial assignments.  Do it here. A
+                # variable stoichiometry (driven by a rate rule) is a state variable; its
+                # initial assignment overrides the speciesReference stoichiometry attribute,
+                # and Initialise's SetDefaultInitialCondition then carries it into the ICs.
                 if var not in sbml_param_ids:
                     param_ids = {p["id"] for p in self._parameters}
-                    if var in param_ids:
+                    state_var_ids = {s["id"] for s in self._state_variables}
+                    if var in param_ids or var in state_var_ids:
                         self._add_equation(var=var, math=math, eq_type=EquationType.INITIAL_ASSIGNMENT)
 
     def _format_parameters(self) -> None:
