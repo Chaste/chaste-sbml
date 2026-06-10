@@ -76,40 +76,61 @@ void Goldbeter1991SbmlOdeSystem::Initialise(double time)
     // reaction1:
     {
         [[maybe_unused]] double vi = 0.025;
-        reaction1 = cell * vi;
+        // Qualify with this-> so the assignment targets the reaction member even when a local
+        // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
+        // reaction J1 with a local parameter also named J1).
+        this->reaction1 = cell * vi;
     }
     // reaction2:
     {
         [[maybe_unused]] double kd = 0.01;
-        reaction2 = C * cell * kd;
+        // Qualify with this-> so the assignment targets the reaction member even when a local
+        // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
+        // reaction J1 with a local parameter also named J1).
+        this->reaction2 = C * cell * kd;
     }
     // reaction3:
     {
         [[maybe_unused]] double vd = 0.25;
         [[maybe_unused]] double Kd = 0.02;
-        reaction3 = C * cell * vd * X * std::pow((C + Kd), -1.0);
+        // Qualify with this-> so the assignment targets the reaction member even when a local
+        // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
+        // reaction J1 with a local parameter also named J1).
+        this->reaction3 = C * cell * vd * X * std::pow((C + Kd), -1.0);
     }
     // reaction4:
     {
         [[maybe_unused]] double K1 = 0.005;
-        reaction4 = cell * (1.0 + -1.0 * M) * V1 * std::pow((K1 + -1.0 * M + 1.0), -1.0);
+        // Qualify with this-> so the assignment targets the reaction member even when a local
+        // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
+        // reaction J1 with a local parameter also named J1).
+        this->reaction4 = cell * (1.0 + -1.0 * M) * V1 * std::pow((K1 + -1.0 * M + 1.0), -1.0);
     }
     // reaction5:
     {
         [[maybe_unused]] double V2 = 1.5;
         [[maybe_unused]] double K2 = 0.005;
-        reaction5 = cell * M * V2 * std::pow((K2 + M), -1.0);
+        // Qualify with this-> so the assignment targets the reaction member even when a local
+        // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
+        // reaction J1 with a local parameter also named J1).
+        this->reaction5 = cell * M * V2 * std::pow((K2 + M), -1.0);
     }
     // reaction6:
     {
         [[maybe_unused]] double K3 = 0.005;
-        reaction6 = cell * V3 * (1.0 + -1.0 * X) * std::pow((K3 + -1.0 * X + 1.0), -1.0);
+        // Qualify with this-> so the assignment targets the reaction member even when a local
+        // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
+        // reaction J1 with a local parameter also named J1).
+        this->reaction6 = cell * V3 * (1.0 + -1.0 * X) * std::pow((K3 + -1.0 * X + 1.0), -1.0);
     }
     // reaction7:
     {
         [[maybe_unused]] double K4 = 0.005;
         [[maybe_unused]] double V4 = 0.5;
-        reaction7 = cell * V4 * X * std::pow((K4 + X), -1.0);
+        // Qualify with this-> so the assignment targets the reaction member even when a local
+        // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
+        // reaction J1 with a local parameter also named J1).
+        this->reaction7 = cell * V4 * X * std::pow((K4 + X), -1.0);
     }
     d_C_dt = (reaction1 - reaction2 - reaction3) / cell; //
     d_M_dt = (reaction4 - reaction5) / cell;             //
@@ -178,40 +199,61 @@ std::vector<double> Goldbeter1991SbmlOdeSystem::RunModelEquations(double time, c
     // reaction1:
     {
         [[maybe_unused]] double vi = 0.025;
-        reaction1 = cell * vi;
+        // Qualify with this-> so the assignment targets the reaction member even when a local
+        // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
+        // reaction J1 with a local parameter also named J1).
+        this->reaction1 = cell * vi;
     }
     // reaction2:
     {
         [[maybe_unused]] double kd = 0.01;
-        reaction2 = C * cell * kd;
+        // Qualify with this-> so the assignment targets the reaction member even when a local
+        // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
+        // reaction J1 with a local parameter also named J1).
+        this->reaction2 = C * cell * kd;
     }
     // reaction3:
     {
         [[maybe_unused]] double vd = 0.25;
         [[maybe_unused]] double Kd = 0.02;
-        reaction3 = C * cell * vd * X * std::pow((C + Kd), -1.0);
+        // Qualify with this-> so the assignment targets the reaction member even when a local
+        // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
+        // reaction J1 with a local parameter also named J1).
+        this->reaction3 = C * cell * vd * X * std::pow((C + Kd), -1.0);
     }
     // reaction4:
     {
         [[maybe_unused]] double K1 = 0.005;
-        reaction4 = cell * (1.0 + -1.0 * M) * V1 * std::pow((K1 + -1.0 * M + 1.0), -1.0);
+        // Qualify with this-> so the assignment targets the reaction member even when a local
+        // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
+        // reaction J1 with a local parameter also named J1).
+        this->reaction4 = cell * (1.0 + -1.0 * M) * V1 * std::pow((K1 + -1.0 * M + 1.0), -1.0);
     }
     // reaction5:
     {
         [[maybe_unused]] double V2 = 1.5;
         [[maybe_unused]] double K2 = 0.005;
-        reaction5 = cell * M * V2 * std::pow((K2 + M), -1.0);
+        // Qualify with this-> so the assignment targets the reaction member even when a local
+        // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
+        // reaction J1 with a local parameter also named J1).
+        this->reaction5 = cell * M * V2 * std::pow((K2 + M), -1.0);
     }
     // reaction6:
     {
         [[maybe_unused]] double K3 = 0.005;
-        reaction6 = cell * V3 * (1.0 + -1.0 * X) * std::pow((K3 + -1.0 * X + 1.0), -1.0);
+        // Qualify with this-> so the assignment targets the reaction member even when a local
+        // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
+        // reaction J1 with a local parameter also named J1).
+        this->reaction6 = cell * V3 * (1.0 + -1.0 * X) * std::pow((K3 + -1.0 * X + 1.0), -1.0);
     }
     // reaction7:
     {
         [[maybe_unused]] double K4 = 0.005;
         [[maybe_unused]] double V4 = 0.5;
-        reaction7 = cell * V4 * X * std::pow((K4 + X), -1.0);
+        // Qualify with this-> so the assignment targets the reaction member even when a local
+        // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
+        // reaction J1 with a local parameter also named J1).
+        this->reaction7 = cell * V4 * X * std::pow((K4 + X), -1.0);
     }
     d_C_dt = (reaction1 - reaction2 - reaction3) / cell; //
     d_M_dt = (reaction4 - reaction5) / cell;             //

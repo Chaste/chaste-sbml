@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import sys
+from math import isnan
 from typing import TYPE_CHECKING, Optional
 
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -510,9 +511,15 @@ class ChasteSbmlModel:
         id_ = species_reference.getId()
         label = species_reference.getName().strip()
 
+        # A named speciesReference's stoichiometry defaults to 1 when not explicitly set, so use
+        # getStoichiometry() (which returns that default) as the initial value even when
+        # isSetStoichiometry() is False - as long as it is a real number. Without this a defaulted
+        # stoichiometry stays uninitialised (e.g. case 1800). An L3 variable stoichiometry left
+        # unset reads as NaN; it is initialised by its rule or assignment instead.
         initial_value = None
-        if species_reference.isSetStoichiometry():
-            initial_value = species_reference.getStoichiometry()
+        stoichiometry = species_reference.getStoichiometry()
+        if not isnan(stoichiometry):
+            initial_value = stoichiometry
             math = parseL3Formula(f"{initial_value}")
             self._add_equation(var=id_, math=math, eq_type=EquationType.INITIAL_VALUE)
 

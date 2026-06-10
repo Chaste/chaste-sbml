@@ -113,7 +113,10 @@ void {{ ode_class_name }}::Initialise(double time)
 {% for local_parameter in eq["local_parameters"] %}
         [[maybe_unused]] double {{ local_parameter["id"] }} = {{ local_parameter["value"] }};
 {% endfor %}
-        {{ eq["var"] }} = {{ eq["rhs"] }};
+        // Qualify with this-> so the assignment targets the reaction member even when a local
+        // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
+        // reaction J1 with a local parameter also named J1).
+        this->{{ eq["var"] }} = {{ eq["rhs"] }};
     }
 {% else %}
     {{ eq["var"] }} = {{ eq["rhs"] }};  // {{ eq["label"] }}
@@ -298,7 +301,10 @@ std::vector<double> {{ ode_class_name }}::RunModelEquations(double time, const s
 {% for local_parameter in eq["local_parameters"] %}
         [[maybe_unused]] double {{ local_parameter["id"] }} = {{ local_parameter["value"] }};
 {% endfor %}
-        {{ eq["var"] }} = {{ eq["rhs"] }};
+        // Qualify with this-> so the assignment targets the reaction member even when a local
+        // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
+        // reaction J1 with a local parameter also named J1).
+        this->{{ eq["var"] }} = {{ eq["rhs"] }};
     }
 {% else %}
     {{ eq["var"] }} = {{ eq["rhs"] }};  // {{ eq["label"] }}

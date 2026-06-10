@@ -585,7 +585,10 @@ void Chen2004SbmlOdeSystem::Initialise(double time)
     // Inactivation_2:
     {
         [[maybe_unused]] double k = 1.0;
-        Inactivation_2 = k * Mass_Action_1_222(MAD2, CDC20);
+        // Qualify with this-> so the assignment targets the reaction member even when a local
+        // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
+        // reaction J1 with a local parameter also named J1).
+        this->Inactivation_2 = k * Mass_Action_1_222(MAD2, CDC20);
     }
     CDH1_synthesis = kscdh;                                                                                                                                                                                                                                //
     CDH1_degradation = Mass_Action_1_222(kdcdh, CDH1);                                                                                                                                                                                                     //
@@ -1524,7 +1527,10 @@ std::vector<double> Chen2004SbmlOdeSystem::RunModelEquations(double time, const 
     // Inactivation_2:
     {
         [[maybe_unused]] double k = 1.0;
-        Inactivation_2 = k * Mass_Action_1_222(MAD2, CDC20);
+        // Qualify with this-> so the assignment targets the reaction member even when a local
+        // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
+        // reaction J1 with a local parameter also named J1).
+        this->Inactivation_2 = k * Mass_Action_1_222(MAD2, CDC20);
     }
     CDH1_synthesis = kscdh;                                                                                                                                                                                                                                //
     CDH1_degradation = Mass_Action_1_222(kdcdh, CDH1);                                                                                                                                                                                                     //
