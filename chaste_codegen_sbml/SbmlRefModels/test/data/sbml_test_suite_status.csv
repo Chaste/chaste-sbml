@@ -380,7 +380,7 @@ test,status,notes
 00379,pass,ok
 00380,pass,ok
 00381,pass,ok
-00382,partly_supported,event at grid point
+00382,pass,ok
 00383,pass,ok
 00384,pass,ok
 00385,pass,ok
@@ -974,7 +974,7 @@ test,status,notes
 00973,pass,ok
 00974,pass,ok
 00975,pass,ok
-00976,partly_supported,tolerance
+00976,pass,ok
 00977,pass,ok
 00978,pass,ok
 00979,unsupported,no odes
@@ -1387,7 +1387,7 @@ test,status,notes
 01386,unsupported,algebraic rule
 01387,pass,ok
 01388,pass,ok
-01389,partly_supported,
+01389,pass,ok
 01390,unsupported,no odes
 01391,unsupported,no odes
 01392,unsupported,no odes
