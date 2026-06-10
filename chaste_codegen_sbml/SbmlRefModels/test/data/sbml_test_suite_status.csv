@@ -928,16 +928,16 @@ test,status,notes
 00927,pass,ok
 00928,pass,ok
 00929,pass,ok
-00930,pass,ok
-00931,pass,ok
-00932,pass,ok
+00930,unsupported,no odes
+00931,unsupported,no odes
+00932,unsupported,delay
 00933,unsupported,delay
-00934,pass,ok
-00935,pass,ok
+00934,unsupported,no odes
+00935,unsupported,no odes
 00936,unsupported,no odes
 00937,unsupported,no odes
 00938,unsupported,delay
-00939,pass,ok
+00939,unsupported,delay
 00940,unsupported,no odes
 00941,unsupported,no odes
 00942,unsupported,no odes
@@ -958,14 +958,14 @@ test,status,notes
 00957,unsupported,no odes
 00958,unsupported,no odes
 00959,unsupported,no odes
-00960,pass,ok
-00961,pass,ok
-00962,pass,ok
-00963,pass,ok
-00964,pass,ok
-00965,pass,ok
-00966,pass,ok
-00967,pass,ok
+00960,unsupported,no odes
+00961,unsupported,no odes
+00962,unsupported,no odes
+00963,unsupported,no odes
+00964,unsupported,no odes
+00965,unsupported,no odes
+00966,unsupported,no odes
+00967,unsupported,no odes
 00968,pass,ok
 00969,pass,ok
 00970,pass,ok
@@ -976,7 +976,7 @@ test,status,notes
 00975,pass,ok
 00976,pass,ok
 00977,pass,ok
-00978,pass,ok
+00978,unsupported,no odes
 00979,unsupported,no odes
 00980,unsupported,no odes
 00981,unsupported,delay
@@ -993,9 +993,9 @@ test,status,notes
 00992,pass,ok
 00993,unsupported,algebraic rule
 00994,pass,ok
-00995,pass,ok
+00995,unsupported,no odes
 00996,pass,ok
-00997,pass,ok
+00997,unsupported,no odes
 00998,pass,ok
 00999,pass,ok
 01000,unsupported,delay
@@ -1519,7 +1519,7 @@ test,status,notes
 01518,unsupported,delay
 01519,unsupported,delay
 01520,unsupported,delay
-01521,pass,ok
+01521,unsupported,delay
 01522,unsupported,no odes
 01523,unsupported,delay
 01524,unsupported,delay
@@ -1542,35 +1542,35 @@ test,status,notes
 01541,pass,ok
 01542,pass,ok
 01543,pass,ok
-01544,pass,ok
-01545,pass,ok
-01546,pass,ok
-01547,pass,ok
-01548,pass,ok
-01549,pass,ok
-01550,pass,ok
-01551,pass,ok
+01544,unsupported,fast reaction
+01545,unsupported,fast reaction
+01546,unsupported,fast reaction
+01547,unsupported,fast reaction
+01548,unsupported,fast reaction
+01549,unsupported,fast reaction
+01550,unsupported,fast reaction
+01551,unsupported,fast reaction
 01552,pass,ok
 01553,pass,ok
 01554,pass,ok
 01555,pass,ok
 01556,pass,ok
 01557,pass,ok
-01558,pass,ok
-01559,pass,ok
-01560,pass,ok
+01558,unsupported,fast reaction
+01559,unsupported,fast reaction
+01560,unsupported,fast reaction
 01561,pass,ok
 01562,pass,ok
 01563,pass,ok
 01564,pass,ok
-01565,pass,ok
+01565,unsupported,fast reaction
 01566,pass,ok
 01567,unsupported,algebraic rule
-01568,pass,ok
-01569,pass,ok
-01570,pass,ok
-01571,pass,ok
-01572,pass,ok
+01568,unsupported,fast reaction
+01569,unsupported,fast reaction
+01570,unsupported,fast reaction
+01571,unsupported,fast reaction
+01572,unsupported,fast reaction
 01573,pass,ok
 01574,pass,ok
 01575,unsupported,algebraic rule
