@@ -1391,11 +1391,13 @@ class ChasteSbmlModel:
             "not": "not_",
             "or": "or_",
             "piecewise": "piecewise",
+            "plus": "plus",
             "quotient": "quotient",
             "root": "root",
             "sec": "sec",
             "sech": "sech",
             "sqr": "sqr",
+            "times": "times",
             "xor": "xor_",
         }
 

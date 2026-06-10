@@ -1529,7 +1529,7 @@ test,status,notes
 01528,unsupported,delay
 01529,unsupported,delay
 01530,unsupported,no odes
-01531,fail_unknown,
+01531,fail_known,event detection misses early/clustered events on a monotonic trigger
 01532,unsupported,delay
 01533,unsupported,no odes
 01534,unsupported,
