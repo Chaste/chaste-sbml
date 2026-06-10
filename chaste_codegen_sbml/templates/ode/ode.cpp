@@ -200,50 +200,10 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
         {
             if (!mEventSatisfied[{{ event["index"] }}] && detected)
             {
-                // The condition is transitioning from false -> true: trigger the event
+                // The condition is transitioning from false -> true: trigger the event. The
+                // assignment values are recorded below (not here) so they can be refreshed at the
+                // committed event point.
                 mEventTriggered[{{ event["index"] }}] = true;
-
-                // Adjust relevant state variables and parameters. event_priority orders
-                // simultaneously-firing events: an assignment only overwrites one already made
-                // this firing if its event has lower-or-equal priority, so the lowest-priority
-                // event - which SBML executes last - wins a conflict. Events with no priority use
-                // +inf, reducing to last-writer-wins (the previous behaviour).
-{% if event["priority"] is not none %}
-                [[maybe_unused]] double event_priority = {{ event["priority"] }};
-{% else %}
-                [[maybe_unused]] double event_priority = std::numeric_limits<double>::max();
-{% endif %}
-{% for assignment in event["assignments"] %}
-{% if ( assignment["type"] == VarType.STATE_VARIABLE ) %}
-                // {{ assignment["lhs"] }} = {{ assignment["rhs"] }}
-                if (!mEventAdjustedStateVars[{{ assignment["index"] }}]
-                    || event_priority <= mEventAdjustedStatePriority[{{ assignment["index"] }}])
-                {
-                    mEventAdjustedStateVars[{{ assignment["index"] }}] = true;
-                    mEventAdjustedStateValues[{{ assignment["index"] }}] = {{ assignment["rhs"] }};
-                    mEventAdjustedStatePriority[{{ assignment["index"] }}] = event_priority;
-                }
-
-{% elif ( assignment["type"] == VarType.PARAMETER ) %}
-                // {{ assignment["lhs"] }} = {{ assignment["rhs"] }}
-                // Defer the assignment (do NOT SetParameter here): this runs inside the CVODE
-                // root function, so applying it immediately would change the parameter during
-                // root bracketing - before the solver commits to the event - corrupting the
-                // current segment. AdjustParameters applies it at the committed event point.
-                if (!mEventAdjustedParameters[{{ assignment["index"] }}]
-                    || event_priority <= mEventAdjustedParameterPriority[{{ assignment["index"] }}])
-                {
-                    mEventAdjustedParameters[{{ assignment["index"] }}] = true;
-                    mEventAdjustedParameterValues[{{ assignment["index"] }}] = {{ assignment["rhs"] }};
-                    mEventAdjustedParameterPriority[{{ assignment["index"] }}] = event_priority;
-                }
-
-{% else %}
-                {{ assignment["lhs"] }} = {{ assignment["rhs"] }}; {# TODO: does this case exist? #}
-
-{% endif %}
-{% endfor %} {# 'for assignment in event["assignments"]' #}
-
             }
             // Latch only once the distance has crossed zero. Until then (active but not yet
             // detected, i.e. within the epsilon boundary) leave the satisfied state untouched, so
@@ -265,6 +225,50 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
             // at the next segment's initial condition).
             mEventSatisfied[{{ event["index"] }}] = false;
             mEventClampActive[{{ event["index"] }}] = false;
+        }
+
+        // Record this event's assignments while it has fired this segment - re-evaluated on every
+        // call rather than only at first detection. The assignment is still deferred (applied by
+        // AdjustParameters at the committed point), but recording it here lets the harness re-run
+        // ProcessModelEvents at the localized root before applying, so a state-dependent value
+        // (e.g. a compartment-resize rescale S * C_old / C_new) uses the root state rather than the
+        // integration step where the event was first detected. event_priority orders simultaneous
+        // events: an assignment only overwrites one already recorded this firing if its event has
+        // lower-or-equal priority, so the lowest-priority event - which SBML executes last - wins a
+        // conflict. Events with no priority use +inf, reducing to last-writer-wins.
+        if (mEventTriggered[{{ event["index"] }}])
+        {
+{% if event["priority"] is not none %}
+            [[maybe_unused]] double event_priority = {{ event["priority"] }};
+{% else %}
+            [[maybe_unused]] double event_priority = std::numeric_limits<double>::max();
+{% endif %}
+{% for assignment in event["assignments"] %}
+{% if ( assignment["type"] == VarType.STATE_VARIABLE ) %}
+            // {{ assignment["lhs"] }} = {{ assignment["rhs"] }}
+            if (!mEventAdjustedStateVars[{{ assignment["index"] }}]
+                || event_priority <= mEventAdjustedStatePriority[{{ assignment["index"] }}])
+            {
+                mEventAdjustedStateVars[{{ assignment["index"] }}] = true;
+                mEventAdjustedStateValues[{{ assignment["index"] }}] = {{ assignment["rhs"] }};
+                mEventAdjustedStatePriority[{{ assignment["index"] }}] = event_priority;
+            }
+
+{% elif ( assignment["type"] == VarType.PARAMETER ) %}
+            // {{ assignment["lhs"] }} = {{ assignment["rhs"] }}
+            if (!mEventAdjustedParameters[{{ assignment["index"] }}]
+                || event_priority <= mEventAdjustedParameterPriority[{{ assignment["index"] }}])
+            {
+                mEventAdjustedParameters[{{ assignment["index"] }}] = true;
+                mEventAdjustedParameterValues[{{ assignment["index"] }}] = {{ assignment["rhs"] }};
+                mEventAdjustedParameterPriority[{{ assignment["index"] }}] = event_priority;
+            }
+
+{% else %}
+            {{ assignment["lhs"] }} = {{ assignment["rhs"] }}; {# TODO: does this case exist? #}
+
+{% endif %}
+{% endfor %} {# 'for assignment in event["assignments"]' #}
         }
     }
 

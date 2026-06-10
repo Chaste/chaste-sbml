@@ -834,7 +834,7 @@ class ChasteSbmlModel:
             # compensating assignments; like all event assignments they are evaluated from the
             # pre-event state, so the compartment id still reads its old size here.
             compartment_ids = {compartment.getId() for compartment in self._sbml_compartments}
-            explicitly_assigned = {assignment["lhs"] for assignment in assignments}
+            assignment_by_lhs = {assignment["lhs"]: assignment for assignment in assignments}
             resized = {a["lhs"]: a["rhs"] for a in assignments if a["lhs"] in compartment_ids}
 
             # A compartment may also be resized indirectly: an assignment rule sets it from a
@@ -858,7 +858,7 @@ class ChasteSbmlModel:
             for compartment_id, new_size in resized.items():
                 for species in self._sbml_species:
                     species_id = species.getId()
-                    if species.getCompartment() != compartment_id or species_id in explicitly_assigned:
+                    if species.getCompartment() != compartment_id:
                         continue
                     has_only_substance_units = (
                         species.isSetHasOnlySubstanceUnits() and species.getHasOnlySubstanceUnits()
@@ -869,14 +869,24 @@ class ChasteSbmlModel:
                     # are recomputed each step, so they cannot be assigned here.
                     if has_only_substance_units or species_type not in (VarType.STATE_VARIABLE, VarType.PARAMETER):
                         continue
-                    assignments.append(
-                        {
-                            "index": self._get_variable_index(species_id),
-                            "lhs": species_id,
-                            "rhs": f"{species_id} * {compartment_id} / ({new_size})",
-                            "type": species_type,
-                        }
-                    )
+
+                    scale = f"{compartment_id} / ({new_size})"
+                    explicit = assignment_by_lhs.get(species_id)
+                    if explicit is not None:
+                        # The event already assigns this species a concentration. That value is
+                        # taken at the old compartment size, so scale it by old_size / new_size to
+                        # carry the resulting amount across the simultaneous resize.
+                        explicit["rhs"] = f"({explicit['rhs']}) * {scale}"
+                    else:
+                        # The species is otherwise unchanged by the event, so conserve its amount.
+                        assignments.append(
+                            {
+                                "index": self._get_variable_index(species_id),
+                                "lhs": species_id,
+                                "rhs": f"{species_id} * {scale}",
+                                "type": species_type,
+                            }
+                        )
 
             # SBML trigger initialValue="false" means the trigger is treated as false just before
             # t=0, allowing the event to fire immediately if the condition is true at t=0.

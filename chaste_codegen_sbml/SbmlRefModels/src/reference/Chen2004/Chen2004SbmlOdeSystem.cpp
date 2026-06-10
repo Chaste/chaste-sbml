@@ -947,23 +947,10 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
         {
             if (!mEventSatisfied[0] && detected)
             {
-                // The condition is transitioning from false -> true: trigger the event
+                // The condition is transitioning from false -> true: trigger the event. The
+                // assignment values are recorded below (not here) so they can be refreshed at the
+                // committed event point.
                 mEventTriggered[0] = true;
-
-                // Adjust relevant state variables and parameters. event_priority orders
-                // simultaneously-firing events: an assignment only overwrites one already made
-                // this firing if its event has lower-or-equal priority, so the lowest-priority
-                // event - which SBML executes last - wins a conflict. Events with no priority use
-                // +inf, reducing to last-writer-wins (the previous behaviour).
-                [[maybe_unused]] double event_priority = std::numeric_limits<double>::max();
-                // ORI = 0.0
-                if (!mEventAdjustedStateVars[25]
-                    || event_priority <= mEventAdjustedStatePriority[25])
-                {
-                    mEventAdjustedStateVars[25] = true;
-                    mEventAdjustedStateValues[25] = 0.0;
-                    mEventAdjustedStatePriority[25] = event_priority;
-                }
             }
             // Latch only once the distance has crossed zero. Until then (active but not yet
             // detected, i.e. within the epsilon boundary) leave the satisfied state untouched, so
@@ -985,6 +972,28 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
             // at the next segment's initial condition).
             mEventSatisfied[0] = false;
             mEventClampActive[0] = false;
+        }
+
+        // Record this event's assignments while it has fired this segment - re-evaluated on every
+        // call rather than only at first detection. The assignment is still deferred (applied by
+        // AdjustParameters at the committed point), but recording it here lets the harness re-run
+        // ProcessModelEvents at the localized root before applying, so a state-dependent value
+        // (e.g. a compartment-resize rescale S * C_old / C_new) uses the root state rather than the
+        // integration step where the event was first detected. event_priority orders simultaneous
+        // events: an assignment only overwrites one already recorded this firing if its event has
+        // lower-or-equal priority, so the lowest-priority event - which SBML executes last - wins a
+        // conflict. Events with no priority use +inf, reducing to last-writer-wins.
+        if (mEventTriggered[0])
+        {
+            [[maybe_unused]] double event_priority = std::numeric_limits<double>::max();
+            // ORI = 0.0
+            if (!mEventAdjustedStateVars[25]
+                || event_priority <= mEventAdjustedStatePriority[25])
+            {
+                mEventAdjustedStateVars[25] = true;
+                mEventAdjustedStateValues[25] = 0.0;
+                mEventAdjustedStatePriority[25] = event_priority;
+            }
         }
     }
 
@@ -1028,17 +1037,10 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
         {
             if (!mEventSatisfied[1] && detected)
             {
-                // The condition is transitioning from false -> true: trigger the event
+                // The condition is transitioning from false -> true: trigger the event. The
+                // assignment values are recorded below (not here) so they can be refreshed at the
+                // committed event point.
                 mEventTriggered[1] = true;
-
-                // Adjust relevant state variables and parameters. event_priority orders
-                // simultaneously-firing events: an assignment only overwrites one already made
-                // this firing if its event has lower-or-equal priority, so the lowest-priority
-                // event - which SBML executes last - wins a conflict. Events with no priority use
-                // +inf, reducing to last-writer-wins (the previous behaviour).
-                [[maybe_unused]] double event_priority = std::numeric_limits<double>::max();
-                MAD2 = mad2h;
-                BUB2 = bub2h;
             }
             // Latch only once the distance has crossed zero. Until then (active but not yet
             // detected, i.e. within the epsilon boundary) leave the satisfied state untouched, so
@@ -1060,6 +1062,22 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
             // at the next segment's initial condition).
             mEventSatisfied[1] = false;
             mEventClampActive[1] = false;
+        }
+
+        // Record this event's assignments while it has fired this segment - re-evaluated on every
+        // call rather than only at first detection. The assignment is still deferred (applied by
+        // AdjustParameters at the committed point), but recording it here lets the harness re-run
+        // ProcessModelEvents at the localized root before applying, so a state-dependent value
+        // (e.g. a compartment-resize rescale S * C_old / C_new) uses the root state rather than the
+        // integration step where the event was first detected. event_priority orders simultaneous
+        // events: an assignment only overwrites one already recorded this firing if its event has
+        // lower-or-equal priority, so the lowest-priority event - which SBML executes last - wins a
+        // conflict. Events with no priority use +inf, reducing to last-writer-wins.
+        if (mEventTriggered[1])
+        {
+            [[maybe_unused]] double event_priority = std::numeric_limits<double>::max();
+            MAD2 = mad2h;
+            BUB2 = bub2h;
         }
     }
 
@@ -1103,18 +1121,10 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
         {
             if (!mEventSatisfied[2] && detected)
             {
-                // The condition is transitioning from false -> true: trigger the event
+                // The condition is transitioning from false -> true: trigger the event. The
+                // assignment values are recorded below (not here) so they can be refreshed at the
+                // committed event point.
                 mEventTriggered[2] = true;
-
-                // Adjust relevant state variables and parameters. event_priority orders
-                // simultaneously-firing events: an assignment only overwrites one already made
-                // this firing if its event has lower-or-equal priority, so the lowest-priority
-                // event - which SBML executes last - wins a conflict. Events with no priority use
-                // +inf, reducing to last-writer-wins (the previous behaviour).
-                [[maybe_unused]] double event_priority = std::numeric_limits<double>::max();
-                MAD2 = mad2l;
-                LTE1 = lte1h;
-                BUB2 = bub2l;
             }
             // Latch only once the distance has crossed zero. Until then (active but not yet
             // detected, i.e. within the epsilon boundary) leave the satisfied state untouched, so
@@ -1136,6 +1146,23 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
             // at the next segment's initial condition).
             mEventSatisfied[2] = false;
             mEventClampActive[2] = false;
+        }
+
+        // Record this event's assignments while it has fired this segment - re-evaluated on every
+        // call rather than only at first detection. The assignment is still deferred (applied by
+        // AdjustParameters at the committed point), but recording it here lets the harness re-run
+        // ProcessModelEvents at the localized root before applying, so a state-dependent value
+        // (e.g. a compartment-resize rescale S * C_old / C_new) uses the root state rather than the
+        // integration step where the event was first detected. event_priority orders simultaneous
+        // events: an assignment only overwrites one already recorded this firing if its event has
+        // lower-or-equal priority, so the lowest-priority event - which SBML executes last - wins a
+        // conflict. Events with no priority use +inf, reducing to last-writer-wins.
+        if (mEventTriggered[2])
+        {
+            [[maybe_unused]] double event_priority = std::numeric_limits<double>::max();
+            MAD2 = mad2l;
+            LTE1 = lte1h;
+            BUB2 = bub2l;
         }
     }
 
@@ -1179,42 +1206,10 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
         {
             if (!mEventSatisfied[3] && detected)
             {
-                // The condition is transitioning from false -> true: trigger the event
+                // The condition is transitioning from false -> true: trigger the event. The
+                // assignment values are recorded below (not here) so they can be refreshed at the
+                // committed event point.
                 mEventTriggered[3] = true;
-
-                // Adjust relevant state variables and parameters. event_priority orders
-                // simultaneously-firing events: an assignment only overwrites one already made
-                // this firing if its event has lower-or-equal priority, so the lowest-priority
-                // event - which SBML executes last - wins a conflict. Events with no priority use
-                // +inf, reducing to last-writer-wins (the previous behaviour).
-                [[maybe_unused]] double event_priority = std::numeric_limits<double>::max();
-                // MASS = F * MASS
-                if (!mEventAdjustedStateVars[22]
-                    || event_priority <= mEventAdjustedStatePriority[22])
-                {
-                    mEventAdjustedStateVars[22] = true;
-                    mEventAdjustedStateValues[22] = F * MASS;
-                    mEventAdjustedStatePriority[22] = event_priority;
-                }
-
-                LTE1 = lte1l;
-                // BUD = 0.0
-                if (!mEventAdjustedStateVars[0]
-                    || event_priority <= mEventAdjustedStatePriority[0])
-                {
-                    mEventAdjustedStateVars[0] = true;
-                    mEventAdjustedStateValues[0] = 0.0;
-                    mEventAdjustedStatePriority[0] = event_priority;
-                }
-
-                // SPN = 0.0
-                if (!mEventAdjustedStateVars[32]
-                    || event_priority <= mEventAdjustedStatePriority[32])
-                {
-                    mEventAdjustedStateVars[32] = true;
-                    mEventAdjustedStateValues[32] = 0.0;
-                    mEventAdjustedStatePriority[32] = event_priority;
-                }
             }
             // Latch only once the distance has crossed zero. Until then (active but not yet
             // detected, i.e. within the epsilon boundary) leave the satisfied state untouched, so
@@ -1236,6 +1231,47 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
             // at the next segment's initial condition).
             mEventSatisfied[3] = false;
             mEventClampActive[3] = false;
+        }
+
+        // Record this event's assignments while it has fired this segment - re-evaluated on every
+        // call rather than only at first detection. The assignment is still deferred (applied by
+        // AdjustParameters at the committed point), but recording it here lets the harness re-run
+        // ProcessModelEvents at the localized root before applying, so a state-dependent value
+        // (e.g. a compartment-resize rescale S * C_old / C_new) uses the root state rather than the
+        // integration step where the event was first detected. event_priority orders simultaneous
+        // events: an assignment only overwrites one already recorded this firing if its event has
+        // lower-or-equal priority, so the lowest-priority event - which SBML executes last - wins a
+        // conflict. Events with no priority use +inf, reducing to last-writer-wins.
+        if (mEventTriggered[3])
+        {
+            [[maybe_unused]] double event_priority = std::numeric_limits<double>::max();
+            // MASS = F * MASS
+            if (!mEventAdjustedStateVars[22]
+                || event_priority <= mEventAdjustedStatePriority[22])
+            {
+                mEventAdjustedStateVars[22] = true;
+                mEventAdjustedStateValues[22] = F * MASS;
+                mEventAdjustedStatePriority[22] = event_priority;
+            }
+
+            LTE1 = lte1l;
+            // BUD = 0.0
+            if (!mEventAdjustedStateVars[0]
+                || event_priority <= mEventAdjustedStatePriority[0])
+            {
+                mEventAdjustedStateVars[0] = true;
+                mEventAdjustedStateValues[0] = 0.0;
+                mEventAdjustedStatePriority[0] = event_priority;
+            }
+
+            // SPN = 0.0
+            if (!mEventAdjustedStateVars[32]
+                || event_priority <= mEventAdjustedStatePriority[32])
+            {
+                mEventAdjustedStateVars[32] = true;
+                mEventAdjustedStateValues[32] = 0.0;
+                mEventAdjustedStatePriority[32] = event_priority;
+            }
         }
     }
 

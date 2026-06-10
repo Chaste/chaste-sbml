@@ -1503,8 +1503,8 @@ test,status,notes
 01502,unsupported,algebraic rule
 01503,unsupported,algebraic rule
 01504,pass,ok
-01505,fail_unknown,
-01506,fail_unknown,
+01505,pass,ok
+01506,pass,ok
 01507,unsupported,delay
 01508,unsupported,delay
 01509,unsupported,delay
@@ -1529,7 +1529,7 @@ test,status,notes
 01528,unsupported,delay
 01529,unsupported,delay
 01530,unsupported,no odes
-01531,fail_known,clustered events
+01531,partly_supported,clustered events
 01532,unsupported,delay
 01533,unsupported,no odes
 01534,unsupported,
