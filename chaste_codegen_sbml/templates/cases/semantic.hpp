@@ -32,13 +32,14 @@ public:
 
             CvodeAdaptor solver;
             solver.CheckForStoppingEvents();
-            // Tighten CVODE's tolerances below the test tolerances (1e-4). The defaults
-            // (rtol 1e-4) leave an integration error comparable to the test bound, which fails
-            // in stiff transients (e.g. case 976, where J = k * S1 / S2 is sensitive to a small
-            // S2). Do not go tighter than this: a too-tight tolerance makes CVODE resolve a
-            // discontinuous rate (e.g. case 28's ceil/factorial) differently from the reference
-            // integrator and diverge from it.
-            solver.SetTolerances(1e-6, 1e-8);
+            // Solve to a hundredth of this case's own test tolerances, so CVODE's integration
+            // error stays well below the bound each data point is checked against. Deriving the
+            // solver tolerances per case (rather than using one global value) keeps small-amount
+            // cases with tight absolute tolerances (e.g. case 66, absolute 1e-9) accurate enough,
+            // while leaving cases with loose tolerances on a correspondingly loose solver - which
+            // matters for discontinuous rates (e.g. case 28's ceil/factorial), where an
+            // over-tight tolerance makes CVODE diverge from the reference integrator.
+            solver.SetTolerances({{ test_settings["relative"] }} * 1e-2, {{ test_settings["absolute"] }} * 1e-2);
 
             // Settings
             double start = {{ test_settings["start"] }};
