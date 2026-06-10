@@ -114,8 +114,8 @@ public:
             };
 
             // Check variable values
-            double tol_absolute = {{ test_settings["absolute"] }} * 10.0; // TODO: review tolerance values
-            double tol_relative = {{ test_settings["relative"] }} * 10.0;
+            double tol_absolute = {{ test_settings["absolute"] }};
+            double tol_relative = {{ test_settings["relative"] }};
 
             for (unsigned j = 1; j < expected_result_columns.size(); j++)
             {
@@ -158,7 +158,6 @@ public:
                 {
                     double delta = std::abs(expected_result_data[i][j] - values[i]);
                     double tol = tol_absolute + tol_relative * std::abs(expected_result_data[i][j]);
-                    tol = std::max(tol, 1e-6); // Set minimum tolerance to avoid false failures
                     std::string msg(sth::ToString(values[i]) + " vs " + sth::ToString(expected_result_data[i][j])
                                     + " at " + sth::ToString(ode_solution.rGetTimes()[i], 3) + " for " + var_name);
                     TSM_ASSERT_LESS_THAN_EQUALS(msg.c_str(), delta, tol);
