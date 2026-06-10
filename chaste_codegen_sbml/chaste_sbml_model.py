@@ -13,6 +13,8 @@ from typing import TYPE_CHECKING, Optional
 from jinja2 import Environment, PackageLoader, select_autoescape
 from libsbml import (
     AST_FUNCTION_DELAY,
+    AST_NAME,
+    AST_NAME_AVOGADRO,
     AST_RELATIONAL_EQ,
     AST_RELATIONAL_GEQ,
     AST_RELATIONAL_GT,
@@ -1391,6 +1393,23 @@ class ChasteSbmlModel:
         return result
 
     @staticmethod
+    def _replace_avogadro_csymbol(node: "ASTNode", placeholder: str) -> None:
+        """Recursively rename avogadro csymbol nodes to a placeholder identifier.
+
+        The avogadro csymbol and a parameter both named 'avogadro' are distinct AST nodes that
+        ``formulaToL3String`` renders identically. Renaming the csymbol to a placeholder keeps it
+        distinct so it can be mapped to ``sm::AVOGADRO`` while the parameter keeps its own name.
+
+        :param node: The root AST node.
+        :param placeholder: The identifier to rename avogadro csymbol nodes to.
+        """
+        if node.getType() == AST_NAME_AVOGADRO:
+            node.setType(AST_NAME)
+            node.setName(placeholder)
+        for i in range(node.getNumChildren()):
+            ChasteSbmlModel._replace_avogadro_csymbol(node.getChild(i), placeholder)
+
+    @staticmethod
     def _strip_ast_units(node: "ASTNode") -> None:
         """Recursively strip units annotations from AST nodes.
 
@@ -1418,6 +1437,11 @@ class ChasteSbmlModel:
                 raise NotImplementedError(f"SBML function not supported: '{func}'.")
 
         self._strip_ast_units(math)
+        # The avogadro csymbol and a parameter both named 'avogadro' are distinct AST nodes that
+        # render identically. Rename the csymbol to a placeholder (mapped to sm::AVOGADRO in the
+        # constants below) so it stays distinct from a same-named parameter.
+        avogadro_placeholder = f"{CHASTE_PREFIX}{PREFIX_SEP}avogadro"
+        self._replace_avogadro_csymbol(math, avogadro_placeholder)
         formula = formulaToL3String(math)
 
         # Convert all integer literals to doubles to fix integer division.
@@ -1430,6 +1454,7 @@ class ChasteSbmlModel:
         # SBML contants to be replaced with C++ equivalents
         constants = {
             "avogadro": "sm::AVOGADRO",
+            avogadro_placeholder: "sm::AVOGADRO",
             "exponentiale": "M_E",
             "inf": "std::numeric_limits<double>::infinity()",
             "infinity": "std::numeric_limits<double>::infinity()",
@@ -1526,14 +1551,17 @@ class ChasteSbmlModel:
 
         tokens = re.findall(r"\w+|\W+", formula)
 
+        local_param_ids = {param["id"] for param in (local_parameters or [])}
+
         cpp_tokens = []
         for token in tokens:
             cpp_token = token
 
-            # Replace function names and constants, but only when the token is
-            # not an actual model variable (e.g. a species named "s" or "t" must
-            # not be replaced with the SBML time symbol).
-            if token in constants and token not in self._variable_types:
+            # Replace function names and constants, but only when the token is not an actual
+            # model variable or a local parameter (e.g. a species named "s" or "t" must not be
+            # replaced with the SBML time symbol, and a local parameter named "avogadro" must
+            # stay the local, distinct from the avogadro csymbol handled above).
+            if token in constants and token not in self._variable_types and token not in local_param_ids:
                 cpp_token = f"{constants[token]}"
 
             elif token in unchanged_functions:
@@ -1550,7 +1578,6 @@ class ChasteSbmlModel:
 
         results = re.findall(r"rateOf\(([^)]+)\)", cpp_formula)
         if results:
-            local_param_ids = {param["id"] for param in (local_parameters or [])}
             for var in results:
                 rate = "0.0"
                 # A local parameter shadows any global symbol of the same name and is

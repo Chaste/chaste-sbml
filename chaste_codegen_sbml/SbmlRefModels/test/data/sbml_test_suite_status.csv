@@ -1758,10 +1758,10 @@ test,status,notes
 01757,unsupported,no odes
 01758,unsupported,no odes
 01759,unsupported,no odes
-01760,fail_unknown,
+01760,pass,ok
 01761,pass,ok
-01762,fail_unknown,
-01763,fail_unknown,
+01762,pass,ok
+01763,pass,ok
 01764,pass,ok
 01765,pass,ok
 01766,pass,ok
