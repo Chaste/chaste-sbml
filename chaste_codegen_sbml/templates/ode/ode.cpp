@@ -111,9 +111,12 @@ void {{ ode_class_name }}::Initialise(double time)
     // {{ eq["var"] }}: {{ eq["label"] }}
     {
 {% for local_parameter in eq["local_parameters"] %}
-        double {{ local_parameter["id"] }} = {{ local_parameter["value"] }};
+        [[maybe_unused]] double {{ local_parameter["id"] }} = {{ local_parameter["value"] }};
 {% endfor %}
-        {{ eq["var"] }} = {{ eq["rhs"] }};
+        // Qualify with this-> so the assignment targets the reaction member even when a local
+        // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
+        // reaction J1 with a local parameter also named J1).
+        this->{{ eq["var"] }} = {{ eq["rhs"] }};
     }
 {% else %}
     {{ eq["var"] }} = {{ eq["rhs"] }};  // {{ eq["label"] }}
@@ -163,6 +166,17 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
     {
         double event_dist = {{ event["distance"] }};
 
+        // active: the raw SBML trigger condition. detected: the signed distance has reached zero,
+        // the point CVODE roots on. For a >=/<= trigger detected lags active by an epsilon at the
+        // boundary; for a non-relational trigger the distance is a constant >= 0 so detected is
+        // always true and the logic below reduces to the raw condition.
+        // The fire is gated on detected so an event whose crossing lands on a sample grid point is
+        // not latched by an uncommitted evaluation at the grid point before it can be applied. The
+        // satisfied/re-arm state tracks active, so a trigger that is already true at the initial
+        // condition (initialValue=true) stays satisfied and does not spuriously fire.
+        bool active = {{ event["trigger"] }};
+        bool detected = event_dist >= 0.0;
+
         // Suppress an event whose trigger was already active when this Solve segment started
         // (a carried-over trigger) by forcing a large negative distance, so CVODE reports no
         // spurious root at the initial condition. mEventClampActive is frozen at segment start
@@ -170,7 +184,7 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
         // Using this monotonic per-segment flag rather than the live, in-step-mutated
         // mEventSatisfied keeps the root function stable across CVODE's root bracketing, so an
         // event localizes at its true crossing instead of the integration step endpoint.
-        if (mEventClampActive[{{ event["index"] }}] && ({{ event["trigger"] }}))
+        if (mEventClampActive[{{ event["index"] }}] && active)
         {
             event_dist = -(std::abs(event_dist) + 1.0);
         }
@@ -182,37 +196,23 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
         }
 
         // Process the event
-        if ({{ event["trigger"] }})
+        if (active)
         {
-            if (!mEventSatisfied[{{ event["index"] }}])
+            if (!mEventSatisfied[{{ event["index"] }}] && detected)
             {
-                // The condition is transitioning from false -> true: trigger the event
+                // The condition is transitioning from false -> true: trigger the event. The
+                // assignment values are recorded below (not here) so they can be refreshed at the
+                // committed event point.
                 mEventTriggered[{{ event["index"] }}] = true;
-
-                // Adjust relevant state variables and parameters
-{% for assignment in event["assignments"] %}
-{% if ( assignment["type"] == VarType.STATE_VARIABLE ) %}
-                // {{ assignment["lhs"] }} = {{ assignment["rhs"] }}
-                mEventAdjustedStateVars[{{ assignment["index"] }}] = true;
-                mEventAdjustedStateValues[{{ assignment["index"] }}] = {{ assignment["rhs"] }};
-
-{% elif ( assignment["type"] == VarType.PARAMETER ) %}
-                // {{ assignment["lhs"] }} = {{ assignment["rhs"] }}
-                // Defer the assignment (do NOT SetParameter here): this runs inside the CVODE
-                // root function, so applying it immediately would change the parameter during
-                // root bracketing - before the solver commits to the event - corrupting the
-                // current segment. AdjustParameters applies it at the committed event point.
-                mEventAdjustedParameters[{{ assignment["index"] }}] = true;
-                mEventAdjustedParameterValues[{{ assignment["index"] }}] = {{ assignment["rhs"] }};
-
-{% else %}
-                {{ assignment["lhs"] }} = {{ assignment["rhs"] }}; {# TODO: does this case exist? #}
-
-{% endif %}
-{% endfor %} {# 'for assignment in event["assignments"]' #}
-
             }
-            mEventSatisfied[{{ event["index"] }}] = true;
+            // Latch only once the distance has crossed zero. Until then (active but not yet
+            // detected, i.e. within the epsilon boundary) leave the satisfied state untouched, so
+            // a crossing exactly on a grid point is neither prematurely latched nor, when the
+            // trigger is already true at t=0, re-armed.
+            if (detected)
+            {
+                mEventSatisfied[{{ event["index"] }}] = true;
+            }
         }
         else if (!mEventTriggered[{{ event["index"] }}])
         {
@@ -225,6 +225,50 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
             // at the next segment's initial condition).
             mEventSatisfied[{{ event["index"] }}] = false;
             mEventClampActive[{{ event["index"] }}] = false;
+        }
+
+        // Record this event's assignments while it has fired this segment - re-evaluated on every
+        // call rather than only at first detection. The assignment is still deferred (applied by
+        // AdjustParameters at the committed point), but recording it here lets the harness re-run
+        // ProcessModelEvents at the localized root before applying, so a state-dependent value
+        // (e.g. a compartment-resize rescale S * C_old / C_new) uses the root state rather than the
+        // integration step where the event was first detected. event_priority orders simultaneous
+        // events: an assignment only overwrites one already recorded this firing if its event has
+        // lower-or-equal priority, so the lowest-priority event - which SBML executes last - wins a
+        // conflict. Events with no priority use +inf, reducing to last-writer-wins.
+        if (mEventTriggered[{{ event["index"] }}])
+        {
+{% if event["priority"] is not none %}
+            [[maybe_unused]] double event_priority = {{ event["priority"] }};
+{% else %}
+            [[maybe_unused]] double event_priority = std::numeric_limits<double>::max();
+{% endif %}
+{% for assignment in event["assignments"] %}
+{% if ( assignment["type"] == VarType.STATE_VARIABLE ) %}
+            // {{ assignment["lhs"] }} = {{ assignment["rhs"] }}
+            if (!mEventAdjustedStateVars[{{ assignment["index"] }}]
+                || event_priority <= mEventAdjustedStatePriority[{{ assignment["index"] }}])
+            {
+                mEventAdjustedStateVars[{{ assignment["index"] }}] = true;
+                mEventAdjustedStateValues[{{ assignment["index"] }}] = {{ assignment["rhs"] }};
+                mEventAdjustedStatePriority[{{ assignment["index"] }}] = event_priority;
+            }
+
+{% elif ( assignment["type"] == VarType.PARAMETER ) %}
+            // {{ assignment["lhs"] }} = {{ assignment["rhs"] }}
+            if (!mEventAdjustedParameters[{{ assignment["index"] }}]
+                || event_priority <= mEventAdjustedParameterPriority[{{ assignment["index"] }}])
+            {
+                mEventAdjustedParameters[{{ assignment["index"] }}] = true;
+                mEventAdjustedParameterValues[{{ assignment["index"] }}] = {{ assignment["rhs"] }};
+                mEventAdjustedParameterPriority[{{ assignment["index"] }}] = event_priority;
+            }
+
+{% else %}
+            {{ assignment["lhs"] }} = {{ assignment["rhs"] }}; {# TODO: does this case exist? #}
+
+{% endif %}
+{% endfor %} {# 'for assignment in event["assignments"]' #}
         }
     }
 
@@ -259,9 +303,12 @@ std::vector<double> {{ ode_class_name }}::RunModelEquations(double time, const s
     // {{ eq["var"] }}: {{ eq["label"] }}
     {
 {% for local_parameter in eq["local_parameters"] %}
-        double {{ local_parameter["id"] }} = {{ local_parameter["value"] }};
+        [[maybe_unused]] double {{ local_parameter["id"] }} = {{ local_parameter["value"] }};
 {% endfor %}
-        {{ eq["var"] }} = {{ eq["rhs"] }};
+        // Qualify with this-> so the assignment targets the reaction member even when a local
+        // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
+        // reaction J1 with a local parameter also named J1).
+        this->{{ eq["var"] }} = {{ eq["rhs"] }};
     }
 {% else %}
     {{ eq["var"] }} = {{ eq["rhs"] }};  // {{ eq["label"] }}

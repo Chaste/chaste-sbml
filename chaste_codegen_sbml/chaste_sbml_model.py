@@ -7,11 +7,14 @@ import re
 import shutil
 import subprocess
 import sys
+from math import isnan
 from typing import TYPE_CHECKING, Optional
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 from libsbml import (
     AST_FUNCTION_DELAY,
+    AST_NAME,
+    AST_NAME_AVOGADRO,
     AST_RELATIONAL_EQ,
     AST_RELATIONAL_GEQ,
     AST_RELATIONAL_GT,
@@ -294,6 +297,7 @@ class ChasteSbmlModel:
         initial_value: Optional[float],
         units: str = NON_DIM_UNITS,
         is_conversion: bool = False,
+        is_reaction: bool = False,
     ) -> None:
         """Add a derived quantity to the template variables.
 
@@ -303,6 +307,9 @@ class ChasteSbmlModel:
         :param units: The variable units.
         :param is_conversion: True if the derived quantity is an amount/concentration
             conversion (computed in ComputeDerivedQuantities rather than stored as a member).
+        :param is_reaction: True if the derived quantity is a reaction flux exposed as an
+            output. Its member is already declared by the reaction loop, so it is not
+            re-declared, and its variable type stays VarType.REACTION.
         """
         self._derived_quantities.append(
             {
@@ -311,10 +318,12 @@ class ChasteSbmlModel:
                 "index": len(self._derived_quantities),
                 "initial_value": initial_value,
                 "is_conversion": is_conversion,
+                "is_reaction": is_reaction,
                 "units": units,
             }
         )
-        self._variable_types[id_] = VarType.DERIVED_QUANTITY
+        if not is_reaction:
+            self._variable_types[id_] = VarType.DERIVED_QUANTITY
 
     def _add_equation(
         self,
@@ -349,6 +358,7 @@ class ChasteSbmlModel:
         distance: str,
         event_type: EventType,
         initial_satisfied: bool = True,
+        priority: Optional[str] = None,
     ) -> None:
         """Add an event to the template variables.
 
@@ -358,6 +368,7 @@ class ChasteSbmlModel:
         :param distance: The distance for the event trigger.
         :param event_type: The type of the event (e.g., cell division).
         :param initial_satisfied: Whether the event starts as satisfied (from SBML trigger initialValue).
+        :param priority: The event priority formula, or None if the event has no priority.
         """
         self._events.append(
             {
@@ -368,6 +379,7 @@ class ChasteSbmlModel:
                 "distance": distance,
                 "type": event_type,
                 "initial_satisfied": initial_satisfied,
+                "priority": priority,
             }
         )
 
@@ -501,9 +513,15 @@ class ChasteSbmlModel:
         id_ = species_reference.getId()
         label = species_reference.getName().strip()
 
+        # A named speciesReference's stoichiometry defaults to 1 when not explicitly set, so use
+        # getStoichiometry() (which returns that default) as the initial value even when
+        # isSetStoichiometry() is False - as long as it is a real number. Without this a defaulted
+        # stoichiometry stays uninitialised (e.g. case 1800). An L3 variable stoichiometry left
+        # unset reads as NaN; it is initialised by its rule or assignment instead.
         initial_value = None
-        if species_reference.isSetStoichiometry():
-            initial_value = species_reference.getStoichiometry()
+        stoichiometry = species_reference.getStoichiometry()
+        if not isnan(stoichiometry):
+            initial_value = stoichiometry
             math = parseL3Formula(f"{initial_value}")
             self._add_equation(var=id_, math=math, eq_type=EquationType.INITIAL_VALUE)
 
@@ -549,6 +567,12 @@ class ChasteSbmlModel:
             :param rxn: The reaction.
             :param add: True if the species reference is a product, False if a reactant.
             """
+            # A boundary-condition species' amount is not changed by reactions (its value is
+            # held constant or set by a rule), so reactions contribute nothing to its ODE.
+            species = self._sbml_model.getSpecies(species_ref.getSpecies())
+            if species is not None and species.getBoundaryCondition():
+                return
+
             rhs = rxn.getId()
 
             # Account for stoichiometry
@@ -596,12 +620,11 @@ class ChasteSbmlModel:
         for var, rhs in odes.items():
             odes[var] = parseL3Formula(f"({rhs})")
 
-        # Extract ODEs from rate rules
+        # Extract ODEs from rate rules. A rate rule fully determines its variable's derivative,
+        # taking precedence over any reaction contribution.
         for rule in self._rate_rules:
             var = rule["var"]
             math = rule["math"]
-            if var in odes:
-                raise ValueError(f"{var} has more than one rate rule and/or reaction.")
             odes[var] = math
 
         if not odes:
@@ -679,7 +702,7 @@ class ChasteSbmlModel:
         """Convert and sort equations."""
         for eq in self._equations:
             if eq["math"]:
-                eq["rhs"] = self._formula_to_string(eq["math"])
+                eq["rhs"] = self._formula_to_string(eq["math"], eq["local_parameters"])
 
         self._sort_equations()
 
@@ -785,6 +808,11 @@ class ChasteSbmlModel:
 
             assignments = []
             for assignment in event.getListOfEventAssignments():
+                # An event assignment with no MathML assigns nothing, leaving its target
+                # unchanged, so skip it rather than dereferencing a null math node.
+                if assignment.getMath() is None:
+                    continue
+
                 lhs = assignment.getVariable()
                 type_ = self._get_variable_type(lhs)
                 index = self._get_variable_index(lhs)
@@ -799,12 +827,87 @@ class ChasteSbmlModel:
                     }
                 )
 
+            # An event that resizes a compartment conserves the amount of each concentration
+            # species in it (SBML semantics), so the species' concentration must be rescaled by
+            # old_size / new_size. The codegen tracks such species as concentration, so without
+            # this their amount (concentration * size) would jump with the compartment. Append
+            # compensating assignments; like all event assignments they are evaluated from the
+            # pre-event state, so the compartment id still reads its old size here.
+            compartment_ids = {compartment.getId() for compartment in self._sbml_compartments}
+            assignment_by_lhs = {assignment["lhs"]: assignment for assignment in assignments}
+            resized = {a["lhs"]: a["rhs"] for a in assignments if a["lhs"] in compartment_ids}
+
+            # A compartment may also be resized indirectly: an assignment rule sets it from a
+            # variable the event assigns (e.g. C = fakeC with the event assigning fakeC). Its new
+            # size is the rule expression with the event's assignments substituted in.
+            event_assignment_math = {
+                ea.getVariable(): ea.getMath()
+                for ea in event.getListOfEventAssignments()
+                if ea.getMath() is not None
+            }
+            assignment_rule_math = {ar["var"]: ar["math"] for ar in self._assignment_rules}
+            for compartment_id, rule_math in assignment_rule_math.items():
+                if compartment_id not in compartment_ids or compartment_id in resized:
+                    continue
+                referenced = set()
+                self._collect_ast_names(rule_math, referenced)
+                if referenced & set(event_assignment_math):
+                    substituted = self._substitute_ast_names(rule_math, event_assignment_math)
+                    resized[compartment_id] = self._formula_to_string(substituted)
+
+            for compartment_id, new_size in resized.items():
+                for species in self._sbml_species:
+                    species_id = species.getId()
+                    if species.getCompartment() != compartment_id:
+                        continue
+                    has_only_substance_units = (
+                        species.isSetHasOnlySubstanceUnits() and species.getHasOnlySubstanceUnits()
+                    )
+                    species_type = self._get_variable_type(species_id)
+                    # Amount-tracked species need no rescale (their amount is unchanged, and the
+                    # concentration = amount / size follows automatically). Assignment-rule species
+                    # are recomputed each step, so they cannot be assigned here.
+                    if has_only_substance_units or species_type not in (VarType.STATE_VARIABLE, VarType.PARAMETER):
+                        continue
+
+                    scale = f"{compartment_id} / ({new_size})"
+                    explicit = assignment_by_lhs.get(species_id)
+                    if explicit is not None:
+                        # The event already assigns this species a concentration. That value is
+                        # taken at the old compartment size, so scale it by old_size / new_size to
+                        # carry the resulting amount across the simultaneous resize.
+                        explicit["rhs"] = f"({explicit['rhs']}) * {scale}"
+                    else:
+                        # The species is otherwise unchanged by the event, so conserve its amount.
+                        assignments.append(
+                            {
+                                "index": self._get_variable_index(species_id),
+                                "lhs": species_id,
+                                "rhs": f"{species_id} * {scale}",
+                                "type": species_type,
+                            }
+                        )
+
             # SBML trigger initialValue="false" means the trigger is treated as false just before
             # t=0, allowing the event to fire immediately if the condition is true at t=0.
             # initialValue="true" (the default) means the event won't fire at t=0.
             initial_satisfied = event.getTrigger().getInitialValue()
 
-            self._add_event(label, trigger_formula, assignments, trigger_distance, event_type, initial_satisfied)
+            # An event priority orders simultaneously-firing events: higher priority executes
+            # first, so a lower-priority event executes last and its assignment wins any conflict.
+            priority = None
+            if event.isSetPriority() and event.getPriority().getMath() is not None:
+                priority = self._formula_to_string(event.getPriority().getMath())
+
+            self._add_event(
+                label,
+                trigger_formula,
+                assignments,
+                trigger_distance,
+                event_type,
+                initial_satisfied,
+                priority,
+            )
 
     def _format_function_definitions(self) -> None:
         """Add function definitions to template variables."""
@@ -833,11 +936,15 @@ class ChasteSbmlModel:
                 math = ia.getMath()
                 self._add_initial_assignment(id_, label, var, math)
 
-                # Species reference stoichiometry variables are not in _sbml_parameters,
-                # so _format_parameters won't apply their initial assignments.  Do it here.
+                # Species reference stoichiometry variables are not in _sbml_parameters, so
+                # _format_parameters won't apply their initial assignments.  Do it here. A
+                # variable stoichiometry (driven by a rate rule) is a state variable; its
+                # initial assignment overrides the speciesReference stoichiometry attribute,
+                # and Initialise's SetDefaultInitialCondition then carries it into the ICs.
                 if var not in sbml_param_ids:
                     param_ids = {p["id"] for p in self._parameters}
-                    if var in param_ids:
+                    state_var_ids = {s["id"] for s in self._state_variables}
+                    if var in param_ids or var in state_var_ids:
                         self._add_equation(var=var, math=math, eq_type=EquationType.INITIAL_ASSIGNMENT)
 
     def _format_parameters(self) -> None:
@@ -893,6 +1000,12 @@ class ChasteSbmlModel:
             id_ = reaction.getId()
             label = reaction.getName().strip()
             self._add_reaction(id_, label)
+
+            # A reaction's ID denotes its rate (flux), an observable that rules, events and
+            # test outputs can read. Expose it as a derived quantity. The flux member is
+            # already declared and computed by the reaction machinery, so it keeps its
+            # VarType.REACTION type and is not re-declared (is_reaction=True).
+            self._add_derived_quantity(id_, label, None, NON_DIM_UNITS, is_reaction=True)
 
             kinetic_law = reaction.getKineticLaw()
             if kinetic_law is None:
@@ -1046,8 +1159,12 @@ class ChasteSbmlModel:
                     state_var = self._add_state_variable(species_id, label, initial_value, units)
                     self._add_equation(var=state_var["derivative_id"], math=math, eq_type=EquationType.DERIVATIVE)
                 else:
-                    # Derived quantity
-                    self._add_derived_quantity(species_id, label, initial_value, units)
+                    # Constant boundary species (no rule, non-time-varying compartment): its value
+                    # is fixed except when an event changes it. Model it as a (variable) parameter
+                    # rather than a derived quantity so the value is stored per step (time-resolved
+                    # in the recorded solution) and event assignments go through the deferred
+                    # parameter mechanism instead of mutating a member that is never recorded.
+                    self._add_parameter(species_id, label, initial_value, units)
 
             elif species_id in self._odes:
                 # State variable
@@ -1058,11 +1175,12 @@ class ChasteSbmlModel:
                 if "+" in rhs or "-" in rhs[1:]:
                     rhs = f"({rhs})"
 
-                # The conversion factor relates reaction extent to the change in species
-                # amount, so it multiplies the reaction flux only. Apply it before the dilution
-                # term below: that term conserves amount in a time-varying compartment and is
-                # independent of the conversion factor.
-                if conversion_factor is not None:
+                # The conversion factor relates reaction extent to the change in species amount,
+                # so it multiplies the reaction flux only - not a rate rule, which gives the
+                # species' rate of change directly. Apply it before the dilution term below: that
+                # term conserves amount in a time-varying compartment and is independent of the
+                # conversion factor.
+                if conversion_factor is not None and species_id not in rate_rules:
                     rhs = f"({rhs}) * {conversion_factor}"
 
                 # Add compartment scaling if defined by a reaction
@@ -1250,6 +1368,59 @@ class ChasteSbmlModel:
         )
 
     @staticmethod
+    def _collect_ast_names(node: "ASTNode", names: set) -> None:
+        """Recursively collect the identifiers referenced by name in an AST.
+
+        :param node: The root AST node.
+        :param names: A set to accumulate referenced identifiers into.
+        """
+        if node is None:
+            return
+        if node.isName():
+            names.add(node.getName())
+        for i in range(node.getNumChildren()):
+            ChasteSbmlModel._collect_ast_names(node.getChild(i), names)
+
+    @staticmethod
+    def _substitute_ast_names(node: "ASTNode", replacements: dict) -> "ASTNode":
+        """Return a copy of an AST with each named node replaced by a replacement AST.
+
+        :param node: The AST to copy and substitute into.
+        :param replacements: A mapping of identifier to replacement ASTNode.
+        :return: A new ASTNode with the substitutions applied.
+        """
+        if node.isName() and node.getName() in replacements:
+            return replacements[node.getName()].deepCopy()
+        result = node.deepCopy()
+        stack = [result]
+        while stack:
+            current = stack.pop()
+            for i in range(current.getNumChildren()):
+                child = current.getChild(i)
+                if child.isName() and child.getName() in replacements:
+                    current.replaceChild(i, replacements[child.getName()].deepCopy())
+                else:
+                    stack.append(child)
+        return result
+
+    @staticmethod
+    def _replace_avogadro_csymbol(node: "ASTNode", placeholder: str) -> None:
+        """Recursively rename avogadro csymbol nodes to a placeholder identifier.
+
+        The avogadro csymbol and a parameter both named 'avogadro' are distinct AST nodes that
+        ``formulaToL3String`` renders identically. Renaming the csymbol to a placeholder keeps it
+        distinct so it can be mapped to ``sm::AVOGADRO`` while the parameter keeps its own name.
+
+        :param node: The root AST node.
+        :param placeholder: The identifier to rename avogadro csymbol nodes to.
+        """
+        if node.getType() == AST_NAME_AVOGADRO:
+            node.setType(AST_NAME)
+            node.setName(placeholder)
+        for i in range(node.getNumChildren()):
+            ChasteSbmlModel._replace_avogadro_csymbol(node.getChild(i), placeholder)
+
+    @staticmethod
     def _strip_ast_units(node: "ASTNode") -> None:
         """Recursively strip units annotations from AST nodes.
 
@@ -1262,10 +1433,13 @@ class ChasteSbmlModel:
         for i in range(node.getNumChildren()):
             ChasteSbmlModel._strip_ast_units(node.getChild(i))
 
-    def _formula_to_string(self, math: "ASTNode") -> str:
+    def _formula_to_string(self, math: "ASTNode", local_parameters: Optional[list[dict[str, str]]] = None) -> str:
         """Convert an AST math formula to an equivalent C++ string.
 
         :param math: The AST math formula.
+        :param local_parameters: Local parameters in scope (e.g. a reaction's kinetic-law
+            parameters). These shadow global symbols of the same name and are constant, so
+            ``rateOf`` applied to one is zero.
         :return: The equivalent C++ string.
         """
         unsupported_functions = ["delay"]
@@ -1274,6 +1448,11 @@ class ChasteSbmlModel:
                 raise NotImplementedError(f"SBML function not supported: '{func}'.")
 
         self._strip_ast_units(math)
+        # The avogadro csymbol and a parameter both named 'avogadro' are distinct AST nodes that
+        # render identically. Rename the csymbol to a placeholder (mapped to sm::AVOGADRO in the
+        # constants below) so it stays distinct from a same-named parameter.
+        avogadro_placeholder = f"{CHASTE_PREFIX}{PREFIX_SEP}avogadro"
+        self._replace_avogadro_csymbol(math, avogadro_placeholder)
         formula = formulaToL3String(math)
 
         # Convert all integer literals to doubles to fix integer division.
@@ -1286,6 +1465,7 @@ class ChasteSbmlModel:
         # SBML contants to be replaced with C++ equivalents
         constants = {
             "avogadro": "sm::AVOGADRO",
+            avogadro_placeholder: "sm::AVOGADRO",
             "exponentiale": "M_E",
             "inf": "std::numeric_limits<double>::infinity()",
             "infinity": "std::numeric_limits<double>::infinity()",
@@ -1366,11 +1546,13 @@ class ChasteSbmlModel:
             "not": "not_",
             "or": "or_",
             "piecewise": "piecewise",
+            "plus": "plus",
             "quotient": "quotient",
             "root": "root",
             "sec": "sec",
             "sech": "sech",
             "sqr": "sqr",
+            "times": "times",
             "xor": "xor_",
         }
 
@@ -1380,14 +1562,17 @@ class ChasteSbmlModel:
 
         tokens = re.findall(r"\w+|\W+", formula)
 
+        local_param_ids = {param["id"] for param in (local_parameters or [])}
+
         cpp_tokens = []
         for token in tokens:
             cpp_token = token
 
-            # Replace function names and constants, but only when the token is
-            # not an actual model variable (e.g. a species named "s" or "t" must
-            # not be replaced with the SBML time symbol).
-            if token in constants and token not in self._variable_types:
+            # Replace function names and constants, but only when the token is not an actual
+            # model variable or a local parameter (e.g. a species named "s" or "t" must not be
+            # replaced with the SBML time symbol, and a local parameter named "avogadro" must
+            # stay the local, distinct from the avogadro csymbol handled above).
+            if token in constants and token not in self._variable_types and token not in local_param_ids:
                 cpp_token = f"{constants[token]}"
 
             elif token in unchanged_functions:
@@ -1406,11 +1591,15 @@ class ChasteSbmlModel:
         if results:
             for var in results:
                 rate = "0.0"
-                var_type = self._get_variable_type(var)
-                if var_type == VarType.STATE_VARIABLE:
-                    i = self._get_variable_index(var)
-                    state_var = self._state_variables[i]
-                    rate = state_var["derivative_id"]
+                # A local parameter shadows any global symbol of the same name and is
+                # constant, so its rate of change is zero. Only fall back to the global
+                # variable when the name is not a local parameter.
+                if var not in local_param_ids:
+                    var_type = self._get_variable_type(var)
+                    if var_type == VarType.STATE_VARIABLE:
+                        i = self._get_variable_index(var)
+                        state_var = self._state_variables[i]
+                        rate = state_var["derivative_id"]
                 cpp_formula = cpp_formula.replace(f"rateOf({var})", rate)
         return cpp_formula
 
@@ -1510,14 +1699,23 @@ class ChasteSbmlModel:
         return self._variable_types.get(var_id, VarType.UNKNOWN)
 
     def _order_derived_quantities(self) -> None:
-        """Order derived quantities so the amount/concentration conversions come last.
+        """Order derived quantities: normal quantities, then reactions, then conversions.
 
-        The conversions (amt__/conc__) are added while processing species, interleaved with
-        the other derived quantities. Moving them to the end keeps the model-intrinsic derived
-        quantities at stable, contiguous indices. The sort is stable, so the relative order
-        within each group is preserved; indices are then renumbered to match.
+        Reaction fluxes and the amount/concentration conversions (amt__/conc__) are added
+        while processing reactions and species, interleaved with the other derived quantities.
+        Grouping them after the model-intrinsic quantities keeps the latter at stable,
+        contiguous indices. The sort is stable, so the relative order within each group is
+        preserved; indices are then renumbered to match.
         """
-        self._derived_quantities.sort(key=lambda dq: dq["is_conversion"])
+
+        def group(dq: dict) -> int:
+            if dq["is_conversion"]:
+                return 2
+            if dq["is_reaction"]:
+                return 1
+            return 0
+
+        self._derived_quantities.sort(key=group)
         for index, dq in enumerate(self._derived_quantities):
             dq["index"] = index
 

@@ -81,6 +81,19 @@ public:
      */
     std::vector<double> GetParameterSeries(const std::string& rName, AbstractOdeSystem* pSystem) const;
 
+    /**
+     * Evaluate a derived quantity at every stored step with that step's recorded parameters
+     * restored first. A derived quantity that depends on an event-modified parameter (e.g. the
+     * amount conversion amt__X = X * compartment for a boundary species X changed by an event)
+     * is otherwise computed with the parameter's final value at every point, losing the time
+     * resolution. Restoring the per-step parameters fixes this.
+     *
+     * @param rName the derived quantity name
+     * @param pSystem the ODE system, used to compute the derived quantities
+     * @return the derived quantity's value at each stored time step
+     */
+    std::vector<double> GetDerivedQuantitySeries(const std::string& rName, AbstractOdeSystem* pSystem) const;
+
     /** @return the parameter values recorded for each stored time step. */
     const std::vector<std::vector<double> >& rGetParametersPerStep() const
     {

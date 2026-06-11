@@ -42,6 +42,13 @@ std::vector<double> Tan2014SbmlOdeSystem::ComputeDerivedQuantities(double time, 
     dqs.push_back(CytosolMembrane);
     dqs.push_back(nucleus);
     dqs.push_back(drag);
+    dqs.push_back(Bsynthesis);
+    dqs.push_back(kDegradation);
+    dqs.push_back(kC);
+    dqs.push_back(kN);
+    dqs.push_back(kdiffusion);
+    dqs.push_back(K_c_active);
+    dqs.push_back(K_n_active);
     dqs.push_back(amt__bcat_cm);
     dqs.push_back(amt__ligand_cm);
     dqs.push_back(amt__complex_cm);
@@ -275,6 +282,27 @@ void CellwiseOdeSystemInformation<Tan2014SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("drag");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Bsynthesis");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("kDegradation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("kC");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("kN");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("kdiffusion");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("K_c_active");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("K_n_active");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("amt__bcat_cm");

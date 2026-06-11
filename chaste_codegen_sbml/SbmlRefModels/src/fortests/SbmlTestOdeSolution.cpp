@@ -66,3 +66,32 @@ std::vector<double> SbmlTestOdeSolution::GetParameterSeries(const std::string& r
     }
     return series;
 }
+
+std::vector<double> SbmlTestOdeSolution::GetDerivedQuantitySeries(const std::string& rName, AbstractOdeSystem* pSystem) const
+{
+    unsigned index = pSystem->GetSystemInformation()->GetDerivedQuantityIndex(rName);
+
+    // Save the system's current parameters so they can be restored afterwards.
+    std::vector<double> saved(pSystem->GetNumberOfParameters());
+    for (unsigned p = 0; p < saved.size(); ++p)
+    {
+        saved[p] = pSystem->GetParameter(p);
+    }
+
+    std::vector<double> series(rGetTimes().size());
+    for (unsigned i = 0; i < series.size(); ++i)
+    {
+        // Restore this step's parameters so parameter-dependent derived quantities are time-resolved.
+        for (unsigned p = 0; p < mParametersPerStep[i].size(); ++p)
+        {
+            pSystem->SetParameter(p, mParametersPerStep[i][p]);
+        }
+        series[i] = pSystem->ComputeDerivedQuantities(rGetTimes()[i], rGetSolutions()[i])[index];
+    }
+
+    for (unsigned p = 0; p < saved.size(); ++p)
+    {
+        pSystem->SetParameter(p, saved[p]);
+    }
+    return series;
+}

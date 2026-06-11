@@ -55,12 +55,14 @@ AbstractSbmlOdeSystem::AbstractSbmlOdeSystem(unsigned numberOfStateVariables, un
         {
             mEventAdjustedStateVars.resize(mNumberOfStateVariables, false);
             mEventAdjustedStateValues.resize(mNumberOfStateVariables, 0.0);
+            mEventAdjustedStatePriority.resize(mNumberOfStateVariables, 0.0);
         }
 
         if (mNumberOfParameters > 0)
         {
             mEventAdjustedParameters.resize(mNumberOfParameters, false);
             mEventAdjustedParameterValues.resize(mNumberOfParameters, 0.0);
+            mEventAdjustedParameterPriority.resize(mNumberOfParameters, 0.0);
         }
     }
 }

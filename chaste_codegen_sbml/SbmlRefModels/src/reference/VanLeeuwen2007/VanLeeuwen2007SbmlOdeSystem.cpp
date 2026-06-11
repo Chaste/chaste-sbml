@@ -49,6 +49,30 @@ std::vector<double> VanLeeuwen2007SbmlOdeSystem::ComputeDerivedQuantities(double
     dqs.push_back(C_F);
     dqs.push_back(C_T);
     dqs.push_back(drag);
+    dqs.push_back(mwd6b35759_f098_484c_9c65_e84e7e4b61e4);
+    dqs.push_back(mweddac6d0_231e_4c92_ba2a_c91edc682ff5);
+    dqs.push_back(mwdf62dfed_ec88_4d81_bc9d_da0e10f41e4b);
+    dqs.push_back(mwee9cc998_28e9_4173_a694_f3e278a639b7);
+    dqs.push_back(mw661e341d_97d1_4e6f_8812_3be7ffc86d42);
+    dqs.push_back(mw179aa33c_9a7e_43c0_9285_3d8f97719c60);
+    dqs.push_back(mwff8d34f9_e036_49f1_b3b8_3706ecb98660);
+    dqs.push_back(mwd4fa317a_a484_4f38_b9b0_6ed404d9adcb);
+    dqs.push_back(mwcb88a249_a200_4e95_9185_5654bf1ebfc0);
+    dqs.push_back(mw0aeac2fc_dd2f_4fe7_b60c_97f0b008ed89);
+    dqs.push_back(mw4b47c66d_37e6_4c33_b043_1f6b3b814449);
+    dqs.push_back(mw69974db4_8ead_416c_a220_f6dc3be1f3b6);
+    dqs.push_back(mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc);
+    dqs.push_back(mw581d69f1_60b3_4d21_9323_31b05ee89570);
+    dqs.push_back(mwb17c2c57_279d_4e88_b9cf_896029135cc1);
+    dqs.push_back(mwe3236fc5_2118_40cb_8db3_ef9da29137cf);
+    dqs.push_back(mw0be4a28b_e9c6_43da_8f95_d9c564a7caae);
+    dqs.push_back(mwc360befb_07da_4d19_bbec_523fbef47dc9);
+    dqs.push_back(mw985b39ad_50ff_4d55_95f7_42e7f1bf6a3d);
+    dqs.push_back(mwf27b65bb_38d6_44cf_aa66_9b38ae5885eb);
+    dqs.push_back(mwd7a7bdbb_8f2e_42ed_bf97_48e33e45dafb);
+    dqs.push_back(mw988a8caf_bd68_462b_86d7_51844c1dcfd3);
+    dqs.push_back(mw9ab26a4c_bd70_45e0_bacc_f830ab28abca);
+    dqs.push_back(mw931baf8f_6572_46f6_96eb_cae40ee267b7);
     dqs.push_back(amt__X);
     dqs.push_back(amt__D);
     dqs.push_back(amt__C_o);
@@ -444,6 +468,78 @@ void CellwiseOdeSystemInformation<VanLeeuwen2007SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("drag");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mwd6b35759_f098_484c_9c65_e84e7e4b61e4");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mweddac6d0_231e_4c92_ba2a_c91edc682ff5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mwdf62dfed_ec88_4d81_bc9d_da0e10f41e4b");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mwee9cc998_28e9_4173_a694_f3e278a639b7");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mw661e341d_97d1_4e6f_8812_3be7ffc86d42");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mw179aa33c_9a7e_43c0_9285_3d8f97719c60");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mwff8d34f9_e036_49f1_b3b8_3706ecb98660");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mwd4fa317a_a484_4f38_b9b0_6ed404d9adcb");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mwcb88a249_a200_4e95_9185_5654bf1ebfc0");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mw0aeac2fc_dd2f_4fe7_b60c_97f0b008ed89");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mw4b47c66d_37e6_4c33_b043_1f6b3b814449");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mw69974db4_8ead_416c_a220_f6dc3be1f3b6");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mwccb628c3_76c8_47be_9d6b_6d3f1ae30dcc");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mw581d69f1_60b3_4d21_9323_31b05ee89570");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mwb17c2c57_279d_4e88_b9cf_896029135cc1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mwe3236fc5_2118_40cb_8db3_ef9da29137cf");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mw0be4a28b_e9c6_43da_8f95_d9c564a7caae");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mwc360befb_07da_4d19_bbec_523fbef47dc9");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mw985b39ad_50ff_4d55_95f7_42e7f1bf6a3d");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mwf27b65bb_38d6_44cf_aa66_9b38ae5885eb");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mwd7a7bdbb_8f2e_42ed_bf97_48e33e45dafb");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mw988a8caf_bd68_462b_86d7_51844c1dcfd3");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mw9ab26a4c_bd70_45e0_bacc_f830ab28abca");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("mw931baf8f_6572_46f6_96eb_cae40ee267b7");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("amt__X");

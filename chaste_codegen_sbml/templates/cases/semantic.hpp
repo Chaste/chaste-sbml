@@ -33,6 +33,20 @@ public:
             CvodeAdaptor solver;
             solver.CheckForStoppingEvents();
 
+            double tol_absolute = {{ test_settings["absolute"] }};
+            double tol_relative = {{ test_settings["relative"] }};
+            // Solve to 1e-4 of this case's own test tolerances, so CVODE's
+            // integration error stays well below the bound each data point is checked against -
+            // with enough margin for the error to accumulate through exponentially growing
+            // transients (e.g. the comp cases 1159-1161, where a submodel species grows ~20-fold
+            // per unit time). Deriving the solver tolerances per case (rather than using one
+            // global value) keeps small-amount cases with tight absolute tolerances (e.g. case
+            // 66, absolute 1e-9) accurate enough, while leaving cases with loose tolerances on a
+            // correspondingly loose solver - which matters for discontinuous rates (e.g. case
+            // 28's ceil/factorial), where an over-tight tolerance makes CVODE diverge from the
+            // reference integrator.
+            solver.SetTolerances(tol_relative * 1e-4, tol_absolute * 1e-4);
+
             // Settings
             double start = {{ test_settings["start"] }};
             double duration = {{ test_settings["duration"] }};
@@ -107,9 +121,6 @@ public:
             };
 
             // Check variable values
-            double tol_absolute = {{ test_settings["absolute"] }} * 10.0; // TODO: review tolerance values
-            double tol_relative = {{ test_settings["relative"] }} * 10.0;
-
             for (unsigned j = 1; j < expected_result_columns.size(); j++)
             {
                 std::string var_name = expected_result_columns[j];
@@ -134,17 +145,23 @@ public:
 
                 // Parameters changed by events vary in time, but OdeSolution stores only a
                 // single parameter snapshot, so read those from the per-step record instead.
+                // A derived quantity that depends on such a parameter (e.g. amt__X for a
+                // boundary species X changed by an event) must likewise be evaluated with the
+                // per-step parameters restored, not the parameter's final value.
                 const std::vector<std::string>& param_names = ode_system.rGetParameterNames();
+                const std::vector<std::string>& dq_names = ode_system.rGetDerivedQuantityNames();
                 bool is_parameter = std::find(param_names.begin(), param_names.end(), var_name) != param_names.end();
+                bool is_derived = std::find(dq_names.begin(), dq_names.end(), var_name) != dq_names.end();
                 std::vector<double> values = is_parameter
                     ? ode_solution.GetParameterSeries(var_name, &ode_system)
+                    : is_derived
+                    ? ode_solution.GetDerivedQuantitySeries(var_name, &ode_system)
                     : ode_solution.GetAnyVariable(var_name);
                 TS_ASSERT_EQUALS(values.size(), expected_result_data.size());
                 for (unsigned i = 0; i < expected_result_data.size(); i++)
                 {
                     double delta = std::abs(expected_result_data[i][j] - values[i]);
                     double tol = tol_absolute + tol_relative * std::abs(expected_result_data[i][j]);
-                    tol = std::max(tol, 1e-6); // Set minimum tolerance to avoid false failures
                     std::string msg(sth::ToString(values[i]) + " vs " + sth::ToString(expected_result_data[i][j])
                                     + " at " + sth::ToString(ode_solution.rGetTimes()[i], 3) + " for " + var_name);
                     TSM_ASSERT_LESS_THAN_EQUALS(msg.c_str(), delta, tol);

@@ -141,6 +141,100 @@ std::vector<double> Chen2004SbmlOdeSystem::ComputeDerivedQuantities(double time,
     dqs.push_back(Vppc1);
     dqs.push_back(Vppf6);
     dqs.push_back(F);
+    dqs.push_back(Growth);
+    dqs.push_back(Synthesis_of_CLN2);
+    dqs.push_back(Degradation_of_CLN2);
+    dqs.push_back(Synthesis_of_CLB2);
+    dqs.push_back(Degradation_of_CLB2);
+    dqs.push_back(Synthesis_of_CLB5);
+    dqs.push_back(Degradation_of_CLB5);
+    dqs.push_back(Synthesis_of_SIC1);
+    dqs.push_back(Phosphorylation_of_SIC1);
+    dqs.push_back(Dephosphorylation_of_SIC1);
+    dqs.push_back(Fast_Degradation_of_SIC1P);
+    dqs.push_back(Assoc_of_CLB2_and_SIC1);
+    dqs.push_back(Dissoc_of_CLB2SIC1_complex);
+    dqs.push_back(Assoc_of_CLB5_and_SIC1);
+    dqs.push_back(Dissoc_of_CLB5SIC1);
+    dqs.push_back(Phosphorylation_of_C2);
+    dqs.push_back(Dephosphorylation_of_C2P);
+    dqs.push_back(Phosphorylation_of_C5);
+    dqs.push_back(Dephosphorylation_of_C5P);
+    dqs.push_back(Degradation_of_CLB2_in_C2);
+    dqs.push_back(Degradation_of_CLB5_in_C5);
+    dqs.push_back(Degradation_of_SIC1_in_C2P);
+    dqs.push_back(Degradation_of_SIC1P_in_C5P_);
+    dqs.push_back(Degradation_of_CLB2_in_C2P);
+    dqs.push_back(Degradation_of_CLB5_in_C5P);
+    dqs.push_back(CDC6_synthesis);
+    dqs.push_back(Phosphorylation_of_CDC6);
+    dqs.push_back(Dephosphorylation_of_CDC6);
+    dqs.push_back(Degradation_of_CDC6P);
+    dqs.push_back(CLB2CDC6_complex_formation);
+    dqs.push_back(CLB2CDC6_dissociation);
+    dqs.push_back(CLB5CDC6_complex_formation);
+    dqs.push_back(CLB5CDC6_dissociation);
+    dqs.push_back(F2_phosphorylation);
+    dqs.push_back(F2P_dephosphorylation);
+    dqs.push_back(F5_phosphorylation);
+    dqs.push_back(F5P_dephosphorylation);
+    dqs.push_back(CLB2_degradation_in_F2);
+    dqs.push_back(CLB5_degradation_in_F5);
+    dqs.push_back(CDC6_degradation_in_F2P);
+    dqs.push_back(CDC6_degradation_in_F5P);
+    dqs.push_back(CLB2_degradation_in_F2P);
+    dqs.push_back(CLB5_degradation_in_F5P);
+    dqs.push_back(Synthesis_of_SWI5);
+    dqs.push_back(Degradation_of_SWI5);
+    dqs.push_back(Degradation_of_SWI5P);
+    dqs.push_back(Activation_of_SWI5);
+    dqs.push_back(Inactivation_of_SWI5);
+    dqs.push_back(Activation_of_IEP);
+    dqs.push_back(Inactivation_1);
+    dqs.push_back(Synthesis_of_inactive_CDC20);
+    dqs.push_back(Degradation_of_inactiveCDC20);
+    dqs.push_back(Degradation_of_active_CDC20);
+    dqs.push_back(Activation_of_CDC20);
+    dqs.push_back(Inactivation_2);
+    dqs.push_back(CDH1_synthesis);
+    dqs.push_back(CDH1_degradation);
+    dqs.push_back(CDH1i_degradation);
+    dqs.push_back(CDH1i_activation);
+    dqs.push_back(Inactivation_3);
+    dqs.push_back(CDC14_synthesis);
+    dqs.push_back(CDC14_degradation);
+    dqs.push_back(Assoc_with_NET1_to_form_RENT);
+    dqs.push_back(Dissoc_from_RENT);
+    dqs.push_back(Assoc_with_NET1P_to_form_RENTP);
+    dqs.push_back(Dissoc_from_RENP);
+    dqs.push_back(Net1_synthesis);
+    dqs.push_back(Net1_degradation);
+    dqs.push_back(Net1P_degradation);
+    dqs.push_back(NET1_phosphorylation);
+    dqs.push_back(dephosphorylation_1);
+    dqs.push_back(RENT_phosphorylation);
+    dqs.push_back(dephosphorylation_2);
+    dqs.push_back(Degradation_of_NET1_in_RENT);
+    dqs.push_back(Degradation_of_NET1P_in_RENTP);
+    dqs.push_back(Degradation_of_CDC14_in_RENT);
+    dqs.push_back(Degradation_of_CDC14_in_RENTP);
+    dqs.push_back(TEM1_activation);
+    dqs.push_back(inactivation_1);
+    dqs.push_back(CDC15_activation);
+    dqs.push_back(inactivation_2);
+    dqs.push_back(PPX_synthesis);
+    dqs.push_back(degradation_1);
+    dqs.push_back(PDS1_synthesis);
+    dqs.push_back(degradation_2);
+    dqs.push_back(Degradation_of_PDS1_in_PE);
+    dqs.push_back(Assoc_with_ESP1_to_form_PE);
+    dqs.push_back(Disso_from_PE);
+    dqs.push_back(DNA_synthesis);
+    dqs.push_back(Negative_regulation_of_DNA_synthesis);
+    dqs.push_back(Budding);
+    dqs.push_back(Negative_regulation_of_Cell_budding);
+    dqs.push_back(Spindle_formation);
+    dqs.push_back(Spindle_disassembly);
     dqs.push_back(conc__BCK2);
     dqs.push_back(conc__BUB2);
     dqs.push_back(conc__BUD);
@@ -490,8 +584,11 @@ void Chen2004SbmlOdeSystem::Initialise(double time)
     Activation_of_CDC20 = Mass_Action_1_222(ka20_p + ka20_p_p * IEP, CDC20i);                          //
     // Inactivation_2:
     {
-        double k = 1.0;
-        Inactivation_2 = k * Mass_Action_1_222(MAD2, CDC20);
+        [[maybe_unused]] double k = 1.0;
+        // Qualify with this-> so the assignment targets the reaction member even when a local
+        // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
+        // reaction J1 with a local parameter also named J1).
+        this->Inactivation_2 = k * Mass_Action_1_222(MAD2, CDC20);
     }
     CDH1_synthesis = kscdh;                                                                                                                                                                                                                                //
     CDH1_degradation = Mass_Action_1_222(kdcdh, CDH1);                                                                                                                                                                                                     //
@@ -816,6 +913,17 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     {
         double event_dist = (0.0) - (CLB2 + CLB5 - KEZ2) - std::numeric_limits<double>::epsilon();
 
+        // active: the raw SBML trigger condition. detected: the signed distance has reached zero,
+        // the point CVODE roots on. For a >=/<= trigger detected lags active by an epsilon at the
+        // boundary; for a non-relational trigger the distance is a constant >= 0 so detected is
+        // always true and the logic below reduces to the raw condition.
+        // The fire is gated on detected so an event whose crossing lands on a sample grid point is
+        // not latched by an uncommitted evaluation at the grid point before it can be applied. The
+        // satisfied/re-arm state tracks active, so a trigger that is already true at the initial
+        // condition (initialValue=true) stays satisfied and does not spuriously fire.
+        bool active = (CLB2 + CLB5 - KEZ2) < 0.0;
+        bool detected = event_dist >= 0.0;
+
         // Suppress an event whose trigger was already active when this Solve segment started
         // (a carried-over trigger) by forcing a large negative distance, so CVODE reports no
         // spurious root at the initial condition. mEventClampActive is frozen at segment start
@@ -823,7 +931,7 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
         // Using this monotonic per-segment flag rather than the live, in-step-mutated
         // mEventSatisfied keeps the root function stable across CVODE's root bracketing, so an
         // event localizes at its true crossing instead of the integration step endpoint.
-        if (mEventClampActive[0] && ((CLB2 + CLB5 - KEZ2) < 0.0))
+        if (mEventClampActive[0] && active)
         {
             event_dist = -(std::abs(event_dist) + 1.0);
         }
@@ -835,19 +943,23 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
         }
 
         // Process the event
-        if ((CLB2 + CLB5 - KEZ2) < 0.0)
+        if (active)
         {
-            if (!mEventSatisfied[0])
+            if (!mEventSatisfied[0] && detected)
             {
-                // The condition is transitioning from false -> true: trigger the event
+                // The condition is transitioning from false -> true: trigger the event. The
+                // assignment values are recorded below (not here) so they can be refreshed at the
+                // committed event point.
                 mEventTriggered[0] = true;
-
-                // Adjust relevant state variables and parameters
-                // ORI = 0.0
-                mEventAdjustedStateVars[25] = true;
-                mEventAdjustedStateValues[25] = 0.0;
             }
-            mEventSatisfied[0] = true;
+            // Latch only once the distance has crossed zero. Until then (active but not yet
+            // detected, i.e. within the epsilon boundary) leave the satisfied state untouched, so
+            // a crossing exactly on a grid point is neither prematurely latched nor, when the
+            // trigger is already true at t=0, re-armed.
+            if (detected)
+            {
+                mEventSatisfied[0] = true;
+            }
         }
         else if (!mEventTriggered[0])
         {
@@ -861,6 +973,28 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
             mEventSatisfied[0] = false;
             mEventClampActive[0] = false;
         }
+
+        // Record this event's assignments while it has fired this segment - re-evaluated on every
+        // call rather than only at first detection. The assignment is still deferred (applied by
+        // AdjustParameters at the committed point), but recording it here lets the harness re-run
+        // ProcessModelEvents at the localized root before applying, so a state-dependent value
+        // (e.g. a compartment-resize rescale S * C_old / C_new) uses the root state rather than the
+        // integration step where the event was first detected. event_priority orders simultaneous
+        // events: an assignment only overwrites one already recorded this firing if its event has
+        // lower-or-equal priority, so the lowest-priority event - which SBML executes last - wins a
+        // conflict. Events with no priority use +inf, reducing to last-writer-wins.
+        if (mEventTriggered[0])
+        {
+            [[maybe_unused]] double event_priority = std::numeric_limits<double>::max();
+            // ORI = 0.0
+            if (!mEventAdjustedStateVars[25]
+                || event_priority <= mEventAdjustedStatePriority[25])
+            {
+                mEventAdjustedStateVars[25] = true;
+                mEventAdjustedStateValues[25] = 0.0;
+                mEventAdjustedStatePriority[25] = event_priority;
+            }
+        }
     }
 
     //========================================
@@ -869,6 +1003,17 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     {
         double event_dist = (ORI - 1.0) - (0.0) - std::numeric_limits<double>::epsilon();
 
+        // active: the raw SBML trigger condition. detected: the signed distance has reached zero,
+        // the point CVODE roots on. For a >=/<= trigger detected lags active by an epsilon at the
+        // boundary; for a non-relational trigger the distance is a constant >= 0 so detected is
+        // always true and the logic below reduces to the raw condition.
+        // The fire is gated on detected so an event whose crossing lands on a sample grid point is
+        // not latched by an uncommitted evaluation at the grid point before it can be applied. The
+        // satisfied/re-arm state tracks active, so a trigger that is already true at the initial
+        // condition (initialValue=true) stays satisfied and does not spuriously fire.
+        bool active = (ORI - 1.0) > 0.0;
+        bool detected = event_dist >= 0.0;
+
         // Suppress an event whose trigger was already active when this Solve segment started
         // (a carried-over trigger) by forcing a large negative distance, so CVODE reports no
         // spurious root at the initial condition. mEventClampActive is frozen at segment start
@@ -876,7 +1021,7 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
         // Using this monotonic per-segment flag rather than the live, in-step-mutated
         // mEventSatisfied keeps the root function stable across CVODE's root bracketing, so an
         // event localizes at its true crossing instead of the integration step endpoint.
-        if (mEventClampActive[1] && ((ORI - 1.0) > 0.0))
+        if (mEventClampActive[1] && active)
         {
             event_dist = -(std::abs(event_dist) + 1.0);
         }
@@ -888,18 +1033,23 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
         }
 
         // Process the event
-        if ((ORI - 1.0) > 0.0)
+        if (active)
         {
-            if (!mEventSatisfied[1])
+            if (!mEventSatisfied[1] && detected)
             {
-                // The condition is transitioning from false -> true: trigger the event
+                // The condition is transitioning from false -> true: trigger the event. The
+                // assignment values are recorded below (not here) so they can be refreshed at the
+                // committed event point.
                 mEventTriggered[1] = true;
-
-                // Adjust relevant state variables and parameters
-                MAD2 = mad2h;
-                BUB2 = bub2h;
             }
-            mEventSatisfied[1] = true;
+            // Latch only once the distance has crossed zero. Until then (active but not yet
+            // detected, i.e. within the epsilon boundary) leave the satisfied state untouched, so
+            // a crossing exactly on a grid point is neither prematurely latched nor, when the
+            // trigger is already true at t=0, re-armed.
+            if (detected)
+            {
+                mEventSatisfied[1] = true;
+            }
         }
         else if (!mEventTriggered[1])
         {
@@ -913,6 +1063,22 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
             mEventSatisfied[1] = false;
             mEventClampActive[1] = false;
         }
+
+        // Record this event's assignments while it has fired this segment - re-evaluated on every
+        // call rather than only at first detection. The assignment is still deferred (applied by
+        // AdjustParameters at the committed point), but recording it here lets the harness re-run
+        // ProcessModelEvents at the localized root before applying, so a state-dependent value
+        // (e.g. a compartment-resize rescale S * C_old / C_new) uses the root state rather than the
+        // integration step where the event was first detected. event_priority orders simultaneous
+        // events: an assignment only overwrites one already recorded this firing if its event has
+        // lower-or-equal priority, so the lowest-priority event - which SBML executes last - wins a
+        // conflict. Events with no priority use +inf, reducing to last-writer-wins.
+        if (mEventTriggered[1])
+        {
+            [[maybe_unused]] double event_priority = std::numeric_limits<double>::max();
+            MAD2 = mad2h;
+            BUB2 = bub2h;
+        }
     }
 
     //========================================
@@ -921,6 +1087,17 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     {
         double event_dist = (SPN - 1.0) - (0.0) - std::numeric_limits<double>::epsilon();
 
+        // active: the raw SBML trigger condition. detected: the signed distance has reached zero,
+        // the point CVODE roots on. For a >=/<= trigger detected lags active by an epsilon at the
+        // boundary; for a non-relational trigger the distance is a constant >= 0 so detected is
+        // always true and the logic below reduces to the raw condition.
+        // The fire is gated on detected so an event whose crossing lands on a sample grid point is
+        // not latched by an uncommitted evaluation at the grid point before it can be applied. The
+        // satisfied/re-arm state tracks active, so a trigger that is already true at the initial
+        // condition (initialValue=true) stays satisfied and does not spuriously fire.
+        bool active = (SPN - 1.0) > 0.0;
+        bool detected = event_dist >= 0.0;
+
         // Suppress an event whose trigger was already active when this Solve segment started
         // (a carried-over trigger) by forcing a large negative distance, so CVODE reports no
         // spurious root at the initial condition. mEventClampActive is frozen at segment start
@@ -928,7 +1105,7 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
         // Using this monotonic per-segment flag rather than the live, in-step-mutated
         // mEventSatisfied keeps the root function stable across CVODE's root bracketing, so an
         // event localizes at its true crossing instead of the integration step endpoint.
-        if (mEventClampActive[2] && ((SPN - 1.0) > 0.0))
+        if (mEventClampActive[2] && active)
         {
             event_dist = -(std::abs(event_dist) + 1.0);
         }
@@ -940,19 +1117,23 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
         }
 
         // Process the event
-        if ((SPN - 1.0) > 0.0)
+        if (active)
         {
-            if (!mEventSatisfied[2])
+            if (!mEventSatisfied[2] && detected)
             {
-                // The condition is transitioning from false -> true: trigger the event
+                // The condition is transitioning from false -> true: trigger the event. The
+                // assignment values are recorded below (not here) so they can be refreshed at the
+                // committed event point.
                 mEventTriggered[2] = true;
-
-                // Adjust relevant state variables and parameters
-                MAD2 = mad2l;
-                LTE1 = lte1h;
-                BUB2 = bub2l;
             }
-            mEventSatisfied[2] = true;
+            // Latch only once the distance has crossed zero. Until then (active but not yet
+            // detected, i.e. within the epsilon boundary) leave the satisfied state untouched, so
+            // a crossing exactly on a grid point is neither prematurely latched nor, when the
+            // trigger is already true at t=0, re-armed.
+            if (detected)
+            {
+                mEventSatisfied[2] = true;
+            }
         }
         else if (!mEventTriggered[2])
         {
@@ -966,6 +1147,23 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
             mEventSatisfied[2] = false;
             mEventClampActive[2] = false;
         }
+
+        // Record this event's assignments while it has fired this segment - re-evaluated on every
+        // call rather than only at first detection. The assignment is still deferred (applied by
+        // AdjustParameters at the committed point), but recording it here lets the harness re-run
+        // ProcessModelEvents at the localized root before applying, so a state-dependent value
+        // (e.g. a compartment-resize rescale S * C_old / C_new) uses the root state rather than the
+        // integration step where the event was first detected. event_priority orders simultaneous
+        // events: an assignment only overwrites one already recorded this firing if its event has
+        // lower-or-equal priority, so the lowest-priority event - which SBML executes last - wins a
+        // conflict. Events with no priority use +inf, reducing to last-writer-wins.
+        if (mEventTriggered[2])
+        {
+            [[maybe_unused]] double event_priority = std::numeric_limits<double>::max();
+            MAD2 = mad2l;
+            LTE1 = lte1h;
+            BUB2 = bub2l;
+        }
     }
 
     //========================================
@@ -974,6 +1172,17 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     {
         double event_dist = (0.0) - (CLB2 - KEZ) - std::numeric_limits<double>::epsilon();
 
+        // active: the raw SBML trigger condition. detected: the signed distance has reached zero,
+        // the point CVODE roots on. For a >=/<= trigger detected lags active by an epsilon at the
+        // boundary; for a non-relational trigger the distance is a constant >= 0 so detected is
+        // always true and the logic below reduces to the raw condition.
+        // The fire is gated on detected so an event whose crossing lands on a sample grid point is
+        // not latched by an uncommitted evaluation at the grid point before it can be applied. The
+        // satisfied/re-arm state tracks active, so a trigger that is already true at the initial
+        // condition (initialValue=true) stays satisfied and does not spuriously fire.
+        bool active = (CLB2 - KEZ) < 0.0;
+        bool detected = event_dist >= 0.0;
+
         // Suppress an event whose trigger was already active when this Solve segment started
         // (a carried-over trigger) by forcing a large negative distance, so CVODE reports no
         // spurious root at the initial condition. mEventClampActive is frozen at segment start
@@ -981,7 +1190,7 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
         // Using this monotonic per-segment flag rather than the live, in-step-mutated
         // mEventSatisfied keeps the root function stable across CVODE's root bracketing, so an
         // event localizes at its true crossing instead of the integration step endpoint.
-        if (mEventClampActive[3] && ((CLB2 - KEZ) < 0.0))
+        if (mEventClampActive[3] && active)
         {
             event_dist = -(std::abs(event_dist) + 1.0);
         }
@@ -993,28 +1202,23 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
         }
 
         // Process the event
-        if ((CLB2 - KEZ) < 0.0)
+        if (active)
         {
-            if (!mEventSatisfied[3])
+            if (!mEventSatisfied[3] && detected)
             {
-                // The condition is transitioning from false -> true: trigger the event
+                // The condition is transitioning from false -> true: trigger the event. The
+                // assignment values are recorded below (not here) so they can be refreshed at the
+                // committed event point.
                 mEventTriggered[3] = true;
-
-                // Adjust relevant state variables and parameters
-                // MASS = F * MASS
-                mEventAdjustedStateVars[22] = true;
-                mEventAdjustedStateValues[22] = F * MASS;
-
-                LTE1 = lte1l;
-                // BUD = 0.0
-                mEventAdjustedStateVars[0] = true;
-                mEventAdjustedStateValues[0] = 0.0;
-
-                // SPN = 0.0
-                mEventAdjustedStateVars[32] = true;
-                mEventAdjustedStateValues[32] = 0.0;
             }
-            mEventSatisfied[3] = true;
+            // Latch only once the distance has crossed zero. Until then (active but not yet
+            // detected, i.e. within the epsilon boundary) leave the satisfied state untouched, so
+            // a crossing exactly on a grid point is neither prematurely latched nor, when the
+            // trigger is already true at t=0, re-armed.
+            if (detected)
+            {
+                mEventSatisfied[3] = true;
+            }
         }
         else if (!mEventTriggered[3])
         {
@@ -1027,6 +1231,47 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
             // at the next segment's initial condition).
             mEventSatisfied[3] = false;
             mEventClampActive[3] = false;
+        }
+
+        // Record this event's assignments while it has fired this segment - re-evaluated on every
+        // call rather than only at first detection. The assignment is still deferred (applied by
+        // AdjustParameters at the committed point), but recording it here lets the harness re-run
+        // ProcessModelEvents at the localized root before applying, so a state-dependent value
+        // (e.g. a compartment-resize rescale S * C_old / C_new) uses the root state rather than the
+        // integration step where the event was first detected. event_priority orders simultaneous
+        // events: an assignment only overwrites one already recorded this firing if its event has
+        // lower-or-equal priority, so the lowest-priority event - which SBML executes last - wins a
+        // conflict. Events with no priority use +inf, reducing to last-writer-wins.
+        if (mEventTriggered[3])
+        {
+            [[maybe_unused]] double event_priority = std::numeric_limits<double>::max();
+            // MASS = F * MASS
+            if (!mEventAdjustedStateVars[22]
+                || event_priority <= mEventAdjustedStatePriority[22])
+            {
+                mEventAdjustedStateVars[22] = true;
+                mEventAdjustedStateValues[22] = F * MASS;
+                mEventAdjustedStatePriority[22] = event_priority;
+            }
+
+            LTE1 = lte1l;
+            // BUD = 0.0
+            if (!mEventAdjustedStateVars[0]
+                || event_priority <= mEventAdjustedStatePriority[0])
+            {
+                mEventAdjustedStateVars[0] = true;
+                mEventAdjustedStateValues[0] = 0.0;
+                mEventAdjustedStatePriority[0] = event_priority;
+            }
+
+            // SPN = 0.0
+            if (!mEventAdjustedStateVars[32]
+                || event_priority <= mEventAdjustedStatePriority[32])
+            {
+                mEventAdjustedStateVars[32] = true;
+                mEventAdjustedStateValues[32] = 0.0;
+                mEventAdjustedStatePriority[32] = event_priority;
+            }
         }
     }
 
@@ -1317,8 +1562,11 @@ std::vector<double> Chen2004SbmlOdeSystem::RunModelEquations(double time, const 
     Activation_of_CDC20 = Mass_Action_1_222(ka20_p + ka20_p_p * IEP, CDC20i);                          //
     // Inactivation_2:
     {
-        double k = 1.0;
-        Inactivation_2 = k * Mass_Action_1_222(MAD2, CDC20);
+        [[maybe_unused]] double k = 1.0;
+        // Qualify with this-> so the assignment targets the reaction member even when a local
+        // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
+        // reaction J1 with a local parameter also named J1).
+        this->Inactivation_2 = k * Mass_Action_1_222(MAD2, CDC20);
     }
     CDH1_synthesis = kscdh;                                                                                                                                                                                                                                //
     CDH1_degradation = Mass_Action_1_222(kdcdh, CDH1);                                                                                                                                                                                                     //
@@ -1777,6 +2025,288 @@ void CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("F");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Growth");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Synthesis_of_CLN2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_CLN2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Synthesis_of_CLB2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_CLB2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Synthesis_of_CLB5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_CLB5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Synthesis_of_SIC1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Phosphorylation_of_SIC1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Dephosphorylation_of_SIC1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Fast_Degradation_of_SIC1P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Assoc_of_CLB2_and_SIC1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Dissoc_of_CLB2SIC1_complex");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Assoc_of_CLB5_and_SIC1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Dissoc_of_CLB5SIC1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Phosphorylation_of_C2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Dephosphorylation_of_C2P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Phosphorylation_of_C5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Dephosphorylation_of_C5P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_CLB2_in_C2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_CLB5_in_C5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_SIC1_in_C2P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_SIC1P_in_C5P_");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_CLB2_in_C2P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_CLB5_in_C5P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CDC6_synthesis");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Phosphorylation_of_CDC6");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Dephosphorylation_of_CDC6");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_CDC6P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CLB2CDC6_complex_formation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CLB2CDC6_dissociation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CLB5CDC6_complex_formation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CLB5CDC6_dissociation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("F2_phosphorylation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("F2P_dephosphorylation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("F5_phosphorylation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("F5P_dephosphorylation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CLB2_degradation_in_F2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CLB5_degradation_in_F5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CDC6_degradation_in_F2P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CDC6_degradation_in_F5P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CLB2_degradation_in_F2P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CLB5_degradation_in_F5P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Synthesis_of_SWI5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_SWI5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_SWI5P");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Activation_of_SWI5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Inactivation_of_SWI5");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Activation_of_IEP");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Inactivation_1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Synthesis_of_inactive_CDC20");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_inactiveCDC20");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_active_CDC20");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Activation_of_CDC20");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Inactivation_2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CDH1_synthesis");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CDH1_degradation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CDH1i_degradation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CDH1i_activation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Inactivation_3");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CDC14_synthesis");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CDC14_degradation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Assoc_with_NET1_to_form_RENT");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Dissoc_from_RENT");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Assoc_with_NET1P_to_form_RENTP");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Dissoc_from_RENP");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Net1_synthesis");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Net1_degradation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Net1P_degradation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("NET1_phosphorylation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("dephosphorylation_1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("RENT_phosphorylation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("dephosphorylation_2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_NET1_in_RENT");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_NET1P_in_RENTP");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_CDC14_in_RENT");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_CDC14_in_RENTP");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("TEM1_activation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("inactivation_1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("CDC15_activation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("inactivation_2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("PPX_synthesis");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("degradation_1");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("PDS1_synthesis");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("degradation_2");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Degradation_of_PDS1_in_PE");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Assoc_with_ESP1_to_form_PE");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Disso_from_PE");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("DNA_synthesis");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Negative_regulation_of_DNA_synthesis");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Budding");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Negative_regulation_of_Cell_budding");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Spindle_formation");
+    this->mDerivedQuantityUnits.push_back("non-dim");
+
+    this->mDerivedQuantityNames.push_back("Spindle_disassembly");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("conc__BCK2");

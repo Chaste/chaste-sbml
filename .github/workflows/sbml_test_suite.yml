@@ -15,18 +15,18 @@ jobs:
 
     strategy:
       fail-fast: false
-      # matrix is split by number of supported test cases (~230 per batch)
+      # matrix is split by number of passing test cases (~230 per batch)
       matrix:
         include:
           - first_case: "1"
-            last_case: "248"
-          - first_case: "249"
-            last_case: "584"
-          - first_case: "585"
-            last_case: "897"
-          - first_case: "898"
-            last_case: "1309"
-          - first_case: "1310"
+            last_case: "245"
+          - first_case: "246"
+            last_case: "578"
+          - first_case: "579"
+            last_case: "890"
+          - first_case: "891"
+            last_case: "1267"
+          - first_case: "1268"
             last_case: "1821"
 
     steps:
@@ -81,6 +81,14 @@ jobs:
         run: |
           cat ${PROJ_ROOT}/test/WeeklyTestPack.txt
           [ -s ${PROJ_ROOT}/test/WeeklyTestPack.txt ] && exit 0 || exit 1
+
+      - name: Check all passing cases are generated
+        run: |
+          python3 ${PROJ_ROOT}/infra/check_passing_cases_generated.py \
+            --status-csv ${PROJ_ROOT}/test/data/sbml_test_suite_status.csv \
+            --gen-test-dir ${PROJ_ROOT}/test/cases/semantic \
+            --first-case ${{ matrix.first_case }} \
+            --last-case ${{ matrix.last_case }}
 
       - name: Checkout Chaste
         uses: actions/checkout@v6

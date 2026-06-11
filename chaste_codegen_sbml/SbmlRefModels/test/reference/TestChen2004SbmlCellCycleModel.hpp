@@ -256,7 +256,7 @@ public:
             { 2.623296, 1e-2 },  // MASS
             { 0.015549, 1e-3 },  // NET1
             { 1.296074, 1e-2 },  // NET1P
-            { 22.172016, 1e-2 }, // ORI
+            { 22.162016, 1e-2 }, // ORI (set by an event; localized at the true root crossing)
             { 0.029879, 1e-3 },  // PDS1
             { 0.128173, 1e-2 },  // PPX
             { 0.872748, 1e-2 },  // RENT
