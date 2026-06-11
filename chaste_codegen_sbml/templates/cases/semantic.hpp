@@ -32,14 +32,20 @@ public:
 
             CvodeAdaptor solver;
             solver.CheckForStoppingEvents();
-            // Solve to a hundredth of this case's own test tolerances, so CVODE's integration
-            // error stays well below the bound each data point is checked against. Deriving the
-            // solver tolerances per case (rather than using one global value) keeps small-amount
-            // cases with tight absolute tolerances (e.g. case 66, absolute 1e-9) accurate enough,
-            // while leaving cases with loose tolerances on a correspondingly loose solver - which
-            // matters for discontinuous rates (e.g. case 28's ceil/factorial), where an
-            // over-tight tolerance makes CVODE diverge from the reference integrator.
-            solver.SetTolerances({{ test_settings["relative"] }} * 1e-2, {{ test_settings["absolute"] }} * 1e-2);
+
+            double tol_absolute = {{ test_settings["absolute"] }};
+            double tol_relative = {{ test_settings["relative"] }};
+            // Solve to 1e-4 of this case's own test tolerances, so CVODE's
+            // integration error stays well below the bound each data point is checked against -
+            // with enough margin for the error to accumulate through exponentially growing
+            // transients (e.g. the comp cases 1159-1161, where a submodel species grows ~20-fold
+            // per unit time). Deriving the solver tolerances per case (rather than using one
+            // global value) keeps small-amount cases with tight absolute tolerances (e.g. case
+            // 66, absolute 1e-9) accurate enough, while leaving cases with loose tolerances on a
+            // correspondingly loose solver - which matters for discontinuous rates (e.g. case
+            // 28's ceil/factorial), where an over-tight tolerance makes CVODE diverge from the
+            // reference integrator.
+            solver.SetTolerances(tol_relative * 1e-4, tol_absolute * 1e-4);
 
             // Settings
             double start = {{ test_settings["start"] }};
@@ -115,9 +121,6 @@ public:
             };
 
             // Check variable values
-            double tol_absolute = {{ test_settings["absolute"] }};
-            double tol_relative = {{ test_settings["relative"] }};
-
             for (unsigned j = 1; j < expected_result_columns.size(); j++)
             {
                 std::string var_name = expected_result_columns[j];
