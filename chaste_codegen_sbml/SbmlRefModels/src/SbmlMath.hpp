@@ -57,10 +57,10 @@ inline constexpr double AVOGADRO = 6.02214179E23;
 // Arithmetic =================================
 
 // divide
-double divide(double x, double y);
+inline double divide(double x, double y) { return x / y; }
 
 // minus
-double minus(double x, double y);
+inline double minus(double x, double y) { return x - y; }
 
 // plus
 template <typename... Args>
@@ -73,14 +73,14 @@ constexpr double times(Args... args);
 // Logs and exponents =========================
 
 // log
-double log(double x);
-double log(double b, double x);
+inline double log(double x) { return std::log(x); }
+inline double log(double b, double x) { return std::log(x) / std::log(b); }
 
 // root
-double root(double n, double x);
+inline double root(double n, double x) { return std::pow(x, 1.0 / n); }
 
 // sqr
-double sqr(double x);
+inline double sqr(double x) { return x * x; }
 
 // Logical ====================================
 
@@ -93,7 +93,7 @@ template <typename... Args>
 constexpr bool or_(Args... args);
 
 // not_
-bool not_(bool x);
+inline bool not_(bool x) { return !x; }
 
 // xor_
 template <typename... Args>
@@ -122,32 +122,32 @@ template <typename... Args>
 constexpr bool lt(double first, double second, Args... rest);
 
 // neq
-bool neq(double x, double y);
+inline bool neq(double x, double y) { return x != y; }
 
 // Trigonometry ===============================
 
 // cot, coth, acot, acoth
-double cot(double x);
-double coth(double x);
-double acot(double x);
-double acoth(double x);
+inline double cot(double x) { return 1.0 / std::tan(x); }
+inline double coth(double x) { return 1.0 / std::tanh(x); }
+inline double acot(double x) { return std::atan(1.0 / x); }
+inline double acoth(double x) { return std::atanh(1.0 / x); }
 
 // csc, csch, acsc, acsch
-double csc(double x);
-double csch(double x);
-double acsc(double x);
-double acsch(double x);
+inline double csc(double x) { return 1.0 / std::sin(x); }
+inline double csch(double x) { return 1.0 / std::sinh(x); }
+inline double acsc(double x) { return std::asin(1.0 / x); }
+inline double acsch(double x) { return std::asinh(1.0 / x); }
 
 // sec, sech, asec, asech
-double sec(double x);
-double sech(double x);
-double asec(double x);
-double asech(double x);
+inline double sec(double x) { return 1.0 / std::cos(x); }
+inline double sech(double x) { return 1.0 / std::cosh(x); }
+inline double asec(double x) { return std::acos(1.0 / x); }
+inline double asech(double x) { return std::acosh(1.0 / x); }
 
 // Other functions ============================
 
 // factorial
-double factorial(double x);
+inline double factorial(double x) { return std::tgamma(x + 1.0); }
 
 // max
 template <typename... Args>
@@ -166,7 +166,7 @@ template <typename... Args>
 constexpr double piecewise(double value, bool condition, Args... rest);
 
 // quotient
-double quotient(double numer, double denom);
+inline double quotient(double numer, double denom) { return std::trunc(numer / denom); }
 
 } // namespace sbmlmath
 
