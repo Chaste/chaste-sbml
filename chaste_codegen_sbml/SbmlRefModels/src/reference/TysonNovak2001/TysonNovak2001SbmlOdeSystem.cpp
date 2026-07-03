@@ -358,16 +358,6 @@ double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::v
     return max_dist; // Signed distance of the event closest to triggering
 }
 
-// ASSIGNMENT RULES
-void TysonNovak2001SbmlOdeSystem::RunAssignmentRules(double time)
-{
-}
-
-// INITIAL ASSIGNMENTS
-void TysonNovak2001SbmlOdeSystem::RunInitialAssignments(double time)
-{
-}
-
 std::vector<double> TysonNovak2001SbmlOdeSystem::RunModelEquations(double time, const std::vector<double>& rStateVariables)
 {
     CycBt = rStateVariables[0];
@@ -459,29 +449,6 @@ std::vector<double> TysonNovak2001SbmlOdeSystem::RunModelEquations(double time, 
     derivatives[6] = d_CKIt_dt;
     derivatives[7] = d_SK_dt;
     return derivatives;
-}
-
-// REACTIONS
-void TysonNovak2001SbmlOdeSystem::RunReactions(double time)
-{
-}
-
-// VARIABLE PARAMETERS
-void TysonNovak2001SbmlOdeSystem::UpdateParameters(double time)
-{
-}
-
-// STATE VARIABLES
-void TysonNovak2001SbmlOdeSystem::UpdateStateVariables(double time, const std::vector<double>& rStateVariables)
-{
-    CycBt = rStateVariables[0];
-    Cdc20a = rStateVariables[1];
-    Cdh1 = rStateVariables[2];
-    m = rStateVariables[3];
-    Cdc20t = rStateVariables[4];
-    IEP = rStateVariables[5];
-    CKIt = rStateVariables[6];
-    SK = rStateVariables[7];
 }
 
 // MODEL FUNCTIONS

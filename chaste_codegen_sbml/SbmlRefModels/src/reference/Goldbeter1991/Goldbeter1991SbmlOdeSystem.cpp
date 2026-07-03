@@ -174,16 +174,6 @@ double Goldbeter1991SbmlOdeSystem::ProcessModelEvents(double time, const std::ve
     return max_dist; // Signed distance of the event closest to triggering
 }
 
-// ASSIGNMENT RULES
-void Goldbeter1991SbmlOdeSystem::RunAssignmentRules(double time)
-{
-}
-
-// INITIAL ASSIGNMENTS
-void Goldbeter1991SbmlOdeSystem::RunInitialAssignments(double time)
-{
-}
-
 std::vector<double> Goldbeter1991SbmlOdeSystem::RunModelEquations(double time, const std::vector<double>& rStateVariables)
 {
     C = rStateVariables[0];
@@ -264,24 +254,6 @@ std::vector<double> Goldbeter1991SbmlOdeSystem::RunModelEquations(double time, c
     derivatives[1] = d_M_dt;
     derivatives[2] = d_X_dt;
     return derivatives;
-}
-
-// REACTIONS
-void Goldbeter1991SbmlOdeSystem::RunReactions(double time)
-{
-}
-
-// VARIABLE PARAMETERS
-void Goldbeter1991SbmlOdeSystem::UpdateParameters(double time)
-{
-}
-
-// STATE VARIABLES
-void Goldbeter1991SbmlOdeSystem::UpdateStateVariables(double time, const std::vector<double>& rStateVariables)
-{
-    C = rStateVariables[0];
-    M = rStateVariables[1];
-    X = rStateVariables[2];
 }
 
 // MODEL FUNCTIONS

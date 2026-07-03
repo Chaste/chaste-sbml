@@ -93,8 +93,7 @@ void sbmltesthelpers::ExportCsv(const std::string& rFilename,
             (*file) << "," << param_names[i];
         }
     }
-    (*file) << std::endl
-            << std::flush;
+    (*file) << '\n';
 
     // Write data
     for (unsigned i = 0; i < time_data.size(); i++)
@@ -129,9 +128,9 @@ void sbmltesthelpers::ExportCsv(const std::string& rFilename,
                 (*file) << "," << param_data[j];
             }
         }
-        (*file) << std::endl
-                << std::flush;
+        (*file) << '\n';
     }
+    (*file) << std::flush;
     file->close();
 }
 
