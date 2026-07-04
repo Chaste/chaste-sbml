@@ -34,13 +34,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "AbstractOdeBasedCellCycleModel.hpp"
-#include "BackwardEulerIvpOdeSolver.hpp"
 #include "CellCycleModelOdeSolver.hpp"
-#include "CvodeAdaptor.hpp"
 #include "SbmlEventType.hpp"
 #include "SbmlOdeSolverSetup.hpp"
-#include "StemCellProliferativeType.hpp"
-#include "TransitCellProliferativeType.hpp"
 
 #include "AbstractSbmlCellCycleModel.hpp"
 
@@ -71,9 +67,7 @@ AbstractSbmlCellCycleModel::AbstractSbmlCellCycleModel(const AbstractSbmlCellCyc
      */
 }
 
-AbstractSbmlCellCycleModel::~AbstractSbmlCellCycleModel()
-{
-}
+AbstractSbmlCellCycleModel::~AbstractSbmlCellCycleModel() = default;
 
 void AbstractSbmlCellCycleModel::AdjustOdeParameters(double currentTime)
 {

@@ -36,9 +36,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AbstractOdeSrnModel.hpp"
 #include "AbstractSbmlOdeSystem.hpp"
 #include "CellCycleModelOdeSolver.hpp"
-#include "ChasteSerialization.hpp"
-#include "CvodeAdaptor.hpp"
-#include "RungeKutta4IvpOdeSolver.hpp"
 #include "SbmlOdeSolverSetup.hpp"
 
 #include "AbstractSbmlSrnModel.hpp"
@@ -70,9 +67,7 @@ AbstractSbmlSrnModel::AbstractSbmlSrnModel(const AbstractSbmlSrnModel& rModel)
      */
 }
 
-AbstractSbmlSrnModel::~AbstractSbmlSrnModel()
-{
-}
+AbstractSbmlSrnModel::~AbstractSbmlSrnModel() = default;
 
 double AbstractSbmlSrnModel::GetStateVariable(const std::string& rName)
 {

@@ -33,7 +33,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include <fstream>
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
@@ -106,26 +105,17 @@ void sbmltesthelpers::ExportCsv(const std::string& rFilename,
 
     // Write column headings
     (*file) << "time";
-    if (!svar_names.empty())
+    for (const auto& name : svar_names)
     {
-        for (unsigned i = 0; i < svar_names.size(); i++)
-        {
-            (*file) << "," << svar_names[i];
-        }
+        (*file) << "," << name;
     }
-    if (!dq_names.empty())
+    for (const auto& name : dq_names)
     {
-        for (unsigned i = 0; i < dq_names.size(); i++)
-        {
-            (*file) << "," << dq_names[i];
-        }
+        (*file) << "," << name;
     }
-    if (!param_names.empty())
+    for (const auto& name : param_names)
     {
-        for (unsigned i = 0; i < param_names.size(); i++)
-        {
-            (*file) << "," << param_names[i];
-        }
+        (*file) << "," << name;
     }
     (*file) << '\n';
 

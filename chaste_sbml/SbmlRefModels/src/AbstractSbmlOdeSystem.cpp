@@ -33,7 +33,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "ChasteSerialization.hpp"
+#include <algorithm>
+
 #include "SbmlEventType.hpp"
 
 #include "AbstractSbmlOdeSystem.hpp"
@@ -67,9 +68,7 @@ AbstractSbmlOdeSystem::AbstractSbmlOdeSystem(unsigned numberOfStateVariables, un
     }
 }
 
-AbstractSbmlOdeSystem::~AbstractSbmlOdeSystem()
-{
-}
+AbstractSbmlOdeSystem::~AbstractSbmlOdeSystem() = default;
 
 void AbstractSbmlOdeSystem::AdjustParameters(double time)
 {
@@ -124,11 +123,8 @@ bool AbstractSbmlOdeSystem::CalculateStoppingEvent(double time, const std::vecto
     // bracketing so events localize at the true crossing rather than the step endpoint.
     mEventClampActive = mEventSatisfied;
 
-    for (unsigned i = 0; i < mEventTriggered.size(); ++i)
-    {
-        if (mEventTriggered[i]) return true;
-    }
-    return false;
+    return std::any_of(mEventTriggered.begin(), mEventTriggered.end(),
+                       [](bool triggered) { return triggered; });
 }
 
 bool AbstractSbmlOdeSystem::HasEventOccurred(SbmlEventType eventType)
