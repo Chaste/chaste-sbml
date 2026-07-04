@@ -13,7 +13,7 @@ or from an id that happens to be a C++ keyword or a name inherited from the base
 
 import re
 
-# C++17 keywords (and alternative operator spellings); none may be used as an identifier.
+# C++ keywords (and alternative operator spellings); none may be used as an identifier.
 CPP_KEYWORDS = frozenset(
     {
         "alignas",
@@ -194,3 +194,23 @@ def find_name_conflicts(identifiers, reserved=RESERVED_NAMES) -> list[str]:
             first_seen[name] = kind
 
     return sorted(messages)
+
+
+def unique_name(base: str, taken) -> str:
+    """Return a name based on ``base`` that is not in ``taken``.
+
+    Used to keep generator-synthesised identifiers (amount/concentration conversions, state
+    derivatives, initial-assignment intermediates) collision-free. ``base`` is returned
+    unchanged when it is free, so names stay clean unless a real id genuinely occupies them;
+    otherwise the smallest ``_N`` (N >= 2) suffix that is free is appended.
+
+    :param base: The desired identifier.
+    :param taken: A container of names already in use.
+    :return: ``base`` if free, else ``base`` with the smallest free ``_N`` suffix.
+    """
+    if base not in taken:
+        return base
+    n = 2
+    while f"{base}_{n}" in taken:
+        n += 1
+    return f"{base}_{n}"

@@ -47,7 +47,7 @@ from ._config import (
     ModelType,
     VarType,
 )
-from ._names import NameConflictError, find_name_conflicts
+from ._names import RESERVED_NAMES, NameConflictError, find_name_conflicts, unique_name
 from ._utils import (
     generate_header_guard,
     get_compartment_size,
@@ -244,7 +244,7 @@ class ChasteSbmlModel:
         species_id = species.getId()
         compartment_id = species.getCompartment()
 
-        amt_id = AMOUNT_PREFIX + PREFIX_SEP + species_id
+        amt_id = self._reserve_synthetic(AMOUNT_PREFIX + PREFIX_SEP + species_id)
         amt_label = f"Amount of {species_id}"
         amt_units = NON_DIM_UNITS  # TODO: Use correct units
         amt_rhs = f"{species_id} * {compartment_id}"
@@ -265,7 +265,7 @@ class ChasteSbmlModel:
         species_id = species.getId()
         compartment_id = species.getCompartment()
 
-        conc_id = CONCENTRATION_PREFIX + PREFIX_SEP + species_id
+        conc_id = self._reserve_synthetic(CONCENTRATION_PREFIX + PREFIX_SEP + species_id)
         conc_label = f"Concentration of {species_id}"
         conc_units = NON_DIM_UNITS  # TODO: Use correct units
         conc_rhs = f"{species_id} / {compartment_id}"
@@ -491,11 +491,10 @@ class ChasteSbmlModel:
         :param initial_value: The variable initial value.
         :param units: The variable units.
         """
-        # TODO: Check for name clashes with derivative_id's
         state_var = {
             "index": len(self._state_variables),
             "id": id_,
-            "derivative_id": f"{DERIVATIVE_PREFIX}{id_}{DERIVATIVE_SUFFIX}",
+            "derivative_id": self._reserve_synthetic(f"{DERIVATIVE_PREFIX}{id_}{DERIVATIVE_SUFFIX}"),
             "label": label,
             "initial_value": initial_value,
             "units": units,
@@ -1772,6 +1771,11 @@ class ChasteSbmlModel:
         self._events = []
         self._functions = []
 
+        # Names already claimed by real SBML entities and the Chaste base classes. Synthetic
+        # identifiers (derivatives, amount/concentration conversions, initial-assignment
+        # intermediates) are allocated against this so they never collide (issue #35, phase B).
+        self._taken_names = self._collect_taken_names() | RESERVED_NAMES
+
         # TODO: enforce processing order e.g. rules must be processed first
         self._format_rules()
         self._extract_odes()
@@ -1796,14 +1800,56 @@ class ChasteSbmlModel:
 
         self._populate_template_vars()
 
+    def _collect_taken_names(self) -> set:
+        """Collect the real SBML ids that become C++ identifiers in the generated code.
+
+        Covers the categories emitted as C++ names -- species, global and local (kinetic-law)
+        parameters, compartments, reactions, function definitions and species-reference
+        stoichiometry ids. Units, events and rules are excluded as they never become
+        identifiers, so a synthetic name is only escaped when it truly collides.
+
+        :return: The set of real ids that synthetic names must avoid.
+        """
+        names = set()
+        for lst in (
+            self._sbml_species,
+            self._sbml_parameters,
+            self._sbml_compartments,
+            self._sbml_reactions,
+            self._sbml_function_definitions,
+        ):
+            names.update(elem.getId() for elem in lst if elem.isSetId())
+        for reaction in self._sbml_reactions:
+            for ref in list(reaction.getListOfReactants()) + list(reaction.getListOfProducts()):
+                if ref.isSetId():
+                    names.add(ref.getId())
+            kinetic_law = reaction.getKineticLaw()
+            if kinetic_law is not None:
+                names.update(lp.getId() for lp in kinetic_law.getListOfParameters() if lp.isSetId())
+        return names
+
+    def _reserve_synthetic(self, base: str) -> str:
+        """Reserve a unique C++ identifier for a generator-synthesised variable.
+
+        Returns ``base`` unchanged when it is free (the usual case, so names stay clean),
+        otherwise the smallest ``_N`` suffix that avoids every real id, reserved name and
+        previously-reserved synthetic. The chosen name is recorded so later synthetics avoid it.
+
+        :param base: The desired synthetic identifier (e.g. ``d_C_dt`` or ``amt__X``).
+        :return: A unique C++ identifier.
+        """
+        name = unique_name(base, self._taken_names)
+        self._taken_names.add(name)
+        return name
+
     def _check_name_conflicts(self) -> None:
         """Fail if any generated C++ identifier clashes with another or a reserved name.
 
         Phase A of issue #35: detect conflicts and raise rather than emit silently incorrect
         C++. Gathers every identifier the templates turn into a C++ name -- parameters, state
         variables and their derivatives, derived quantities (including amount/concentration
-        conversions), stoichiometry variables, reactions, model functions and initial
-        assignments -- and checks them for duplicates, C++ keywords, reserved Chaste base-class
+        conversions), stoichiometry variables, reactions and model functions --
+        and checks them for duplicates, C++ keywords, reserved Chaste base-class
         names and invalid identifiers. Reaction flux outputs are excluded from the derived
         quantities here as they are the same entities already counted under reactions.
 

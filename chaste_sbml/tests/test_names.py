@@ -7,6 +7,7 @@ from chaste_sbml._names import (
     CPP_KEYWORDS,
     find_name_conflicts,
     is_valid_cpp_identifier,
+    unique_name,
 )
 
 
@@ -66,3 +67,20 @@ def test_keyword_and_reserved_sets_disjoint_from_ordinary_names():
     for name in ("C", "M", "X", "VM1", "cell", "reaction1", "amt__C"):
         assert name not in CPP_KEYWORDS
         assert name not in CHASTE_RESERVED_NAMES
+
+
+def test_unique_name_returns_base_when_free():
+    """A free base name is returned unchanged, so names stay clean."""
+    assert unique_name("amt__X", set()) == "amt__X"
+    assert unique_name("d_C_dt", {"C", "M", "X"}) == "d_C_dt"
+
+
+def test_unique_name_appends_suffix_on_collision():
+    """A taken base name is escaped with the smallest free numeric suffix."""
+    assert unique_name("amt__X", {"amt__X"}) == "amt__X_2"
+    assert unique_name("amt__X", {"amt__X", "amt__X_2"}) == "amt__X_3"
+
+
+def test_unique_name_skips_taken_suffixes():
+    """Already-taken suffixed names are skipped."""
+    assert unique_name("v", {"v", "v_2", "v_3"}) == "v_4"

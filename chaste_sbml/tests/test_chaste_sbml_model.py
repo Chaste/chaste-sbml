@@ -89,6 +89,22 @@ def test_check_name_conflicts_ignores_initial_assignment_target():
     model._check_name_conflicts()  # should not raise
 
 
+def test_reserve_synthetic_keeps_clean_name_when_free():
+    """A synthetic name that does not collide is returned unchanged and then reserved."""
+    model = _model_without_init()
+    model._taken_names = {"X", "cell"}
+    assert model._reserve_synthetic("amt__X") == "amt__X"
+    assert "amt__X" in model._taken_names
+
+
+def test_reserve_synthetic_escapes_collision_with_real_id():
+    """A synthetic name equal to a real id is escaped, and repeats take further suffixes."""
+    model = _model_without_init()
+    model._taken_names = {"amt__X"}  # a real species literally named amt__X
+    assert model._reserve_synthetic("amt__X") == "amt__X_2"
+    assert model._reserve_synthetic("amt__X") == "amt__X_3"
+
+
 def test_convert_infix_operator_to_function_syntax_power():
     """Converts infix power expressions to pow calls."""
     model = _model_without_init()
