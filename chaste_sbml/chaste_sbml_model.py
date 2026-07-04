@@ -47,6 +47,7 @@ from ._config import (
     ModelType,
     VarType,
 )
+from ._names import NameConflictError, find_name_conflicts
 from ._utils import (
     generate_header_guard,
     get_compartment_size,
@@ -841,9 +842,7 @@ class ChasteSbmlModel:
             # variable the event assigns (e.g. C = fakeC with the event assigning fakeC). Its new
             # size is the rule expression with the event's assignments substituted in.
             event_assignment_math = {
-                ea.getVariable(): ea.getMath()
-                for ea in event.getListOfEventAssignments()
-                if ea.getMath() is not None
+                ea.getVariable(): ea.getMath() for ea in event.getListOfEventAssignments() if ea.getMath() is not None
             }
             assignment_rule_math = {ar["var"]: ar["math"] for ar in self._assignment_rules}
             for compartment_id, rule_math in assignment_rule_math.items():
@@ -1793,7 +1792,46 @@ class ChasteSbmlModel:
         self._format_equations()
         self._order_derived_quantities()
 
+        self._check_name_conflicts()
+
         self._populate_template_vars()
+
+    def _check_name_conflicts(self) -> None:
+        """Fail if any generated C++ identifier clashes with another or a reserved name.
+
+        Phase A of issue #35: detect conflicts and raise rather than emit silently incorrect
+        C++. Gathers every identifier the templates turn into a C++ name -- parameters, state
+        variables and their derivatives, derived quantities (including amount/concentration
+        conversions), stoichiometry variables, reactions, model functions and initial
+        assignments -- and checks them for duplicates, C++ keywords, reserved Chaste base-class
+        names and invalid identifiers. Reaction flux outputs are excluded from the derived
+        quantities here as they are the same entities already counted under reactions.
+
+        :raises NameConflictError: if any conflict is found.
+        """
+        identifiers = []
+        identifiers += [(p["id"], "parameter") for p in self._parameters]
+        for var in self._state_variables:
+            identifiers.append((var["id"], "state variable"))
+            identifiers.append((var["derivative_id"], "state-variable derivative"))
+        for dq in self._derived_quantities:
+            if dq["is_reaction"]:
+                continue  # Declared under reactions; counted there.
+            kind = "amount/concentration conversion" if dq["is_conversion"] else "derived quantity"
+            identifiers.append((dq["id"], kind))
+        identifiers += [(s["id"], "stoichiometry variable") for s in self._stoichiometry_variables]
+        identifiers += [(r["id"], "reaction") for r in self._reactions]
+        identifiers += [(f["id"], "function") for f in self._functions]
+        # Initial assignments are deliberately excluded: an initial assignment's id is the
+        # existing variable it assigns to (emitted as `var = <expr>`), not a new declaration,
+        # so counting it would double-count that variable.
+
+        conflicts = find_name_conflicts(identifiers)
+        if conflicts:
+            raise NameConflictError(
+                f"Cannot generate '{self._model_name}': C++ identifier conflicts detected:\n  - "
+                + "\n  - ".join(conflicts)
+            )
 
     def _sort_equations(self) -> None:
         """Sort equations, ordering by groups, then by dependencies.
