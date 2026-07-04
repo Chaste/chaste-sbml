@@ -1112,40 +1112,34 @@ class ModelBuilder:
         return 3600.0
 
     def _get_variable_index(self, id_: str) -> int:
-        """Get the index of a variable.
+        """Get the index of a variable within its own collection.
 
         :param id_: The variable ID.
         :return: The variable index.
+        :raises ValueError: if ``id_`` is not a recognised variable.
         """
-        # TODO: Make this more generic
-        var_type = self._get_variable_type(id_)
+        if self._index_of is None:
+            self._index_of = self._build_variable_index()
+        if id_ not in self._index_of:
+            raise ValueError(f"ID '{id_}' is not a recognized variable.")
+        return self._index_of[id_]
 
-        if var_type == VarType.DERIVED_QUANTITY:
-            for dq in self._derived_quantities:
-                if dq["id"] == id_:
-                    return dq["index"]
+    def _build_variable_index(self) -> dict[str, int]:
+        """Map each variable id to its index within its own collection.
 
-        elif var_type == VarType.FUNCTION:
-            for func in self._functions:
-                if func["id"] == id_:
-                    return func["index"]
-
-        elif var_type == VarType.PARAMETER:
-            for param in self._parameters:
-                if param["id"] == id_:
-                    return param["index"]
-
-        elif var_type == VarType.REACTION:
-            for reaction in self._reactions:
-                if reaction["id"] == id_:
-                    return reaction["index"]
-
-        elif var_type == VarType.STATE_VARIABLE:
-            for state_variable in self._state_variables:
-                if state_variable["id"] == id_:
-                    return state_variable["index"]
-
-        raise ValueError(f"ID '{id_}' is not a recognized variable.")
+        Built once and cached; only valid once the collections are complete, which holds because
+        _get_variable_index is only called while formatting events, after every variable has been
+        added. Reaction fluxes exposed as derived quantities are skipped so a reaction's index is
+        its position among reactions, matching how it is declared.
+        """
+        index_of: dict[str, int] = {}
+        for collection in (self._parameters, self._reactions, self._state_variables, self._functions):
+            for record in collection:
+                index_of[record["id"]] = record["index"]
+        for derived_quantity in self._derived_quantities:
+            if not derived_quantity["is_reaction"]:
+                index_of[derived_quantity["id"]] = derived_quantity["index"]
+        return index_of
 
     def _get_variable_type(self, var_id: str) -> VarType:
         """Get the type of a variable based on its ID.
@@ -1179,6 +1173,7 @@ class ModelBuilder:
     def build(self) -> None:
         """Process the SBML model to set up the formatted variables for templates."""
         self._variable_types = {}
+        self._index_of = None  # id -> index cache, built lazily by _get_variable_index
         self._odes = {}
 
         self._assignment_rules = []
