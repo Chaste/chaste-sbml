@@ -42,7 +42,7 @@ cd chaste-codegen-sbml
 Create and activate a virtual environment
 
 ```sh
-python3 -m .venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 ```
 
@@ -60,19 +60,58 @@ python3 -m pytest
 
 ## Usage
 
-```
-usage: chaste_codegen_sbml [-h] [--version] [--output-dir OUTPUT_DIR] [--model-type [{generic,srn,cell-cycle}]] sbml_file
+`chaste-sbml` has two subcommands:
 
-Convert SBML models to Chaste C++ code
+```
+usage: chaste-sbml [-h] [--version] command ...
+
+positional arguments:
+  command
+    generate           Generate Chaste C++ code from an SBML file
+    copy-base-classes  Copy the C++ base classes the generated code depends on
+
+options:
+  -h, --help           show this help message and exit
+  --version            show program's version number and exit
+```
+
+### `generate`
+
+Generate Chaste C++ code from an SBML file:
+
+```sh
+chaste-sbml generate my_model.xml --model-type srn --output-dir src/
+```
+
+```
+usage: chaste-sbml generate [-h] [--output-dir OUTPUT_DIR]
+                                    [--model-type [{generic,srn,cell-cycle}]]
+                                    sbml_file
 
 positional arguments:
   sbml_file             The SBML file to convert
 
 options:
-  -h, --help            show this help message and exit
-  --version             show program's version number and exit
   --output-dir OUTPUT_DIR
                         The directory to place output files in
   --model-type [{generic,srn,cell-cycle}]
                         The type of model to generate
+```
+
+### `copy-base-classes`
+
+The generated code `#include`s and subclasses a set of C++ base classes (for example
+`AbstractSbmlOdeSystem`). These are shipped with the package; copy them into your project so
+they match the installed version of `chaste-sbml`:
+
+```sh
+chaste-sbml copy-base-classes --output-dir src/
+```
+
+```
+usage: chaste-sbml copy-base-classes [-h] [--output-dir OUTPUT_DIR]
+
+options:
+  --output-dir OUTPUT_DIR
+                        The directory to place the base classes in
 ```

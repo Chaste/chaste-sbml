@@ -2,7 +2,7 @@
 
 import logging
 
-from chaste_codegen_sbml._utils import generate_header_guard, to_camel_case, to_cpp_name
+from chaste_sbml._utils import generate_header_guard, to_camel_case, to_cpp_name
 
 logger = logging.getLogger(__name__)
 

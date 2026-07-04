@@ -6,8 +6,8 @@ from difflib import Differ
 
 import pytest
 
-from chaste_codegen_sbml import ChasteSbmlModel
-from chaste_codegen_sbml._config import ROOT_DIR, ModelType
+from chaste_sbml import ChasteSbmlModel
+from chaste_sbml._config import ROOT_DIR, ModelType
 
 logger = logging.getLogger(__name__)
 

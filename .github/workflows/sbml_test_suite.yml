@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      PROJ_ROOT: chaste_codegen_sbml/SbmlRefModels
+      PROJ_ROOT: chaste_sbml/SbmlRefModels
 
     strategy:
       fail-fast: false

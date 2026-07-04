@@ -12,9 +12,9 @@ fi
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "${script_dir}/../../.." && pwd)"
-src_cases_dir="${repo_root}/chaste_codegen_sbml/SbmlRefModels/src/cases/semantic"
-test_cases_dir="${repo_root}/chaste_codegen_sbml/SbmlRefModels/test/cases/semantic"
-weekly_test_pack="${repo_root}/chaste_codegen_sbml/SbmlRefModels/test/WeeklyTestPack.txt"
+src_cases_dir="${repo_root}/chaste_sbml/SbmlRefModels/src/cases/semantic"
+test_cases_dir="${repo_root}/chaste_sbml/SbmlRefModels/test/cases/semantic"
+weekly_test_pack="${repo_root}/chaste_sbml/SbmlRefModels/test/WeeklyTestPack.txt"
 
 for dir in "${src_cases_dir}" "${test_cases_dir}"; do
 	if [[ ! -d "${dir}" ]]; then

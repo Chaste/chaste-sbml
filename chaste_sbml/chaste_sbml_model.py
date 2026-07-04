@@ -69,7 +69,7 @@ class ChasteSbmlModel:
     __metaclass__ = abc.ABCMeta
 
     _jinja_env = Environment(
-        loader=PackageLoader("chaste_codegen_sbml"),
+        loader=PackageLoader("chaste_sbml"),
         autoescape=select_autoescape(),
         trim_blocks=True,
         lstrip_blocks=True,

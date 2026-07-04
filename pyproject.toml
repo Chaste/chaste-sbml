@@ -3,7 +3,7 @@ requires = ["setuptools>=64", "setuptools-scm>=8", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "chaste_codegen_sbml"
+name = "chaste-sbml"
 dynamic = ["version"]
 
 description = "Chaste C++ code generation from SBML"
@@ -30,13 +30,24 @@ dev = [
 ]
 
 [project.scripts]
-chaste_codegen_sbml = "chaste_codegen_sbml.__main__:main"
+chaste-sbml = "chaste_sbml.__main__:main"
 
 [project.urls]
 source = "https://github.com/Chaste/chaste-codegen-sbml"
 
+[tool.setuptools.package-data]
+# Ship the C++ base classes so `chaste-sbml copy-base-classes` can copy them out
+# of an installed package. (setuptools-scm also tracks these, but declaring them explicitly
+# keeps them in the wheel regardless of the VCS file finder.)
+chaste_sbml = [
+    "SbmlRefModels/src/*.hpp",
+    "SbmlRefModels/src/*.cpp",
+    "SbmlRefModels/src/fortests/*.hpp",
+    "SbmlRefModels/src/fortests/*.cpp",
+]
+
 [tool.setuptools_scm]
-version_file = "chaste_codegen_sbml/_version.py"
+version_file = "chaste_sbml/_version.py"
 
 [tool.black]
 line-length = 120
@@ -49,7 +60,7 @@ extend-exclude = """
 """
 
 [tool.isort]
-known_first_party = "chaste_codegen_sbml"
+known_first_party = "chaste_sbml"
 extend_skip = ["templates", "venv"]
 profile = "black"
 multi_line_output = 3

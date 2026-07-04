@@ -1,6 +1,6 @@
 [run]
-source = chaste_codegen_sbml
+source = chaste_sbml
 omit =
-    chaste_codegen_sbml/_version.py
-    chaste_codegen_sbml/tests/*
-    chaste_codegen_sbml/templates/*
+    chaste_sbml/_version.py
+    chaste_sbml/tests/*
+    chaste_sbml/templates/*
