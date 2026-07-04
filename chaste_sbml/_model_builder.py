@@ -197,7 +197,7 @@ class ModelBuilder:
         :param var: The variable being defined.
         :param math: The right-hand side of the equation as an AST.
         :param eq_type: The type of the equation.
-        :param local_parameters: A list of local parameter names used in the equation.
+        :param local_parameters: The kinetic-law LocalParameter records in scope for the equation.
         """
         self._equations.append(Equation(var=var, math=math, type=eq_type, local_parameters=local_parameters))
 
@@ -311,6 +311,7 @@ class ModelBuilder:
         :param label: The variable description.
         :param initial_value: The variable initial value.
         :param units: The variable units.
+        :return: The created StateVariable record (callers read its derivative_id).
         """
         state_var = StateVariable(
             index=len(self._state_variables),
