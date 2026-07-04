@@ -2,15 +2,10 @@
 
 import abc
 import os
-import pathlib
 import re
-import shutil
-import subprocess
-import sys
 from math import isnan
 from typing import TYPE_CHECKING, Optional
 
-from jinja2 import Environment, PackageLoader, select_autoescape
 from libsbml import (
     AST_RELATIONAL_EQ,
     AST_RELATIONAL_GEQ,
@@ -38,7 +33,6 @@ from ._config import (
     INITIAL_ASSIGNMENT_PREFIX,
     NON_DIM_UNITS,
     PREFIX_SEP,
-    ROOT_DIR,
     EquationType,
     EventType,
     ModelType,
@@ -46,6 +40,7 @@ from ._config import (
 )
 from ._expressions import collect_ast_names, formula_to_string, substitute_ast_names
 from ._names import CHASTE_RESERVED_NAMES, NameConflictError, NameManager, find_name_conflicts
+from ._rendering import CodeRenderer
 from ._utils import (
     generate_header_guard,
     get_compartment_size,
@@ -57,7 +52,6 @@ from ._utils import (
 if TYPE_CHECKING:
     from typing import Any
 
-    from jinja2.environment import Template
     from libsbml import ASTNode, Reaction, Species, SpeciesReference
 
 
@@ -65,19 +59,6 @@ class ChasteSbmlModel:
     """Holds information about an SBML model for which Chaste code is to be generated."""
 
     __metaclass__ = abc.ABCMeta
-
-    _jinja_env = Environment(
-        loader=PackageLoader("chaste_sbml"),
-        autoescape=select_autoescape(),
-        trim_blocks=True,
-        lstrip_blocks=True,
-    )
-    _jinja_env.globals["AMOUNT_PREFIX"] = AMOUNT_PREFIX
-    _jinja_env.globals["CONCENTRATION_PREFIX"] = CONCENTRATION_PREFIX
-    _jinja_env.globals["EquationType"] = EquationType
-    _jinja_env.globals["EventType"] = EventType
-    _jinja_env.globals["PREFIX_SEP"] = PREFIX_SEP
-    _jinja_env.globals["VarType"] = VarType
 
     # -- PUBLIC --------------------------------------
 
@@ -185,6 +166,7 @@ class ChasteSbmlModel:
         self._template_vars = {}  # type: dict[str, Any]
 
         self._outputs = {}  # { filename: code }
+        self._renderer = CodeRenderer()
 
         self._names.resolve_real_id_conflicts()
         self._process_model()
@@ -205,34 +187,8 @@ class ChasteSbmlModel:
         # Generate the code
         self._generate_outputs()
 
-        # Write the code to file
-        if output_directory:
-            root_dir = pathlib.Path(output_directory)
-        else:
-            root_dir = pathlib.Path().cwd()
-
-        for filename, code in self._outputs.items():
-            file_path = root_dir / filename
-            with open(file_path, "w") as f:
-                f.write(code)
-
-        # Format with clang-format — search the current interpreter's bin/ first
-        # so the clang-format installed as a Python dependency is always found.
-        python_bin = os.path.dirname(sys.executable)
-        search_path = os.pathsep.join([python_bin, os.environ.get("PATH", "")])
-        clang_format = shutil.which("clang-format", path=search_path)
-        if clang_format is not None:
-            for filename in self._outputs:
-                file_path = str(root_dir / filename)
-                subprocess.run(
-                    [
-                        clang_format,
-                        "-i",
-                        f"-style=file:{ROOT_DIR}/.clang-format",
-                        str(file_path),
-                    ],
-                    check=True,
-                )
+        # Write the code to file (formatted with clang-format)
+        self._renderer.write(self._outputs, output_directory)
 
     # -- PRIVATE ---------------------------------------
 
@@ -1261,8 +1217,7 @@ class ChasteSbmlModel:
         :param template_path: The path to the template.
         :param filename: The output filename.
         """
-        template = self._get_template(template_path)
-        code = template.render(self._template_vars)
+        code = self._renderer.render(template_path, self._template_vars)
         self._add_output(filename, code)
 
     def _generate_outputs(self) -> None:
@@ -1279,14 +1234,6 @@ class ChasteSbmlModel:
         elif self._model_type == ModelType.CELL_CYCLE:
             self._generate_output("cell_cycle/cell_cycle.hpp", self._cell_cycle_hpp_filename)
             self._generate_output("cell_cycle/cell_cycle.cpp", self._cell_cycle_cpp_filename)
-
-    def _get_template(self, name: str) -> "Template":
-        """Get a Jinja2 template.
-
-        :param name: The template name.
-        :return: The template object.
-        """
-        return self._jinja_env.get_template(name)
 
     def _get_timescale_multiplier(self) -> float:
         """Get the timescale multiplier.
