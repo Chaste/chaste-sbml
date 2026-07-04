@@ -550,194 +550,20 @@ class ModelBuilder:
     def _format_events(self) -> None:
         """Add events to template variables."""
         # TODO: Add priority
-
         for event in self._sbml_events:
-            if event.isSetDelay():
-                math = self._formula_to_string(event.getDelay().getMath())
-                try:
-                    delay = float(math)
-                except ValueError:
-                    delay = 9999
-
-                if delay != 0.0:
-                    # Delay of zero is equivalent to no delay
-                    raise NotImplementedError("Events with delays are not supported.")
-
+            self._reject_unsupported_delay(event)
             label = event.getName().strip()
-
-            # Try to guess the event type
-            event_type = EventType.UNKNOWN
-
-            cell_division_terms = ["cell division", "cytokinesis", "mitosis", "meiosis"]
-            for term in cell_division_terms:
-                if all(word in label.lower() for word in term.split()):
-                    event_type = EventType.CELL_DIVISION
-                    break
-
-            trigger_math = event.getTrigger().getMath()
-            trigger_formula = self._formula_to_string(trigger_math)
-
-            # A trigger may be written using a function definition, e.g. lessthan(S1, 0.6).
-            # Expand function-definition calls in a copy so the underlying relational operator
-            # is visible to the distance calculation below; without this the trigger is opaque
-            # and falls back to a constant distance, so CVODE never detects the event. The
-            # original (unexpanded) trigger_formula is still used for the trigger condition.
-            distance_math = trigger_math.deepCopy()
-            SBMLTransforms.replaceFD(distance_math, self._sbml_model.getListOfFunctionDefinitions())
-
-            trigger_distance = "1.0"
-            node_type = distance_math.getType()
-            if node_type in [
-                AST_RELATIONAL_LT,
-                AST_RELATIONAL_GT,
-                AST_RELATIONAL_EQ,
-                AST_RELATIONAL_LEQ,
-                AST_RELATIONAL_GEQ,
-                AST_RELATIONAL_NEQ,
-            ]:
-                lc = self._formula_to_string(distance_math.getLeftChild())
-                rc = self._formula_to_string(distance_math.getRightChild())
-
-                # Distance is negative when the condition is false,
-                # zero at the point where the condition switches from false to true,
-                # and positive when the condition is true.
-                if node_type == AST_RELATIONAL_GT:
-                    # gt(4.5    , 5.0    ) -> condition=false, dist=-0.5-eps
-                    # gt(5.0    , 5.0+eps) -> condition=false, dist=-eps-eps
-                    # gt(5.0    , 5.0    ) -> condition=false, dist=-eps
-                    # gt(5.0+eps, 5.0    ) -> condition=true, dist=0.0
-                    # gt(5.5    , 5.0    ) -> condition=true, dist=0.5-eps
-                    trigger_distance = f"({lc}) - ({rc}) - std::numeric_limits<double>::epsilon()"
-                elif node_type == AST_RELATIONAL_GEQ:
-                    # geq(4.5    , 5.0    ) -> condition=false, dist=-0.5-eps
-                    # geq(5.0    , 5.0+eps) -> condition=false, dist=-eps-eps
-                    # geq(5.0    , 5.0    ) -> condition=true, dist=-eps
-                    # geq(5.0+eps, 5.0    ) -> condition=true, dist=0.0
-                    # geq(5.5    , 5.0    ) -> condition=true, dist=0.5-eps
-                    trigger_distance = f"({lc}) - ({rc}) - std::numeric_limits<double>::epsilon()"
-                elif node_type == AST_RELATIONAL_LT:
-                    # lt(5.5    , 5.0    ) -> condition=false, dist=-0.5-eps
-                    # lt(5.0+eps, 5.0    ) -> condition=false, dist=-eps-eps
-                    # lt(5.0    , 5.0    ) -> condition=false, dist=-eps
-                    # lt(5.0    , 5.0+eps) -> condition=true, dist=0.0
-                    # lt(4.5    , 5.0    ) -> condition=true, dist=0.5-eps
-                    trigger_distance = f"({rc}) - ({lc}) - std::numeric_limits<double>::epsilon()"
-                elif node_type == AST_RELATIONAL_LEQ:
-                    # leq(5.5    , 5.0    ) -> condition=false, dist=-0.5-eps
-                    # leq(5.0+eps, 5.0    ) -> condition=false, dist=-eps-eps
-                    # leq(5.0    , 5.0    ) -> condition=true, dist=-eps
-                    # leq(5.0    , 5.0+eps) -> condition=true, dist=0.0
-                    # leq(4.5    , 5.0    ) -> condition=true, dist=0.5-eps
-                    trigger_distance = f"({rc}) - ({lc}) - std::numeric_limits<double>::epsilon()"
-                elif node_type == AST_RELATIONAL_EQ:
-                    # eq(4.5    , 5.0    ) -> condition=false, dist=-0.5
-                    # eq(5.0    , 5.0+eps) -> condition=false, dist=-eps
-                    # eq(5.0    , 5.0    ) -> condition=true, dist=0.0
-                    # eq(5.0+eps, 5.0    ) -> condition=false, dist=-eps
-                    # eq(5.5    , 5.0    ) -> condition=false, dist=-0.5
-                    trigger_distance = f"-std::abs(({lc}) - ({rc}))"
-                else:  # AST_RELATIONAL_NEQ
-                    # neq(4.5    , 5.0    ) -> condition=true, dist=0.5-eps
-                    # neq(5.0    , 5.0+eps) -> condition=true, dist=0.0
-                    # neq(5.0    , 5.0    ) -> condition=false, dist=-eps
-                    # neq(5.0+eps, 5.0    ) -> condition=true, dist=0.0
-                    # neq(5.5    , 5.0    ) -> condition=true, dist=0.5-eps
-                    trigger_distance = f"std::abs(({lc}) - ({rc})) - std::numeric_limits<double>::epsilon()"
-
-                # TODO: Distance calculation assumes two operands. Extend to more operands?
-                # e.g. trigger: geq(3.0, 6.0, 7.0, 9.0) -> condition=false, dist=min(3.0, 1.0, 2.0)=1.0
-
-            assignments = []
-            for assignment in event.getListOfEventAssignments():
-                # An event assignment with no MathML assigns nothing, leaving its target
-                # unchanged, so skip it rather than dereferencing a null math node.
-                if assignment.getMath() is None:
-                    continue
-
-                lhs = assignment.getVariable()
-                type_ = self._get_variable_type(lhs)
-                index = self._get_variable_index(lhs)
-                rhs = self._formula_to_string(assignment.getMath())
-
-                assignments.append(
-                    {
-                        "index": index,
-                        "lhs": lhs,
-                        "rhs": rhs,
-                        "type": type_,
-                    }
-                )
-
-            # An event that resizes a compartment conserves the amount of each concentration
-            # species in it (SBML semantics), so the species' concentration must be rescaled by
-            # old_size / new_size. The codegen tracks such species as concentration, so without
-            # this their amount (concentration * size) would jump with the compartment. Append
-            # compensating assignments; like all event assignments they are evaluated from the
-            # pre-event state, so the compartment id still reads its old size here.
-            compartment_ids = {compartment.getId() for compartment in self._sbml_compartments}
-            assignment_by_lhs = {assignment["lhs"]: assignment for assignment in assignments}
-            resized = {a["lhs"]: a["rhs"] for a in assignments if a["lhs"] in compartment_ids}
-
-            # A compartment may also be resized indirectly: an assignment rule sets it from a
-            # variable the event assigns (e.g. C = fakeC with the event assigning fakeC). Its new
-            # size is the rule expression with the event's assignments substituted in.
-            event_assignment_math = {
-                ea.getVariable(): ea.getMath() for ea in event.getListOfEventAssignments() if ea.getMath() is not None
-            }
-            assignment_rule_math = {ar["var"]: ar["math"] for ar in self._assignment_rules}
-            for compartment_id, rule_math in assignment_rule_math.items():
-                if compartment_id not in compartment_ids or compartment_id in resized:
-                    continue
-                referenced = set()
-                collect_ast_names(rule_math, referenced)
-                if referenced & set(event_assignment_math):
-                    substituted = substitute_ast_names(rule_math, event_assignment_math)
-                    resized[compartment_id] = self._formula_to_string(substituted)
-
-            for compartment_id, new_size in resized.items():
-                for species in self._sbml_species:
-                    species_id = species.getId()
-                    if species.getCompartment() != compartment_id:
-                        continue
-                    has_only_substance_units = (
-                        species.isSetHasOnlySubstanceUnits() and species.getHasOnlySubstanceUnits()
-                    )
-                    species_type = self._get_variable_type(species_id)
-                    # Amount-tracked species need no rescale (their amount is unchanged, and the
-                    # concentration = amount / size follows automatically). Assignment-rule species
-                    # are recomputed each step, so they cannot be assigned here.
-                    if has_only_substance_units or species_type not in (VarType.STATE_VARIABLE, VarType.PARAMETER):
-                        continue
-
-                    scale = f"{compartment_id} / ({new_size})"
-                    explicit = assignment_by_lhs.get(species_id)
-                    if explicit is not None:
-                        # The event already assigns this species a concentration. That value is
-                        # taken at the old compartment size, so scale it by old_size / new_size to
-                        # carry the resulting amount across the simultaneous resize.
-                        explicit["rhs"] = f"({explicit['rhs']}) * {scale}"
-                    else:
-                        # The species is otherwise unchanged by the event, so conserve its amount.
-                        assignments.append(
-                            {
-                                "index": self._get_variable_index(species_id),
-                                "lhs": species_id,
-                                "rhs": f"{species_id} * {scale}",
-                                "type": species_type,
-                            }
-                        )
-
+            event_type = self._guess_event_type(label)
+            # Compute the trigger formula first: it mutates the trigger AST in place (stripping
+            # units, renaming the avogadro csymbol), and the distance below deep-copies that AST.
+            trigger_formula = self._formula_to_string(event.getTrigger().getMath())
+            trigger_distance = self._event_trigger_distance(event)
+            assignments = self._event_assignments(event)
+            self._compensate_compartment_resizes(event, assignments)
             # SBML trigger initialValue="false" means the trigger is treated as false just before
             # t=0, allowing the event to fire immediately if the condition is true at t=0.
-            # initialValue="true" (the default) means the event won't fire at t=0.
             initial_satisfied = event.getTrigger().getInitialValue()
-
-            # An event priority orders simultaneously-firing events: higher priority executes
-            # first, so a lower-priority event executes last and its assignment wins any conflict.
-            priority = None
-            if event.isSetPriority() and event.getPriority().getMath() is not None:
-                priority = self._formula_to_string(event.getPriority().getMath())
-
+            priority = self._event_priority(event)
             self._add_event(
                 label,
                 trigger_formula,
@@ -747,6 +573,190 @@ class ModelBuilder:
                 initial_satisfied,
                 priority,
             )
+
+    def _reject_unsupported_delay(self, event) -> None:
+        """Raise if the event has a non-zero delay (delays are not supported)."""
+        if event.isSetDelay():
+            math = self._formula_to_string(event.getDelay().getMath())
+            try:
+                delay = float(math)
+            except ValueError:
+                delay = 9999
+
+            if delay != 0.0:
+                # Delay of zero is equivalent to no delay
+                raise NotImplementedError("Events with delays are not supported.")
+
+    @staticmethod
+    def _guess_event_type(label: str) -> EventType:
+        """Guess the event type from its label (cell division vs unknown)."""
+        cell_division_terms = ["cell division", "cytokinesis", "mitosis", "meiosis"]
+        for term in cell_division_terms:
+            if all(word in label.lower() for word in term.split()):
+                return EventType.CELL_DIVISION
+        return EventType.UNKNOWN
+
+    def _event_trigger_distance(self, event) -> str:
+        """Signed distance to the trigger boundary, for CVODE root-finding.
+
+        Must run after the trigger formula: it deep-copies the (already unit-stripped) trigger
+        AST and expands function-definition calls so the relational operator is visible. The
+        distance is negative when the condition is false, zero at the crossing, positive when true.
+        """
+        distance_math = event.getTrigger().getMath().deepCopy()
+        SBMLTransforms.replaceFD(distance_math, self._sbml_model.getListOfFunctionDefinitions())
+
+        trigger_distance = "1.0"
+        node_type = distance_math.getType()
+        if node_type in [
+            AST_RELATIONAL_LT,
+            AST_RELATIONAL_GT,
+            AST_RELATIONAL_EQ,
+            AST_RELATIONAL_LEQ,
+            AST_RELATIONAL_GEQ,
+            AST_RELATIONAL_NEQ,
+        ]:
+            lc = self._formula_to_string(distance_math.getLeftChild())
+            rc = self._formula_to_string(distance_math.getRightChild())
+
+            # Distance is negative when the condition is false,
+            # zero at the point where the condition switches from false to true,
+            # and positive when the condition is true.
+            if node_type == AST_RELATIONAL_GT:
+                # gt(4.5    , 5.0    ) -> condition=false, dist=-0.5-eps
+                # gt(5.0    , 5.0+eps) -> condition=false, dist=-eps-eps
+                # gt(5.0    , 5.0    ) -> condition=false, dist=-eps
+                # gt(5.0+eps, 5.0    ) -> condition=true, dist=0.0
+                # gt(5.5    , 5.0    ) -> condition=true, dist=0.5-eps
+                trigger_distance = f"({lc}) - ({rc}) - std::numeric_limits<double>::epsilon()"
+            elif node_type == AST_RELATIONAL_GEQ:
+                # geq(4.5    , 5.0    ) -> condition=false, dist=-0.5-eps
+                # geq(5.0    , 5.0+eps) -> condition=false, dist=-eps-eps
+                # geq(5.0    , 5.0    ) -> condition=true, dist=-eps
+                # geq(5.0+eps, 5.0    ) -> condition=true, dist=0.0
+                # geq(5.5    , 5.0    ) -> condition=true, dist=0.5-eps
+                trigger_distance = f"({lc}) - ({rc}) - std::numeric_limits<double>::epsilon()"
+            elif node_type == AST_RELATIONAL_LT:
+                # lt(5.5    , 5.0    ) -> condition=false, dist=-0.5-eps
+                # lt(5.0+eps, 5.0    ) -> condition=false, dist=-eps-eps
+                # lt(5.0    , 5.0    ) -> condition=false, dist=-eps
+                # lt(5.0    , 5.0+eps) -> condition=true, dist=0.0
+                # lt(4.5    , 5.0    ) -> condition=true, dist=0.5-eps
+                trigger_distance = f"({rc}) - ({lc}) - std::numeric_limits<double>::epsilon()"
+            elif node_type == AST_RELATIONAL_LEQ:
+                # leq(5.5    , 5.0    ) -> condition=false, dist=-0.5-eps
+                # leq(5.0+eps, 5.0    ) -> condition=false, dist=-eps-eps
+                # leq(5.0    , 5.0    ) -> condition=true, dist=-eps
+                # leq(5.0    , 5.0+eps) -> condition=true, dist=0.0
+                # leq(4.5    , 5.0    ) -> condition=true, dist=0.5-eps
+                trigger_distance = f"({rc}) - ({lc}) - std::numeric_limits<double>::epsilon()"
+            elif node_type == AST_RELATIONAL_EQ:
+                # eq(4.5    , 5.0    ) -> condition=false, dist=-0.5
+                # eq(5.0    , 5.0+eps) -> condition=false, dist=-eps
+                # eq(5.0    , 5.0    ) -> condition=true, dist=0.0
+                # eq(5.0+eps, 5.0    ) -> condition=false, dist=-eps
+                # eq(5.5    , 5.0    ) -> condition=false, dist=-0.5
+                trigger_distance = f"-std::abs(({lc}) - ({rc}))"
+            else:  # AST_RELATIONAL_NEQ
+                # neq(4.5    , 5.0    ) -> condition=true, dist=0.5-eps
+                # neq(5.0    , 5.0+eps) -> condition=true, dist=0.0
+                # neq(5.0    , 5.0    ) -> condition=false, dist=-eps
+                # neq(5.0+eps, 5.0    ) -> condition=true, dist=0.0
+                # neq(5.5    , 5.0    ) -> condition=true, dist=0.5-eps
+                trigger_distance = f"std::abs(({lc}) - ({rc})) - std::numeric_limits<double>::epsilon()"
+
+            # TODO: Distance calculation assumes two operands. Extend to more operands?
+            # e.g. trigger: geq(3.0, 6.0, 7.0, 9.0) -> condition=false, dist=min(3.0, 1.0, 2.0)=1.0
+        return trigger_distance
+
+    def _event_assignments(self, event) -> list:
+        """Build the list of assignment records the event applies when it fires."""
+        assignments = []
+        for assignment in event.getListOfEventAssignments():
+            # An event assignment with no MathML assigns nothing, leaving its target
+            # unchanged, so skip it rather than dereferencing a null math node.
+            if assignment.getMath() is None:
+                continue
+
+            lhs = assignment.getVariable()
+            type_ = self._get_variable_type(lhs)
+            index = self._get_variable_index(lhs)
+            rhs = self._formula_to_string(assignment.getMath())
+
+            assignments.append(
+                {
+                    "index": index,
+                    "lhs": lhs,
+                    "rhs": rhs,
+                    "type": type_,
+                }
+            )
+        return assignments
+
+    def _compensate_compartment_resizes(self, event, assignments) -> None:
+        """Append/adjust assignments so a compartment resize conserves species amounts."""
+        # An event that resizes a compartment conserves the amount of each concentration
+        # species in it (SBML semantics), so the species' concentration must be rescaled by
+        # old_size / new_size. The codegen tracks such species as concentration, so without
+        # this their amount (concentration * size) would jump with the compartment. Append
+        # compensating assignments; like all event assignments they are evaluated from the
+        # pre-event state, so the compartment id still reads its old size here.
+        compartment_ids = {compartment.getId() for compartment in self._sbml_compartments}
+        assignment_by_lhs = {assignment["lhs"]: assignment for assignment in assignments}
+        resized = {a["lhs"]: a["rhs"] for a in assignments if a["lhs"] in compartment_ids}
+
+        # A compartment may also be resized indirectly: an assignment rule sets it from a
+        # variable the event assigns (e.g. C = fakeC with the event assigning fakeC). Its new
+        # size is the rule expression with the event's assignments substituted in.
+        event_assignment_math = {
+            ea.getVariable(): ea.getMath() for ea in event.getListOfEventAssignments() if ea.getMath() is not None
+        }
+        assignment_rule_math = {ar["var"]: ar["math"] for ar in self._assignment_rules}
+        for compartment_id, rule_math in assignment_rule_math.items():
+            if compartment_id not in compartment_ids or compartment_id in resized:
+                continue
+            referenced = set()
+            collect_ast_names(rule_math, referenced)
+            if referenced & set(event_assignment_math):
+                substituted = substitute_ast_names(rule_math, event_assignment_math)
+                resized[compartment_id] = self._formula_to_string(substituted)
+
+        for compartment_id, new_size in resized.items():
+            for species in self._sbml_species:
+                species_id = species.getId()
+                if species.getCompartment() != compartment_id:
+                    continue
+                has_only_substance_units = species.isSetHasOnlySubstanceUnits() and species.getHasOnlySubstanceUnits()
+                species_type = self._get_variable_type(species_id)
+                # Amount-tracked species need no rescale (their amount is unchanged, and the
+                # concentration = amount / size follows automatically). Assignment-rule species
+                # are recomputed each step, so they cannot be assigned here.
+                if has_only_substance_units or species_type not in (VarType.STATE_VARIABLE, VarType.PARAMETER):
+                    continue
+
+                scale = f"{compartment_id} / ({new_size})"
+                explicit = assignment_by_lhs.get(species_id)
+                if explicit is not None:
+                    # The event already assigns this species a concentration. That value is
+                    # taken at the old compartment size, so scale it by old_size / new_size to
+                    # carry the resulting amount across the simultaneous resize.
+                    explicit["rhs"] = f"({explicit['rhs']}) * {scale}"
+                else:
+                    # The species is otherwise unchanged by the event, so conserve its amount.
+                    assignments.append(
+                        {
+                            "index": self._get_variable_index(species_id),
+                            "lhs": species_id,
+                            "rhs": f"{species_id} * {scale}",
+                            "type": species_type,
+                        }
+                    )
+
+    def _event_priority(self, event):
+        """Return the event priority expression, or None if it has none."""
+        if event.isSetPriority() and event.getPriority().getMath() is not None:
+            return self._formula_to_string(event.getPriority().getMath())
+        return None
 
     def _format_function_definitions(self) -> None:
         """Add function definitions to template variables."""
@@ -898,182 +908,32 @@ class ModelBuilder:
                     self._add_rate_rule(id_, label, var, math)
 
     def _format_species(self) -> None:
-        """Add species to template variables."""
-        # Note: Rules must be processed before species
+        """Add species to template variables (rules must be processed first)."""
         assignment_rules = {ar["var"]: ar["math"] for ar in self._assignment_rules}
         rate_rules = {rr["var"]: rr["math"] for rr in self._rate_rules}
         initial_assignments = {ia["var"]: ia["math"] for ia in self._initial_assignments}
 
-        model_conversion_factor = None
-        if self._sbml_model.isSetConversionFactor():
-            model_conversion_factor = self._sbml_model.getConversionFactor()
-
         for species in self._sbml_species:
-            species_id = species.getId()
-            label = species.getName().strip()
-
-            conversion_factor = None
-            if species.isSetConversionFactor():
-                conversion_factor = species.getConversionFactor()
-            elif model_conversion_factor is not None:
-                conversion_factor = model_conversion_factor
+            conversion_factor = self._species_conversion_factor(species)
 
             # If there's a compartment we'll normalise the ODEs, so declare it as non-dimensional
-            compartment_id = species.getCompartment()
-            compartment = self._sbml_compartments.get(compartment_id)
-
+            compartment = self._sbml_compartments.get(species.getCompartment())
             units = NON_DIM_UNITS if compartment else species.getSubstanceUnits()
             has_only_substance_units = species.isSetHasOnlySubstanceUnits() and species.getHasOnlySubstanceUnits()
 
-            initial_value = None
-            if species.isSetInitialConcentration():
-                initial_value = species.getInitialConcentration()
-                math = parseL3Formula(f"{initial_value}")
-                self._add_equation(
-                    var=species_id,
-                    math=math,
-                    eq_type=EquationType.INITIAL_VALUE,
-                )
-
-                if (
-                    has_only_substance_units
-                    and (species_id not in assignment_rules)
-                    and (species_id not in initial_assignments)
-                ):
-                    # Convert initial concentration to amount via a custom initial assignment
-                    ia_id = PREFIX_SEP.join([CHASTE_PREFIX, INITIAL_ASSIGNMENT_PREFIX, species_id])
-                    ia_label = f"Convert {species_id} concentration to amount"
-                    ia_var = species_id
-                    ia_rhs = f"{species_id} * {compartment_id}"
-                    ia_math = parseL3Formula(ia_rhs)
-                    self._add_initial_assignment(ia_id, ia_label, ia_var, ia_math)
-                    self._add_equation(var=ia_var, math=ia_math, eq_type=EquationType.INITIAL_ASSIGNMENT)
-
-            elif species.isSetInitialAmount():
-                initial_value = species.getInitialAmount()
-                math = parseL3Formula(f"{initial_value}")
-                self._add_equation(species_id, math, eq_type=EquationType.INITIAL_VALUE)
-
-                if (
-                    not has_only_substance_units
-                    and (species_id not in assignment_rules)
-                    and (species_id not in initial_assignments)
-                ):
-                    # Convert initial amount to concentration via a custom initial assignment
-                    ia_id = PREFIX_SEP.join([CHASTE_PREFIX, INITIAL_ASSIGNMENT_PREFIX, species_id])
-                    ia_label = f"Convert {species_id} amount to concentration"
-                    ia_var = species_id
-                    ia_rhs = f"{species_id} / {compartment_id}"
-                    ia_math = parseL3Formula(ia_rhs)
-                    self._add_initial_assignment(ia_id, ia_label, ia_var, ia_math)
-                    self._add_equation(var=ia_var, math=ia_math, eq_type=EquationType.INITIAL_ASSIGNMENT)
-
-            is_bc = species.isSetBoundaryCondition() and species.getBoundaryCondition()
-
-            if species_id in initial_assignments:
-                math = initial_assignments[species_id]
-                self._add_equation(var=species_id, math=math, eq_type=EquationType.INITIAL_ASSIGNMENT)
-
-            if species_id in assignment_rules:
-                # Derived quantity (includes boundary conditions with assignment rules)
-                math = assignment_rules[species_id]
-                self._add_derived_quantity(species_id, label, initial_value, units)
-                self._add_equation(var=species_id, math=math, eq_type=EquationType.ASSIGNMENT_RULE)
-
-            elif is_bc and (species_id not in rate_rules):
-                if not has_only_substance_units:
-                    if compartment_id in self._odes:
-                        compartment_rhs = formulaToL3String(self._odes[compartment_id])
-                    elif compartment_id in assignment_rules:
-                        compartment_rhs = self._total_time_derivative(assignment_rules[compartment_id])
-                    else:
-                        compartment_rhs = ""
-
-                if not has_only_substance_units and compartment_rhs:
-                    # State variable: boundary condition in changing compartment
-                    rhs = f"(-{species_id} * ({compartment_rhs})) / {compartment_id}"
-                    if conversion_factor is not None:
-                        rhs = f"({rhs}) * {conversion_factor}"
-                    math = parseL3Formula(rhs)
-                    state_var = self._add_state_variable(species_id, label, initial_value, units)
-                    self._add_equation(var=state_var["derivative_id"], math=math, eq_type=EquationType.DERIVATIVE)
-                else:
-                    # Constant boundary species (no rule, non-time-varying compartment): its value
-                    # is fixed except when an event changes it. Model it as a (variable) parameter
-                    # rather than a derived quantity so the value is stored per step (time-resolved
-                    # in the recorded solution) and event assignments go through the deferred
-                    # parameter mechanism instead of mutating a member that is never recorded.
-                    self._add_parameter(species_id, label, initial_value, units)
-
-            elif species_id in self._odes:
-                # State variable
-                math = self._odes[species_id]
-                rhs = formulaToL3String(math)
-
-                # Add parentheses if there are multiple terms
-                if "+" in rhs or "-" in rhs[1:]:
-                    rhs = f"({rhs})"
-
-                # The conversion factor relates reaction extent to the change in species amount,
-                # so it multiplies the reaction flux only - not a rate rule, which gives the
-                # species' rate of change directly. Apply it before the dilution term below: that
-                # term conserves amount in a time-varying compartment and is independent of the
-                # conversion factor.
-                if conversion_factor is not None and species_id not in rate_rules:
-                    rhs = f"({rhs}) * {conversion_factor}"
-
-                # Add compartment scaling if defined by a reaction
-                if not (has_only_substance_units or species_id in rate_rules):
-                    # Determine dC/dt for the dilution correction
-                    if compartment_id in self._odes:
-                        compartment_ddt = formulaToL3String(self._odes[compartment_id])
-                    elif compartment_id in assignment_rules:
-                        compartment_ddt = self._total_time_derivative(assignment_rules[compartment_id])
-                    else:
-                        compartment_ddt = ""
-
-                    if compartment_ddt:
-                        rhs = f"({rhs} - {species_id} * ({compartment_ddt}))"
-
-                    # Scale by compartment volume
-                    rhs = f"{rhs} / {compartment_id}"
-
-                # TODO: Handle time scaling
-                # time_multiplier = self._get_timescale_multiplier()
-                # if time_multiplier != 1.0:
-                #     f"rDY[{state_variable_index}] *= {time_multiplier};"
-
-                state_var = self._add_state_variable(species_id, label, initial_value, units)
-                self._add_equation(
-                    var=state_var["derivative_id"],
-                    math=parseL3Formula(rhs),
-                    eq_type=EquationType.DERIVATIVE,
-                )
-
-            else:
-                # Check whether the compartment is time-varying: a species in
-                # concentration with no reactions or rules still needs a dilution
-                # ODE (ds/dt = -s*(dC/dt)/C) to conserve its amount.
-                compartment_ddt = ""
-                if not has_only_substance_units:
-                    if compartment_id in self._odes:
-                        compartment_ddt = formulaToL3String(self._odes[compartment_id])
-                    elif compartment_id in assignment_rules:
-                        compartment_ddt = self._total_time_derivative(assignment_rules[compartment_id])
-
-                if compartment_ddt:
-                    rhs = f"(-{species_id} * ({compartment_ddt})) / {compartment_id}"
-                    if conversion_factor is not None:
-                        rhs = f"({rhs}) * {conversion_factor}"
-                    state_var = self._add_state_variable(species_id, label, initial_value, units)
-                    self._add_equation(
-                        var=state_var["derivative_id"],
-                        math=parseL3Formula(rhs),
-                        eq_type=EquationType.DERIVATIVE,
-                    )
-                else:
-                    # Truly constant: no reactions, no rules, constant compartment
-                    self._add_derived_quantity(species_id, label, initial_value, units)
+            initial_value = self._add_species_initial_value(
+                species, has_only_substance_units, assignment_rules, initial_assignments
+            )
+            self._add_species_dynamics(
+                species,
+                units,
+                has_only_substance_units,
+                conversion_factor,
+                initial_value,
+                assignment_rules,
+                rate_rules,
+                initial_assignments,
+            )
 
             if not has_only_substance_units:
                 # Concentration species: add an "amount" derived quantity (amount = conc * volume)
@@ -1081,6 +941,176 @@ class ModelBuilder:
             else:
                 # Amount species: add a "concentration" derived quantity (conc = amount / volume)
                 self._add_concentration(species)
+
+    def _species_conversion_factor(self, species):
+        """Return the species' conversion factor, falling back to the model's, else None."""
+        if species.isSetConversionFactor():
+            return species.getConversionFactor()
+        if self._sbml_model.isSetConversionFactor():
+            return self._sbml_model.getConversionFactor()
+        return None
+
+    def _compartment_time_derivative(self, compartment_id, assignment_rules) -> str:
+        """Return the compartment's dC/dt as an infix string, or "" if it is constant.
+
+        A species in concentration in a time-varying compartment needs a dilution term
+        (ds/dt gains -s*(dC/dt)/C) to conserve its amount; this supplies that dC/dt from the
+        compartment's own ODE or assignment rule.
+        """
+        if compartment_id in self._odes:
+            return formulaToL3String(self._odes[compartment_id])
+        if compartment_id in assignment_rules:
+            return self._total_time_derivative(assignment_rules[compartment_id])
+        return ""
+
+    def _add_species_unit_conversion(self, species_id, description, rhs) -> None:
+        """Add a synthetic initial assignment converting a species' initial value between units."""
+        ia_id = PREFIX_SEP.join([CHASTE_PREFIX, INITIAL_ASSIGNMENT_PREFIX, species_id])
+        ia_math = parseL3Formula(rhs)
+        self._add_initial_assignment(ia_id, f"Convert {species_id} {description}", species_id, ia_math)
+        self._add_equation(var=species_id, math=ia_math, eq_type=EquationType.INITIAL_ASSIGNMENT)
+
+    def _add_species_initial_value(self, species, has_only_substance_units, assignment_rules, initial_assignments):
+        """Emit the species' initial-value equation and any concentration<->amount conversion.
+
+        :return: the initial concentration or amount, or None if neither is set.
+        """
+        species_id = species.getId()
+        compartment_id = species.getCompartment()
+
+        if species.isSetInitialConcentration():
+            initial_value = species.getInitialConcentration()
+            self._add_equation(
+                var=species_id, math=parseL3Formula(f"{initial_value}"), eq_type=EquationType.INITIAL_VALUE
+            )
+            if (
+                has_only_substance_units
+                and (species_id not in assignment_rules)
+                and (species_id not in initial_assignments)
+            ):
+                # Convert initial concentration to amount via a custom initial assignment
+                self._add_species_unit_conversion(
+                    species_id, "concentration to amount", f"{species_id} * {compartment_id}"
+                )
+            return initial_value
+
+        if species.isSetInitialAmount():
+            initial_value = species.getInitialAmount()
+            self._add_equation(species_id, parseL3Formula(f"{initial_value}"), eq_type=EquationType.INITIAL_VALUE)
+            if (
+                (not has_only_substance_units)
+                and (species_id not in assignment_rules)
+                and (species_id not in initial_assignments)
+            ):
+                # Convert initial amount to concentration via a custom initial assignment
+                self._add_species_unit_conversion(
+                    species_id, "amount to concentration", f"{species_id} / {compartment_id}"
+                )
+            return initial_value
+
+        return None
+
+    def _add_species_dynamics(
+        self,
+        species,
+        units,
+        has_only_substance_units,
+        conversion_factor,
+        initial_value,
+        assignment_rules,
+        rate_rules,
+        initial_assignments,
+    ) -> None:
+        """Classify a species (derived quantity, state variable or parameter) and emit its equation."""
+        species_id = species.getId()
+        label = species.getName().strip()
+        compartment_id = species.getCompartment()
+
+        is_bc = species.isSetBoundaryCondition() and species.getBoundaryCondition()
+
+        if species_id in initial_assignments:
+            math = initial_assignments[species_id]
+            self._add_equation(var=species_id, math=math, eq_type=EquationType.INITIAL_ASSIGNMENT)
+
+        if species_id in assignment_rules:
+            # Derived quantity (includes boundary conditions with assignment rules)
+            math = assignment_rules[species_id]
+            self._add_derived_quantity(species_id, label, initial_value, units)
+            self._add_equation(var=species_id, math=math, eq_type=EquationType.ASSIGNMENT_RULE)
+
+        elif is_bc and (species_id not in rate_rules):
+            compartment_ddt = (
+                "" if has_only_substance_units else self._compartment_time_derivative(compartment_id, assignment_rules)
+            )
+            if compartment_ddt:
+                # State variable: boundary condition in changing compartment
+                rhs = f"(-{species_id} * ({compartment_ddt})) / {compartment_id}"
+                if conversion_factor is not None:
+                    rhs = f"({rhs}) * {conversion_factor}"
+                state_var = self._add_state_variable(species_id, label, initial_value, units)
+                self._add_equation(
+                    var=state_var["derivative_id"], math=parseL3Formula(rhs), eq_type=EquationType.DERIVATIVE
+                )
+            else:
+                # Constant boundary species (no rule, non-time-varying compartment): its value
+                # is fixed except when an event changes it. Model it as a (variable) parameter
+                # rather than a derived quantity so the value is stored per step (time-resolved
+                # in the recorded solution) and event assignments go through the deferred
+                # parameter mechanism instead of mutating a member that is never recorded.
+                self._add_parameter(species_id, label, initial_value, units)
+
+        elif species_id in self._odes:
+            # State variable
+            rhs = formulaToL3String(self._odes[species_id])
+
+            # Add parentheses if there are multiple terms
+            if "+" in rhs or "-" in rhs[1:]:
+                rhs = f"({rhs})"
+
+            # The conversion factor relates reaction extent to the change in species amount,
+            # so it multiplies the reaction flux only - not a rate rule, which gives the
+            # species' rate of change directly. Apply it before the dilution term below: that
+            # term conserves amount in a time-varying compartment and is independent of the
+            # conversion factor.
+            if conversion_factor is not None and species_id not in rate_rules:
+                rhs = f"({rhs}) * {conversion_factor}"
+
+            # Add compartment scaling if defined by a reaction
+            if not (has_only_substance_units or species_id in rate_rules):
+                compartment_ddt = self._compartment_time_derivative(compartment_id, assignment_rules)
+                if compartment_ddt:
+                    rhs = f"({rhs} - {species_id} * ({compartment_ddt}))"
+                # Scale by compartment volume
+                rhs = f"{rhs} / {compartment_id}"
+
+            # TODO: Handle time scaling
+            # time_multiplier = self._get_timescale_multiplier()
+            # if time_multiplier != 1.0:
+            #     f"rDY[{state_variable_index}] *= {time_multiplier};"
+
+            state_var = self._add_state_variable(species_id, label, initial_value, units)
+            self._add_equation(
+                var=state_var["derivative_id"], math=parseL3Formula(rhs), eq_type=EquationType.DERIVATIVE
+            )
+
+        else:
+            # Check whether the compartment is time-varying: a species in concentration with no
+            # reactions or rules still needs a dilution ODE (ds/dt = -s*(dC/dt)/C) to conserve
+            # its amount.
+            compartment_ddt = (
+                "" if has_only_substance_units else self._compartment_time_derivative(compartment_id, assignment_rules)
+            )
+            if compartment_ddt:
+                rhs = f"(-{species_id} * ({compartment_ddt})) / {compartment_id}"
+                if conversion_factor is not None:
+                    rhs = f"({rhs}) * {conversion_factor}"
+                state_var = self._add_state_variable(species_id, label, initial_value, units)
+                self._add_equation(
+                    var=state_var["derivative_id"], math=parseL3Formula(rhs), eq_type=EquationType.DERIVATIVE
+                )
+            else:
+                # Truly constant: no reactions, no rules, constant compartment
+                self._add_derived_quantity(species_id, label, initial_value, units)
 
     def _formula_to_string(self, math: "ASTNode", local_parameters: Optional[list[dict[str, str]]] = None) -> str:
         """Convert an AST math formula to an equivalent C++ string.
