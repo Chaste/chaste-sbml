@@ -1,4 +1,4 @@
-"""C++ identifier naming for generated model code (issue #35).
+"""C++ identifier naming for generated model code.
 
 Provides the pieces that keep generated C++ identifiers valid and unique:
 
@@ -240,7 +240,7 @@ def resolve_cpp_name(base: str, taken) -> str:
 
 
 class NameManager:
-    """Manages C++ identifier naming for one SBML model (issue #35, phases B and C).
+    """Manages C++ identifier naming for one SBML model.
 
     It resolves real ids that clash with C++ keywords or reserved names (phase C) and hands out
     collision-free names for generator-synthesised identifiers such as state derivatives and
@@ -313,7 +313,7 @@ class NameManager:
         self._taken.add(name)
         return name
 
-    def _collect_ids(self) -> set:
+    def _collect_ids(self) -> set[str]:
         """Collect the real SBML ids that become C++ identifiers in the generated code.
 
         Covers the categories emitted as C++ names -- species, global and local (kinetic-law)

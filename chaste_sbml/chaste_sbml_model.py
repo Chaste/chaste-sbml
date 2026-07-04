@@ -25,8 +25,6 @@ class ChasteSbmlModel:
 
     __metaclass__ = abc.ABCMeta
 
-    # -- PUBLIC --------------------------------------
-
     def __init__(self, sbml_file: str, model_name: str = "", model_type: ModelType = ModelType.GENERIC) -> None:
         """Initialise the ChasteSbmlModel.
 
@@ -87,9 +85,9 @@ class ChasteSbmlModel:
     def outputs(self) -> dict[str, str]:
         """Get the generated code outputs.
 
-        :return: A dictionary of filename and code pairs.
+        :return: A copy of the filename to code mapping, so callers cannot mutate the internal state.
         """
-        return self._outputs
+        return dict(self._outputs)
 
     def write(self, output_directory=None):
         """Generate Chaste code and write to file.
@@ -101,8 +99,6 @@ class ChasteSbmlModel:
 
         # Write the code to file (formatted with clang-format)
         self._renderer.write(self._outputs, output_directory)
-
-    # -- PRIVATE ---------------------------------------
 
     def _add_output(self, filename: str, code: str) -> None:
         """Add generated code to the outputs dictionary.

@@ -71,7 +71,7 @@ class ModelBuilder:
         self._names = name_manager
         self._model_name = model_name
 
-    def template_data(self) -> dict:
+    def template_data(self) -> dict[str, "Any"]:
         """Return the built collections as a template-variables dict."""
         return dict(
             assignment_rules=self._assignment_rules,
@@ -324,7 +324,7 @@ class ModelBuilder:
 
     def _add_state_variable(
         self, id_: str, label: str, initial_value: Optional[float], units: str = NON_DIM_UNITS
-    ) -> dict:
+    ) -> dict[str, "Any"]:
         """Add a state variable to the template variables.
 
         :param id_: The variable ID.
@@ -366,21 +366,21 @@ class ModelBuilder:
             math = parseL3Formula(f"{initial_value}")
             self._add_equation(var=id_, math=math, eq_type=EquationType.INITIAL_VALUE)
 
-        # A speciesReference's stoichiometry may be driven by a rate rule or an assignment
-        # rule rather than a constant `stoichiometry` attribute (rules are processed before
-        # ODE extraction). A rate-rule stoichiometry is integrated as a state variable; an
-        # assignment-rule stoichiometry is a derived quantity recomputed each step (mirroring
-        # _format_parameters). Otherwise it stays a constant parameter. Note these are not in
-        # _sbml_parameters, so _format_parameters does not handle them.
+        # A speciesReference's stoichiometry may be driven by a rate rule or an
+        # assignment rule rather than a constant `stoichiometry` attribute. Note
+        # these are not in _sbml_parameters, so _format_parameters does not handle them.
         rate_rules = {rule["var"]: rule["math"] for rule in self._rate_rules}
         assignment_rules = {rule["var"]: rule["math"] for rule in self._assignment_rules}
         if id_ in rate_rules:
+            # A rate-rule stoichiometry is integrated as a state variable
             state_var = self._add_state_variable(id_, label, initial_value, NON_DIM_UNITS)  # TODO: Use correct units
             self._add_equation(var=state_var["derivative_id"], math=rate_rules[id_], eq_type=EquationType.DERIVATIVE)
         elif id_ in assignment_rules:
+            # An assignment-rule stoichiometry is a derived quantity recomputed each step.
             self._add_derived_quantity(id_, label, initial_value, NON_DIM_UNITS)  # TODO: Use correct units
             self._add_equation(var=id_, math=assignment_rules[id_], eq_type=EquationType.ASSIGNMENT_RULE)
         else:
+            # A constant stoichiometry parameter.
             self._add_parameter(id_, label, initial_value, NON_DIM_UNITS)  # TODO: Use correct units
 
         if species_reference.isSetStoichiometryMath():
@@ -776,8 +776,8 @@ class ModelBuilder:
                 self._add_initial_assignment(id_, label, var, math)
 
                 # Species reference stoichiometry variables are not in _sbml_parameters, so
-                # _format_parameters won't apply their initial assignments.  Do it here. A
-                # variable stoichiometry (driven by a rate rule) is a state variable; its
+                # _format_parameters won't apply their initial assignments. Do it here.
+                # A variable stoichiometry (driven by a rate rule) is a state variable; its
                 # initial assignment overrides the speciesReference stoichiometry attribute,
                 # and Initialise's SetDefaultInitialCondition then carries it into the ICs.
                 if var not in sbml_param_ids:
@@ -1147,10 +1147,11 @@ class ModelBuilder:
 
         raise ValueError(f"ID '{id_}' is not a recognized variable.")
 
-    def _get_variable_type(self, var_id: str) -> bool:
+    def _get_variable_type(self, var_id: str) -> VarType:
         """Get the type of a variable based on its ID.
 
         :param var_id: The variable ID.
+        :return: The variable's VarType, or VarType.UNKNOWN if it is not a known variable.
         """
         return self._variable_types.get(var_id, VarType.UNKNOWN)
 
@@ -1196,7 +1197,7 @@ class ModelBuilder:
 
         # Names already claimed by real SBML entities and the Chaste base classes. Synthetic
         # identifiers (derivatives, amount/concentration conversions, initial-assignment
-        # intermediates) are allocated against this so they never collide (issue #35, phase B).
+        # intermediates) are allocated against this so they never collide.
         self._names.reset()
 
         # TODO: enforce processing order e.g. rules must be processed first
@@ -1224,7 +1225,7 @@ class ModelBuilder:
     def _check_name_conflicts(self) -> None:
         """Fail if any generated C++ identifier clashes with another or a reserved name.
 
-        Phase A of issue #35: detect conflicts and raise rather than emit silently incorrect
+        Detect conflicts and raise rather than emit silently incorrect
         C++. Gathers every identifier the templates turn into a C++ name -- parameters, state
         variables and their derivatives, derived quantities (including amount/concentration
         conversions), stoichiometry variables, reactions and model functions -- and checks them
