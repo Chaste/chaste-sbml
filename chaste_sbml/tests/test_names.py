@@ -1,10 +1,12 @@
-"""Tests for C++ identifier conflict detection (issue #35, phase A)."""
+"""Tests for C++ identifier conflict detection and naming (issue #35)."""
 
+import libsbml
 import pytest
 
 from chaste_sbml._names import (
     CHASTE_RESERVED_NAMES,
     CPP_KEYWORDS,
+    NameManager,
     find_name_conflicts,
     is_valid_cpp_identifier,
     resolve_cpp_name,
@@ -106,3 +108,56 @@ def test_resolve_cpp_name_escapes_reserved_chaste_name():
 def test_resolve_cpp_name_escape_then_uniquify():
     """If the escaped name is already taken, a numeric suffix is added."""
     assert resolve_cpp_name("default", {"default_"}) == "default__2"
+
+
+def test_name_manager_reserve_keeps_clean_name_when_free():
+    """A synthetic name that does not collide is returned unchanged and then reserved."""
+    manager = NameManager(None)
+    manager._taken = {"X", "cell"}
+    assert manager.reserve("amt__X") == "amt__X"
+    assert "amt__X" in manager._taken
+
+
+def test_name_manager_reserve_escapes_collision_with_real_id():
+    """A synthetic name equal to a real id is escaped, and repeats take further suffixes."""
+    manager = NameManager(None)
+    manager._taken = {"amt__X"}  # a real species literally named amt__X
+    assert manager.reserve("amt__X") == "amt__X_2"
+    assert manager.reserve("amt__X") == "amt__X_3"
+
+
+def test_name_manager_resolve_renames_keyword_compartment():
+    """A compartment whose id is a C++ keyword is renamed, and its references updated."""
+    doc = libsbml.SBMLDocument(3, 2)
+    sbml_model = doc.createModel()
+    compartment = sbml_model.createCompartment()
+    compartment.setId("default")  # 'default' is a C++ keyword
+    compartment.setConstant(True)
+    compartment.setSize(1.0)
+    species = sbml_model.createSpecies()
+    species.setId("S")
+    species.setCompartment("default")
+    species.setConstant(False)
+    species.setBoundaryCondition(False)
+    species.setHasOnlySubstanceUnits(False)
+    species.setInitialAmount(1.0)
+
+    NameManager(sbml_model).resolve_real_id_conflicts()
+
+    assert sbml_model.getElementBySId("default") is None
+    assert sbml_model.getElementBySId("default_") is not None
+    # The species' compartment reference was rewritten too.
+    assert sbml_model.getSpecies("S").getCompartment() == "default_"
+
+
+def test_name_manager_resolve_leaves_safe_ids_untouched():
+    """A model with only safe ids is not modified."""
+    doc = libsbml.SBMLDocument(3, 2)
+    sbml_model = doc.createModel()
+    compartment = sbml_model.createCompartment()
+    compartment.setId("cell")
+    compartment.setConstant(True)
+
+    NameManager(sbml_model).resolve_real_id_conflicts()
+
+    assert sbml_model.getElementBySId("cell") is not None

@@ -237,3 +237,107 @@ def resolve_cpp_name(base: str, taken) -> str:
     while candidate in CPP_KEYWORDS or candidate in CHASTE_RESERVED_NAMES:
         candidate += "_"
     return unique_name(candidate, taken)
+
+
+class NameManager:
+    """Manages C++ identifier naming for one SBML model (issue #35, phases B and C).
+
+    It resolves real ids that clash with C++ keywords or reserved names (phase C) and hands out
+    collision-free names for generator-synthesised identifiers such as state derivatives and
+    amount/concentration conversions (phase B). The residual conflict *detection* (phase A) stays
+    with the model, which validates its own built collections.
+    """
+
+    def __init__(self, sbml_model) -> None:
+        """:param sbml_model: The libsbml Model whose ids are being turned into C++."""
+        self._sbml_model = sbml_model
+        self._taken: set = set()
+
+    def resolve_real_id_conflicts(self) -> None:
+        """Rename real SBML ids that are C++ keywords or reserved Chaste names.
+
+        An SBML ``SId`` is already valid C++ identifier syntax, so the only ids that cannot be
+        emitted verbatim are those equal to a C++ keyword (e.g. a compartment called ``default``)
+        or a Chaste base-class member. Each such id is renamed in place to a safe unique name and
+        every reference to it is updated via libsbml's per-element ``renameSIdRefs``, so the rest
+        of generation -- equations, events, initial assignments, the templates -- sees only clean
+        ids. Ids that are already safe are left untouched, so conflict-free models are unchanged.
+        Only global SId-namespace entities that become C++ identifiers are considered.
+        """
+        model = self._sbml_model
+        # Replacements must avoid every existing id plus the reserved names.
+        taken = self._collect_ids() | RESERVED_NAMES
+
+        elements = []
+        for lst in (
+            model.getListOfSpecies(),
+            model.getListOfParameters(),
+            model.getListOfCompartments(),
+            model.getListOfReactions(),
+            model.getListOfFunctionDefinitions(),
+        ):
+            elements.extend(lst)
+        for reaction in model.getListOfReactions():
+            elements.extend(list(reaction.getListOfReactants()) + list(reaction.getListOfProducts()))
+
+        for element in elements:
+            if not element.isSetId():
+                continue
+            old_id = element.getId()
+            if old_id not in CPP_KEYWORDS and old_id not in CHASTE_RESERVED_NAMES:
+                continue
+            new_id = resolve_cpp_name(old_id, taken)
+            element.setId(new_id)
+            for referrer in model.getListOfAllElements():
+                referrer.renameSIdRefs(old_id, new_id)
+            taken.add(new_id)
+
+    def reset(self) -> None:
+        """Recompute the taken-name set from the (resolved) model, ready for a build.
+
+        Call before allocating synthetic names, so they avoid every real id and reserved name.
+        """
+        self._taken = self._collect_ids() | RESERVED_NAMES
+
+    def reserve(self, base: str) -> str:
+        """Reserve a unique C++ identifier for a generator-synthesised variable.
+
+        Returns ``base`` unchanged when it is free (the usual case, so names stay clean),
+        otherwise the smallest ``_N`` suffix that avoids every real id, reserved name and
+        previously-reserved synthetic. The chosen name is recorded so later synthetics avoid it.
+
+        :param base: The desired synthetic identifier (e.g. ``d_C_dt`` or ``amt__X``).
+        :return: A unique C++ identifier.
+        """
+        name = unique_name(base, self._taken)
+        self._taken.add(name)
+        return name
+
+    def _collect_ids(self) -> set:
+        """Collect the real SBML ids that become C++ identifiers in the generated code.
+
+        Covers the categories emitted as C++ names -- species, global and local (kinetic-law)
+        parameters, compartments, reactions, function definitions and species-reference
+        stoichiometry ids. Units, events and rules are excluded as they never become identifiers,
+        so a synthetic name is only escaped when it truly collides.
+
+        :return: The set of real ids that names must avoid.
+        """
+        model = self._sbml_model
+        names = set()
+        for lst in (
+            model.getListOfSpecies(),
+            model.getListOfParameters(),
+            model.getListOfCompartments(),
+            model.getListOfReactions(),
+            model.getListOfFunctionDefinitions(),
+        ):
+            names.update(elem.getId() for elem in lst if elem.isSetId())
+        for reaction in model.getListOfReactions():
+            for ref in list(reaction.getListOfReactants()) + list(reaction.getListOfProducts()):
+                if ref.isSetId():
+                    names.add(ref.getId())
+            kinetic_law = reaction.getKineticLaw()
+            if kinetic_law is not None:
+                names.update(lp.getId() for lp in kinetic_law.getListOfParameters() if lp.isSetId())
+        return names
