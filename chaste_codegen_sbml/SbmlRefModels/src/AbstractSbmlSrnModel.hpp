@@ -121,11 +121,6 @@ public:
      * @param rParamsFile the file stream to which the parameters are output
      */
     void OutputSrnModelParameters(out_stream& rParamsFile);
-
-    /**
-     * Overridden SimulateToCurrentTime() method for custom behaviour
-     */
-    void SimulateToCurrentTime();
 };
 
 // Register abstract class with Boost serialization

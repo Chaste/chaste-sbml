@@ -38,6 +38,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "CellCycleModelOdeSolver.hpp"
 #include "CvodeAdaptor.hpp"
 #include "SbmlEventType.hpp"
+#include "SbmlOdeSolverSetup.hpp"
 #include "StemCellProliferativeType.hpp"
 #include "TransitCellProliferativeType.hpp"
 
@@ -46,23 +47,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 AbstractSbmlCellCycleModel::AbstractSbmlCellCycleModel(boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver)
         : AbstractOdeBasedCellCycleModel(SimulationTime::Instance()->GetTime(), pOdeSolver)
 {
-    if (!mpOdeSolver)
-    {
-#ifdef CHASTE_CVODE
-        // Default to CVODE where available
-        mpOdeSolver = CellCycleModelOdeSolver<AbstractSbmlCellCycleModel, CvodeAdaptor>::Instance();
-        mpOdeSolver->Initialise();
-        mpOdeSolver->SetMaxSteps(10000); // Safe defaults
-        mpOdeSolver->SetTolerances(1e-6, 1e-8);
-        // CVODE needs to be instructed to check for stopping events
-        mpOdeSolver->CheckForStoppingEvents();
-#else
-        // Default to Chaste Runge-Kutta solver where CVODE is not available
-        mpOdeSolver = CellCycleModelOdeSolver<AbstractSbmlCellCycleModel, RungeKutta4IvpOdeSolver>::Instance();
-        mpOdeSolver->Initialise();
-        this->SetDt(0.0001); // Safe default
-#endif // CHASTE_CVODE
-    }
+    sbmlodesolversetup::SetUpDefaultOdeSolver(this, mpOdeSolver);
 
     assert(mpOdeSolver->IsSetUp());
 }

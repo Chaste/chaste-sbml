@@ -39,29 +39,14 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ChasteSerialization.hpp"
 #include "CvodeAdaptor.hpp"
 #include "RungeKutta4IvpOdeSolver.hpp"
+#include "SbmlOdeSolverSetup.hpp"
 
 #include "AbstractSbmlSrnModel.hpp"
 
 AbstractSbmlSrnModel::AbstractSbmlSrnModel(unsigned stateSize, boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver)
         : AbstractOdeSrnModel(stateSize, pOdeSolver)
 {
-    if (mpOdeSolver == boost::shared_ptr<AbstractCellCycleModelOdeSolver>())
-    {
-#ifdef CHASTE_CVODE
-        // Default to CVODE where available
-        mpOdeSolver = CellCycleModelOdeSolver<AbstractSbmlSrnModel, CvodeAdaptor>::Instance();
-        mpOdeSolver->Initialise();
-        mpOdeSolver->SetMaxSteps(10000); // Safe default
-        mpOdeSolver->SetTolerances(1e-6, 1e-8);
-        // CVODE needs to be instructed to check for stopping events
-        mpOdeSolver->CheckForStoppingEvents();
-#else
-        // Default to Chaste Runge-Kutta solver where CVODE is not available
-        mpOdeSolver = CellCycleModelOdeSolver<AbstractSbmlSrnModel, RungeKutta4IvpOdeSolver>::Instance();
-        mpOdeSolver->Initialise();
-        this->SetDt(0.0001); // Safe default
-#endif // CHASTE_CVODE
-    }
+    sbmlodesolversetup::SetUpDefaultOdeSolver(this, mpOdeSolver);
 
     assert(mpOdeSolver->IsSetUp());
 }
@@ -104,15 +89,6 @@ void AbstractSbmlSrnModel::OutputSrnModelParameters(out_stream& rParamsFile)
 {
     // No new parameters to output, so just call method on direct parent class
     AbstractOdeSrnModel::OutputSrnModelParameters(rParamsFile);
-}
-
-void AbstractSbmlSrnModel::SimulateToCurrentTime()
-{
-    assert(mpOdeSystem != NULL);
-    assert(mpCell != NULL);
-
-    // Run the ODE simulation as needed
-    AbstractOdeSrnModel::SimulateToCurrentTime();
 }
 
 // Register class with Boost serialization
