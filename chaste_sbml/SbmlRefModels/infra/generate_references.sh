@@ -21,8 +21,8 @@ script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "${script_dir}/../../.." && pwd)"
 venv_dir="${VENV_DIR:-${repo_root}/venv}"
 python_bin="${venv_dir}/bin/python"
-generator="${repo_root}/chaste_codegen_sbml/SbmlRefModels/generate_references.py"
-reference_dir="${repo_root}/chaste_codegen_sbml/SbmlRefModels/src/reference"
+generator="${repo_root}/chaste_sbml/SbmlRefModels/generate_references.py"
+reference_dir="${repo_root}/chaste_sbml/SbmlRefModels/src/reference"
 
 if [[ ! -x "${python_bin}" ]]; then
   echo "Error: Python interpreter not found at '${python_bin}'." >&2

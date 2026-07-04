@@ -13,8 +13,8 @@ import logging
 import os
 import sys
 
-from chaste_codegen_sbml import ChasteSbmlModel
-from chaste_codegen_sbml._config import ModelType
+from chaste_sbml import ChasteSbmlModel
+from chaste_sbml._config import ModelType
 
 logger = logging.getLogger(__name__)
 
