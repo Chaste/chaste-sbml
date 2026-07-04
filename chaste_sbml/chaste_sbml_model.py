@@ -34,8 +34,8 @@ from libsbml import (
 
 from ._config import (
     AMOUNT_PREFIX,
-    CONCENTRATION_PREFIX,
     CHASTE_PREFIX,
+    CONCENTRATION_PREFIX,
     DERIVATIVE_PREFIX,
     DERIVATIVE_SUFFIX,
     INITIAL_ASSIGNMENT_PREFIX,
@@ -1873,6 +1873,10 @@ class ChasteSbmlModel:
         # so counting it would double-count that variable.
 
         conflicts = find_name_conflicts(identifiers)
+        for eq in self._equations:
+            for lp in eq.get("local_parameters") or ():
+                conflicts.extend(find_name_conflicts([(lp["id"], "local parameter")], reserved=frozenset()))
+        conflicts = sorted(conflicts)
         if conflicts:
             raise NameConflictError(
                 f"Cannot generate '{self._model_name}': C++ identifier conflicts detected:\n  - "

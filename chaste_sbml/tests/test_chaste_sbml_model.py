@@ -20,6 +20,7 @@ def _model_with_names(
     reactions=(),
     functions=(),
     initial_assignments=(),
+    local_parameters=(),
 ) -> ChasteSbmlModel:
     """Build a bare model with just the id collections _check_name_conflicts inspects."""
     model = _model_without_init()
@@ -35,6 +36,10 @@ def _model_with_names(
     model._reactions = [{"id": i} for i in reactions]
     model._functions = [{"id": i} for i in functions]
     model._initial_assignments = [{"id": i} for i in initial_assignments]
+    # A single reaction equation carrying the given local-parameter ids.
+    model._equations = (
+        [{"var": "J1", "local_parameters": [{"id": i} for i in local_parameters]}] if local_parameters else []
+    )
     return model
 
 
@@ -86,6 +91,19 @@ def test_check_name_conflicts_ignores_initial_assignment_target():
     not a new declaration, so it must not be counted as a separately-emitted identifier.
     """
     model = _model_with_names(parameters=["q"], state_variables=["C"], initial_assignments=["q"])
+    model._check_name_conflicts()  # should not raise
+
+
+def test_check_name_conflicts_flags_keyword_local_parameter():
+    """A kinetic-law local parameter that is a C++ keyword is caught."""
+    model = _model_with_names(state_variables=["C"], reactions=["J1"], local_parameters=["int"])
+    with pytest.raises(NameConflictError, match="local parameter 'int' is a C\\+\\+ keyword"):
+        model._check_name_conflicts()
+
+
+def test_check_name_conflicts_allows_ordinary_local_parameter():
+    """A validly-named local parameter (even shadowing a global) is not flagged."""
+    model = _model_with_names(parameters=["k1"], state_variables=["C"], reactions=["J1"], local_parameters=["k1"])
     model._check_name_conflicts()  # should not raise
 
 
