@@ -1897,10 +1897,14 @@ class ChasteSbmlModel:
         Phase A of issue #35: detect conflicts and raise rather than emit silently incorrect
         C++. Gathers every identifier the templates turn into a C++ name -- parameters, state
         variables and their derivatives, derived quantities (including amount/concentration
-        conversions), stoichiometry variables, reactions and model functions --
-        and checks them for duplicates, C++ keywords, reserved Chaste base-class
-        names and invalid identifiers. Reaction flux outputs are excluded from the derived
-        quantities here as they are the same entities already counted under reactions.
+        conversions), stoichiometry variables, reactions and model functions -- and checks them
+        for duplicates, C++ keywords, reserved Chaste base-class names and invalid identifiers.
+        Reaction flux outputs are excluded from the derived quantities here as they are the same
+        entities already counted under reactions.
+
+        Kinetic-law local parameters (emitted as ``double <id> = ...;`` inside a reaction block)
+        are checked too, but only for keywords and invalid identifiers: they are scoped per
+        reaction, so ids that repeat across reactions or shadow a global are legal and not flagged.
 
         :raises NameConflictError: if any conflict is found.
         """

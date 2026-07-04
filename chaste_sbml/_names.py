@@ -1,14 +1,19 @@
-"""C++ identifier conflict detection for generated model code (issue #35).
+"""C++ identifier naming for generated model code (issue #35).
 
-Phase A: detect identifier conflicts and fail loudly, so the generator never silently
-emits C++ in which two entities share a name or a name clashes with a C++ keyword or a
-Chaste base-class member. Later phases will *resolve* such conflicts by renaming; this
-module only diagnoses them.
+Provides the pieces that keep generated C++ identifiers valid and unique:
+
+* ``find_name_conflicts`` -- detect clashes and fail loudly (phase A), so the generator never
+  silently emits C++ in which two entities share a name, or a name is a C++ keyword, a Chaste
+  base-class member or an invalid identifier.
+* ``unique_name`` -- allocate a collision-free name for a generator-synthesised identifier
+  (phase B).
+* ``resolve_cpp_name`` -- make a real SBML id safe to emit verbatim by escaping keyword and
+  reserved-name clashes (phase C).
 
 SBML already guarantees its own object ids are unique, so in practice conflicts arise from
 generator-synthesised names (amount/concentration conversions ``amt__x``/``conc__x``, state
-derivatives ``d_x_dt``, initial assignments) colliding with a real id of the same spelling,
-or from an id that happens to be a C++ keyword or a name inherited from the base classes.
+derivatives ``d_x_dt``) colliding with a real id of the same spelling, or from an id that
+happens to be a C++ keyword or a name inherited from the base classes.
 """
 
 import re
