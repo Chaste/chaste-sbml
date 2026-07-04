@@ -73,11 +73,20 @@ AbstractSbmlOdeSystem::~AbstractSbmlOdeSystem()
 
 void AbstractSbmlOdeSystem::AdjustParameters(double time)
 {
+    // Apply each recorded event assignment exactly once, then clear its flag. An SBML event
+    // assignment executes a single time when the event fires; the assigned value then persists on
+    // its own (SetParameter/SetStateVariable store it, and nothing resets it between Solve
+    // segments). Clearing the flag after applying is essential for state variables, which evolve
+    // during the solve and must not be re-forced back to their event-time value on the next
+    // segment. Parameters are cleared symmetrically: on the CVODE path ProcessModelEvents never
+    // clears these flags, so leaving a parameter flag set would re-apply its (now stale) value at
+    // the start of every subsequent segment, clobbering any later change to that parameter.
     for (unsigned i = 0; i < mEventAdjustedParameters.size(); ++i)
     {
         if (mEventAdjustedParameters[i])
         {
             SetParameter(i, mEventAdjustedParameterValues[i]);
+            mEventAdjustedParameters[i] = false;
         }
     }
 
