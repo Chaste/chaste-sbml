@@ -16,7 +16,12 @@ if TYPE_CHECKING:
 
 
 class ChasteSbmlModel:
-    """Holds information about an SBML model for which Chaste code is to be generated."""
+    """Generates Chaste C++ code from an SBML model.
+
+    Orchestrates the pipeline: load the SBML (``_sbml_loader``), resolve identifier conflicts
+    and reserve synthetic names (``NameManager``), build the internal representation
+    (``ModelBuilder``), then render and write the C++ (``CodeRenderer``).
+    """
 
     __metaclass__ = abc.ABCMeta
 
@@ -25,8 +30,8 @@ class ChasteSbmlModel:
     def __init__(self, sbml_file: str, model_name: str = "", model_type: ModelType = ModelType.GENERIC) -> None:
         """Initialise the ChasteSbmlModel.
 
-        :param sbml: The SBML file.
-        :param name: The model name.
+        :param sbml_file: The SBML file to generate code from.
+        :param model_name: The model name; derived from the filename when not given.
         :param model_type: The model type e.g. ModelType.SRN.
         """
         self._sbml_file = os.path.abspath(sbml_file)
