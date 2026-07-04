@@ -59,7 +59,7 @@ jobs:
 
       - name: Setup Chaste paths
         run: |
-          ln -s $(pwd)/chaste_codegen_sbml/SbmlRefModels Chaste/projects/SbmlRefModels
+          ln -s $(pwd)/chaste_sbml/SbmlRefModels Chaste/projects/SbmlRefModels
           mkdir -p Chaste/build
 
       - name: Install Chaste dependencies

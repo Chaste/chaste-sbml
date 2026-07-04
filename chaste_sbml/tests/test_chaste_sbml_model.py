@@ -2,7 +2,7 @@
 
 import pytest
 
-from chaste_codegen_sbml.chaste_sbml_model import ChasteSbmlModel
+from chaste_sbml.chaste_sbml_model import ChasteSbmlModel
 
 
 def _model_without_init() -> ChasteSbmlModel:
