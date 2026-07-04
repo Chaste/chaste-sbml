@@ -13,12 +13,9 @@ from libsbml import (
     AST_RELATIONAL_LEQ,
     AST_RELATIONAL_LT,
     AST_RELATIONAL_NEQ,
-    LIBSBML_OPERATION_SUCCESS,
     SBML_ALGEBRAIC_RULE,
     SBML_ASSIGNMENT_RULE,
     SBML_RATE_RULE,
-    ConversionProperties,
-    SBMLReader,
     SBMLTransforms,
     formulaToL3String,
     parseL3Formula,
@@ -41,6 +38,7 @@ from ._config import (
 from ._expressions import collect_ast_names, formula_to_string, substitute_ast_names
 from ._names import CHASTE_RESERVED_NAMES, NameConflictError, NameManager, find_name_conflicts
 from ._rendering import CodeRenderer
+from ._sbml_loader import load_sbml_model
 from ._utils import (
     generate_header_guard,
     get_compartment_size,
@@ -102,40 +100,8 @@ class ChasteSbmlModel:
             self._cell_cycle_hpp_filename = f"{self._cell_cycle_class_name}.hpp"
             self._cell_cycle_cpp_filename = f"{self._cell_cycle_class_name}.cpp"
 
-        # Read the SBML model
-        reader = SBMLReader()
-        doc = reader.readSBMLFromFile(self._sbml_file)
-
-        if doc.getNumErrors() > 0:
-            doc.printErrors()
-            raise ValueError(f"Errors found while reading SBML file: {self._sbml_file}")
-
-        # Flatten hierarchical (comp package) models - composing their submodels into a single
-        # model with flattened submodelId__element names - before any further processing.
-        if doc.getPlugin("comp") is not None:
-            flatten_props = ConversionProperties()
-            flatten_props.addOption("flatten comp", True, "flatten comp")
-            flatten_props.addOption("leave_ports", False)
-            if doc.convert(flatten_props) != LIBSBML_OPERATION_SUCCESS:
-                doc.printErrors()
-                raise ValueError("Errors during comp flattening")
-
-        # Run required conversions
-        config = ConversionProperties()
-        # Sort assignment rules in order of dependence.
-        config.addOption("sortRules")
-        config.addOption("removeUnusedUnits")
-        # Convert initial assignments to initial values where possible
-        config.addOption("expandInitialAssignments")
-        # config.addOption('replaceReactions')
-        # config.addOption('expandFunctionDefinitions')
-
-        status = doc.convert(config)
-        if status != LIBSBML_OPERATION_SUCCESS:
-            doc.printErrors()
-            raise ValueError("Errors during conversion")
-
-        self._sbml_model = doc.getModel()
+        # Read, flatten and convert the SBML model
+        self._sbml_model = load_sbml_model(self._sbml_file)
         self._sbml_compartments = self._sbml_model.getListOfCompartments()
         self._sbml_events = self._sbml_model.getListOfEvents()
         self._sbml_function_definitions = self._sbml_model.getListOfFunctionDefinitions()
