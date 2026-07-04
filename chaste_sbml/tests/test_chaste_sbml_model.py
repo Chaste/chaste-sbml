@@ -108,6 +108,13 @@ def test_check_name_conflicts_allows_ordinary_local_parameter():
     model._check_name_conflicts()  # should not raise
 
 
+def test_check_name_conflicts_flags_local_parameter_shadowing_time():
+    """A local parameter named 'time' would shadow the emitted time parameter and is flagged."""
+    model = _model_with_names(state_variables=["C"], reactions=["J1"], local_parameters=["time"])
+    with pytest.raises(NameConflictError, match="local parameter 'time' clashes with a reserved Chaste name"):
+        model._check_name_conflicts()
+
+
 def test_resolve_name_conflicts_renames_keyword_compartment():
     """A compartment whose id is a C++ keyword is renamed, and its references updated."""
     doc = libsbml.SBMLDocument(3, 2)

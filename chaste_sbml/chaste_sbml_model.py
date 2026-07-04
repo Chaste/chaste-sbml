@@ -1903,8 +1903,10 @@ class ChasteSbmlModel:
         entities already counted under reactions.
 
         Kinetic-law local parameters (emitted as ``double <id> = ...;`` inside a reaction block)
-        are checked too, but only for keywords and invalid identifiers: they are scoped per
-        reaction, so ids that repeat across reactions or shadow a global are legal and not flagged.
+        are checked too, against C++ keywords and reserved Chaste names but not for duplication:
+        they are scoped per reaction, so an id that repeats across reactions or shadows a global is
+        legal, but one equal to a reserved name -- e.g. ``time``, the emitted simulation-time
+        parameter -- would shadow it and silently corrupt the reaction, so it is flagged.
 
         :raises NameConflictError: if any conflict is found.
         """
@@ -1928,7 +1930,7 @@ class ChasteSbmlModel:
         conflicts = find_name_conflicts(identifiers)
         for eq in self._equations:
             for lp in eq.get("local_parameters") or ():
-                conflicts.extend(find_name_conflicts([(lp["id"], "local parameter")], reserved=frozenset()))
+                conflicts.extend(find_name_conflicts([(lp["id"], "local parameter")], reserved=CHASTE_RESERVED_NAMES))
         conflicts = sorted(conflicts)
         if conflicts:
             raise NameConflictError(
