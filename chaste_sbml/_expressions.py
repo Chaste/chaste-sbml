@@ -17,6 +17,8 @@ from ._utils import search_ast_type
 if TYPE_CHECKING:
     from libsbml import ASTNode
 
+    from ._records import LocalParameter, StateVariable
+
 
 def collect_ast_names(node: "ASTNode", names: set) -> None:
     """Recursively collect the identifiers referenced by name in an AST.
@@ -211,16 +213,16 @@ def convert_infix_power_to_function_syntax(formula: str) -> str:
 def formula_to_string(
     math: "ASTNode",
     variable_types: dict,
-    state_variables: list,
-    local_parameters: Optional[list[dict[str, str]]] = None,
+    state_variables: list["StateVariable"],
+    local_parameters: Optional[list["LocalParameter"]] = None,
 ) -> str:
     """Convert an AST math formula to an equivalent C++ string.
 
     :param math: The AST math formula.
     :param variable_types: Mapping of model id to :class:`VarType`, used to tell model variables
         apart from SBML constants/functions of the same spelling.
-    :param state_variables: The model's state-variable dicts, used to resolve ``rateOf`` to a
-        state variable's derivative id.
+    :param state_variables: The model's state variables, used to resolve ``rateOf`` to a state
+        variable's derivative id.
     :param local_parameters: Local parameters in scope (e.g. a reaction's kinetic-law
         parameters). These shadow global symbols of the same name and are constant, so
         ``rateOf`` applied to one is zero.
@@ -346,7 +348,7 @@ def formula_to_string(
 
     tokens = re.findall(r"\w+|\W+", formula)
 
-    local_param_ids = {param["id"] for param in (local_parameters or [])}
+    local_param_ids = {param.id for param in (local_parameters or [])}
 
     cpp_tokens = []
     for token in tokens:
@@ -381,8 +383,8 @@ def formula_to_string(
             if var not in local_param_ids:
                 if variable_types.get(var, VarType.UNKNOWN) == VarType.STATE_VARIABLE:
                     for state_var in state_variables:
-                        if state_var["id"] == var:
-                            rate = state_var["derivative_id"]
+                        if state_var.id == var:
+                            rate = state_var.derivative_id
                             break
             cpp_formula = cpp_formula.replace(f"rateOf({var})", rate)
     return cpp_formula

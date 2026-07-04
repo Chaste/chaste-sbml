@@ -5,6 +5,17 @@ import pytest
 from chaste_sbml._config import ROOT_DIR, EquationType, VarType
 from chaste_sbml._model_builder import ModelBuilder
 from chaste_sbml._names import NameConflictError, NameManager
+from chaste_sbml._records import (
+    DerivedQuantity,
+    Equation,
+    EventAssignment,
+    Function,
+    InitialAssignment,
+    LocalParameter,
+    Parameter,
+    Reaction,
+    StateVariable,
+)
 from chaste_sbml._sbml_loader import load_sbml_model
 
 REFERENCE = ROOT_DIR / "SbmlRefModels" / "src" / "reference"
@@ -37,24 +48,53 @@ def _builder_with_names(
     local_parameters=(),
 ) -> ModelBuilder:
     """Build a bare builder with just the id collections _check_name_conflicts inspects."""
+
+    def _state_var(i):
+        return i if isinstance(i, StateVariable) else _make_state_variable(id=i, derivative_id=f"d_{i}_dt")
+
+    def _derived(i):
+        if isinstance(i, DerivedQuantity):
+            return i
+        if isinstance(i, dict):
+            return _make_derived_quantity(**i)
+        return _make_derived_quantity(id=i)
+
     builder = _builder_without_init()
     builder._model_name = "Demo"
-    builder._parameters = [{"id": i} for i in parameters]
-    builder._state_variables = [
-        {"id": i, "derivative_id": f"d_{i}_dt"} if isinstance(i, str) else i for i in state_variables
-    ]
-    builder._derived_quantities = [
-        {"id": i, "is_conversion": False, "is_reaction": False} if isinstance(i, str) else i for i in derived_quantities
-    ]
-    builder._stoichiometry_variables = [{"id": i} for i in stoichiometry_variables]
-    builder._reactions = [{"id": i} for i in reactions]
-    builder._functions = [{"id": i} for i in functions]
-    builder._initial_assignments = [{"id": i} for i in initial_assignments]
+    builder._parameters = [_make_parameter(id=i) for i in parameters]
+    builder._state_variables = [_state_var(i) for i in state_variables]
+    builder._derived_quantities = [_derived(i) for i in derived_quantities]
+    builder._stoichiometry_variables = [_make_parameter(id=i) for i in stoichiometry_variables]
+    builder._reactions = [Reaction(index=0, id=i, label="") for i in reactions]
+    builder._functions = [Function(id=i, label="", index=0, args="", body="") for i in functions]
+    builder._initial_assignments = [InitialAssignment(id=i, label="", var=i) for i in initial_assignments]
     # A single reaction equation carrying the given local-parameter ids.
     builder._equations = (
-        [{"var": "J1", "local_parameters": [{"id": i} for i in local_parameters]}] if local_parameters else []
+        [
+            Equation(
+                var="J1",
+                math=None,
+                local_parameters=[LocalParameter(id=i, label="", value="0") for i in local_parameters],
+            )
+        ]
+        if local_parameters
+        else []
     )
     return builder
+
+
+def _make_parameter(*, id, is_const=False):
+    return Parameter(index=0, id=id, is_const=is_const, label="", initial_value=None, units="")
+
+
+def _make_state_variable(*, id, derivative_id):
+    return StateVariable(index=0, id=id, derivative_id=derivative_id, label="", initial_value=None, units="")
+
+
+def _make_derived_quantity(*, id, is_conversion=False, is_reaction=False):
+    return DerivedQuantity(
+        id=id, label="", index=0, initial_value=None, is_conversion=is_conversion, is_reaction=is_reaction, units=""
+    )
 
 
 def test_check_name_conflicts_passes_for_clean_model():
@@ -131,28 +171,28 @@ def test_check_name_conflicts_flags_local_parameter_shadowing_time():
 def test_build_extracts_state_variables_and_derivatives():
     """Each SBML species with an ODE becomes a state variable with a d_<id>_dt derivative."""
     builder = _build(REFERENCE / "Goldbeter1991" / "Goldbeter1991.xml")
-    state_vars = {s["id"]: s["derivative_id"] for s in builder._state_variables}
+    state_vars = {s.id: s.derivative_id for s in builder._state_variables}
     assert state_vars == {"C": "d_C_dt", "M": "d_M_dt", "X": "d_X_dt"}
 
 
 def test_build_extracts_parameters_and_reactions():
     """Global parameters and reactions are collected under their SBML ids."""
     builder = _build(REFERENCE / "Goldbeter1991" / "Goldbeter1991.xml")
-    assert {p["id"] for p in builder._parameters} == {"VM1", "VM3", "Kc"}
-    assert {r["id"] for r in builder._reactions} == {f"reaction{i}" for i in range(1, 8)}
+    assert {p.id for p in builder._parameters} == {"VM1", "VM3", "Kc"}
+    assert {r.id for r in builder._reactions} == {f"reaction{i}" for i in range(1, 8)}
 
 
 def test_build_adds_amount_conversions_for_amount_species():
     """Amount species get an amt__<id> conversion derived quantity."""
     builder = _build(REFERENCE / "Goldbeter1991" / "Goldbeter1991.xml")
-    conversions = {d["id"] for d in builder._derived_quantities if d["is_conversion"]}
+    conversions = {d.id for d in builder._derived_quantities if d.is_conversion}
     assert conversions == {"amt__C", "amt__M", "amt__X"}
 
 
 def test_build_produces_one_derivative_equation_per_state_variable():
     """A derivative equation is emitted for each state variable."""
     builder = _build(REFERENCE / "Goldbeter1991" / "Goldbeter1991.xml")
-    deriv_vars = {e["var"] for e in builder._equations if e["type"] == EquationType.DERIVATIVE}
+    deriv_vars = {e.var for e in builder._equations if e.type == EquationType.DERIVATIVE}
     assert deriv_vars == {"d_C_dt", "d_M_dt", "d_X_dt"}
 
 
@@ -161,5 +201,5 @@ def test_build_extracts_cell_division_event():
     builder = _build(REFERENCE / "TysonNovak2001" / "TysonNovak2001.xml")
     assert len(builder._events) == 1
     event = builder._events[0]
-    assert event["trigger"] == "CycB < 0.1"
-    assert event["assignments"] == [{"index": 3, "lhs": "m", "rhs": "m / 2.0", "type": VarType.STATE_VARIABLE}]
+    assert event.trigger == "CycB < 0.1"
+    assert event.assignments == [EventAssignment(index=3, lhs="m", rhs="m / 2.0", type=VarType.STATE_VARIABLE)]

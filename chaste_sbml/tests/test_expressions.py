@@ -5,6 +5,7 @@ from libsbml import parseL3Formula
 
 from chaste_sbml._config import VarType
 from chaste_sbml._expressions import convert_infix_operator_to_function_syntax, formula_to_string
+from chaste_sbml._records import StateVariable
 
 
 def test_convert_infix_operator_to_function_syntax_power():
@@ -62,6 +63,8 @@ def test_formula_to_string_rateof_state_variable_uses_derivative():
     out = formula_to_string(
         math,
         variable_types={"X": VarType.STATE_VARIABLE},
-        state_variables=[{"id": "X", "derivative_id": "d_X_dt"}],
+        state_variables=[
+            StateVariable(index=0, id="X", derivative_id="d_X_dt", label="X", initial_value=None, units="")
+        ],
     )
     assert out == "d_X_dt"

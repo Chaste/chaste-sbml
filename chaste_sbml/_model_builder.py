@@ -40,12 +40,27 @@ from ._config import (
 )
 from ._expressions import collect_ast_names, formula_to_string, substitute_ast_names
 from ._names import CHASTE_RESERVED_NAMES, NameConflictError, find_name_conflicts
+from ._records import (
+    DerivedQuantity,
+    Equation,
+    Event,
+    EventAssignment,
+    Function,
+    InitialAssignment,
+    LocalParameter,
+    Parameter,
+    Reaction,
+    Rule,
+    StateVariable,
+)
 from ._utils import get_compartment_size, get_function_definition_arguments
 
 if TYPE_CHECKING:
     from typing import Any
 
-    from libsbml import ASTNode, Reaction, Species, SpeciesReference
+    from libsbml import ASTNode
+    from libsbml import Reaction as SbmlReaction
+    from libsbml import Species, SpeciesReference
 
 
 class ModelBuilder:
@@ -131,14 +146,7 @@ class ModelBuilder:
         :param var: The variable being defined.
         :param math: The right-hand side of the rule as an ASTNode.
         """
-        self._assignment_rules.append(
-            {
-                "id": id_,
-                "label": label,
-                "var": var,
-                "math": math,
-            }
-        )
+        self._assignment_rules.append(Rule(id=id_, label=label, var=var, math=math))
 
     def _add_derived_quantity(
         self,
@@ -162,15 +170,15 @@ class ModelBuilder:
             re-declared, and its variable type stays VarType.REACTION.
         """
         self._derived_quantities.append(
-            {
-                "id": id_,
-                "label": label,
-                "index": len(self._derived_quantities),
-                "initial_value": initial_value,
-                "is_conversion": is_conversion,
-                "is_reaction": is_reaction,
-                "units": units,
-            }
+            DerivedQuantity(
+                id=id_,
+                label=label,
+                index=len(self._derived_quantities),
+                initial_value=initial_value,
+                is_conversion=is_conversion,
+                is_reaction=is_reaction,
+                units=units,
+            )
         )
         if not is_reaction:
             self._variable_types[id_] = VarType.DERIVED_QUANTITY
@@ -180,7 +188,7 @@ class ModelBuilder:
         var: str,
         math: "ASTNode",
         eq_type: EquationType = EquationType.UNKNOWN,
-        local_parameters: Optional[list[dict[str, str]]] = None,
+        local_parameters: Optional[list["LocalParameter"]] = None,
     ) -> None:
         """Add an equation to the template variables.
 
@@ -191,20 +199,13 @@ class ModelBuilder:
         :param eq_type: The type of the equation.
         :param local_parameters: A list of local parameter names used in the equation.
         """
-        eq = {
-            "var": var,
-            "rhs": "",
-            "math": math,
-            "type": eq_type,
-            "local_parameters": local_parameters,
-        }
-        self._equations.append(eq)
+        self._equations.append(Equation(var=var, math=math, type=eq_type, local_parameters=local_parameters))
 
     def _add_event(
         self,
         label: str,
         trigger: str,
-        assignments: list[dict[str, "Any"]],
+        assignments: list["EventAssignment"],
         distance: str,
         event_type: EventType,
         initial_satisfied: bool = True,
@@ -221,16 +222,16 @@ class ModelBuilder:
         :param priority: The event priority formula, or None if the event has no priority.
         """
         self._events.append(
-            {
-                "label": label,
-                "index": len(self._events),
-                "trigger": trigger,
-                "assignments": assignments,
-                "distance": distance,
-                "type": event_type,
-                "initial_satisfied": initial_satisfied,
-                "priority": priority,
-            }
+            Event(
+                label=label,
+                index=len(self._events),
+                trigger=trigger,
+                assignments=assignments,
+                distance=distance,
+                type=event_type,
+                initial_satisfied=initial_satisfied,
+                priority=priority,
+            )
         )
 
     def _add_function(self, id_: str, label: str, args: str, body: str) -> None:
@@ -241,15 +242,7 @@ class ModelBuilder:
         :param args: The function arguments.
         :param body: The function body.
         """
-        self._functions.append(
-            {
-                "id": id_,
-                "label": label,
-                "index": len(self._functions),
-                "args": args,
-                "body": body,
-            }
-        )
+        self._functions.append(Function(id=id_, label=label, index=len(self._functions), args=args, body=body))
         self._variable_types[id_] = VarType.FUNCTION
 
     def _add_initial_assignment(self, id_: str, label: str, var: str, math: Optional["ASTNode"] = None) -> None:
@@ -260,7 +253,7 @@ class ModelBuilder:
         :param var: The variable being assigned.
         :param math: The right-hand side of the rule as an ASTNode.
         """
-        self._initial_assignments.append({"id": id_, "label": label, "var": var, "math": math})
+        self._initial_assignments.append(InitialAssignment(id=id_, label=label, var=var, math=math))
 
     def _add_parameter(
         self,
@@ -279,14 +272,14 @@ class ModelBuilder:
         :param is_const: True if variable is constant.
         """
         self._parameters.append(
-            {
-                "index": len(self._parameters),
-                "id": id_,
-                "is_const": is_const,
-                "label": label,
-                "initial_value": initial_value,
-                "units": units,
-            }
+            Parameter(
+                index=len(self._parameters),
+                id=id_,
+                is_const=is_const,
+                label=label,
+                initial_value=initial_value,
+                units=units,
+            )
         )
         self._variable_types[id_] = VarType.PARAMETER
 
@@ -298,14 +291,7 @@ class ModelBuilder:
         :param var: The variable being defined.
         :param math: The right-hand side of the rule as an ASTNode.
         """
-        self._rate_rules.append(
-            {
-                "id": id_,
-                "label": label,
-                "var": var,
-                "math": math,
-            }
-        )
+        self._rate_rules.append(Rule(id=id_, label=label, var=var, math=math))
 
     def _add_reaction(self, id_: str, label: str) -> None:
         """Add a reaction variable to the template variables.
@@ -313,18 +299,12 @@ class ModelBuilder:
         :param id_: The variable ID.
         :param label: The variable description.
         """
-        self._reactions.append(
-            {
-                "index": len(self._reactions),
-                "id": id_,
-                "label": label,
-            }
-        )
+        self._reactions.append(Reaction(index=len(self._reactions), id=id_, label=label))
         self._variable_types[id_] = VarType.REACTION
 
     def _add_state_variable(
         self, id_: str, label: str, initial_value: Optional[float], units: str = NON_DIM_UNITS
-    ) -> dict[str, "Any"]:
+    ) -> "StateVariable":
         """Add a state variable to the template variables.
 
         :param id_: The variable ID.
@@ -332,14 +312,14 @@ class ModelBuilder:
         :param initial_value: The variable initial value.
         :param units: The variable units.
         """
-        state_var = {
-            "index": len(self._state_variables),
-            "id": id_,
-            "derivative_id": self._names.reserve(f"{DERIVATIVE_PREFIX}{id_}{DERIVATIVE_SUFFIX}"),
-            "label": label,
-            "initial_value": initial_value,
-            "units": units,
-        }
+        state_var = StateVariable(
+            index=len(self._state_variables),
+            id=id_,
+            derivative_id=self._names.reserve(f"{DERIVATIVE_PREFIX}{id_}{DERIVATIVE_SUFFIX}"),
+            label=label,
+            initial_value=initial_value,
+            units=units,
+        )
 
         self._state_variables.append(state_var)
         self._variable_types[id_] = VarType.STATE_VARIABLE
@@ -369,12 +349,12 @@ class ModelBuilder:
         # A speciesReference's stoichiometry may be driven by a rate rule or an
         # assignment rule rather than a constant `stoichiometry` attribute. Note
         # these are not in _sbml_parameters, so _format_parameters does not handle them.
-        rate_rules = {rule["var"]: rule["math"] for rule in self._rate_rules}
-        assignment_rules = {rule["var"]: rule["math"] for rule in self._assignment_rules}
+        rate_rules = {rule.var: rule.math for rule in self._rate_rules}
+        assignment_rules = {rule.var: rule.math for rule in self._assignment_rules}
         if id_ in rate_rules:
             # A rate-rule stoichiometry is integrated as a state variable
             state_var = self._add_state_variable(id_, label, initial_value, NON_DIM_UNITS)  # TODO: Use correct units
-            self._add_equation(var=state_var["derivative_id"], math=rate_rules[id_], eq_type=EquationType.DERIVATIVE)
+            self._add_equation(var=state_var.derivative_id, math=rate_rules[id_], eq_type=EquationType.DERIVATIVE)
         elif id_ in assignment_rules:
             # An assignment-rule stoichiometry is a derived quantity recomputed each step.
             self._add_derived_quantity(id_, label, initial_value, NON_DIM_UNITS)  # TODO: Use correct units
@@ -398,7 +378,7 @@ class ModelBuilder:
         # Note: rules must be processed before ODE extraction
         odes = {}
 
-        def _update_ode(species_ref: "SpeciesReference", rxn: "Reaction", add: bool) -> None:
+        def _update_ode(species_ref: "SpeciesReference", rxn: "SbmlReaction", add: bool) -> None:
             """Update the ODE for a species based on a species reference in a reaction.
 
             Each ODE will essentially be the sum of the products minus the
@@ -464,8 +444,8 @@ class ModelBuilder:
         # Extract ODEs from rate rules. A rate rule fully determines its variable's derivative,
         # taking precedence over any reaction contribution.
         for rule in self._rate_rules:
-            var = rule["var"]
-            math = rule["math"]
+            var = rule.var
+            math = rule.math
             odes[var] = math
 
         if not odes:
@@ -496,8 +476,8 @@ class ModelBuilder:
     def _format_compartments(self) -> None:
         """Add compartments to template variables."""
         # Note: rules must be processed before compartments
-        assignment_rules = {rule["var"]: rule["math"] for rule in self._assignment_rules}
-        initial_assignments = {ia["var"]: ia["math"] for ia in self._initial_assignments}
+        assignment_rules = {rule.var: rule.math for rule in self._assignment_rules}
+        initial_assignments = {ia.var: ia.math for ia in self._initial_assignments}
 
         for compartment in self._sbml_compartments:
             id_ = compartment.getId()
@@ -526,7 +506,7 @@ class ModelBuilder:
                 math = self._odes[id_]
                 state_var = self._add_state_variable(id_, label, size, units)
                 self._add_equation(
-                    var=state_var["derivative_id"],
+                    var=state_var.derivative_id,
                     math=math,
                     eq_type=EquationType.DERIVATIVE,
                 )
@@ -542,8 +522,8 @@ class ModelBuilder:
     def _format_equations(self) -> None:
         """Convert and sort equations."""
         for eq in self._equations:
-            if eq["math"]:
-                eq["rhs"] = self._formula_to_string(eq["math"], eq["local_parameters"])
+            if eq.math:
+                eq.rhs = self._formula_to_string(eq.math, eq.local_parameters)
 
         self._sort_equations()
 
@@ -669,7 +649,7 @@ class ModelBuilder:
             # e.g. trigger: geq(3.0, 6.0, 7.0, 9.0) -> condition=false, dist=min(3.0, 1.0, 2.0)=1.0
         return trigger_distance
 
-    def _event_assignments(self, event) -> list:
+    def _event_assignments(self, event) -> list["EventAssignment"]:
         """Build the list of assignment records the event applies when it fires."""
         assignments = []
         for assignment in event.getListOfEventAssignments():
@@ -683,14 +663,7 @@ class ModelBuilder:
             index = self._get_variable_index(lhs)
             rhs = self._formula_to_string(assignment.getMath())
 
-            assignments.append(
-                {
-                    "index": index,
-                    "lhs": lhs,
-                    "rhs": rhs,
-                    "type": type_,
-                }
-            )
+            assignments.append(EventAssignment(index=index, lhs=lhs, rhs=rhs, type=type_))
         return assignments
 
     def _compensate_compartment_resizes(self, event, assignments) -> None:
@@ -702,8 +675,8 @@ class ModelBuilder:
         # compensating assignments; like all event assignments they are evaluated from the
         # pre-event state, so the compartment id still reads its old size here.
         compartment_ids = {compartment.getId() for compartment in self._sbml_compartments}
-        assignment_by_lhs = {assignment["lhs"]: assignment for assignment in assignments}
-        resized = {a["lhs"]: a["rhs"] for a in assignments if a["lhs"] in compartment_ids}
+        assignment_by_lhs = {assignment.lhs: assignment for assignment in assignments}
+        resized = {a.lhs: a.rhs for a in assignments if a.lhs in compartment_ids}
 
         # A compartment may also be resized indirectly: an assignment rule sets it from a
         # variable the event assigns (e.g. C = fakeC with the event assigning fakeC). Its new
@@ -711,7 +684,7 @@ class ModelBuilder:
         event_assignment_math = {
             ea.getVariable(): ea.getMath() for ea in event.getListOfEventAssignments() if ea.getMath() is not None
         }
-        assignment_rule_math = {ar["var"]: ar["math"] for ar in self._assignment_rules}
+        assignment_rule_math = {ar.var: ar.math for ar in self._assignment_rules}
         for compartment_id, rule_math in assignment_rule_math.items():
             if compartment_id not in compartment_ids or compartment_id in resized:
                 continue
@@ -740,16 +713,16 @@ class ModelBuilder:
                     # The event already assigns this species a concentration. That value is
                     # taken at the old compartment size, so scale it by old_size / new_size to
                     # carry the resulting amount across the simultaneous resize.
-                    explicit["rhs"] = f"({explicit['rhs']}) * {scale}"
+                    explicit.rhs = f"({explicit.rhs}) * {scale}"
                 else:
                     # The species is otherwise unchanged by the event, so conserve its amount.
                     assignments.append(
-                        {
-                            "index": self._get_variable_index(species_id),
-                            "lhs": species_id,
-                            "rhs": f"{species_id} * {scale}",
-                            "type": species_type,
-                        }
+                        EventAssignment(
+                            index=self._get_variable_index(species_id),
+                            lhs=species_id,
+                            rhs=f"{species_id} * {scale}",
+                            type=species_type,
+                        )
                     )
 
     def _event_priority(self, event):
@@ -791,16 +764,16 @@ class ModelBuilder:
                 # initial assignment overrides the speciesReference stoichiometry attribute,
                 # and Initialise's SetDefaultInitialCondition then carries it into the ICs.
                 if var not in sbml_param_ids:
-                    param_ids = {p["id"] for p in self._parameters}
-                    state_var_ids = {s["id"] for s in self._state_variables}
+                    param_ids = {p.id for p in self._parameters}
+                    state_var_ids = {s.id for s in self._state_variables}
                     if var in param_ids or var in state_var_ids:
                         self._add_equation(var=var, math=math, eq_type=EquationType.INITIAL_ASSIGNMENT)
 
     def _format_parameters(self) -> None:
         """Add parameters to template variables."""
         # Note: rules must be processed before parameters
-        assignment_rules = {rule["var"]: rule["math"] for rule in self._assignment_rules}
-        initial_assignments = {ia["var"]: ia["math"] for ia in self._initial_assignments}
+        assignment_rules = {rule.var: rule.math for rule in self._assignment_rules}
+        initial_assignments = {ia.var: ia.math for ia in self._initial_assignments}
 
         for param in self._sbml_parameters:
             param_id = param.getId()
@@ -830,7 +803,7 @@ class ModelBuilder:
                 # State variable
                 math = self._odes[param_id]
                 state_var = self._add_state_variable(param_id, label, value, units)
-                d_param_id = state_var["derivative_id"]
+                d_param_id = state_var.derivative_id
                 self._add_equation(var=d_param_id, math=math, eq_type=EquationType.DERIVATIVE)
 
             elif param_id in assignment_rules:
@@ -876,11 +849,7 @@ class ModelBuilder:
                     if not param.isSetValue():
                         raise ValueError(f"Local parameter {param_id} in reaction {id_} has no value.")
                     local_parameters.append(
-                        {
-                            "id": param_id,
-                            "label": param.getName().strip(),
-                            "value": str(param.getValue()),
-                        }
+                        LocalParameter(id=param_id, label=param.getName().strip(), value=str(param.getValue()))
                     )
                 self._add_equation(
                     var=id_,
@@ -909,9 +878,9 @@ class ModelBuilder:
 
     def _format_species(self) -> None:
         """Add species to template variables (rules must be processed first)."""
-        assignment_rules = {ar["var"]: ar["math"] for ar in self._assignment_rules}
-        rate_rules = {rr["var"]: rr["math"] for rr in self._rate_rules}
-        initial_assignments = {ia["var"]: ia["math"] for ia in self._initial_assignments}
+        assignment_rules = {ar.var: ar.math for ar in self._assignment_rules}
+        rate_rules = {rr.var: rr.math for rr in self._rate_rules}
+        initial_assignments = {ia.var: ia.math for ia in self._initial_assignments}
 
         for species in self._sbml_species:
             conversion_factor = self._species_conversion_factor(species)
@@ -1049,7 +1018,7 @@ class ModelBuilder:
                     rhs = f"({rhs}) * {conversion_factor}"
                 state_var = self._add_state_variable(species_id, label, initial_value, units)
                 self._add_equation(
-                    var=state_var["derivative_id"], math=parseL3Formula(rhs), eq_type=EquationType.DERIVATIVE
+                    var=state_var.derivative_id, math=parseL3Formula(rhs), eq_type=EquationType.DERIVATIVE
                 )
             else:
                 # Constant boundary species (no rule, non-time-varying compartment): its value
@@ -1089,9 +1058,7 @@ class ModelBuilder:
             #     f"rDY[{state_variable_index}] *= {time_multiplier};"
 
             state_var = self._add_state_variable(species_id, label, initial_value, units)
-            self._add_equation(
-                var=state_var["derivative_id"], math=parseL3Formula(rhs), eq_type=EquationType.DERIVATIVE
-            )
+            self._add_equation(var=state_var.derivative_id, math=parseL3Formula(rhs), eq_type=EquationType.DERIVATIVE)
 
         else:
             # Check whether the compartment is time-varying: a species in concentration with no
@@ -1106,13 +1073,13 @@ class ModelBuilder:
                     rhs = f"({rhs}) * {conversion_factor}"
                 state_var = self._add_state_variable(species_id, label, initial_value, units)
                 self._add_equation(
-                    var=state_var["derivative_id"], math=parseL3Formula(rhs), eq_type=EquationType.DERIVATIVE
+                    var=state_var.derivative_id, math=parseL3Formula(rhs), eq_type=EquationType.DERIVATIVE
                 )
             else:
                 # Truly constant: no reactions, no rules, constant compartment
                 self._add_derived_quantity(species_id, label, initial_value, units)
 
-    def _formula_to_string(self, math: "ASTNode", local_parameters: Optional[list[dict[str, str]]] = None) -> str:
+    def _formula_to_string(self, math: "ASTNode", local_parameters: Optional[list["LocalParameter"]] = None) -> str:
         """Convert an AST math formula to an equivalent C++ string.
 
         Thin wrapper over :func:`chaste_sbml._expressions.formula_to_string`, supplying the
@@ -1165,10 +1132,10 @@ class ModelBuilder:
         index_of: dict[str, int] = {}
         for collection in (self._parameters, self._reactions, self._state_variables, self._functions):
             for record in collection:
-                index_of[record["id"]] = record["index"]
+                index_of[record.id] = record.index
         for derived_quantity in self._derived_quantities:
-            if not derived_quantity["is_reaction"]:
-                index_of[derived_quantity["id"]] = derived_quantity["index"]
+            if not derived_quantity.is_reaction:
+                index_of[derived_quantity.id] = derived_quantity.index
         return index_of
 
     def _get_variable_type(self, var_id: str) -> VarType:
@@ -1189,16 +1156,16 @@ class ModelBuilder:
         preserved; indices are then renumbered to match.
         """
 
-        def group(dq: dict) -> int:
-            if dq["is_conversion"]:
+        def group(dq: "DerivedQuantity") -> int:
+            if dq.is_conversion:
                 return 2
-            if dq["is_reaction"]:
+            if dq.is_reaction:
                 return 1
             return 0
 
         self._derived_quantities.sort(key=group)
         for index, dq in enumerate(self._derived_quantities):
-            dq["index"] = index
+            dq.index = index
 
     def build(self) -> None:
         """Process the SBML model to set up the formatted variables for templates."""
@@ -1267,26 +1234,26 @@ class ModelBuilder:
         :raises NameConflictError: if any conflict is found.
         """
         identifiers = []
-        identifiers += [(p["id"], "parameter") for p in self._parameters]
+        identifiers += [(p.id, "parameter") for p in self._parameters]
         for var in self._state_variables:
-            identifiers.append((var["id"], "state variable"))
-            identifiers.append((var["derivative_id"], "state-variable derivative"))
+            identifiers.append((var.id, "state variable"))
+            identifiers.append((var.derivative_id, "state-variable derivative"))
         for dq in self._derived_quantities:
-            if dq["is_reaction"]:
+            if dq.is_reaction:
                 continue  # Declared under reactions; counted there.
-            kind = "amount/concentration conversion" if dq["is_conversion"] else "derived quantity"
-            identifiers.append((dq["id"], kind))
-        identifiers += [(s["id"], "stoichiometry variable") for s in self._stoichiometry_variables]
-        identifiers += [(r["id"], "reaction") for r in self._reactions]
-        identifiers += [(f["id"], "function") for f in self._functions]
+            kind = "amount/concentration conversion" if dq.is_conversion else "derived quantity"
+            identifiers.append((dq.id, kind))
+        identifiers += [(s.id, "stoichiometry variable") for s in self._stoichiometry_variables]
+        identifiers += [(r.id, "reaction") for r in self._reactions]
+        identifiers += [(f.id, "function") for f in self._functions]
         # Initial assignments are deliberately excluded: an initial assignment's id is the
         # existing variable it assigns to (emitted as `var = <expr>`), not a new declaration,
         # so counting it would double-count that variable.
 
         conflicts = find_name_conflicts(identifiers)
         for eq in self._equations:
-            for lp in eq.get("local_parameters") or ():
-                conflicts.extend(find_name_conflicts([(lp["id"], "local parameter")], reserved=CHASTE_RESERVED_NAMES))
+            for lp in eq.local_parameters or ():
+                conflicts.extend(find_name_conflicts([(lp.id, "local parameter")], reserved=CHASTE_RESERVED_NAMES))
         conflicts = sorted(conflicts)
         if conflicts:
             raise NameConflictError(
@@ -1310,7 +1277,7 @@ class ModelBuilder:
         sort cyclic dependencies such as A -> B -> A or A -> B -> C -> A.
         """
 
-        def _depends(eq: dict, var: str) -> bool:
+        def _depends(eq: "Equation", var: str) -> bool:
             """Check if a variable appears in the rhs of an equation.
 
             :param eq: The equation to check.
@@ -1318,11 +1285,11 @@ class ModelBuilder:
             :return: True if the variable appears in the rhs of the equation, False otherwise.
             """
             # False if there is a local parameter with the same name as the variable.
-            if eq["local_parameters"]:
-                if any(var == param["id"] for param in eq["local_parameters"]):
+            if eq.local_parameters:
+                if any(var == param.id for param in eq.local_parameters):
                     return False
 
-            return bool(re.search(rf"\b{var}\b", eq["rhs"]))
+            return bool(re.search(rf"\b{var}\b", eq.rhs))
 
         # Sort equations by group
         group_order = [
@@ -1335,7 +1302,7 @@ class ModelBuilder:
             EquationType.UNKNOWN,
         ]
 
-        sorted_equations = [eq for eq_type in group_order for eq in self._equations if eq["type"] == eq_type]
+        sorted_equations = [eq for eq_type in group_order for eq in self._equations if eq.type == eq_type]
 
         # Sort equations by dependencies
         for _ in range(len(sorted_equations)):  # Max iterations for worst case
@@ -1343,7 +1310,7 @@ class ModelBuilder:
             for eq in sorted_equations:
                 for i, other_eq in enumerate(re_sorted_equations):
                     # Insert eq before the first other equation that depends on it.
-                    if _depends(other_eq, eq["var"]):
+                    if _depends(other_eq, eq.var):
                         re_sorted_equations.insert(i, eq)
                         break
                 else:
