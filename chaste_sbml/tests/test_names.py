@@ -7,6 +7,7 @@ from chaste_sbml._names import (
     CPP_KEYWORDS,
     find_name_conflicts,
     is_valid_cpp_identifier,
+    resolve_cpp_name,
     unique_name,
 )
 
@@ -84,3 +85,24 @@ def test_unique_name_appends_suffix_on_collision():
 def test_unique_name_skips_taken_suffixes():
     """Already-taken suffixed names are skipped."""
     assert unique_name("v", {"v", "v_2", "v_3"}) == "v_4"
+
+
+def test_resolve_cpp_name_leaves_safe_id_unchanged():
+    """A real id that is neither keyword nor reserved and is free is returned unchanged."""
+    assert resolve_cpp_name("cell", {"C", "M"}) == "cell"
+
+
+@pytest.mark.parametrize(("keyword", "expected"), [("default", "default_"), ("int", "int_"), ("new", "new_")])
+def test_resolve_cpp_name_escapes_keywords(keyword, expected):
+    """A keyword id is escaped by suffixing an underscore."""
+    assert resolve_cpp_name(keyword, set()) == expected
+
+
+def test_resolve_cpp_name_escapes_reserved_chaste_name():
+    """A reserved Chaste member name is escaped."""
+    assert resolve_cpp_name("mParameters", set()) == "mParameters_"
+
+
+def test_resolve_cpp_name_escape_then_uniquify():
+    """If the escaped name is already taken, a numeric suffix is added."""
+    assert resolve_cpp_name("default", {"default_"}) == "default__2"

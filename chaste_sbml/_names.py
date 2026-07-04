@@ -214,3 +214,21 @@ def unique_name(base: str, taken) -> str:
     while f"{base}_{n}" in taken:
         n += 1
     return f"{base}_{n}"
+
+
+def resolve_cpp_name(base: str, taken) -> str:
+    """Return a C++-safe, unique replacement for a real SBML id.
+
+    An SBML ``SId`` already matches C++ identifier syntax, so the only clashes to fix are with
+    C++ keywords and reserved Chaste names: those are escaped by appending ``_`` until the name
+    is neither. Uniqueness against ``taken`` is then ensured. A name that needs no change is
+    returned unchanged.
+
+    :param base: The real SBML id to make safe.
+    :param taken: A container of names already in use (other ids and reserved names).
+    :return: A C++-safe identifier not present in ``taken``.
+    """
+    candidate = base
+    while candidate in CPP_KEYWORDS or candidate in CHASTE_RESERVED_NAMES:
+        candidate += "_"
+    return unique_name(candidate, taken)

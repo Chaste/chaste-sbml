@@ -47,7 +47,15 @@ from ._config import (
     ModelType,
     VarType,
 )
-from ._names import RESERVED_NAMES, NameConflictError, find_name_conflicts, unique_name
+from ._names import (
+    CHASTE_RESERVED_NAMES,
+    CPP_KEYWORDS,
+    RESERVED_NAMES,
+    NameConflictError,
+    find_name_conflicts,
+    resolve_cpp_name,
+    unique_name,
+)
 from ._utils import (
     generate_header_guard,
     get_compartment_size,
@@ -187,6 +195,7 @@ class ChasteSbmlModel:
 
         self._outputs = {}  # { filename: code }
 
+        self._resolve_name_conflicts()
         self._process_model()
 
     @property
@@ -1810,16 +1819,17 @@ class ChasteSbmlModel:
 
         :return: The set of real ids that synthetic names must avoid.
         """
+        model = self._sbml_model
         names = set()
         for lst in (
-            self._sbml_species,
-            self._sbml_parameters,
-            self._sbml_compartments,
-            self._sbml_reactions,
-            self._sbml_function_definitions,
+            model.getListOfSpecies(),
+            model.getListOfParameters(),
+            model.getListOfCompartments(),
+            model.getListOfReactions(),
+            model.getListOfFunctionDefinitions(),
         ):
             names.update(elem.getId() for elem in lst if elem.isSetId())
-        for reaction in self._sbml_reactions:
+        for reaction in model.getListOfReactions():
             for ref in list(reaction.getListOfReactants()) + list(reaction.getListOfProducts()):
                 if ref.isSetId():
                     names.add(ref.getId())
@@ -1827,6 +1837,45 @@ class ChasteSbmlModel:
             if kinetic_law is not None:
                 names.update(lp.getId() for lp in kinetic_law.getListOfParameters() if lp.isSetId())
         return names
+
+    def _resolve_name_conflicts(self) -> None:
+        """Rename real SBML ids that are C++ keywords or reserved Chaste names (issue #35, phase C).
+
+        An SBML ``SId`` is already valid C++ identifier syntax, so the only ids that cannot be
+        emitted verbatim are those equal to a C++ keyword (e.g. a compartment called ``default``)
+        or a Chaste base-class member. Each such id is renamed in place to a safe unique name and
+        every reference to it is updated via libsbml's per-element ``renameSIdRefs``, so the rest
+        of generation -- equations, events, initial assignments, the templates -- sees only clean
+        ids. Ids that are already safe are left untouched, so conflict-free models are unchanged.
+        Only global SId-namespace entities that become C++ identifiers are considered.
+        """
+        model = self._sbml_model
+        # Names replacements must avoid: every existing id plus the reserved names.
+        taken = self._collect_taken_names() | RESERVED_NAMES
+
+        elements = []
+        for lst in (
+            model.getListOfSpecies(),
+            model.getListOfParameters(),
+            model.getListOfCompartments(),
+            model.getListOfReactions(),
+            model.getListOfFunctionDefinitions(),
+        ):
+            elements.extend(lst)
+        for reaction in model.getListOfReactions():
+            elements.extend(list(reaction.getListOfReactants()) + list(reaction.getListOfProducts()))
+
+        for element in elements:
+            if not element.isSetId():
+                continue
+            old_id = element.getId()
+            if old_id not in CPP_KEYWORDS and old_id not in CHASTE_RESERVED_NAMES:
+                continue
+            new_id = resolve_cpp_name(old_id, taken)
+            element.setId(new_id)
+            for referrer in model.getListOfAllElements():
+                referrer.renameSIdRefs(old_id, new_id)
+            taken.add(new_id)
 
     def _reserve_synthetic(self, base: str) -> str:
         """Reserve a unique C++ identifier for a generator-synthesised variable.

@@ -1,5 +1,6 @@
 """Unit tests for ChasteSbmlModel internals."""
 
+import libsbml
 import pytest
 
 from chaste_sbml._names import NameConflictError
@@ -105,6 +106,47 @@ def test_check_name_conflicts_allows_ordinary_local_parameter():
     """A validly-named local parameter (even shadowing a global) is not flagged."""
     model = _model_with_names(parameters=["k1"], state_variables=["C"], reactions=["J1"], local_parameters=["k1"])
     model._check_name_conflicts()  # should not raise
+
+
+def test_resolve_name_conflicts_renames_keyword_compartment():
+    """A compartment whose id is a C++ keyword is renamed, and its references updated."""
+    doc = libsbml.SBMLDocument(3, 2)
+    sbml_model = doc.createModel()
+    compartment = sbml_model.createCompartment()
+    compartment.setId("default")  # 'default' is a C++ keyword
+    compartment.setConstant(True)
+    compartment.setSize(1.0)
+    species = sbml_model.createSpecies()
+    species.setId("S")
+    species.setCompartment("default")
+    species.setConstant(False)
+    species.setBoundaryCondition(False)
+    species.setHasOnlySubstanceUnits(False)
+    species.setInitialAmount(1.0)
+
+    model = _model_without_init()
+    model._sbml_model = sbml_model
+    model._resolve_name_conflicts()
+
+    assert sbml_model.getElementBySId("default") is None
+    assert sbml_model.getElementBySId("default_") is not None
+    # The species' compartment reference was rewritten too.
+    assert sbml_model.getSpecies("S").getCompartment() == "default_"
+
+
+def test_resolve_name_conflicts_leaves_safe_ids_untouched():
+    """A model with only safe ids is not modified."""
+    doc = libsbml.SBMLDocument(3, 2)
+    sbml_model = doc.createModel()
+    compartment = sbml_model.createCompartment()
+    compartment.setId("cell")
+    compartment.setConstant(True)
+
+    model = _model_without_init()
+    model._sbml_model = sbml_model
+    model._resolve_name_conflicts()
+
+    assert sbml_model.getElementBySId("cell") is not None
 
 
 def test_reserve_synthetic_keeps_clean_name_when_free():
