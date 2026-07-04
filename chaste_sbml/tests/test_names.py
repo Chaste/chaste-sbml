@@ -1,4 +1,4 @@
-"""Tests for C++ identifier conflict detection and naming (issue #35)."""
+"""Tests for C++ identifier conflict detection and naming."""
 
 import libsbml
 import pytest

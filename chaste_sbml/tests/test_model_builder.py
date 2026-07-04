@@ -1,9 +1,23 @@
-"""Unit tests for ModelBuilder name-conflict detection."""
+"""Unit tests for ModelBuilder: SBML translation and name-conflict detection."""
 
 import pytest
 
-from chaste_sbml._names import NameConflictError
+from chaste_sbml._config import ROOT_DIR, EquationType, VarType
 from chaste_sbml._model_builder import ModelBuilder
+from chaste_sbml._names import NameConflictError, NameManager
+from chaste_sbml._sbml_loader import load_sbml_model
+
+REFERENCE = ROOT_DIR / "SbmlRefModels" / "src" / "reference"
+
+
+def _build(sbml_path) -> ModelBuilder:
+    """Load, resolve names for and build a real SBML model, returning the ModelBuilder."""
+    sbml_model = load_sbml_model(str(sbml_path))
+    names = NameManager(sbml_model)
+    names.resolve_real_id_conflicts()
+    builder = ModelBuilder(sbml_model, names, "Test")
+    builder.build()
+    return builder
 
 
 def _builder_without_init() -> ModelBuilder:
@@ -112,3 +126,40 @@ def test_check_name_conflicts_flags_local_parameter_shadowing_time():
     builder = _builder_with_names(state_variables=["C"], reactions=["J1"], local_parameters=["time"])
     with pytest.raises(NameConflictError, match="local parameter 'time' clashes with a reserved Chaste name"):
         builder._check_name_conflicts()
+
+
+def test_build_extracts_state_variables_and_derivatives():
+    """Each SBML species with an ODE becomes a state variable with a d_<id>_dt derivative."""
+    builder = _build(REFERENCE / "Goldbeter1991" / "Goldbeter1991.xml")
+    state_vars = {s["id"]: s["derivative_id"] for s in builder._state_variables}
+    assert state_vars == {"C": "d_C_dt", "M": "d_M_dt", "X": "d_X_dt"}
+
+
+def test_build_extracts_parameters_and_reactions():
+    """Global parameters and reactions are collected under their SBML ids."""
+    builder = _build(REFERENCE / "Goldbeter1991" / "Goldbeter1991.xml")
+    assert {p["id"] for p in builder._parameters} == {"VM1", "VM3", "Kc"}
+    assert {r["id"] for r in builder._reactions} == {f"reaction{i}" for i in range(1, 8)}
+
+
+def test_build_adds_amount_conversions_for_amount_species():
+    """Amount species get an amt__<id> conversion derived quantity."""
+    builder = _build(REFERENCE / "Goldbeter1991" / "Goldbeter1991.xml")
+    conversions = {d["id"] for d in builder._derived_quantities if d["is_conversion"]}
+    assert conversions == {"amt__C", "amt__M", "amt__X"}
+
+
+def test_build_produces_one_derivative_equation_per_state_variable():
+    """A derivative equation is emitted for each state variable."""
+    builder = _build(REFERENCE / "Goldbeter1991" / "Goldbeter1991.xml")
+    deriv_vars = {e["var"] for e in builder._equations if e["type"] == EquationType.DERIVATIVE}
+    assert deriv_vars == {"d_C_dt", "d_M_dt", "d_X_dt"}
+
+
+def test_build_extracts_cell_division_event():
+    """An event is translated with its trigger and state-variable assignment."""
+    builder = _build(REFERENCE / "TysonNovak2001" / "TysonNovak2001.xml")
+    assert len(builder._events) == 1
+    event = builder._events[0]
+    assert event["trigger"] == "CycB < 0.1"
+    assert event["assignments"] == [{"index": 3, "lhs": "m", "rhs": "m / 2.0", "type": VarType.STATE_VARIABLE}]
