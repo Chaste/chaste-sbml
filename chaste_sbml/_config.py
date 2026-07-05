@@ -16,6 +16,10 @@ INITIAL_ASSIGNMENT_PREFIX = "ia"
 DERIVATIVE_PREFIX = "d_"
 DERIVATIVE_SUFFIX = "_dt"
 
+# Base id for the synthetic zero-derivative state variable added to models with no ODEs, so the
+# generated ODE system always has at least one variable for the solver to integrate.
+PLACEHOLDER_STATE_ID = "placeholder"
+
 
 class EquationType(Enum):
     """Enumeration of equation types for code generation."""

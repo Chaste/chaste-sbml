@@ -4,7 +4,14 @@ import libsbml
 import pytest
 from libsbml import parseL3Formula
 
-from chaste_sbml._config import ROOT_DIR, EquationType, VarType
+from chaste_sbml._config import (
+    CHASTE_PREFIX,
+    PLACEHOLDER_STATE_ID,
+    PREFIX_SEP,
+    ROOT_DIR,
+    EquationType,
+    VarType,
+)
 from chaste_sbml._model_builder import ModelBuilder
 from chaste_sbml._names import NameConflictError, NameManager
 from chaste_sbml._records import (
@@ -169,6 +176,74 @@ def test_check_name_conflicts_flags_local_parameter_shadowing_time():
     builder = _builder_with_names(state_variables=["C"], reactions=["J1"], local_parameters=["time"])
     with pytest.raises(NameConflictError, match="local parameter 'time' clashes with a reserved Chaste name"):
         builder._check_name_conflicts()
+
+
+PLACEHOLDER_ID = PREFIX_SEP.join([CHASTE_PREFIX, PLACEHOLDER_STATE_ID])
+
+
+def _no_ode_model(tmp_path):
+    """Write a no-ODE SBML model (constant species + time-dependent assignment rule) to disk.
+
+    The model has no reactions, ODEs or rate rules, so it has no state variables of its own.
+    """
+    doc = libsbml.SBMLDocument(3, 2)
+    model = doc.createModel()
+    model.setId("NoOde")
+    compartment = model.createCompartment()
+    compartment.setId("cell")
+    compartment.setConstant(True)
+    compartment.setSize(1.0)
+    compartment.setSpatialDimensions(3)
+    # A parameter that is an explicit function of time via an assignment rule.
+    parameter = model.createParameter()
+    parameter.setId("P")
+    parameter.setConstant(False)
+    parameter.setValue(0.0)
+    rule = model.createAssignmentRule()
+    rule.setVariable("P")
+    rule.setMath(parseL3Formula("2 * time"))
+    # A constant species.
+    species = model.createSpecies()
+    species.setId("S")
+    species.setCompartment("cell")
+    species.setConstant(True)
+    species.setBoundaryCondition(True)
+    species.setHasOnlySubstanceUnits(False)
+    species.setInitialConcentration(3.0)
+
+    path = tmp_path / "NoOde.xml"
+    libsbml.writeSBMLToFile(doc, str(path))
+    return path
+
+
+def test_build_synthesises_placeholder_state_variable_for_no_ode_model(tmp_path):
+    """A model with no ODEs gets a single zero-derivative placeholder state variable."""
+    builder = _build(_no_ode_model(tmp_path))
+
+    assert [s.id for s in builder._state_variables] == [PLACEHOLDER_ID]
+    placeholder = builder._state_variables[0]
+    assert placeholder.initial_value == 0.0
+
+    deriv_equations = [e for e in builder._equations if e.type == EquationType.DERIVATIVE]
+    assert len(deriv_equations) == 1
+    assert deriv_equations[0].var == placeholder.derivative_id
+    assert deriv_equations[0].rhs == "0.0"
+
+
+def test_build_no_ode_model_preserves_real_outputs(tmp_path):
+    """The placeholder does not displace the model's real outputs (assignment rule, species)."""
+    builder = _build(_no_ode_model(tmp_path))
+
+    # The time-dependent assignment-rule parameter is still emitted as a derived quantity, and
+    # the constant boundary species is still emitted (as a parameter). Neither is the placeholder.
+    assert "P" in {d.id for d in builder._derived_quantities}
+    assert "S" in {p.id for p in builder._parameters}
+
+
+def test_build_does_not_add_placeholder_when_model_has_odes():
+    """A model with genuine ODEs is left untouched: no placeholder state variable is added."""
+    builder = _build(REFERENCE / "Goldbeter1991" / "Goldbeter1991.xml")
+    assert PLACEHOLDER_ID not in {s.id for s in builder._state_variables}
 
 
 def test_build_extracts_state_variables_and_derivatives():

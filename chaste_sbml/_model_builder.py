@@ -33,6 +33,7 @@ from ._config import (
     DERIVATIVE_SUFFIX,
     INITIAL_ASSIGNMENT_PREFIX,
     NON_DIM_UNITS,
+    PLACEHOLDER_STATE_ID,
     PREFIX_SEP,
     EquationType,
     EventType,
@@ -327,6 +328,19 @@ class ModelBuilder:
 
         return state_var
 
+    def _add_placeholder_state_variable(self) -> None:
+        """Add a synthetic state variable with a zero derivative for a model with no ODEs.
+
+        Chaste's ODE system integrates a vector of state variables, so a model with no continuous
+        dynamics still needs at least one. The placeholder is constant (``dy/dt = 0``), starts at
+        zero and is not an SBML output, so it never appears in the expected results; it exists only
+        to give the solver a trivial state to advance in time while the model's real outputs are
+        recomputed each step.
+        """
+        placeholder_id = self._names.reserve(PREFIX_SEP.join([CHASTE_PREFIX, PLACEHOLDER_STATE_ID]))
+        state_var = self._add_state_variable(placeholder_id, "Placeholder state variable (model has no ODEs)", 0.0)
+        self._add_equation(var=state_var.derivative_id, math=parseL3Formula("0.0"), eq_type=EquationType.DERIVATIVE)
+
     def _add_stoichiometry_variable(self, species_reference: "SpeciesReference") -> None:
         """Add a stoichiometry variable to the template variables.
 
@@ -449,9 +463,9 @@ class ModelBuilder:
             math = rule.math
             odes[var] = math
 
-        if not odes:
-            raise NotImplementedError("Models without ODEs are not supported.")
-
+        # An empty odes dict is allowed: a model with no reactions or rate rules has no
+        # continuous dynamics, and build() synthesises a placeholder state variable so the
+        # generated ODE system still has something for the solver to integrate.
         self._odes = odes
 
     def _total_time_derivative(self, ast_node: "ASTNode") -> str:
@@ -1207,7 +1221,11 @@ class ModelBuilder:
         self._format_parameters()
 
         if not self._state_variables:
-            raise NotImplementedError("Models without state variables are not supported.")
+            # The model has no continuous dynamics (no reactions, ODEs or rate rules). Add a
+            # placeholder state variable with a zero derivative so the generated ODE system still
+            # has something for the solver to integrate; its outputs (constants, assignment rules
+            # of time, event-driven changes) are recomputed each step like any other model.
+            self._add_placeholder_state_variable()
 
         self._format_reactions()
         self._format_function_definitions()
