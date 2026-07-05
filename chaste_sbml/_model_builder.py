@@ -727,7 +727,7 @@ class ModelBuilder:
                         )
                     )
 
-    def _event_priority(self, event):
+    def _event_priority(self, event) -> Optional[str]:
         """Return the event priority expression, or None if it has none."""
         if event.isSetPriority() and event.getPriority().getMath() is not None:
             return self._formula_to_string(event.getPriority().getMath())
@@ -913,7 +913,7 @@ class ModelBuilder:
                 # Amount species: add a "concentration" derived quantity (conc = amount / volume)
                 self._add_concentration(species)
 
-    def _species_conversion_factor(self, species):
+    def _species_conversion_factor(self, species) -> Optional[str]:
         """Return the species' conversion factor, falling back to the model's, else None."""
         if species.isSetConversionFactor():
             return species.getConversionFactor()
@@ -941,7 +941,9 @@ class ModelBuilder:
         self._add_initial_assignment(ia_id, f"Convert {species_id} {description}", species_id, ia_math)
         self._add_equation(var=species_id, math=ia_math, eq_type=EquationType.INITIAL_ASSIGNMENT)
 
-    def _add_species_initial_value(self, species, has_only_substance_units, assignment_rules, initial_assignments):
+    def _add_species_initial_value(
+        self, species, has_only_substance_units, assignment_rules, initial_assignments
+    ) -> Optional[float]:
         """Emit the species' initial-value equation and any concentration<->amount conversion.
 
         :return: the initial concentration or amount, or None if neither is set.

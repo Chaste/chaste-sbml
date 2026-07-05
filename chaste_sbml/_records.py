@@ -106,7 +106,7 @@ class Equation:
     """A ``var = rhs`` equation; ``rhs`` is filled in from ``math`` during formatting."""
 
     var: str
-    math: "ASTNode"
+    math: Optional["ASTNode"]
     type: EquationType = EquationType.UNKNOWN
     local_parameters: Optional[list[LocalParameter]] = None
     rhs: str = ""

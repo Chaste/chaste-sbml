@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from ._records import LocalParameter, StateVariable
 
 
-def collect_ast_names(node: "ASTNode", names: set) -> None:
+def collect_ast_names(node: Optional["ASTNode"], names: set) -> None:
     """Recursively collect the identifiers referenced by name in an AST.
 
     :param node: The root AST node.
@@ -87,7 +87,7 @@ def strip_ast_units(node: "ASTNode") -> None:
         strip_ast_units(node.getChild(i))
 
 
-def search_ast_type(root: "ASTNode", node_type: int) -> bool:
+def search_ast_type(root: Optional["ASTNode"], node_type: int) -> bool:
     """Recursively search the AST for a node of a certain type.
 
     :param root: The root node of the AST.

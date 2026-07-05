@@ -13,10 +13,10 @@ from typing import TYPE_CHECKING
 from libsbml import LIBSBML_OPERATION_SUCCESS, ConversionProperties, SBMLReader, formulaToString
 
 if TYPE_CHECKING:
-    from libsbml import Compartment, FunctionDefinition
+    from libsbml import Compartment, FunctionDefinition, Model
 
 
-def load_sbml_model(sbml_file: str):
+def load_sbml_model(sbml_file: str) -> "Model":
     """Read, comp-flatten and convert an SBML file into a ready-to-process libsbml Model.
 
     :param sbml_file: Path to the SBML file.

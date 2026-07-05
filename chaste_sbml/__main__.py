@@ -8,7 +8,7 @@ from chaste_sbml._config import ModelType
 from ._version import __version__
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
         prog="chaste-sbml",
