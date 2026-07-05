@@ -948,8 +948,8 @@ test,status,notes
 00947,pass,ok
 00948,pass,ok
 00949,pass,ok (no-ode placeholder)
-00950,fail_known,codegen: inf constant
-00951,fail_known,codegen: inf constant
+00950,fail_known,non-finite expected results (INF/NaN)
+00951,fail_known,non-finite expected results (INF/NaN)
 00952,unsupported,random event execution
 00953,fail_known,event priority/ordering
 00954,pass,ok (no-ode placeholder)
@@ -1809,7 +1809,7 @@ test,status,notes
 01808,pass,ok
 01809,pass,ok
 01810,pass,ok (no-ode placeholder)
-01811,fail_known,codegen: inf in expected results
+01811,fail_known,non-finite expected results (INF/NaN)
 01812,fail_known,codegen: string literal in math
 01813,fail_known,codegen: string literal in math
 01814,pass,ok (no-ode placeholder)
@@ -1817,6 +1817,6 @@ test,status,notes
 01816,pass,ok (no-ode placeholder)
 01817,pass,ok (no-ode placeholder)
 01818,pass,ok (no-ode placeholder)
-01819,fail_known,pi constant vs parameter collision
+01819,pass,ok (pi constant vs parameter distinguished)
 01820,pass,ok (no-ode placeholder)
 01821,pass,ok (no-ode placeholder)

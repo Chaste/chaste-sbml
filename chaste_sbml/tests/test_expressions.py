@@ -16,9 +16,10 @@ from libsbml import (
 
 from chaste_sbml._config import VarType
 from chaste_sbml._expressions import (
+    AVOGADRO_PLACEHOLDER,
     collect_ast_names,
     formula_to_string,
-    replace_avogadro_csymbol,
+    replace_constant_symbols,
     rewrite_nary_relational,
     rewrite_power,
     search_ast_type,
@@ -153,8 +154,8 @@ def test_substitute_ast_names_leaves_original_unchanged():
     assert formulaToL3String(original) == "a + b"
 
 
-def test_replace_avogadro_csymbol_renames_nested_node():
-    """An avogadro csymbol anywhere in the tree becomes a plain name with the placeholder id."""
+def test_replace_constant_symbols_renames_nested_node():
+    """An avogadro csymbol anywhere in the tree becomes a plain name with its placeholder id."""
     one = ASTNode(AST_REAL)
     one.setValue(1.0)
     avogadro = ASTNode(AST_NAME_AVOGADRO)
@@ -162,19 +163,63 @@ def test_replace_avogadro_csymbol_renames_nested_node():
     expr.addChild(one)
     expr.addChild(avogadro)
 
-    replace_avogadro_csymbol(expr, "AVO")
+    replace_constant_symbols(expr)
 
     renamed = expr.getChild(1)
     assert renamed.getType() == AST_NAME
-    assert renamed.getName() == "AVO"
+    assert renamed.getName() == AVOGADRO_PLACEHOLDER
 
 
-def test_replace_avogadro_csymbol_leaves_other_names():
-    """A non-avogadro name node is left untouched."""
+def test_replace_constant_symbols_leaves_other_names():
+    """A non-symbol name node is left untouched."""
     name = ASTNode(AST_NAME)
     name.setName("x")
-    replace_avogadro_csymbol(name, "AVO")
+    replace_constant_symbols(name)
     assert name.getName() == "x"
+
+
+@pytest.mark.parametrize(
+    ("mathml_symbol", "expected"),
+    [
+        ("<pi/>", "M_PI"),
+        ("<exponentiale/>", "M_E"),
+        ("<infinity/>", "std::numeric_limits<double>::infinity()"),
+        ("<notanumber/>", "NAN"),
+    ],
+)
+def test_formula_to_string_math_constants(mathml_symbol, expected):
+    """SBML math constants (incl. the capitalised INF/NaN libsbml emits) map to their C++ form."""
+    math = libsbml.readMathMLFromString(f'<math xmlns="http://www.w3.org/1998/Math/MathML">{mathml_symbol}</math>')
+    assert formula_to_string(math, {}, state_variables=[]) == expected
+
+
+def test_formula_to_string_pi_constant_and_parameter_are_distinct():
+    """The <pi/> constant maps to M_PI while a same-named parameter keeps its own name."""
+    math = libsbml.readMathMLFromString(
+        '<math xmlns="http://www.w3.org/1998/Math/MathML"><apply><plus/><ci>pi</ci><pi/></apply></math>'
+    )
+    assert formula_to_string(math, {"pi": VarType.PARAMETER}, state_variables=[]) == "pi + M_PI"
+
+
+def test_formula_to_string_time_symbol_and_named_variable_are_distinct():
+    """The time csymbol maps to `time`; a plain variable named `t` is left as-is (not time)."""
+    assert formula_to_string(parseL3Formula("time"), {}, state_variables=[]) == "time"
+    assert formula_to_string(parseL3Formula("t"), {"t": VarType.PARAMETER}, state_variables=[]) == "t"
+
+
+def test_formula_to_string_rateof_local_parameter_is_zero():
+    """rateOf of a kinetic-law local parameter (constant) is zero, not a global's derivative."""
+    from chaste_sbml._records import LocalParameter
+
+    out = formula_to_string(
+        parseL3Formula("rateOf(k)"),
+        variable_types={"k": VarType.STATE_VARIABLE},
+        state_variables=[
+            StateVariable(index=0, id="k", derivative_id="d_k_dt", label="", initial_value=None, units="")
+        ],
+        local_parameters=[LocalParameter(id="k", label="", value="1")],
+    )
+    assert out == "0.0"
 
 
 def test_strip_ast_units_removes_units_recursively():
