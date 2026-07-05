@@ -9,7 +9,18 @@ into the model.
 import re
 from typing import TYPE_CHECKING, Optional
 
-from libsbml import AST_FUNCTION_DELAY, AST_NAME, AST_NAME_AVOGADRO, formulaToL3String
+from libsbml import (
+    AST_FUNCTION,
+    AST_FUNCTION_DELAY,
+    AST_NAME,
+    AST_NAME_AVOGADRO,
+    AST_RELATIONAL_EQ,
+    AST_RELATIONAL_GEQ,
+    AST_RELATIONAL_GT,
+    AST_RELATIONAL_LEQ,
+    AST_RELATIONAL_LT,
+    formulaToL3String,
+)
 
 from ._config import CHASTE_PREFIX, PREFIX_SEP, VarType
 
@@ -85,6 +96,39 @@ def strip_ast_units(node: "ASTNode") -> None:
         node.unsetUnits()
     for i in range(node.getNumChildren()):
         strip_ast_units(node.getChild(i))
+
+
+# SBML MathML relational operators, and the SbmlMath (``sm::``) helper each maps to.
+_NARY_RELATIONAL_NAMES = {
+    AST_RELATIONAL_LT: "lt",
+    AST_RELATIONAL_GT: "gt",
+    AST_RELATIONAL_LEQ: "leq",
+    AST_RELATIONAL_GEQ: "geq",
+    AST_RELATIONAL_EQ: "eq",
+}
+
+
+def rewrite_nary_relational(node: Optional["ASTNode"]) -> None:
+    """Rewrite n-ary (>2 operand) relational AST nodes into function-call form, in place.
+
+    SBML MathML relationals are n-ary -- ``lt(a, b, c)`` means ``a < b < c`` (i.e. ``a < b`` and
+    ``b < c``), and ``eq(a, b, c)`` means all equal -- but ``formulaToL3String`` renders them as a
+    chained infix expression (``a < b < c``), which C++ mis-evaluates left-to-right as
+    ``(a < b) < c``. Converting each such node to a function call (rendered ``lt(a, b, c)``, later
+    mapped to the variadic ``sm::lt`` helper that implements the correct semantics) fixes this.
+    Binary relationals are left as infix operators, so existing generated code is unchanged.
+    ``neq`` is binary-only in MathML, so it is never n-ary and is not rewritten here.
+
+    :param node: The root AST node to rewrite.
+    """
+    if node is None:
+        return
+    name = _NARY_RELATIONAL_NAMES.get(node.getType())
+    if name is not None and node.getNumChildren() > 2:
+        node.setType(AST_FUNCTION)
+        node.setName(name)
+    for i in range(node.getNumChildren()):
+        rewrite_nary_relational(node.getChild(i))
 
 
 def search_ast_type(root: Optional["ASTNode"], node_type: int) -> bool:
@@ -260,6 +304,9 @@ def formula_to_string(
     # constants below) so it stays distinct from a same-named parameter.
     avogadro_placeholder = f"{CHASTE_PREFIX}{PREFIX_SEP}avogadro"
     replace_avogadro_csymbol(math, avogadro_placeholder)
+    # Route n-ary relationals (a < b < c) to the sm:: helpers before stringifying, so they are
+    # not emitted as C++-misevaluating chained infix. Binary relationals stay as infix operators.
+    rewrite_nary_relational(math)
     formula = formulaToL3String(math)
 
     # Convert all integer literals to doubles to fix integer division.

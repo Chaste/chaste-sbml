@@ -1210,11 +1210,11 @@ test,status,notes
 01209,pass,ok (no-ode placeholder)
 01210,pass,ok (no-ode placeholder)
 01211,pass,ok (no-ode placeholder)
-01212,fail_known,nary relational operator
+01212,pass,ok (nary relational via sm:: helpers)
 01213,unsupported,delay
 01214,pass,ok (no-ode placeholder)
 01215,pass,ok
-01216,fail_known,nary relational operator
+01216,pass,ok (nary relational via sm:: helpers)
 01217,pass,ok (no-ode placeholder)
 01218,pass,ok (no-ode placeholder)
 01219,pass,ok
@@ -1492,7 +1492,7 @@ test,status,notes
 01491,fail_known,codegen: unconverted ^ operator
 01492,pass,ok
 01493,pass,ok
-01494,fail_known,nary relational operator
+01494,pass,ok (nary relational via sm:: helpers)
 01495,pass,ok (no-ode placeholder)
 01496,pass,ok (no-ode placeholder)
 01497,fail_known,codegen: implies operator
@@ -1779,7 +1779,7 @@ test,status,notes
 01778,pass,ok
 01779,pass,ok (no-ode placeholder)
 01780,pass,ok (no-ode placeholder)
-01781,fail_known,nary relational operator
+01781,pass,ok (nary relational via sm:: helpers)
 01782,pass,ok (no-ode placeholder)
 01783,pass,ok
 01784,pass,ok

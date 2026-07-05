@@ -19,6 +19,7 @@ from chaste_sbml._expressions import (
     convert_infix_operator_to_function_syntax,
     formula_to_string,
     replace_avogadro_csymbol,
+    rewrite_nary_relational,
     search_ast_type,
     strip_ast_units,
     substitute_ast_names,
@@ -73,6 +74,37 @@ def test_formula_to_string_functions_constants_and_power():
         math, variable_types={"k": VarType.PARAMETER, "S": VarType.STATE_VARIABLE}, state_variables=[]
     )
     assert out == "k * std::pow(S, 2.0) + M_PI"
+
+
+@pytest.mark.parametrize(
+    ("formula", "expected"),
+    [
+        # n-ary relationals (>2 operands) become sm:: calls with the correct semantics...
+        ("lt(1, 2, 3)", "sm::lt(1.0, 2.0, 3.0)"),
+        ("gt(2, 1, 2)", "sm::gt(2.0, 1.0, 2.0)"),
+        ("leq(1, 2, 3, 4)", "sm::leq(1.0, 2.0, 3.0, 4.0)"),
+        ("geq(2, 1, 2)", "sm::geq(2.0, 1.0, 2.0)"),
+        ("eq(1, 1, 2)", "sm::eq(1.0, 1.0, 2.0)"),
+        # ...while binary relationals stay as infix operators (unchanged output).
+        ("a < b", "a < b"),
+        ("a >= b", "a >= b"),
+    ],
+)
+def test_formula_to_string_nary_relational_uses_sbmlmath(formula, expected):
+    """n-ary relationals route to the variadic sm:: helpers; binary ones stay infix."""
+    variable_types = {"a": VarType.PARAMETER, "b": VarType.PARAMETER}
+    assert formula_to_string(parseL3Formula(formula), variable_types, state_variables=[]) == expected
+
+
+def test_rewrite_nary_relational_leaves_binary_untouched():
+    """rewrite_nary_relational converts only >2-operand relationals, leaving binary ones as-is."""
+    binary = parseL3Formula("a < b")
+    rewrite_nary_relational(binary)
+    assert formulaToL3String(binary) == "a < b"
+
+    nary = parseL3Formula("lt(a, b, c)")
+    rewrite_nary_relational(nary)
+    assert formulaToL3String(nary) == "lt(a, b, c)"
 
 
 def test_formula_to_string_rateof_state_variable_uses_derivative():
