@@ -1278,16 +1278,6 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     return max_dist; // Signed distance of the event closest to triggering
 }
 
-// ASSIGNMENT RULES
-void Chen2004SbmlOdeSystem::RunAssignmentRules(double time)
-{
-}
-
-// INITIAL ASSIGNMENTS
-void Chen2004SbmlOdeSystem::RunInitialAssignments(double time)
-{
-}
-
 std::vector<double> Chen2004SbmlOdeSystem::RunModelEquations(double time, const std::vector<double>& rStateVariables)
 {
     BUD = rStateVariables[0];
@@ -1682,57 +1672,6 @@ std::vector<double> Chen2004SbmlOdeSystem::RunModelEquations(double time, const 
     derivatives[34] = d_SWI5P_dt;
     derivatives[35] = d_TEM1GTP_dt;
     return derivatives;
-}
-
-// REACTIONS
-void Chen2004SbmlOdeSystem::RunReactions(double time)
-{
-}
-
-// VARIABLE PARAMETERS
-void Chen2004SbmlOdeSystem::UpdateParameters(double time)
-{
-}
-
-// STATE VARIABLES
-void Chen2004SbmlOdeSystem::UpdateStateVariables(double time, const std::vector<double>& rStateVariables)
-{
-    BUD = rStateVariables[0];
-    C2 = rStateVariables[1];
-    C2P = rStateVariables[2];
-    C5 = rStateVariables[3];
-    C5P = rStateVariables[4];
-    CDC14 = rStateVariables[5];
-    CDC15 = rStateVariables[6];
-    CDC20 = rStateVariables[7];
-    CDC20i = rStateVariables[8];
-    CDC6 = rStateVariables[9];
-    CDC6P = rStateVariables[10];
-    CDH1 = rStateVariables[11];
-    CDH1i = rStateVariables[12];
-    CLB2 = rStateVariables[13];
-    CLB5 = rStateVariables[14];
-    CLN2 = rStateVariables[15];
-    ESP1 = rStateVariables[16];
-    F2 = rStateVariables[17];
-    F2P = rStateVariables[18];
-    F5 = rStateVariables[19];
-    F5P = rStateVariables[20];
-    IEP = rStateVariables[21];
-    MASS = rStateVariables[22];
-    NET1 = rStateVariables[23];
-    NET1P = rStateVariables[24];
-    ORI = rStateVariables[25];
-    PDS1 = rStateVariables[26];
-    PPX = rStateVariables[27];
-    RENT = rStateVariables[28];
-    RENTP = rStateVariables[29];
-    SIC1 = rStateVariables[30];
-    SIC1P = rStateVariables[31];
-    SPN = rStateVariables[32];
-    SWI5 = rStateVariables[33];
-    SWI5P = rStateVariables[34];
-    TEM1GTP = rStateVariables[35];
 }
 
 // MODEL FUNCTIONS

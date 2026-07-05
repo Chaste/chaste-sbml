@@ -1,62 +1,29 @@
-"""Unit tests for ChasteSbmlModel internals."""
+"""End-to-end tests for the ChasteSbmlModel orchestrator."""
 
-import pytest
+from chaste_sbml import ChasteSbmlModel
+from chaste_sbml._config import ROOT_DIR, ModelType
 
-from chaste_sbml.chaste_sbml_model import ChasteSbmlModel
-
-
-def _model_without_init() -> ChasteSbmlModel:
-    """Create an instance without running __init__ for pure string helper tests."""
-    return object.__new__(ChasteSbmlModel)
+GOLDBETER = ROOT_DIR / "SbmlRefModels" / "src" / "reference" / "Goldbeter1991" / "Goldbeter1991.xml"
 
 
-def test_convert_infix_operator_to_function_syntax_power():
-    """Converts infix power expressions to pow calls."""
-    model = _model_without_init()
+def test_write_produces_output_files(tmp_path):
+    """Writing an SRN model renders and writes its OdeSystem and SRN sources."""
+    model = ChasteSbmlModel(str(GOLDBETER), model_type=ModelType.SRN)
+    model.write(tmp_path)
 
-    converted = model._convert_infix_operator_to_function_syntax(
-        formula="(a + b) ^ (1.0 / 2.0)",
-        operator="^",
-        function_name="pow",
-    )
-
-    assert converted == "pow((a + b), (1.0 / 2.0))"
-
-
-def test_convert_infix_operator_to_function_syntax_custom_pair():
-    """Supports arbitrary operator/function conversion pairs."""
-    model = _model_without_init()
-
-    converted = model._convert_infix_operator_to_function_syntax(
-        formula="alpha @@ beta", operator="@@", function_name="combine"
-    )
-
-    assert converted == "combine(alpha, beta)"
+    written = {p.name for p in tmp_path.iterdir()}
+    assert "Goldbeter1991SbmlOdeSystem.hpp" in written
+    assert "Goldbeter1991SbmlOdeSystem.cpp" in written
+    assert "Goldbeter1991SbmlSrnModel.hpp" in written
+    assert "Goldbeter1991SbmlSrnModel.cpp" in written
 
 
-def test_convert_infix_operator_to_function_syntax_nested_and_repeated():
-    """Converts nested and repeated operator expressions in one formula."""
-    model = _model_without_init()
+def test_outputs_property_exposes_generated_code(tmp_path):
+    """The outputs property returns the generated filename -> code mapping after write."""
+    model = ChasteSbmlModel(str(GOLDBETER), model_type=ModelType.SRN)
+    model.write(tmp_path)
 
-    converted = model._convert_infix_operator_to_function_syntax(
-        formula="(x ^ y) ^ z", operator="^", function_name="pow"
-    )
-
-    assert converted == "pow((pow(x, y)), z)"
-
-
-@pytest.mark.parametrize(
-    ("operator", "function_name", "error_message"),
-    [
-        ("", "pow", "operator must be a non-empty string"),
-        ("^", "", "function_name must be a non-empty string"),
-    ],
-)
-def test_convert_infix_operator_to_function_syntax_invalid_args(operator: str, function_name: str, error_message: str):
-    """Validates required arguments for operator/function conversion."""
-    model = _model_without_init()
-
-    with pytest.raises(ValueError, match=error_message):
-        model._convert_infix_operator_to_function_syntax(
-            formula="a ^ b", operator=operator, function_name=function_name
-        )
+    outputs = model.outputs
+    assert isinstance(outputs, dict)
+    assert "Goldbeter1991SbmlOdeSystem.cpp" in outputs
+    assert outputs["Goldbeter1991SbmlOdeSystem.cpp"].strip()  # non-empty source

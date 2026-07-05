@@ -90,44 +90,6 @@ private:
      */
     virtual double ProcessModelEvents(double time, const std::vector<double>& rY) = 0;
 
-    /**
-     * Run the assignment rules to update state.
-     *
-     * @param time The current time
-     * @param rY The current state variables
-     */
-    virtual void RunAssignmentRules(double time) = 0;
-
-    /**
-     * Run the initial assignments to set initial state.
-     *
-     * @param time The current time
-     */
-    virtual void RunInitialAssignments(double time) = 0;
-
-    /**
-     * Run the reactions to update state.
-     *
-     * @param time The current time
-     * @param rY The current state variables
-     */
-    virtual void RunReactions(double time) = 0;
-
-    /**
-     * Update variable parameters from current ODE system parameter settings.
-     *
-     * @param time The current time
-     */
-    virtual void UpdateParameters(double time) = 0;
-
-    /**
-     * Update state variables from the given ODE system state.
-     *
-     * @param time The current time
-     * @param rStateVariables The state variables to use
-     */
-    virtual void UpdateStateVariables(double time, const std::vector<double>& rStateVariables) = 0;
-
 protected:
     /** The number of parameters in the model */
     unsigned mNumberOfParameters;
@@ -156,14 +118,6 @@ protected:
     std::vector<bool> mEventAdjustedParameters;
     std::vector<double> mEventAdjustedParameterValues;
     std::vector<double> mEventAdjustedParameterPriority;
-
-    /**
-     * Run the equations governing the model to update state.
-     *
-     * @param time The current time
-     * @param rY The current state variables
-     */
-    void RunModelRules(double time, const std::vector<double>& rY);
 
 public:
     /**

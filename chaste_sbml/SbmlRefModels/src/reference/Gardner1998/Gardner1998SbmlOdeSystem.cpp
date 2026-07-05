@@ -247,16 +247,6 @@ double Gardner1998SbmlOdeSystem::ProcessModelEvents(double time, const std::vect
     return max_dist; // Signed distance of the event closest to triggering
 }
 
-// ASSIGNMENT RULES
-void Gardner1998SbmlOdeSystem::RunAssignmentRules(double time)
-{
-}
-
-// INITIAL ASSIGNMENTS
-void Gardner1998SbmlOdeSystem::RunInitialAssignments(double time)
-{
-}
-
 std::vector<double> Gardner1998SbmlOdeSystem::RunModelEquations(double time, const std::vector<double>& rStateVariables)
 {
     C = rStateVariables[0];
@@ -393,26 +383,6 @@ std::vector<double> Gardner1998SbmlOdeSystem::RunModelEquations(double time, con
     derivatives[3] = d_Y_dt;
     derivatives[4] = d_Z_dt;
     return derivatives;
-}
-
-// REACTIONS
-void Gardner1998SbmlOdeSystem::RunReactions(double time)
-{
-}
-
-// VARIABLE PARAMETERS
-void Gardner1998SbmlOdeSystem::UpdateParameters(double time)
-{
-}
-
-// STATE VARIABLES
-void Gardner1998SbmlOdeSystem::UpdateStateVariables(double time, const std::vector<double>& rStateVariables)
-{
-    C = rStateVariables[0];
-    X = rStateVariables[1];
-    M = rStateVariables[2];
-    Y = rStateVariables[3];
-    Z = rStateVariables[4];
 }
 
 // MODEL FUNCTIONS

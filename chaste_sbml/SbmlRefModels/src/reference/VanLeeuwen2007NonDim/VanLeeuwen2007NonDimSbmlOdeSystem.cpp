@@ -282,16 +282,6 @@ double VanLeeuwen2007NonDimSbmlOdeSystem::ProcessModelEvents(double time, const 
     return max_dist; // Signed distance of the event closest to triggering
 }
 
-// ASSIGNMENT RULES
-void VanLeeuwen2007NonDimSbmlOdeSystem::RunAssignmentRules(double time)
-{
-}
-
-// INITIAL ASSIGNMENTS
-void VanLeeuwen2007NonDimSbmlOdeSystem::RunInitialAssignments(double time)
-{
-}
-
 std::vector<double> VanLeeuwen2007NonDimSbmlOdeSystem::RunModelEquations(double time, const std::vector<double>& rStateVariables)
 {
     X = rStateVariables[0];
@@ -390,32 +380,6 @@ std::vector<double> VanLeeuwen2007NonDimSbmlOdeSystem::RunModelEquations(double 
     derivatives[9] = d_C_cT_dt;
     derivatives[10] = d_Y_dt;
     return derivatives;
-}
-
-// REACTIONS
-void VanLeeuwen2007NonDimSbmlOdeSystem::RunReactions(double time)
-{
-}
-
-// VARIABLE PARAMETERS
-void VanLeeuwen2007NonDimSbmlOdeSystem::UpdateParameters(double time)
-{
-}
-
-// STATE VARIABLES
-void VanLeeuwen2007NonDimSbmlOdeSystem::UpdateStateVariables(double time, const std::vector<double>& rStateVariables)
-{
-    X = rStateVariables[0];
-    D = rStateVariables[1];
-    C_o = rStateVariables[2];
-    C_u = rStateVariables[3];
-    C_c = rStateVariables[4];
-    A = rStateVariables[5];
-    C_A = rStateVariables[6];
-    T = rStateVariables[7];
-    C_oT = rStateVariables[8];
-    C_cT = rStateVariables[9];
-    Y = rStateVariables[10];
 }
 
 // MODEL FUNCTIONS

@@ -124,44 +124,6 @@ private:
      */
     double ProcessModelEvents(double time, const std::vector<double>& rY) override;
 
-    /**
-     * Run the assignment rules to update state.
-     *
-     * @param time The current time
-     * @param rY The current state variables
-     */
-    void RunAssignmentRules(double time) override;
-
-    /**
-     * Run the initial assignments to set initial state.
-     *
-     * @param time The current time
-     */
-    void RunInitialAssignments(double time) override;
-
-    /**
-     * Run the reactions to update state.
-     *
-     * @param time The current time
-     * @param rY The current state variables
-     */
-    void RunReactions(double time) override;
-
-    /**
-     * Update variable parameters from current ODE system parameter settings.
-     *
-     * @param time The current time
-     */
-    void UpdateParameters(double time) override;
-
-    /**
-     * Update state variables from the given ODE system state.
-     *
-     * @param time The current time
-     * @param rStateVariables The state variables to use
-     */
-    void UpdateStateVariables(double time, const std::vector<double>& rStateVariables) override;
-
     // MODEL FUNCTIONS
     inline double GK(double A1, double A2, double A3, double A4);
 

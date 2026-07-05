@@ -1,7 +1,12 @@
 name: sbml_test_suite
 
-on: [pull_request]
-
+on:
+  pull_request:
+    branches:
+      - "**"
+  push:
+    branches:
+      - develop
 concurrency:
   group: sbml_test_suite-${{ github.ref }}
   cancel-in-progress: true

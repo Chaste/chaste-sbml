@@ -38,8 +38,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <algorithm>
 #include <cmath>
-#include <iostream>
-#include <limits>
 #include <numeric>
 #include <stdexcept>
 #include <string>
@@ -164,16 +162,20 @@ inline double sbmltesthelpers::Quantile(const std::vector<double>& vec, double q
     std::sort(sorted_vec.begin(), sorted_vec.end());
 
     size_t n = sorted_vec.size();
-    size_t index = static_cast<size_t>(q * (n - 1));
 
-    // Even number of elements
-    if (n % 2 == 0)
+    // Linear-interpolation quantile (numpy/pandas default 'linear' method): the qth quantile
+    // sits at fractional position h = q * (n - 1) in the sorted data, interpolated between its
+    // two neighbouring samples. This matches how the reference statistics are generated.
+    double h = q * (n - 1);
+    size_t lo = static_cast<size_t>(h);
+
+    // Exactly on the last sample (q == 1, or lo already the final index): no upper neighbour.
+    if (lo + 1 >= n)
     {
-        return (sorted_vec[index] + sorted_vec[index - 1]) / 2.0;
+        return sorted_vec[n - 1];
     }
 
-    // Odd number of elements
-    return sorted_vec[index];
+    return sorted_vec[lo] + (h - lo) * (sorted_vec[lo + 1] - sorted_vec[lo]);
 }
 
 // variance

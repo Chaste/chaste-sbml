@@ -1,4 +1,5 @@
 ![build_and_test](https://github.com/Chaste/chaste-codegen-sbml/actions/workflows/build_and_test.yml/badge.svg?branch=develop)
+![sbml_test_suite](https://github.com/Chaste/chaste-codegen-sbml/actions/workflows/sbml_test_suite.yml/badge.svg?branch=develop)
 
 # Import SBML models into Chaste
 

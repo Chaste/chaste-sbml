@@ -8,7 +8,7 @@ def test_base_class_files_found():
     """The package ships a non-empty set of base-class files, including fortests helpers."""
     names = {p.name for p in base_class_files()}
     assert "AbstractSbmlOdeSystem.hpp" in names
-    assert "SbmlMath.cpp" in names
+    assert "AbstractSbmlOdeSystem.cpp" in names
     assert "SbmlTestHelpers.hpp" in names
 
 

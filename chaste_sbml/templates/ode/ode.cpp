@@ -277,16 +277,6 @@ double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<d
     return max_dist; // Signed distance of the event closest to triggering
 }
 
-// ASSIGNMENT RULES
-void {{ ode_class_name }}::RunAssignmentRules(double time)
-{
-}
-
-// INITIAL ASSIGNMENTS
-void {{ ode_class_name }}::RunInitialAssignments(double time)
-{
-}
-
 std::vector<double> {{ ode_class_name }}::RunModelEquations(double time, const std::vector<double>& rStateVariables)
 {
 {% for var in state_variables %}
@@ -321,29 +311,6 @@ std::vector<double> {{ ode_class_name }}::RunModelEquations(double time, const s
     derivatives[{{ var["index"] }}] = {{ var["derivative_id"] }};
 {% endfor %}
     return derivatives;
-}
-
-// REACTIONS
-void {{ ode_class_name }}::RunReactions(double time)
-{
-}
-
-// VARIABLE PARAMETERS
-void {{ ode_class_name }}::UpdateParameters(double time)
-{
-{% for param in parameters %}
-{% if param["fixed"] is false() %}
-    {{ param["id"] }} = GetParameter({{ param['index'] }});
-{% endif %}
-{% endfor %}
-}
-
-// STATE VARIABLES
-void {{ ode_class_name }}::UpdateStateVariables(double time, const std::vector<double>& rStateVariables)
-{
-{% for var in state_variables %}
-    {{ var["id"] }} = rStateVariables[{{ var["index"] }}];
-{% endfor %}
 }
 
 // MODEL FUNCTIONS

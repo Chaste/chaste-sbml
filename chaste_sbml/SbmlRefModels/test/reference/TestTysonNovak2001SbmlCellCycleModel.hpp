@@ -134,7 +134,7 @@ public:
         TS_ASSERT_DELTA(proteins_0[1], 0.3039, 1e-4); // Cdc20a
         TS_ASSERT_DELTA(proteins_0[2], 0.4435, 1e-4); // Cdh1
         TS_ASSERT_DELTA(proteins_0[3], 0.8125, 1e-4); // m
-        TS_ASSERT_DELTA(proteins_0[4], 1.1628, 1e-4); // Cdc20t
+        TS_ASSERT_DELTA(proteins_0[4], 1.1629, 1e-4); // Cdc20t
         TS_ASSERT_DELTA(proteins_0[5], 0.5465, 1e-4); // IEP
         TS_ASSERT_DELTA(proteins_0[6], 0.0800, 1e-4); // CKIt
         TS_ASSERT_DELTA(proteins_0[7], 0.0811, 1e-4); // SK

@@ -304,16 +304,6 @@ double Chen2000SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
     return max_dist; // Signed distance of the event closest to triggering
 }
 
-// ASSIGNMENT RULES
-void Chen2000SbmlOdeSystem::RunAssignmentRules(double time)
-{
-}
-
-// INITIAL ASSIGNMENTS
-void Chen2000SbmlOdeSystem::RunInitialAssignments(double time)
-{
-}
-
 std::vector<double> Chen2000SbmlOdeSystem::RunModelEquations(double time, const std::vector<double>& rStateVariables)
 {
     Cln2 = rStateVariables[0];
@@ -446,34 +436,6 @@ std::vector<double> Chen2000SbmlOdeSystem::RunModelEquations(double time, const 
     derivatives[11] = d_BUD_dt;
     derivatives[12] = d_SPN_dt;
     return derivatives;
-}
-
-// REACTIONS
-void Chen2000SbmlOdeSystem::RunReactions(double time)
-{
-}
-
-// VARIABLE PARAMETERS
-void Chen2000SbmlOdeSystem::UpdateParameters(double time)
-{
-}
-
-// STATE VARIABLES
-void Chen2000SbmlOdeSystem::UpdateStateVariables(double time, const std::vector<double>& rStateVariables)
-{
-    Cln2 = rStateVariables[0];
-    Clb2_T = rStateVariables[1];
-    Clb5_T = rStateVariables[2];
-    Sic1_T = rStateVariables[3];
-    Clb2_Sic1 = rStateVariables[4];
-    Clb5_Sic1 = rStateVariables[5];
-    Cdc20_T = rStateVariables[6];
-    Cdc20 = rStateVariables[7];
-    Hct1 = rStateVariables[8];
-    mass = rStateVariables[9];
-    ORI = rStateVariables[10];
-    BUD = rStateVariables[11];
-    SPN = rStateVariables[12];
 }
 
 // MODEL FUNCTIONS

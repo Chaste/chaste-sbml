@@ -163,16 +163,6 @@ double Tan2014SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<d
     return max_dist; // Signed distance of the event closest to triggering
 }
 
-// ASSIGNMENT RULES
-void Tan2014SbmlOdeSystem::RunAssignmentRules(double time)
-{
-}
-
-// INITIAL ASSIGNMENTS
-void Tan2014SbmlOdeSystem::RunInitialAssignments(double time)
-{
-}
-
 std::vector<double> Tan2014SbmlOdeSystem::RunModelEquations(double time, const std::vector<double>& rStateVariables)
 {
     bcat_cm = rStateVariables[0];
@@ -218,27 +208,6 @@ std::vector<double> Tan2014SbmlOdeSystem::RunModelEquations(double time, const s
     derivatives[4] = d_ligand_nu_dt;
     derivatives[5] = d_complex_nu_dt;
     return derivatives;
-}
-
-// REACTIONS
-void Tan2014SbmlOdeSystem::RunReactions(double time)
-{
-}
-
-// VARIABLE PARAMETERS
-void Tan2014SbmlOdeSystem::UpdateParameters(double time)
-{
-}
-
-// STATE VARIABLES
-void Tan2014SbmlOdeSystem::UpdateStateVariables(double time, const std::vector<double>& rStateVariables)
-{
-    bcat_cm = rStateVariables[0];
-    ligand_cm = rStateVariables[1];
-    complex_cm = rStateVariables[2];
-    bcat_nu = rStateVariables[3];
-    ligand_nu = rStateVariables[4];
-    complex_nu = rStateVariables[5];
 }
 
 // MODEL FUNCTIONS
