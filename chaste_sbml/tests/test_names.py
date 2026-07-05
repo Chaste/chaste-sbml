@@ -166,6 +166,27 @@ def test_name_manager_resolve_leaves_safe_ids_untouched():
     assert sbml_model.getElementBySId("cell") is not None
 
 
+def test_name_manager_sbml_name_recovers_original_id():
+    """After a keyword id is renamed, sbml_name maps the C++ id back to the original SBML id.
+
+    A variable must be reported to Chaste under its real SBML id even though the emitted C++
+    identifier had to be escaped, so it can be looked up by that id.
+    """
+    doc = libsbml.SBMLDocument(3, 2)
+    sbml_model = doc.createModel()
+    parameter = sbml_model.createParameter()
+    parameter.setId("true")  # 'true' is a C++ keyword, so it is renamed to 'true_'
+    parameter.setConstant(True)
+    parameter.setValue(1.0)
+
+    manager = NameManager(sbml_model)
+    manager.resolve_real_id_conflicts()
+
+    assert sbml_model.getParameter("true_") is not None
+    assert manager.sbml_name("true_") == "true"  # renamed id maps back to the real SBML id
+    assert manager.sbml_name("k") == "k"  # an un-renamed id is returned unchanged
+
+
 def test_generate_header_guard():
     """Test header guard generation."""
     test_cases = [

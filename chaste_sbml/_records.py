@@ -45,6 +45,8 @@ class StateVariable:
     label: str
     initial_value: Optional[float]
     units: str
+    # SBML id reported to Chaste; equals ``id`` unless the id was escaped for C++ (see NameManager).
+    name: str = ""
 
 
 @dataclass
@@ -57,6 +59,8 @@ class Parameter:
     label: str
     initial_value: Optional[float]
     units: str
+    # SBML id reported to Chaste; equals ``id`` unless the id was escaped for C++ (see NameManager).
+    name: str = ""
 
 
 @dataclass
@@ -70,6 +74,8 @@ class DerivedQuantity:
     is_conversion: bool
     is_reaction: bool
     units: str
+    # SBML id reported to Chaste; equals ``id`` unless the id was escaped for C++ (see NameManager).
+    name: str = ""
 
 
 @dataclass

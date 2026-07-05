@@ -179,6 +179,7 @@ class ModelBuilder:
                 is_conversion=is_conversion,
                 is_reaction=is_reaction,
                 units=units,
+                name=self._names.sbml_name(id_),
             )
         )
         if not is_reaction:
@@ -280,6 +281,7 @@ class ModelBuilder:
                 label=label,
                 initial_value=initial_value,
                 units=units,
+                name=self._names.sbml_name(id_),
             )
         )
         self._variable_types[id_] = VarType.PARAMETER
@@ -321,6 +323,7 @@ class ModelBuilder:
             label=label,
             initial_value=initial_value,
             units=units,
+            name=self._names.sbml_name(id_),
         )
 
         self._state_variables.append(state_var)

@@ -257,6 +257,10 @@ class NameManager:
         """:param sbml_model: The libsbml Model whose ids are being turned into C++."""
         self._sbml_model = sbml_model
         self._taken: set = set()
+        # C++ identifier (the renamed id) -> original SBML id, for ids renamed to dodge a C++
+        # keyword or reserved name. Lets the generated code report a variable under its real SBML
+        # id even though its C++ identifier had to be escaped.
+        self._sbml_names: dict[str, str] = {}
 
     def resolve_real_id_conflicts(self) -> None:
         """Rename real SBML ids that are C++ keywords or reserved Chaste names.
@@ -296,6 +300,19 @@ class NameManager:
             for referrer in model.getListOfAllElements():
                 referrer.renameSIdRefs(old_id, new_id)
             taken.add(new_id)
+            self._sbml_names[new_id] = old_id
+
+    def sbml_name(self, cpp_id: str) -> str:
+        """Return the original SBML id for a (possibly renamed) C++ identifier.
+
+        A variable is reported to Chaste under this name, so it is looked up by its real SBML id
+        even when the emitted C++ identifier had to be escaped (e.g. a parameter ``time`` emitted
+        as ``time_``). Ids that were never renamed are returned unchanged.
+
+        :param cpp_id: The C++ identifier as it appears in the generated code.
+        :return: The original SBML id if ``cpp_id`` was a renamed id, else ``cpp_id``.
+        """
+        return self._sbml_names.get(cpp_id, cpp_id)
 
     def reset(self) -> None:
         """Recompute the taken-name set from the (resolved) model, ready for a build.
