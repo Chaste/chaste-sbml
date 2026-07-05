@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Optional
 from libsbml import AST_FUNCTION_DELAY, AST_NAME, AST_NAME_AVOGADRO, formulaToL3String
 
 from ._config import CHASTE_PREFIX, PREFIX_SEP, VarType
-from ._utils import search_ast_type
 
 if TYPE_CHECKING:
     from libsbml import ASTNode
@@ -20,7 +19,7 @@ if TYPE_CHECKING:
     from ._records import LocalParameter, StateVariable
 
 
-def collect_ast_names(node: "ASTNode", names: set) -> None:
+def collect_ast_names(node: Optional["ASTNode"], names: set) -> None:
     """Recursively collect the identifiers referenced by name in an AST.
 
     :param node: The root AST node.
@@ -86,6 +85,28 @@ def strip_ast_units(node: "ASTNode") -> None:
         node.unsetUnits()
     for i in range(node.getNumChildren()):
         strip_ast_units(node.getChild(i))
+
+
+def search_ast_type(root: Optional["ASTNode"], node_type: int) -> bool:
+    """Recursively search the AST for a node of a certain type.
+
+    :param root: The root node of the AST.
+    :param node_type: The type of node to search for.
+
+    :return: True if a node matching the spec is found, False otherwise.
+    """
+    if root is None:
+        return False
+
+    if root.getType() == node_type:
+        return True
+
+    for i in range(root.getNumChildren()):
+        child = root.getChild(i)
+        if search_ast_type(child, node_type):
+            return True
+
+    return False
 
 
 def convert_infix_operator_to_function_syntax(formula: str, operator: str, function_name: str) -> str:

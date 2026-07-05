@@ -1,6 +1,8 @@
 """Unit tests for ModelBuilder: SBML translation and name-conflict detection."""
 
+import libsbml
 import pytest
+from libsbml import parseL3Formula
 
 from chaste_sbml._config import ROOT_DIR, EquationType, VarType
 from chaste_sbml._model_builder import ModelBuilder
@@ -14,9 +16,10 @@ from chaste_sbml._records import (
     LocalParameter,
     Parameter,
     Reaction,
+    Rule,
     StateVariable,
 )
-from chaste_sbml._sbml_loader import load_sbml_model
+from chaste_sbml._sbml_reader import load_sbml_model
 
 REFERENCE = ROOT_DIR / "SbmlRefModels" / "src" / "reference"
 
@@ -203,3 +206,119 @@ def test_build_extracts_cell_division_event():
     event = builder._events[0]
     assert event.trigger == "CycB < 0.1"
     assert event.assignments == [EventAssignment(index=3, lhs="m", rhs="m / 2.0", type=VarType.STATE_VARIABLE)]
+
+
+def _distance_builder() -> ModelBuilder:
+    """A bare builder wired just enough for _event_trigger_distance and trigger formatting."""
+    builder = _builder_without_init()
+    doc = libsbml.SBMLDocument(3, 2)
+    builder._sbml_model = doc.createModel()
+    builder._keep_doc = doc  # keep the owning document (and thus the model) alive
+    builder._variable_types = {}
+    builder._state_variables = []
+    return builder
+
+
+def _trigger_event(builder: ModelBuilder, formula: str):
+    """Create an event on the builder's model whose trigger is ``formula``."""
+    event = builder._sbml_model.createEvent()
+    event.createTrigger().setMath(parseL3Formula(formula))
+    return event
+
+
+@pytest.mark.parametrize(
+    ("trigger", "expected"),
+    [
+        ("A < 5", "(5.0) - (A) - std::numeric_limits<double>::epsilon()"),
+        ("A > 5", "(A) - (5.0) - std::numeric_limits<double>::epsilon()"),
+        ("A >= 5", "(A) - (5.0) - std::numeric_limits<double>::epsilon()"),
+        ("A <= 5", "(5.0) - (A) - std::numeric_limits<double>::epsilon()"),
+        ("A == 5", "-std::abs((A) - (5.0))"),
+        ("A != 5", "std::abs((A) - (5.0)) - std::numeric_limits<double>::epsilon()"),
+    ],
+)
+def test_event_trigger_distance_relational_operators(trigger, expected):
+    """Each relational operator yields the signed distance CVODE roots on (only < is in the ref models)."""
+    builder = _distance_builder()
+    event = _trigger_event(builder, trigger)
+    assert builder._event_trigger_distance(event) == expected
+
+
+def test_event_trigger_distance_non_relational_is_constant():
+    """A non-relational trigger has no crossing to locate, so the distance is the constant 1.0."""
+    builder = _distance_builder()
+    event = _trigger_event(builder, "and(A > 1, B > 1)")
+    assert builder._event_trigger_distance(event) == "1.0"
+
+
+def _resize_builder(*, assignment_rules=()) -> ModelBuilder:
+    """A bare builder with one compartment C and one concentration species S in it."""
+    builder = _builder_without_init()
+    doc = libsbml.SBMLDocument(3, 2)
+    model = doc.createModel()
+    model.createCompartment().setId("C")
+    species = model.createSpecies()
+    species.setId("S")
+    species.setCompartment("C")
+
+    builder._sbml_model = model
+    builder._keep_doc = doc
+    builder._sbml_compartments = model.getListOfCompartments()
+    builder._sbml_species = model.getListOfSpecies()
+    builder._assignment_rules = list(assignment_rules)
+    builder._variable_types = {"S": VarType.STATE_VARIABLE}
+    builder._state_variables = []
+    builder._index_of = {"S": 0}
+    return builder
+
+
+def test_compensate_compartment_resizes_directly_resized_compartment():
+    """A species in a directly-resized compartment gets a compensating amount-conserving assignment."""
+    builder = _resize_builder()
+    event = builder._sbml_model.createEvent()
+    assignments = [EventAssignment(index=0, lhs="C", rhs="2.0", type=VarType.PARAMETER)]
+
+    builder._compensate_compartment_resizes(event, assignments)
+
+    added = [a for a in assignments if a.lhs == "S"]
+    assert added == [EventAssignment(index=0, lhs="S", rhs="S * C / (2.0)", type=VarType.STATE_VARIABLE)]
+
+
+def test_compensate_compartment_resizes_indirect_assignment_rule():
+    """A compartment resized indirectly (rule C = fakeC, event assigns fakeC) still rescales its species."""
+    builder = _resize_builder(assignment_rules=[Rule(id="r", label="", var="C", math=parseL3Formula("fakeC"))])
+    event = builder._sbml_model.createEvent()
+    event_assignment = event.createEventAssignment()
+    event_assignment.setVariable("fakeC")
+    event_assignment.setMath(parseL3Formula("3.0"))
+    assignments = [EventAssignment(index=1, lhs="fakeC", rhs="3", type=VarType.PARAMETER)]
+
+    builder._compensate_compartment_resizes(event, assignments)
+
+    added = [a for a in assignments if a.lhs == "S"]
+    assert added == [EventAssignment(index=0, lhs="S", rhs="S * C / (3.0)", type=VarType.STATE_VARIABLE)]
+
+
+def test_compensate_compartment_resizes_scales_existing_species_assignment():
+    """When the event already assigns the species, its rhs is scaled rather than duplicated."""
+    builder = _resize_builder()
+    event = builder._sbml_model.createEvent()
+    species_assignment = EventAssignment(index=0, lhs="S", rhs="0.5", type=VarType.STATE_VARIABLE)
+    assignments = [EventAssignment(index=1, lhs="C", rhs="2.0", type=VarType.PARAMETER), species_assignment]
+
+    builder._compensate_compartment_resizes(event, assignments)
+
+    assert species_assignment.rhs == "(0.5) * C / (2.0)"
+    assert [a.lhs for a in assignments] == ["C", "S"]  # not duplicated
+
+
+def test_compensate_compartment_resizes_skips_amount_species():
+    """An amount-tracked species conserves its amount automatically, so it is not rescaled."""
+    builder = _resize_builder()
+    builder._sbml_model.getSpecies("S").setHasOnlySubstanceUnits(True)
+    event = builder._sbml_model.createEvent()
+    assignments = [EventAssignment(index=0, lhs="C", rhs="2.0", type=VarType.PARAMETER)]
+
+    builder._compensate_compartment_resizes(event, assignments)
+
+    assert [a.lhs for a in assignments] == ["C"]

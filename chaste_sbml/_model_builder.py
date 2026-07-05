@@ -53,7 +53,7 @@ from ._records import (
     Rule,
     StateVariable,
 )
-from ._utils import get_compartment_size, get_function_definition_arguments
+from ._sbml_reader import get_compartment_size, get_function_definition_arguments
 
 if TYPE_CHECKING:
     from typing import Any
@@ -530,7 +530,6 @@ class ModelBuilder:
 
     def _format_events(self) -> None:
         """Add events to template variables."""
-        # TODO: Add priority
         for event in self._sbml_events:
             self._reject_unsupported_delay(event)
             label = event.getName().strip()
@@ -647,7 +646,9 @@ class ModelBuilder:
                 trigger_distance = f"std::abs(({lc}) - ({rc})) - std::numeric_limits<double>::epsilon()"
 
             # TODO: Distance calculation assumes two operands. Extend to more operands?
-            # e.g. trigger: geq(3.0, 6.0, 7.0, 9.0) -> condition=false, dist=min(3.0, 1.0, 2.0)=1.0
+            # e.g. trigger: geq(3.0, 6.0, 7.0, 9.0) -> condition=false, dist=max(3.0, 1.0, 2.0)=3.0
+            # TODO: Distance calculation assumes a single relational operator. Handle compound expressions?
+            # e.g. trigger: and(geq(3.0, 6.0), geq(7.0, 9.0)) -> condition=false, dist=max(3.0, 2.0)=3.0
         return trigger_distance
 
     def _event_assignments(self, event) -> list["EventAssignment"]:
@@ -726,7 +727,7 @@ class ModelBuilder:
                         )
                     )
 
-    def _event_priority(self, event):
+    def _event_priority(self, event) -> Optional[str]:
         """Return the event priority expression, or None if it has none."""
         if event.isSetPriority() and event.getPriority().getMath() is not None:
             return self._formula_to_string(event.getPriority().getMath())
@@ -912,7 +913,7 @@ class ModelBuilder:
                 # Amount species: add a "concentration" derived quantity (conc = amount / volume)
                 self._add_concentration(species)
 
-    def _species_conversion_factor(self, species):
+    def _species_conversion_factor(self, species) -> Optional[str]:
         """Return the species' conversion factor, falling back to the model's, else None."""
         if species.isSetConversionFactor():
             return species.getConversionFactor()
@@ -940,7 +941,9 @@ class ModelBuilder:
         self._add_initial_assignment(ia_id, f"Convert {species_id} {description}", species_id, ia_math)
         self._add_equation(var=species_id, math=ia_math, eq_type=EquationType.INITIAL_ASSIGNMENT)
 
-    def _add_species_initial_value(self, species, has_only_substance_units, assignment_rules, initial_assignments):
+    def _add_species_initial_value(
+        self, species, has_only_substance_units, assignment_rules, initial_assignments
+    ) -> Optional[float]:
         """Emit the species' initial-value equation and any concentration<->amount conversion.
 
         :return: the initial concentration or amount, or None if neither is set.

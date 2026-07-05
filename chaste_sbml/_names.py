@@ -2,18 +2,23 @@
 
 Provides the pieces that keep generated C++ identifiers valid and unique:
 
-* ``find_name_conflicts`` -- detect clashes and fail loudly (phase A), so the generator never
-  silently emits C++ in which two entities share a name, or a name is a C++ keyword, a Chaste
-  base-class member or an invalid identifier.
-* ``unique_name`` -- allocate a collision-free name for a generator-synthesised identifier
-  (phase B).
-* ``resolve_cpp_name`` -- make a real SBML id safe to emit verbatim by escaping keyword and
-  reserved-name clashes (phase C).
+* ``find_name_conflicts``: detect clashes and fail loudly, so the generator
+  never silently emits C++ in which two entities share a name, or a name is a
+  C++ keyword, a Chaste base-class member or an invalid identifier.
+* ``unique_name``: allocate a collision-free name for a generator-synthesised
+  identifier.
+* ``resolve_cpp_name``: make a real SBML id safe to emit verbatim by escaping
+  keyword and reserved-name clashes.
 
-SBML already guarantees its own object ids are unique, so in practice conflicts arise from
-generator-synthesised names (amount/concentration conversions ``amt__x``/``conc__x``, state
-derivatives ``d_x_dt``) colliding with a real id of the same spelling, or from an id that
-happens to be a C++ keyword or a name inherited from the base classes.
+It also derives C++ names from arbitrary strings, using ``to_cpp_name`` and
+``to_camel_case`` for the model class name, and ``generate_header_guard`` for
+include guards.
+
+SBML already guarantees its own object ids are unique, so in practice conflicts
+arise from generator-synthesised names (e.g. amount/concentration conversions
+``amt__x``/``conc__x``, and state derivatives ``d_x_dt``) colliding with a real
+id of the same spelling, or from an id that happens to be a C++ keyword or a
+name inherited from the base classes.
 """
 
 import re
@@ -242,9 +247,9 @@ def resolve_cpp_name(base: str, taken) -> str:
 class NameManager:
     """Manages C++ identifier naming for one SBML model.
 
-    It resolves real ids that clash with C++ keywords or reserved names (phase C) and hands out
+    It resolves real ids that clash with C++ keywords or reserved names and hands out
     collision-free names for generator-synthesised identifiers such as state derivatives and
-    amount/concentration conversions (phase B). The residual conflict *detection* (phase A) stays
+    amount/concentration conversions. The residual conflict *detection* stays
     with the model, which validates its own built collections.
     """
 
@@ -341,3 +346,91 @@ class NameManager:
             if kinetic_law is not None:
                 names.update(lp.getId() for lp in kinetic_law.getListOfParameters() if lp.isSetId())
         return names
+
+
+def to_cpp_name(name: str) -> str:
+    """Sanitize an input name to a C++ compatible alphanumeric name.
+
+    C++ keyword / reserved-name clashes are handled separately by :func:`resolve_cpp_name` and
+    :class:`NameManager`; this only fixes the character set and leading character.
+
+    :param name: The variable name.
+    :return: The sanitized variable name.
+    """
+    name_ = name.strip()
+    if not name_:
+        return ""
+
+    cpp_name = []
+    # Prefix with "_" if name doesn't start with a letter or "_"
+    if name_[0] != "_" and not name_[0].isalpha():
+        cpp_name.append("_")
+
+    for char in name_:
+        if char.isalpha() or char.isdigit() or char == "_":
+            cpp_name.append(char)
+        else:
+            # Replace other chars with "_"
+            cpp_name.append("_")
+
+    return "".join(cpp_name)
+
+
+def to_camel_case(name: str) -> str:
+    """Convert an input name to an alphanumeric name in camel case.
+
+    :param name: The variable name.
+    :return: The variable name in camel case.
+    """
+    camel = []
+
+    caps = False  # True: capitalize next letter
+    for char in name.strip():
+        if char.isalpha():
+            if caps:
+                camel.append(char.upper())
+                caps = False
+            else:
+                camel.append(char)
+        elif char.isdigit():
+            camel.append(char)
+            caps = True
+        else:
+            # Skip other chars
+            caps = True
+
+    return "".join(camel)
+
+
+def generate_header_guard(filename: str) -> str:
+    """Generate a C++ header guard from a filename.
+
+    :param filename: The filename.
+    :return: The header guard.
+    """
+    name = to_cpp_name(filename)
+    if not name:
+        return ""
+
+    prev = name[0]
+    guard = [prev.upper()]
+
+    for char in name[1:]:
+        if char.isupper():
+            # Add _ before uppercase chars if not sequence of uppercase chars
+            if not prev.isupper():
+                guard.append("_")
+            guard.append(char)
+        elif char.islower():
+            guard.append(char.upper())
+        elif char.isdigit():
+            # Add _ between lowercase char and digit
+            if prev.islower():
+                guard.append("_")
+            guard.append(char)
+        elif guard[-1] != "_":
+            # Replace non-alphanumeric chars with "_"; merging successive "_"s
+            guard.append("_")
+        prev = char
+
+    return "".join(guard) + "_"
