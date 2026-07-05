@@ -1,5 +1,6 @@
 """Tests for SBML expression/AST -> C++ formula translation."""
 
+import libsbml
 import pytest
 from libsbml import (
     AST_FUNCTION_COS,
@@ -16,10 +17,10 @@ from libsbml import (
 from chaste_sbml._config import VarType
 from chaste_sbml._expressions import (
     collect_ast_names,
-    convert_infix_operator_to_function_syntax,
     formula_to_string,
     replace_avogadro_csymbol,
     rewrite_nary_relational,
+    rewrite_power,
     search_ast_type,
     strip_ast_units,
     substitute_ast_names,
@@ -27,44 +28,43 @@ from chaste_sbml._expressions import (
 from chaste_sbml._records import StateVariable
 
 
-def test_convert_infix_operator_to_function_syntax_power():
-    """Converts infix power expressions to pow calls."""
-    converted = convert_infix_operator_to_function_syntax(
-        formula="(a + b) ^ (1.0 / 2.0)",
-        operator="^",
-        function_name="pow",
-    )
-
-    assert converted == "pow((a + b), (1.0 / 2.0))"
-
-
-def test_convert_infix_operator_to_function_syntax_custom_pair():
-    """Supports arbitrary operator/function conversion pairs."""
-    converted = convert_infix_operator_to_function_syntax(
-        formula="alpha @@ beta", operator="@@", function_name="combine"
-    )
-
-    assert converted == "combine(alpha, beta)"
-
-
-def test_convert_infix_operator_to_function_syntax_nested_and_repeated():
-    """Converts nested and repeated operator expressions in one formula."""
-    converted = convert_infix_operator_to_function_syntax(formula="(x ^ y) ^ z", operator="^", function_name="pow")
-
-    assert converted == "pow((pow(x, y)), z)"
-
-
 @pytest.mark.parametrize(
-    ("operator", "function_name", "error_message"),
+    ("formula", "expected"),
     [
-        ("", "pow", "operator must be a non-empty string"),
-        ("^", "", "function_name must be a non-empty string"),
+        ("a ^ b", "std::pow(a, b)"),
+        ("2 ^ 3", "std::pow(2.0, 3.0)"),
+        ("(a + b) ^ 2", "std::pow(a + b, 2.0)"),
+        # Nested power fully converts (the old string rewrite left an inner ^ behind).
+        ("a ^ b ^ c", "std::pow(a, std::pow(b, c))"),
     ],
 )
-def test_convert_infix_operator_to_function_syntax_invalid_args(operator: str, function_name: str, error_message: str):
-    """Validates required arguments for operator/function conversion."""
-    with pytest.raises(ValueError, match=error_message):
-        convert_infix_operator_to_function_syntax(formula="a ^ b", operator=operator, function_name=function_name)
+def test_formula_to_string_power_uses_std_pow(formula, expected):
+    """Power operators (including nested) become std::pow calls."""
+    variable_types = {name: VarType.PARAMETER for name in ("a", "b", "c")}
+    assert formula_to_string(parseL3Formula(formula), variable_types, state_variables=[]) == expected
+
+
+def test_rewrite_power_converts_only_power_nodes():
+    """rewrite_power converts AST_POWER nodes to pow() and leaves other nodes alone."""
+    node = parseL3Formula("a ^ b ^ c")
+    rewrite_power(node)
+    assert formulaToL3String(node) == "pow(a, pow(b, c))"
+
+    unaffected = parseL3Formula("a * b + c")
+    rewrite_power(unaffected)
+    assert formulaToL3String(unaffected) == "a * b + c"
+
+
+def test_rewrite_power_converts_mathml_function_power():
+    """A MathML <power> (AST_FUNCTION_POWER, distinct from L3 AST_POWER) is also converted.
+
+    Guards against only handling the L3-parsed power node type: SBML MathML powers parse to a
+    different AST type that ``formulaToL3String`` still renders as ``^``.
+    """
+    mathml = '<math xmlns="http://www.w3.org/1998/Math/MathML">' "<apply><power/><ci>a</ci><cn>2</cn></apply></math>"
+    node = libsbml.readMathMLFromString(mathml)
+    rewrite_power(node)
+    assert formulaToL3String(node) == "pow(a, 2)"
 
 
 def test_formula_to_string_functions_constants_and_power():

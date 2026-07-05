@@ -1682,7 +1682,7 @@ inline double Chen2004SbmlOdeSystem::BB_218(double A1, double A2, double A3, dou
 
 inline double Chen2004SbmlOdeSystem::GK_219(double A1, double A2, double A3, double A4)
 {
-    return 2.0 * A4 * A1 / ((A2 - A1) + A3 * A2 + A4 * A1 + sm::root(2.0, std::pow(((A2 - A1) + A3 * A2 + A4 * A1), 2.0) - 4.0 * (A2 - A1) * A4 * A1));
+    return 2.0 * A4 * A1 / ((A2 - A1) + A3 * A2 + A4 * A1 + sm::root(2.0, std::pow((A2 - A1) + A3 * A2 + A4 * A1, 2.0) - 4.0 * (A2 - A1) * A4 * A1));
 }
 
 inline double Chen2004SbmlOdeSystem::MichaelisMenten_220(double M1, double J1, double k1, double S1)
