@@ -16,7 +16,7 @@ from chaste_sbml._records import (
     Reaction,
     StateVariable,
 )
-from chaste_sbml._sbml_loader import load_sbml_model
+from chaste_sbml._sbml_reader import load_sbml_model
 
 REFERENCE = ROOT_DIR / "SbmlRefModels" / "src" / "reference"
 

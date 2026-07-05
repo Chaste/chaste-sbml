@@ -53,7 +53,7 @@ from ._records import (
     Rule,
     StateVariable,
 )
-from ._utils import get_compartment_size, get_function_definition_arguments
+from ._sbml_reader import get_compartment_size, get_function_definition_arguments
 
 if TYPE_CHECKING:
     from typing import Any
@@ -530,7 +530,6 @@ class ModelBuilder:
 
     def _format_events(self) -> None:
         """Add events to template variables."""
-        # TODO: Add priority
         for event in self._sbml_events:
             self._reject_unsupported_delay(event)
             label = event.getName().strip()
@@ -647,7 +646,9 @@ class ModelBuilder:
                 trigger_distance = f"std::abs(({lc}) - ({rc})) - std::numeric_limits<double>::epsilon()"
 
             # TODO: Distance calculation assumes two operands. Extend to more operands?
-            # e.g. trigger: geq(3.0, 6.0, 7.0, 9.0) -> condition=false, dist=min(3.0, 1.0, 2.0)=1.0
+            # e.g. trigger: geq(3.0, 6.0, 7.0, 9.0) -> condition=false, dist=max(3.0, 1.0, 2.0)=3.0
+            # TODO: Distance calculation assumes a single relational operator. Handle compound expressions?
+            # e.g. trigger: and(geq(3.0, 6.0), geq(7.0, 9.0)) -> condition=false, dist=max(3.0, 2.0)=3.0
         return trigger_distance
 
     def _event_assignments(self, event) -> list["EventAssignment"]:

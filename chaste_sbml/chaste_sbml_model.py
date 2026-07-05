@@ -6,10 +6,9 @@ from typing import TYPE_CHECKING
 
 from ._config import ModelType
 from ._model_builder import ModelBuilder
-from ._names import NameManager
+from ._names import NameManager, generate_header_guard, to_camel_case, to_cpp_name
 from ._rendering import CodeRenderer
-from ._sbml_loader import load_sbml_model
-from ._utils import generate_header_guard, to_camel_case, to_cpp_name
+from ._sbml_reader import load_sbml_model
 
 if TYPE_CHECKING:
     from typing import Any
@@ -18,7 +17,7 @@ if TYPE_CHECKING:
 class ChasteSbmlModel:
     """Generates Chaste C++ code from an SBML model.
 
-    Orchestrates the pipeline: load the SBML (``_sbml_loader``), resolve identifier conflicts
+    Orchestrates the pipeline: load the SBML (``_sbml_reader``), resolve identifier conflicts
     and reserve synthetic names (``NameManager``), build the internal representation
     (``ModelBuilder``), then render and write the C++ (``CodeRenderer``).
     """

@@ -1,11 +1,19 @@
-"""Loading and normalising an SBML model with libsbml.
+"""Loading, normalising and reading an SBML model with libsbml.
 
-Reads an SBML file, flattens hierarchical (comp package) models and runs the conversions the
-generator depends on, returning a libsbml ``Model`` ready to be processed. python-libsbml keeps
-the owning document alive through the returned model, so callers need only hold the model.
+Reads an SBML file, flattens hierarchical models and runs the conversions the
+generator depends on, returning a libsbml ``Model`` ready to be processed.
+python-libsbml keeps the owning document alive through the returned model, so
+callers need only hold the model.
+Also provides small readers over individual SBML elements (compartment size,
+function-definition arguments) used while building the internal representation.
 """
 
-from libsbml import LIBSBML_OPERATION_SUCCESS, ConversionProperties, SBMLReader
+from typing import TYPE_CHECKING
+
+from libsbml import LIBSBML_OPERATION_SUCCESS, ConversionProperties, SBMLReader, formulaToString
+
+if TYPE_CHECKING:
+    from libsbml import Compartment, FunctionDefinition
 
 
 def load_sbml_model(sbml_file: str):
@@ -22,8 +30,8 @@ def load_sbml_model(sbml_file: str):
         doc.printErrors()
         raise ValueError(f"Errors found while reading SBML file: {sbml_file}")
 
-    # Flatten hierarchical (comp package) models - composing their submodels into a single
-    # model with flattened submodelId__element names - before any further processing.
+    # Flatten hierarchical (comp package) models, composing submodels into
+    # a flattened model with submodelId__element names.
     if doc.getPlugin("comp") is not None:
         flatten_props = ConversionProperties()
         flatten_props.addOption("flatten comp", True, "flatten comp")
@@ -48,3 +56,23 @@ def load_sbml_model(sbml_file: str):
         raise ValueError("Errors during conversion")
 
     return doc.getModel()
+
+
+def get_compartment_size(compartment: "Compartment") -> float:
+    """Get a compartment size.
+
+    :return: The compartment size.
+    """
+    if compartment.isSetSize():
+        return compartment.getSize()
+    return 1.0
+
+
+def get_function_definition_arguments(fn_def: "FunctionDefinition") -> list[str]:
+    """Get the list of arguments in a given function definition.
+
+    :param fn_def: The function definition
+    :return: List of arguments in the function definition
+    """
+    n = fn_def.getNumArguments()
+    return [formulaToString(fn_def.getArgument(i)) for i in range(n)]

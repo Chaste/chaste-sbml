@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 from chaste_sbml import ChasteSbmlModel
 from chaste_sbml._config import ROOT_DIR, ModelType
-from chaste_sbml._utils import generate_header_guard
+from chaste_sbml._names import generate_header_guard
 
 if TYPE_CHECKING:
     from typing import Any
