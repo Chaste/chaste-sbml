@@ -548,12 +548,16 @@ class ModelBuilder:
     def _format_events(self) -> None:
         """Add events to template variables."""
         for event in self._sbml_events:
+            trigger = event.getTrigger()
+            if trigger is None or trigger.getMath() is None:
+                # An event with no trigger, or a trigger with no MathML, can never fire.
+                continue
             self._reject_unsupported_delay(event)
             label = event.getName().strip()
             event_type = self._guess_event_type(label)
             # Compute the trigger formula first: it mutates the trigger AST in place (stripping
             # units, renaming the avogadro csymbol), and the distance below deep-copies that AST.
-            trigger_formula = self._formula_to_string(event.getTrigger().getMath())
+            trigger_formula = self._formula_to_string(trigger.getMath())
             trigger_distance = self._event_trigger_distance(event)
             assignments = self._event_assignments(event)
             self._compensate_compartment_resizes(event, assignments)
@@ -573,16 +577,21 @@ class ModelBuilder:
 
     def _reject_unsupported_delay(self, event) -> None:
         """Raise if the event has a non-zero delay (delays are not supported)."""
-        if event.isSetDelay():
-            math = self._formula_to_string(event.getDelay().getMath())
-            try:
-                delay = float(math)
-            except ValueError:
-                delay = 9999
+        if not event.isSetDelay():
+            return
+        delay_math = event.getDelay().getMath()
+        if delay_math is None:
+            # A delay element with no MathML is treated as no delay.
+            return
+        math = self._formula_to_string(delay_math)
+        try:
+            delay = float(math)
+        except ValueError:
+            delay = 9999
 
-            if delay != 0.0:
-                # Delay of zero is equivalent to no delay
-                raise NotImplementedError("Events with delays are not supported.")
+        if delay != 0.0:
+            # Delay of zero is equivalent to no delay
+            raise NotImplementedError("Events with delays are not supported.")
 
     @staticmethod
     def _guess_event_type(label: str) -> EventType:
@@ -753,6 +762,9 @@ class ModelBuilder:
     def _format_function_definitions(self) -> None:
         """Add function definitions to template variables."""
         for fd in self._sbml_function_definitions:
+            if fd.getBody() is None:
+                # A function definition with no MathML body cannot be emitted.
+                continue
             fd_id = fd.getId()
             label = fd.getName().strip()
             arg_list = get_function_definition_arguments(fd)

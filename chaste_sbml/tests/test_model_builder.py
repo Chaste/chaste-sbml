@@ -283,6 +283,62 @@ def test_build_extracts_cell_division_event():
     assert event.assignments == [EventAssignment(index=3, lhs="m", rhs="m / 2.0", type=VarType.STATE_VARIABLE)]
 
 
+def _event_builder():
+    """A bare builder with an empty model, wired just enough for _format_events."""
+    builder = _builder_without_init()
+    doc = libsbml.SBMLDocument(3, 2)
+    builder._sbml_model = doc.createModel()
+    builder._keep_doc = doc  # keep the owning document (and thus the model) alive
+    builder._sbml_events = builder._sbml_model.getListOfEvents()
+    builder._sbml_function_definitions = builder._sbml_model.getListOfFunctionDefinitions()
+    builder._variable_types = {}
+    builder._state_variables = []
+    builder._events = []
+    builder._functions = []
+    return builder
+
+
+def test_format_events_skips_event_with_missing_trigger_math():
+    """An event whose trigger has no MathML can never fire, so no event is emitted."""
+    builder = _event_builder()
+    event = builder._sbml_model.createEvent()
+    event.createTrigger()  # trigger element present but with no math
+    event.createEventAssignment().setVariable("p")
+
+    builder._format_events()
+
+    assert builder._events == []
+
+
+def test_format_events_skips_event_with_no_trigger():
+    """An event with no trigger element at all can never fire, so no event is emitted."""
+    builder = _event_builder()
+    builder._sbml_model.createEvent()  # no trigger
+
+    builder._format_events()
+
+    assert builder._events == []
+
+
+def test_reject_unsupported_delay_allows_missing_delay_math():
+    """A delay element with no MathML is treated as no delay, so it is not rejected."""
+    builder = _event_builder()
+    event = builder._sbml_model.createEvent()
+    event.createDelay()  # delay element present but with no math
+
+    builder._reject_unsupported_delay(event)  # should not raise
+
+
+def test_format_function_definitions_skips_missing_body():
+    """A function definition with no MathML body is skipped rather than crashing."""
+    builder = _event_builder()
+    builder._sbml_model.createFunctionDefinition().setId("foo")  # no body
+
+    builder._format_function_definitions()
+
+    assert builder._functions == []
+
+
 def _distance_builder() -> ModelBuilder:
     """A bare builder wired just enough for _event_trigger_distance and trigger formatting."""
     builder = _builder_without_init()

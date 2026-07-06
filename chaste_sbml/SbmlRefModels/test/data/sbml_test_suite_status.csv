@@ -1236,10 +1236,10 @@ test,status,notes
 01235,pass,ok (no-ode placeholder)
 01236,pass,ok (no-ode placeholder)
 01237,pass,ok (no-ode placeholder)
-01238,fail_known,missing mathml (event trigger)
-01239,fail_known,missing mathml (event trigger)
+01238,pass,ok (missing mathml treated as no-op)
+01239,pass,ok (missing mathml treated as no-op)
 01240,pass,ok (no-ode placeholder)
-01241,fail_known,missing mathml (event delay)
+01241,pass,ok (missing mathml treated as no-op)
 01242,pass,ok (no-ode placeholder)
 01243,pass,ok (no-ode placeholder)
 01244,unsupported,algebraic rule
@@ -1269,7 +1269,7 @@ test,status,notes
 01268,unsupported,delay
 01269,unsupported,delay
 01270,unsupported,delay
-01271,fail_known,missing mathml (function definition)
+01271,pass,ok (missing mathml treated as no-op)
 01272,pass,ok (no-ode placeholder)
 01273,pass,ok (no-ode placeholder)
 01274,fail_known,codegen: implies operator
