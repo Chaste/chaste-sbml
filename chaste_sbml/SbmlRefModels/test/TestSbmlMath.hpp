@@ -154,6 +154,14 @@ public:
         TS_ASSERT_EQUALS(sm::not_(true), false);
         TS_ASSERT_EQUALS(sm::not_(false), true);
     }
+    void TestImplies()
+    {
+        // implies(a, b) == (not a) or b
+        TS_ASSERT_EQUALS(sm::implies(true, true), true);
+        TS_ASSERT_EQUALS(sm::implies(true, false), false);
+        TS_ASSERT_EQUALS(sm::implies(false, true), true);
+        TS_ASSERT_EQUALS(sm::implies(false, false), true);
+    }
 
     void TestXor()
     {
@@ -361,6 +369,7 @@ public:
 
     void TestMax()
     {
+        TS_ASSERT_EQUALS(sm::max(2.0), 2.0);  // single argument
         TS_ASSERT_EQUALS(sm::max(1.0, 2.0), 2.0);
         TS_ASSERT_EQUALS(sm::max(2.0, 1.0), 2.0);
         TS_ASSERT_EQUALS(sm::max(1.0, 2.0, 3.0), 3.0);
@@ -374,6 +383,7 @@ public:
 
     void TestMin()
     {
+        TS_ASSERT_EQUALS(sm::min(2.0), 2.0);  // single argument
         TS_ASSERT_EQUALS(sm::min(1.0, 2.0), 1.0);
         TS_ASSERT_EQUALS(sm::min(2.0, 1.0), 1.0);
         TS_ASSERT_EQUALS(sm::min(3.0, 2.0, 1.0), 1.0);

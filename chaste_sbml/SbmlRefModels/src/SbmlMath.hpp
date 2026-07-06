@@ -95,6 +95,9 @@ constexpr bool or_(Args... args);
 // not_
 inline bool not_(bool x) { return !x; }
 
+// implies (a implies b == (not a) or b)
+inline bool implies(double antecedent, double consequent) { return !antecedent || consequent; }
+
 // xor_
 template <typename... Args>
 constexpr bool xor_(Args... args);
@@ -149,11 +152,13 @@ inline double asech(double x) { return std::acosh(1.0 / x); }
 // factorial
 inline double factorial(double x) { return std::tgamma(x + 1.0); }
 
-// max
+// max (the max of a single value is that value)
+constexpr double max(double only) { return only; }
 template <typename... Args>
 constexpr double max(double first, double second, Args... rest);
 
-// min
+// min (the min of a single value is that value)
+constexpr double min(double only) { return only; }
 template <typename... Args>
 constexpr double min(double first, double second, Args... rest);
 

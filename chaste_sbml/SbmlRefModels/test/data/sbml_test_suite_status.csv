@@ -1272,14 +1272,14 @@ test,status,notes
 01271,pass,ok (missing mathml treated as no-op)
 01272,pass,ok (no-ode placeholder)
 01273,pass,ok (no-ode placeholder)
-01274,fail_known,codegen: implies operator
-01275,fail_known,codegen: implies operator
-01276,fail_known,codegen: implies operator
+01274,pass,ok (implies operator)
+01275,pass,ok (implies operator)
+01276,pass,ok (implies operator)
 01277,pass,ok (no-ode placeholder)
 01278,pass,ok (no-ode placeholder)
-01279,fail_known,codegen: single-arg min
-01280,fail_known,codegen: implies operator
-01281,fail_known,codegen: implies operator
+01279,pass,ok (single-arg min/max)
+01280,pass,ok (implies operator)
+01281,pass,ok (implies operator)
 01282,pass,ok (no-ode placeholder)
 01283,pass,ok (no-ode placeholder)
 01284,pass,ok (no-ode placeholder)
@@ -1495,7 +1495,7 @@ test,status,notes
 01494,pass,ok (nary relational via sm:: helpers)
 01495,pass,ok (no-ode placeholder)
 01496,pass,ok (no-ode placeholder)
-01497,fail_known,codegen: implies operator
+01497,pass,ok (implies operator)
 01498,pass,ok
 01499,unsupported,algebraic rule
 01500,unsupported,algebraic rule

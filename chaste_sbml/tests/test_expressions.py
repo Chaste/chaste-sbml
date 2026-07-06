@@ -77,6 +77,11 @@ def test_formula_to_string_functions_constants_and_power():
     assert out == "k * std::pow(S, 2.0) + M_PI"
 
 
+def test_formula_to_string_implies_maps_to_sbmlmath():
+    """The MathML 'implies' logical operator maps to the sm::implies helper."""
+    assert formula_to_string(parseL3Formula("implies(a, b)"), {}, state_variables=[]) == "sm::implies(a, b)"
+
+
 @pytest.mark.parametrize(
     ("formula", "expected"),
     [

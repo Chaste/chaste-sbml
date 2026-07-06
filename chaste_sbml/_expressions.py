@@ -313,6 +313,7 @@ _CUSTOM_FUNCTIONS = {
     "factorial": "factorial",
     "geq": "geq",
     "gt": "gt",
+    "implies": "implies",
     "leq": "leq",
     "log": "log",
     "lt": "lt",
