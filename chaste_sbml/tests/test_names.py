@@ -187,6 +187,27 @@ def test_name_manager_sbml_name_recovers_original_id():
     assert manager.sbml_name("k") == "k"  # an un-renamed id is returned unchanged
 
 
+def test_name_manager_resolve_renames_cpp_macro():
+    """An id spelling a C++ macro (e.g. NAN) is renamed but still reported under its original id.
+
+    ``double NAN;`` would be rewritten by the preprocessor into the macro's expansion, so the id
+    must be escaped for the emitted code while keeping ``NAN`` as its reported name.
+    """
+    doc = libsbml.SBMLDocument(3, 2)
+    sbml_model = doc.createModel()
+    parameter = sbml_model.createParameter()
+    parameter.setId("NAN")  # the NAN macro from <cmath>
+    parameter.setConstant(True)
+    parameter.setValue(0.1)
+
+    manager = NameManager(sbml_model)
+    manager.resolve_real_id_conflicts()
+
+    assert sbml_model.getParameter("NAN") is None
+    assert sbml_model.getParameter("NAN_") is not None
+    assert manager.sbml_name("NAN_") == "NAN"
+
+
 def test_generate_header_guard():
     """Test header guard generation."""
     test_cases = [

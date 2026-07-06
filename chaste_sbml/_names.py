@@ -156,8 +156,13 @@ CHASTE_RESERVED_NAMES = frozenset(
     }
 )
 
+# C++ macros (from <cmath>/<cstdlib>) that expand when used as a bare identifier, so an SBML id
+# spelled like one cannot be emitted verbatim (e.g. a parameter NAN becomes `double NAN;`, which
+# the preprocessor rewrites into the macro's expansion).
+CPP_MACROS = frozenset({"NAN", "INFINITY", "HUGE_VAL", "EOF", "NULL"})
+
 # Every name the generator may not use for one of its own identifiers.
-RESERVED_NAMES = CPP_KEYWORDS | CHASTE_RESERVED_NAMES
+RESERVED_NAMES = CPP_KEYWORDS | CHASTE_RESERVED_NAMES | CPP_MACROS
 
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
@@ -239,7 +244,7 @@ def resolve_cpp_name(base: str, taken) -> str:
     :return: A C++-safe identifier not present in ``taken``.
     """
     candidate = base
-    while candidate in CPP_KEYWORDS or candidate in CHASTE_RESERVED_NAMES:
+    while candidate in CPP_KEYWORDS or candidate in CHASTE_RESERVED_NAMES or candidate in CPP_MACROS:
         candidate += "_"
     return unique_name(candidate, taken)
 
@@ -293,7 +298,7 @@ class NameManager:
             if not element.isSetId():
                 continue
             old_id = element.getId()
-            if old_id not in CPP_KEYWORDS and old_id not in CHASTE_RESERVED_NAMES:
+            if old_id not in CPP_KEYWORDS and old_id not in CHASTE_RESERVED_NAMES and old_id not in CPP_MACROS:
                 continue
             new_id = resolve_cpp_name(old_id, taken)
             element.setId(new_id)

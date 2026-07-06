@@ -1810,8 +1810,8 @@ test,status,notes
 01809,pass,ok
 01810,pass,ok (no-ode placeholder)
 01811,fail_known,non-finite expected results (INF/NaN)
-01812,fail_known,codegen: string literal in math
-01813,fail_known,codegen: string literal in math
+01812,pass,ok (id spelled like a C++ macro)
+01813,fail_known,non-finite expected results (INF/NaN)
 01814,pass,ok (no-ode placeholder)
 01815,pass,ok (no-ode placeholder)
 01816,pass,ok (no-ode placeholder)
