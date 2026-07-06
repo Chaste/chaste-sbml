@@ -1,7 +1,10 @@
 # SBML Test Suite Cases
 
 ## Semantic
-
-## Stochastic
+Case support tracked in test/data/sbml_test_suite_status.csv
 
 ## Syntactic
+Covered by libSBML
+
+## Stochastic
+Not supported
