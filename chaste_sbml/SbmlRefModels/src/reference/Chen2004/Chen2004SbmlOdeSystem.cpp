@@ -11,7 +11,7 @@
 namespace sm = sbmlmath;
 
 Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
-        : AbstractSbmlOdeSystem(36, 143, 4)
+        : AbstractSbmlOdeSystem(36, 146, 4)
 {
     mpSystemInfo.reset(new CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>);
 
@@ -30,8 +30,8 @@ Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
     mEventSatisfied = { true, true, true, true }; // From SBML trigger initialValue
     mEventTriggered.resize(4, false);
 
-    mEventAdjustedParameters.resize(143, false);
-    mEventAdjustedParameterValues.resize(143, 0.0);
+    mEventAdjustedParameters.resize(146, false);
+    mEventAdjustedParameterValues.resize(146, 0.0);
 
     mEventAdjustedStateVars.resize(36, false);
     mEventAdjustedStateValues.resize(36, 0.0);
@@ -104,7 +104,6 @@ std::vector<double> Chen2004SbmlOdeSystem::ComputeDerivedQuantities(double time,
 
     dqs.push_back(cell);
     dqs.push_back(BCK2);
-    dqs.push_back(BUB2);
     dqs.push_back(CDC14T);
     dqs.push_back(CDC15i);
     dqs.push_back(CDC6T);
@@ -113,8 +112,6 @@ std::vector<double> Chen2004SbmlOdeSystem::ComputeDerivedQuantities(double time,
     dqs.push_back(CLB5T);
     dqs.push_back(CLN3);
     dqs.push_back(IE);
-    dqs.push_back(LTE1);
-    dqs.push_back(MAD2);
     dqs.push_back(MCM1);
     dqs.push_back(NET1T);
     dqs.push_back(PE);
@@ -740,6 +737,9 @@ void Chen2004SbmlOdeSystem::Initialise(double time)
     SetDefaultInitialCondition(34, SWI5P);
     SetDefaultInitialCondition(35, TEM1GTP);
 
+    mParameters.push_back(BUB2);
+    mParameters.push_back(LTE1);
+    mParameters.push_back(MAD2);
     mParameters.push_back(b0);
     mParameters.push_back(bub2h);
     mParameters.push_back(bub2l);
@@ -1076,8 +1076,23 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
         if (mEventTriggered[1])
         {
             [[maybe_unused]] double event_priority = std::numeric_limits<double>::max();
-            MAD2 = mad2h;
-            BUB2 = bub2h;
+            // MAD2 = mad2h
+            if (!mEventAdjustedParameters[2]
+                || event_priority <= mEventAdjustedParameterPriority[2])
+            {
+                mEventAdjustedParameters[2] = true;
+                mEventAdjustedParameterValues[2] = mad2h;
+                mEventAdjustedParameterPriority[2] = event_priority;
+            }
+
+            // BUB2 = bub2h
+            if (!mEventAdjustedParameters[0]
+                || event_priority <= mEventAdjustedParameterPriority[0])
+            {
+                mEventAdjustedParameters[0] = true;
+                mEventAdjustedParameterValues[0] = bub2h;
+                mEventAdjustedParameterPriority[0] = event_priority;
+            }
         }
     }
 
@@ -1160,9 +1175,32 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
         if (mEventTriggered[2])
         {
             [[maybe_unused]] double event_priority = std::numeric_limits<double>::max();
-            MAD2 = mad2l;
-            LTE1 = lte1h;
-            BUB2 = bub2l;
+            // MAD2 = mad2l
+            if (!mEventAdjustedParameters[2]
+                || event_priority <= mEventAdjustedParameterPriority[2])
+            {
+                mEventAdjustedParameters[2] = true;
+                mEventAdjustedParameterValues[2] = mad2l;
+                mEventAdjustedParameterPriority[2] = event_priority;
+            }
+
+            // LTE1 = lte1h
+            if (!mEventAdjustedParameters[1]
+                || event_priority <= mEventAdjustedParameterPriority[1])
+            {
+                mEventAdjustedParameters[1] = true;
+                mEventAdjustedParameterValues[1] = lte1h;
+                mEventAdjustedParameterPriority[1] = event_priority;
+            }
+
+            // BUB2 = bub2l
+            if (!mEventAdjustedParameters[0]
+                || event_priority <= mEventAdjustedParameterPriority[0])
+            {
+                mEventAdjustedParameters[0] = true;
+                mEventAdjustedParameterValues[0] = bub2l;
+                mEventAdjustedParameterPriority[0] = event_priority;
+            }
         }
     }
 
@@ -1254,7 +1292,15 @@ double Chen2004SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<
                 mEventAdjustedStatePriority[22] = event_priority;
             }
 
-            LTE1 = lte1l;
+            // LTE1 = lte1l
+            if (!mEventAdjustedParameters[1]
+                || event_priority <= mEventAdjustedParameterPriority[1])
+            {
+                mEventAdjustedParameters[1] = true;
+                mEventAdjustedParameterValues[1] = lte1l;
+                mEventAdjustedParameterPriority[1] = event_priority;
+            }
+
             // BUD = 0.0
             if (!mEventAdjustedStateVars[0]
                 || event_priority <= mEventAdjustedStatePriority[0])
@@ -1317,149 +1363,152 @@ std::vector<double> Chen2004SbmlOdeSystem::RunModelEquations(double time, const 
     SWI5P = rStateVariables[34];
     TEM1GTP = rStateVariables[35];
 
-    b0 = GetParameter(0);
-    bub2h = GetParameter(1);
-    bub2l = GetParameter(2);
-    C0 = GetParameter(3);
-    CDC15T = GetParameter(4);
-    Dn3 = GetParameter(5);
-    ebudb5 = GetParameter(6);
-    ebudn2 = GetParameter(7);
-    ebudn3 = GetParameter(8);
-    ec1b2 = GetParameter(9);
-    ec1b5 = GetParameter(10);
-    ec1k2 = GetParameter(11);
-    ec1n2 = GetParameter(12);
-    ec1n3 = GetParameter(13);
-    ef6b2 = GetParameter(14);
-    ef6b5 = GetParameter(15);
-    ef6k2 = GetParameter(16);
-    ef6n2 = GetParameter(17);
-    ef6n3 = GetParameter(18);
-    eicdhb2 = GetParameter(19);
-    eicdhb5 = GetParameter(20);
-    eicdhn2 = GetParameter(21);
-    eicdhn3 = GetParameter(22);
-    eorib2 = GetParameter(23);
-    eorib5 = GetParameter(24);
-    esbfb5 = GetParameter(25);
-    esbfn2 = GetParameter(26);
-    esbfn3 = GetParameter(27);
-    ESP1T = GetParameter(28);
-    IET = GetParameter(29);
-    J20ppx = GetParameter(30);
-    Jacdh = GetParameter(31);
-    Jaiep = GetParameter(32);
-    Jamcm = GetParameter(33);
-    Jasbf = GetParameter(34);
-    Jatem = GetParameter(35);
-    Jd2c1 = GetParameter(36);
-    Jd2f6 = GetParameter(37);
-    Jicdh = GetParameter(38);
-    Jiiep = GetParameter(39);
-    Jimcm = GetParameter(40);
-    Jisbf = GetParameter(41);
-    Jitem = GetParameter(42);
-    Jn3 = GetParameter(43);
-    Jpds = GetParameter(44);
-    Jspn = GetParameter(45);
-    ka15_p = GetParameter(46);
-    ka15_p_p = GetParameter(47);
-    ka15p = GetParameter(48);
-    ka20_p = GetParameter(49);
-    ka20_p_p = GetParameter(50);
-    kacdh_p = GetParameter(51);
-    kacdh_p_p = GetParameter(52);
-    kaiep = GetParameter(53);
-    kamcm = GetParameter(54);
-    kasb2 = GetParameter(55);
-    kasb5 = GetParameter(56);
-    kasbf = GetParameter(57);
-    kasesp = GetParameter(58);
-    kasf2 = GetParameter(59);
-    kasf5 = GetParameter(60);
-    kasrent = GetParameter(61);
-    kasrentp = GetParameter(62);
-    kaswi = GetParameter(63);
-    kd14 = GetParameter(64);
-    kd1c1 = GetParameter(65);
-    kd1f6 = GetParameter(66);
-    kd1pds_p = GetParameter(67);
-    kd20 = GetParameter(68);
-    kd2c1 = GetParameter(69);
-    kd2f6 = GetParameter(70);
-    kd2pds_p_p = GetParameter(71);
-    kd3c1 = GetParameter(72);
-    kd3f6 = GetParameter(73);
-    kd3pds_p_p = GetParameter(74);
-    kdb2_p = GetParameter(75);
-    kdb2_p_p = GetParameter(76);
-    kdb2p = GetParameter(77);
-    kdb5_p = GetParameter(78);
-    kdb5_p_p = GetParameter(79);
-    kdbud = GetParameter(80);
-    kdcdh = GetParameter(81);
-    kdib2 = GetParameter(82);
-    kdib5 = GetParameter(83);
-    kdiesp = GetParameter(84);
-    kdif2 = GetParameter(85);
-    kdif5 = GetParameter(86);
-    kdirent = GetParameter(87);
-    kdirentp = GetParameter(88);
-    kdn2 = GetParameter(89);
-    kdnet = GetParameter(90);
-    kdori = GetParameter(91);
-    kdppx_p = GetParameter(92);
-    kdppx_p_p = GetParameter(93);
-    kdspn = GetParameter(94);
-    kdswi = GetParameter(95);
-    KEZ = GetParameter(96);
-    KEZ2 = GetParameter(97);
-    ki15 = GetParameter(98);
-    kicdh_p = GetParameter(99);
-    kicdh_p_p = GetParameter(100);
-    kiiep = GetParameter(101);
-    kimcm = GetParameter(102);
-    kisbf_p = GetParameter(103);
-    kisbf_p_p = GetParameter(104);
-    kiswi = GetParameter(105);
-    kkpnet_p = GetParameter(106);
-    kkpnet_p_p = GetParameter(107);
-    kppc1 = GetParameter(108);
-    kppf6 = GetParameter(109);
-    kppnet_p = GetParameter(110);
-    kppnet_p_p = GetParameter(111);
-    ks14 = GetParameter(112);
-    ks1pds_p_p = GetParameter(113);
-    ks20_p = GetParameter(114);
-    ks20_p_p = GetParameter(115);
-    ks2pds_p_p = GetParameter(116);
-    ksb2_p = GetParameter(117);
-    ksb2_p_p = GetParameter(118);
-    ksb5_p = GetParameter(119);
-    ksb5_p_p = GetParameter(120);
-    ksbud = GetParameter(121);
-    ksc1_p = GetParameter(122);
-    ksc1_p_p = GetParameter(123);
-    kscdh = GetParameter(124);
-    ksf6_p = GetParameter(125);
-    ksf6_p_p = GetParameter(126);
-    ksf6_p_p_p = GetParameter(127);
-    ksn2_p = GetParameter(128);
-    ksn2_p_p = GetParameter(129);
-    ksnet = GetParameter(130);
-    ksori = GetParameter(131);
-    kspds_p = GetParameter(132);
-    ksppx = GetParameter(133);
-    ksspn = GetParameter(134);
-    ksswi_p = GetParameter(135);
-    ksswi_p_p = GetParameter(136);
-    lte1h = GetParameter(137);
-    lte1l = GetParameter(138);
-    mad2h = GetParameter(139);
-    mad2l = GetParameter(140);
-    mdt = GetParameter(141);
-    TEM1T = GetParameter(142);
+    BUB2 = GetParameter(0);
+    LTE1 = GetParameter(1);
+    MAD2 = GetParameter(2);
+    b0 = GetParameter(3);
+    bub2h = GetParameter(4);
+    bub2l = GetParameter(5);
+    C0 = GetParameter(6);
+    CDC15T = GetParameter(7);
+    Dn3 = GetParameter(8);
+    ebudb5 = GetParameter(9);
+    ebudn2 = GetParameter(10);
+    ebudn3 = GetParameter(11);
+    ec1b2 = GetParameter(12);
+    ec1b5 = GetParameter(13);
+    ec1k2 = GetParameter(14);
+    ec1n2 = GetParameter(15);
+    ec1n3 = GetParameter(16);
+    ef6b2 = GetParameter(17);
+    ef6b5 = GetParameter(18);
+    ef6k2 = GetParameter(19);
+    ef6n2 = GetParameter(20);
+    ef6n3 = GetParameter(21);
+    eicdhb2 = GetParameter(22);
+    eicdhb5 = GetParameter(23);
+    eicdhn2 = GetParameter(24);
+    eicdhn3 = GetParameter(25);
+    eorib2 = GetParameter(26);
+    eorib5 = GetParameter(27);
+    esbfb5 = GetParameter(28);
+    esbfn2 = GetParameter(29);
+    esbfn3 = GetParameter(30);
+    ESP1T = GetParameter(31);
+    IET = GetParameter(32);
+    J20ppx = GetParameter(33);
+    Jacdh = GetParameter(34);
+    Jaiep = GetParameter(35);
+    Jamcm = GetParameter(36);
+    Jasbf = GetParameter(37);
+    Jatem = GetParameter(38);
+    Jd2c1 = GetParameter(39);
+    Jd2f6 = GetParameter(40);
+    Jicdh = GetParameter(41);
+    Jiiep = GetParameter(42);
+    Jimcm = GetParameter(43);
+    Jisbf = GetParameter(44);
+    Jitem = GetParameter(45);
+    Jn3 = GetParameter(46);
+    Jpds = GetParameter(47);
+    Jspn = GetParameter(48);
+    ka15_p = GetParameter(49);
+    ka15_p_p = GetParameter(50);
+    ka15p = GetParameter(51);
+    ka20_p = GetParameter(52);
+    ka20_p_p = GetParameter(53);
+    kacdh_p = GetParameter(54);
+    kacdh_p_p = GetParameter(55);
+    kaiep = GetParameter(56);
+    kamcm = GetParameter(57);
+    kasb2 = GetParameter(58);
+    kasb5 = GetParameter(59);
+    kasbf = GetParameter(60);
+    kasesp = GetParameter(61);
+    kasf2 = GetParameter(62);
+    kasf5 = GetParameter(63);
+    kasrent = GetParameter(64);
+    kasrentp = GetParameter(65);
+    kaswi = GetParameter(66);
+    kd14 = GetParameter(67);
+    kd1c1 = GetParameter(68);
+    kd1f6 = GetParameter(69);
+    kd1pds_p = GetParameter(70);
+    kd20 = GetParameter(71);
+    kd2c1 = GetParameter(72);
+    kd2f6 = GetParameter(73);
+    kd2pds_p_p = GetParameter(74);
+    kd3c1 = GetParameter(75);
+    kd3f6 = GetParameter(76);
+    kd3pds_p_p = GetParameter(77);
+    kdb2_p = GetParameter(78);
+    kdb2_p_p = GetParameter(79);
+    kdb2p = GetParameter(80);
+    kdb5_p = GetParameter(81);
+    kdb5_p_p = GetParameter(82);
+    kdbud = GetParameter(83);
+    kdcdh = GetParameter(84);
+    kdib2 = GetParameter(85);
+    kdib5 = GetParameter(86);
+    kdiesp = GetParameter(87);
+    kdif2 = GetParameter(88);
+    kdif5 = GetParameter(89);
+    kdirent = GetParameter(90);
+    kdirentp = GetParameter(91);
+    kdn2 = GetParameter(92);
+    kdnet = GetParameter(93);
+    kdori = GetParameter(94);
+    kdppx_p = GetParameter(95);
+    kdppx_p_p = GetParameter(96);
+    kdspn = GetParameter(97);
+    kdswi = GetParameter(98);
+    KEZ = GetParameter(99);
+    KEZ2 = GetParameter(100);
+    ki15 = GetParameter(101);
+    kicdh_p = GetParameter(102);
+    kicdh_p_p = GetParameter(103);
+    kiiep = GetParameter(104);
+    kimcm = GetParameter(105);
+    kisbf_p = GetParameter(106);
+    kisbf_p_p = GetParameter(107);
+    kiswi = GetParameter(108);
+    kkpnet_p = GetParameter(109);
+    kkpnet_p_p = GetParameter(110);
+    kppc1 = GetParameter(111);
+    kppf6 = GetParameter(112);
+    kppnet_p = GetParameter(113);
+    kppnet_p_p = GetParameter(114);
+    ks14 = GetParameter(115);
+    ks1pds_p_p = GetParameter(116);
+    ks20_p = GetParameter(117);
+    ks20_p_p = GetParameter(118);
+    ks2pds_p_p = GetParameter(119);
+    ksb2_p = GetParameter(120);
+    ksb2_p_p = GetParameter(121);
+    ksb5_p = GetParameter(122);
+    ksb5_p_p = GetParameter(123);
+    ksbud = GetParameter(124);
+    ksc1_p = GetParameter(125);
+    ksc1_p_p = GetParameter(126);
+    kscdh = GetParameter(127);
+    ksf6_p = GetParameter(128);
+    ksf6_p_p = GetParameter(129);
+    ksf6_p_p_p = GetParameter(130);
+    ksn2_p = GetParameter(131);
+    ksn2_p_p = GetParameter(132);
+    ksnet = GetParameter(133);
+    ksori = GetParameter(134);
+    kspds_p = GetParameter(135);
+    ksppx = GetParameter(136);
+    ksspn = GetParameter(137);
+    ksswi_p = GetParameter(138);
+    ksswi_p_p = GetParameter(139);
+    lte1h = GetParameter(140);
+    lte1l = GetParameter(141);
+    mad2h = GetParameter(142);
+    mad2l = GetParameter(143);
+    mdt = GetParameter(144);
+    TEM1T = GetParameter(145);
 
     BCK2 = b0 * MASS;                                                                                  //
     CDC14T = CDC14 + RENT + RENTP;                                                                     //
@@ -1855,9 +1904,6 @@ void CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityNames.push_back("BCK2");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
-    this->mDerivedQuantityNames.push_back("BUB2");
-    this->mDerivedQuantityUnits.push_back("non-dim");
-
     this->mDerivedQuantityNames.push_back("CDC14T");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
@@ -1880,12 +1926,6 @@ void CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("IE");
-    this->mDerivedQuantityUnits.push_back("non-dim");
-
-    this->mDerivedQuantityNames.push_back("LTE1");
-    this->mDerivedQuantityUnits.push_back("non-dim");
-
-    this->mDerivedQuantityNames.push_back("MAD2");
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     this->mDerivedQuantityNames.push_back("MCM1");
@@ -2411,6 +2451,15 @@ void CellwiseOdeSystemInformation<Chen2004SbmlOdeSystem>::Initialise()
     this->mDerivedQuantityUnits.push_back("non-dim");
 
     // PARAMETERS
+    this->mParameterNames.push_back("BUB2");
+    this->mParameterUnits.push_back("non-dim");
+
+    this->mParameterNames.push_back("LTE1");
+    this->mParameterUnits.push_back("non-dim");
+
+    this->mParameterNames.push_back("MAD2");
+    this->mParameterUnits.push_back("non-dim");
+
     this->mParameterNames.push_back("b0");
     this->mParameterUnits.push_back("non-dim");
 

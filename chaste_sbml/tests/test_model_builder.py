@@ -240,6 +240,44 @@ def test_build_no_ode_model_preserves_real_outputs(tmp_path):
     assert "S" in {p.id for p in builder._parameters}
 
 
+def test_build_event_modified_constant_species_is_a_parameter(tmp_path):
+    """An otherwise-constant species modified by an event is a parameter, not a derived quantity.
+
+    A derived quantity is recomputed from the current member each step, so an event's change would
+    be reported at every earlier time point; a parameter is time-resolved in the recorded solution.
+    """
+    doc = libsbml.SBMLDocument(3, 2)
+    model = doc.createModel()
+    compartment = model.createCompartment()
+    compartment.setId("C")
+    compartment.setConstant(True)
+    compartment.setSize(1.0)
+    compartment.setSpatialDimensions(3)
+    species = model.createSpecies()
+    species.setId("S")
+    species.setCompartment("C")
+    species.setConstant(False)
+    species.setBoundaryCondition(False)
+    species.setHasOnlySubstanceUnits(False)
+    species.setInitialAmount(0.0)
+    event = model.createEvent()
+    event.setUseValuesFromTriggerTime(True)
+    trigger = event.createTrigger()
+    trigger.setMath(parseL3Formula("time >= 1"))
+    trigger.setInitialValue(True)
+    trigger.setPersistent(True)
+    assignment = event.createEventAssignment()
+    assignment.setVariable("S")
+    assignment.setMath(parseL3Formula("5"))
+    path = tmp_path / "event_species.xml"
+    libsbml.writeSBMLToFile(doc, str(path))
+
+    builder = _build(path)
+
+    assert "S" in {p.id for p in builder._parameters}
+    assert "S" not in {d.id for d in builder._derived_quantities}
+
+
 def test_build_does_not_add_placeholder_when_model_has_odes():
     """A model with genuine ODEs is left untouched: no placeholder state variable is added."""
     builder = _build(REFERENCE / "Goldbeter1991" / "Goldbeter1991.xml")

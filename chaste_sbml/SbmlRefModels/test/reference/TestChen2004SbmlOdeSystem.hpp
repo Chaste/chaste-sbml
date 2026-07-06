@@ -66,7 +66,7 @@ class TestChen2004SbmlOdeSystem : public AbstractCellBasedTestSuite
 {
 private:
     const unsigned ODE_SIZE = 36u;
-    const unsigned NUM_DERIVED_QUANTITIES = 187u;
+    const unsigned NUM_DERIVED_QUANTITIES = 184u;
 
     std::vector<double> default_initial_conditions = {
         0.008473,  // BUD
@@ -470,7 +470,6 @@ public:
         std::vector<std::string> dq_names = {
             "cell",
             "BCK2",
-            "BUB2",
             "CDC14T",
             "CDC15i",
             "CDC6T",
@@ -479,8 +478,6 @@ public:
             "CLB5T",
             "CLN3",
             "IE",
-            "LTE1",
-            "MAD2",
             "MCM1",
             "NET1T",
             "PE",
@@ -524,7 +521,6 @@ public:
         std::vector<double> dqs_expected = {
             1.0,                  // cell
             0.065125026,          // BCK2
-            0.2,                  // BUB2
             2.117884,             // CDC14T
             0.34346699999999997,  // CDC15i
             0.3866693,            // CDC6T
@@ -533,8 +529,6 @@ public:
             0.1289119,            // CLB5T
             0.06694509131879892,  // CLN3
             0.8985,               // IE
-            0.1,                  // LTE1
-            0.01,                  // MAD2
             0.4690076182110798,   // MCM1
             2.638456,             // NET1T
             0.6986870000000001,   // PE

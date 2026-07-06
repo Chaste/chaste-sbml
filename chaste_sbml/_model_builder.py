@@ -1108,8 +1108,11 @@ class ModelBuilder:
                 self._add_equation(
                     var=state_var.derivative_id, math=parseL3Formula(rhs), eq_type=EquationType.DERIVATIVE
                 )
+            elif species_id in self._event_assigned_ids:
+                # Otherwise constant but modified by an event: model as a (variable) parameter
+                self._add_parameter(species_id, label, initial_value, units)
             else:
-                # Truly constant: no reactions, no rules, constant compartment
+                # Truly constant: no reactions, no rules, no events, constant compartment
                 self._add_derived_quantity(species_id, label, initial_value, units)
 
     def _formula_to_string(self, math: "ASTNode", local_parameters: Optional[list["LocalParameter"]] = None) -> str:
@@ -1219,6 +1222,12 @@ class ModelBuilder:
         self._reactions = []
         self._events = []
         self._functions = []
+
+        # Ids assigned by some event, so species classification can model an otherwise-constant
+        # event-modified species as a (variable) parameter.
+        self._event_assigned_ids = {
+            ea.getVariable() for event in self._sbml_events for ea in event.getListOfEventAssignments()
+        }
 
         # Names already claimed by real SBML entities and the Chaste base classes. Synthetic
         # identifiers (derivatives, amount/concentration conversions, initial-assignment

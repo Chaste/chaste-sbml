@@ -928,12 +928,12 @@ test,status,notes
 00927,pass,ok
 00928,pass,ok
 00929,pass,ok
-00930,fail_known,event priority/ordering
-00931,fail_known,event priority/ordering
+00930,pass,ok (event-modified species as parameter)
+00931,pass,ok (event-modified species as parameter)
 00932,unsupported,delay
 00933,unsupported,delay
-00934,fail_known,event priority/ordering
-00935,fail_known,event priority/ordering
+00934,unsupported,event execution semantics (priority ordering / useValuesFromTriggerTime)
+00935,unsupported,event execution semantics (priority ordering / useValuesFromTriggerTime)
 00936,unsupported,delay
 00937,unsupported,delay function
 00938,unsupported,delay
@@ -951,7 +951,7 @@ test,status,notes
 00950,fail_known,non-finite expected results (INF/NaN)
 00951,fail_known,non-finite expected results (INF/NaN)
 00952,unsupported,random event execution
-00953,fail_known,event priority/ordering
+00953,unsupported,event execution semantics (competing simultaneous events)
 00954,pass,ok (no-ode placeholder)
 00955,pass,ok (no-ode placeholder)
 00956,pass,ok (no-ode placeholder)
@@ -961,11 +961,11 @@ test,status,notes
 00960,pass,ok (no-ode placeholder)
 00961,pass,ok (no-ode placeholder)
 00962,unsupported,random event execution
-00963,fail_known,event priority/ordering
+00963,unsupported,event execution semantics (priority ordering / useValuesFromTriggerTime)
 00964,unsupported,random event execution
 00965,unsupported,random event execution
 00966,unsupported,random event execution
-00967,fail_known,event priority/ordering
+00967,unsupported,event execution semantics (priority ordering / useValuesFromTriggerTime)
 00968,pass,ok
 00969,pass,ok
 00970,pass,ok
@@ -976,7 +976,7 @@ test,status,notes
 00975,pass,ok
 00976,pass,ok
 00977,pass,ok
-00978,fail_known,event priority/ordering
+00978,unsupported,event execution semantics (priority ordering / useValuesFromTriggerTime)
 00979,pass,ok (no-ode placeholder)
 00980,unsupported,delay
 00981,unsupported,delay
@@ -1329,13 +1329,13 @@ test,status,notes
 01328,unsupported,delay
 01329,unsupported,delay
 01330,pass,ok (no-ode placeholder)
-01331,fail_known,event priority/ordering
+01331,unsupported,event execution semantics (priority ordering / useValuesFromTriggerTime)
 01332,pass,ok (no-ode placeholder)
-01333,fail_known,event priority/ordering
+01333,unsupported,event execution semantics (priority ordering / useValuesFromTriggerTime)
 01334,pass,ok (no-ode placeholder)
 01335,unsupported,delay
 01336,pass,ok (no-ode placeholder)
-01337,fail_known,event priority/ordering
+01337,unsupported,event execution semantics (persistent triggers)
 01338,pass,ok
 01339,pass,ok
 01340,pass,ok
