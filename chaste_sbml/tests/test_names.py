@@ -208,6 +208,30 @@ def test_name_manager_resolve_renames_cpp_macro():
     assert manager.sbml_name("NAN_") == "NAN"
 
 
+def test_name_manager_resolve_renames_function_calls():
+    """A function definition renamed to dodge a keyword also has its callers rewritten.
+
+    A call ``this(x)`` is an ``AST_FUNCTION`` node, which ``renameSIdRefs`` leaves untouched, so
+    renaming the ``this`` function definition must explicitly rewrite the call inside ``caller`` --
+    otherwise the emitted C++ would call a function that no longer exists (and ``this`` is a keyword).
+    """
+    doc = libsbml.SBMLDocument(3, 2)
+    sbml_model = doc.createModel()
+    callee = sbml_model.createFunctionDefinition()
+    callee.setId("this")  # 'this' is a C++ keyword
+    callee.setMath(libsbml.parseL3Formula("lambda(x, x)"))
+    caller = sbml_model.createFunctionDefinition()
+    caller.setId("caller")
+    caller.setMath(libsbml.parseL3Formula("lambda(x, this(x))"))
+
+    NameManager(sbml_model).resolve_real_id_conflicts()
+
+    assert sbml_model.getFunctionDefinition("this") is None
+    assert sbml_model.getFunctionDefinition("this_") is not None
+    # The body of 'caller' now calls the renamed function.
+    assert "this_(x)" in libsbml.formulaToL3String(sbml_model.getFunctionDefinition("caller").getMath())
+
+
 def test_generate_header_guard():
     """Test header guard generation."""
     test_cases = [

@@ -23,6 +23,8 @@ name inherited from the base classes.
 
 import re
 
+import libsbml
+
 # C++ keywords (and alternative operator spellings); none may be used as an identifier.
 CPP_KEYWORDS = frozenset(
     {
@@ -304,8 +306,33 @@ class NameManager:
             element.setId(new_id)
             for referrer in model.getListOfAllElements():
                 referrer.renameSIdRefs(old_id, new_id)
+            # ``renameSIdRefs`` rewrites variable references but not function-call names (a call
+            # ``f(x)`` is an ``AST_FUNCTION`` node, not an ``AST_NAME``), so a renamed function
+            # definition would leave its callers dangling. Rewrite those calls explicitly.
+            self._rename_function_call_refs(old_id, new_id)
             taken.add(new_id)
             self._sbml_names[new_id] = old_id
+
+    def _rename_function_call_refs(self, old_id: str, new_id: str) -> None:
+        """Rename every ``old_id(...)`` function call in the model's math to ``new_id(...)``.
+
+        Function calls reference a function definition by name through an ``AST_FUNCTION`` node,
+        which ``renameSIdRefs`` leaves untouched; without this a function definition renamed to
+        avoid a keyword/reserved/macro clash (e.g. one called ``this``) keeps being called under
+        its old, now-invalid name.
+        """
+
+        def rename(node: "libsbml.ASTNode") -> None:
+            if node is None:
+                return
+            if node.getType() == libsbml.AST_FUNCTION and node.getName() == old_id:
+                node.setName(new_id)
+            for i in range(node.getNumChildren()):
+                rename(node.getChild(i))
+
+        for element in self._sbml_model.getListOfAllElements():
+            if hasattr(element, "isSetMath") and element.isSetMath():
+                rename(element.getMath())
 
     def sbml_name(self, cpp_id: str) -> str:
         """Return the original SBML id for a (possibly renamed) C++ identifier.

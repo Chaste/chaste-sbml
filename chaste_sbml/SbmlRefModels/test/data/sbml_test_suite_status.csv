@@ -1310,7 +1310,7 @@ test,status,notes
 01309,pass,ok
 01310,pass,ok (no-ode placeholder)
 01311,pass,ok (no-ode placeholder)
-01312,fail_known,codegen: expression called as function
+01312,pass,ok (nested function definitions; a function named after a C++ keyword)
 01313,pass,ok (no-ode placeholder)
 01314,pass,ok (no-ode placeholder)
 01315,pass,ok (no-ode placeholder)
