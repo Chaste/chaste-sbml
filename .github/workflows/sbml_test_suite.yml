@@ -20,18 +20,18 @@ jobs:
 
     strategy:
       fail-fast: false
-      # matrix is split by number of passing test cases (~230 per batch)
+      # matrix is split by number of passing test cases (269 per batch)
       matrix:
         include:
           - first_case: "1"
-            last_case: "245"
-          - first_case: "246"
-            last_case: "578"
-          - first_case: "579"
-            last_case: "890"
-          - first_case: "891"
-            last_case: "1267"
-          - first_case: "1268"
+            last_case: "276"
+          - first_case: "277"
+            last_case: "678"
+          - first_case: "679"
+            last_case: "1030"
+          - first_case: "1031"
+            last_case: "1364"
+          - first_case: "1365"
             last_case: "1821"
 
     steps:
