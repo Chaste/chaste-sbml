@@ -1488,8 +1488,8 @@ test,status,notes
 01487,pass,ok (no-ode placeholder)
 01488,pass,ok (no-ode placeholder)
 01489,pass,ok (no-ode placeholder)
-01490,fail_known,CVODE convergence failure (degenerate no-ode model)
-01491,fail_known,CVODE convergence failure (degenerate no-ode model)
+01490,pass,ok (no-ODE model integrated over time; placeholder initial condition)
+01491,pass,ok (no-ODE model integrated over time; placeholder initial condition)
 01492,pass,ok
 01493,pass,ok
 01494,pass,ok (nary relational via sm:: helpers)

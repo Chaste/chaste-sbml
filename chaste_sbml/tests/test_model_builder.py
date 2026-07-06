@@ -228,6 +228,12 @@ def test_build_synthesises_placeholder_state_variable_for_no_ode_model(tmp_path)
     assert deriv_equations[0].var == placeholder.derivative_id
     assert deriv_equations[0].rhs == "0.0"
 
+    # The placeholder's member must be initialised to zero: Initialise() reads it to set the
+    # solver's initial condition, so without this equation the state would be uninitialised memory.
+    init_equations = [e for e in builder._equations if e.type == EquationType.INITIAL_VALUE]
+    assert placeholder.id in [e.var for e in init_equations]
+    assert next(e for e in init_equations if e.var == placeholder.id).rhs == "0.0"
+
 
 def test_build_no_ode_model_preserves_real_outputs(tmp_path):
     """The placeholder does not displace the model's real outputs (assignment rule, species)."""

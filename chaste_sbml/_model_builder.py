@@ -334,6 +334,8 @@ class ModelBuilder:
         """
         placeholder_id = self._names.reserve(PREFIX_SEP.join([CHASTE_PREFIX, PLACEHOLDER_STATE_ID]))
         state_var = self._add_state_variable(placeholder_id, "Placeholder state variable (model has no ODEs)", 0.0)
+        # Initialise the member to zero
+        self._add_equation(var=placeholder_id, math=parseL3Formula("0.0"), eq_type=EquationType.INITIAL_VALUE)
         self._add_equation(var=state_var.derivative_id, math=parseL3Formula("0.0"), eq_type=EquationType.DERIVATIVE)
 
     def _add_stoichiometry_variable(self, species_reference: "SpeciesReference") -> None:
