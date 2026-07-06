@@ -391,7 +391,7 @@ def formula_to_string(
     rewrite_power(math)
     formula = formulaToL3String(math)
 
-    # Convert all integer literals to doubles to fix integer division. Thelookbehinds
+    # Convert all integer literals to doubles to fix integer division. The lookbehinds
     # keep the digits of a scientific-notation exponent (e.g. 1e-5, 1e+5) intact.
     formula = re.sub(r"(?<!\.)(?<![eE][-+])\b[0-9]+\b(?!\.)", lambda x: f"{x[0]}.0", formula)
 

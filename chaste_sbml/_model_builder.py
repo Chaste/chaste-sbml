@@ -1248,7 +1248,7 @@ class ModelBuilder:
         self._functions = []
 
         # Ids assigned by some event, so species classification can model an otherwise-constant
-        # event-modified species as a (variable) parameterp.
+        # event-modified species as a (variable) parameter.
         self._event_assigned_ids = {
             ea.getVariable() for event in self._sbml_events for ea in event.getListOfEventAssignments()
         }
