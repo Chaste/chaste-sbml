@@ -165,6 +165,10 @@ constexpr double min(double first, double second, Args... rest);
 // piecewise
 constexpr double piecewise(double otherwise);
 
+// A piecewise with no otherwise clause: undefined (NaN) when the condition does not hold. Also the
+// recursion base case for an even number of arguments (pieces without a trailing otherwise).
+constexpr double piecewise(double value, bool condition);
+
 constexpr double piecewise(double value, bool condition, double otherwise);
 
 template <typename... Args>
@@ -211,7 +215,9 @@ constexpr bool sbmlmath::or_(Args... args)
 template <typename... Args>
 constexpr bool sbmlmath::xor_(Args... args)
 {
-    return (false ^ ... ^ args);
+    // Cast each operand to bool first: the arguments are numeric booleans (0/non-0), and ^ is
+    // bitwise (undefined for double), so xor them as bools -- true when an odd number are true.
+    return (false ^ ... ^ static_cast<bool>(args));
 }
 
 // Relational (variadic templates) ==============
@@ -299,6 +305,11 @@ constexpr double sbmlmath::min(double first, double second, Args... rest)
 constexpr double sbmlmath::piecewise(double otherwise)
 {
     return otherwise;
+}
+
+constexpr double sbmlmath::piecewise(double value, bool condition)
+{
+    return condition ? value : std::numeric_limits<double>::quiet_NaN();
 }
 
 constexpr double sbmlmath::piecewise(double value, bool condition, double otherwise)

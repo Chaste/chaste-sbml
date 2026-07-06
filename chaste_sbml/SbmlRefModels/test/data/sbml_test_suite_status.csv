@@ -1114,7 +1114,7 @@ test,status,notes
 01113,pass,ok (no-ode placeholder)
 01114,pass,ok (no-ode placeholder)
 01115,pass,ok (no-ode placeholder)
-01116,fail_known,codegen: piecewise arity
+01116,pass,ok (piecewise without otherwise)
 01117,pass,ok
 01118,pass,ok
 01119,unsupported,delay
@@ -1484,12 +1484,12 @@ test,status,notes
 01483,unsupported,algebraic rule
 01484,unsupported,algebraic rule
 01485,pass,ok (no-ode placeholder)
-01486,fail_known,codegen: unconverted ^ operator
+01486,pass,ok (xor / arcsec / uncommon mathml)
 01487,pass,ok (no-ode placeholder)
 01488,pass,ok (no-ode placeholder)
 01489,pass,ok (no-ode placeholder)
-01490,fail_known,codegen: unconverted ^ operator
-01491,fail_known,codegen: unconverted ^ operator
+01490,fail_known,CVODE convergence failure (degenerate no-ode model)
+01491,fail_known,CVODE convergence failure (degenerate no-ode model)
 01492,pass,ok
 01493,pass,ok
 01494,pass,ok (nary relational via sm:: helpers)

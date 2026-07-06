@@ -305,6 +305,8 @@ _CUSTOM_FUNCTIONS = {
     "arccoth": "acoth",
     "arccsc": "acsc",
     "arccsch": "acsch",
+    "arcsec": "asec",
+    "arcsech": "asech",
     "cot": "cot",
     "coth": "coth",
     "csc": "csc",
