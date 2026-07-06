@@ -367,6 +367,27 @@ def test_reject_unsupported_delay_allows_missing_delay_math():
     builder._reject_unsupported_delay(event)  # should not raise
 
 
+def test_reject_unsupported_packages_rejects_fbc():
+    """A model using the flux-balance-constraints (fbc) package is rejected."""
+    doc = libsbml.SBMLDocument(libsbml.SBMLNamespaces(3, 1, "fbc", 2))
+    builder = _builder_without_init()
+    builder._sbml_model = doc.createModel()
+    builder._keep_doc = doc
+
+    with pytest.raises(NotImplementedError, match="fbc"):
+        builder._reject_unsupported_packages()
+
+
+def test_reject_unsupported_packages_allows_plain_model():
+    """A model without an unsupported package is not rejected."""
+    doc = libsbml.SBMLDocument(3, 2)
+    builder = _builder_without_init()
+    builder._sbml_model = doc.createModel()
+    builder._keep_doc = doc
+
+    builder._reject_unsupported_packages()  # should not raise
+
+
 def test_format_function_definitions_skips_missing_body():
     """A function definition with no MathML body is skipped rather than crashing."""
     builder = _event_builder()

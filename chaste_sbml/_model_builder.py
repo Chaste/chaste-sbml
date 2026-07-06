@@ -575,6 +575,14 @@ class ModelBuilder:
                 priority,
             )
 
+    def _reject_unsupported_packages(self) -> None:
+        """Raise if the model uses an SBML package the generator cannot translate.
+
+        :raises NotImplementedError: if the model uses the flux-balance-constraints (fbc) package.
+        """
+        if self._sbml_model.getPlugin("fbc") is not None:
+            raise NotImplementedError("Flux balance constraint models (SBML fbc package) are not supported.")
+
     def _reject_unsupported_delay(self, event) -> None:
         """Raise if the event has a non-zero delay (delays are not supported)."""
         if not event.isSetDelay():
@@ -1205,6 +1213,8 @@ class ModelBuilder:
 
     def build(self) -> None:
         """Process the SBML model to set up the formatted variables for templates."""
+        self._reject_unsupported_packages()
+
         self._variable_types = {}
         self._index_of = None  # id -> index cache, built lazily by _get_variable_index
         self._odes = {}
@@ -1224,7 +1234,7 @@ class ModelBuilder:
         self._functions = []
 
         # Ids assigned by some event, so species classification can model an otherwise-constant
-        # event-modified species as a (variable) parameter.
+        # event-modified species as a (variable) parameterp.
         self._event_assigned_ids = {
             ea.getVariable() for event in self._sbml_events for ea in event.getListOfEventAssignments()
         }
