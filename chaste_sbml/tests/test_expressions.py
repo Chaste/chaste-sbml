@@ -1,5 +1,6 @@
 """Tests for SBML expression/AST -> C++ formula translation."""
 
+import libsbml
 import pytest
 from libsbml import (
     AST_FUNCTION_COS,
@@ -15,10 +16,12 @@ from libsbml import (
 
 from chaste_sbml._config import VarType
 from chaste_sbml._expressions import (
+    AVOGADRO_PLACEHOLDER,
     collect_ast_names,
-    convert_infix_operator_to_function_syntax,
     formula_to_string,
-    replace_avogadro_csymbol,
+    replace_constant_symbols,
+    rewrite_nary_relational,
+    rewrite_power,
     search_ast_type,
     strip_ast_units,
     substitute_ast_names,
@@ -26,44 +29,43 @@ from chaste_sbml._expressions import (
 from chaste_sbml._records import StateVariable
 
 
-def test_convert_infix_operator_to_function_syntax_power():
-    """Converts infix power expressions to pow calls."""
-    converted = convert_infix_operator_to_function_syntax(
-        formula="(a + b) ^ (1.0 / 2.0)",
-        operator="^",
-        function_name="pow",
-    )
-
-    assert converted == "pow((a + b), (1.0 / 2.0))"
-
-
-def test_convert_infix_operator_to_function_syntax_custom_pair():
-    """Supports arbitrary operator/function conversion pairs."""
-    converted = convert_infix_operator_to_function_syntax(
-        formula="alpha @@ beta", operator="@@", function_name="combine"
-    )
-
-    assert converted == "combine(alpha, beta)"
-
-
-def test_convert_infix_operator_to_function_syntax_nested_and_repeated():
-    """Converts nested and repeated operator expressions in one formula."""
-    converted = convert_infix_operator_to_function_syntax(formula="(x ^ y) ^ z", operator="^", function_name="pow")
-
-    assert converted == "pow((pow(x, y)), z)"
-
-
 @pytest.mark.parametrize(
-    ("operator", "function_name", "error_message"),
+    ("formula", "expected"),
     [
-        ("", "pow", "operator must be a non-empty string"),
-        ("^", "", "function_name must be a non-empty string"),
+        ("a ^ b", "std::pow(a, b)"),
+        ("2 ^ 3", "std::pow(2.0, 3.0)"),
+        ("(a + b) ^ 2", "std::pow(a + b, 2.0)"),
+        # Nested power fully converts (the old string rewrite left an inner ^ behind).
+        ("a ^ b ^ c", "std::pow(a, std::pow(b, c))"),
     ],
 )
-def test_convert_infix_operator_to_function_syntax_invalid_args(operator: str, function_name: str, error_message: str):
-    """Validates required arguments for operator/function conversion."""
-    with pytest.raises(ValueError, match=error_message):
-        convert_infix_operator_to_function_syntax(formula="a ^ b", operator=operator, function_name=function_name)
+def test_formula_to_string_power_uses_std_pow(formula, expected):
+    """Power operators (including nested) become std::pow calls."""
+    variable_types = {name: VarType.PARAMETER for name in ("a", "b", "c")}
+    assert formula_to_string(parseL3Formula(formula), variable_types, state_variables=[]) == expected
+
+
+def test_rewrite_power_converts_only_power_nodes():
+    """rewrite_power converts AST_POWER nodes to pow() and leaves other nodes alone."""
+    node = parseL3Formula("a ^ b ^ c")
+    rewrite_power(node)
+    assert formulaToL3String(node) == "pow(a, pow(b, c))"
+
+    unaffected = parseL3Formula("a * b + c")
+    rewrite_power(unaffected)
+    assert formulaToL3String(unaffected) == "a * b + c"
+
+
+def test_rewrite_power_converts_mathml_function_power():
+    """A MathML <power> (AST_FUNCTION_POWER, distinct from L3 AST_POWER) is also converted.
+
+    Guards against only handling the L3-parsed power node type: SBML MathML powers parse to a
+    different AST type that ``formulaToL3String`` still renders as ``^``.
+    """
+    mathml = '<math xmlns="http://www.w3.org/1998/Math/MathML">' "<apply><power/><ci>a</ci><cn>2</cn></apply></math>"
+    node = libsbml.readMathMLFromString(mathml)
+    rewrite_power(node)
+    assert formulaToL3String(node) == "pow(a, 2)"
 
 
 def test_formula_to_string_functions_constants_and_power():
@@ -73,6 +75,42 @@ def test_formula_to_string_functions_constants_and_power():
         math, variable_types={"k": VarType.PARAMETER, "S": VarType.STATE_VARIABLE}, state_variables=[]
     )
     assert out == "k * std::pow(S, 2.0) + M_PI"
+
+
+def test_formula_to_string_implies_maps_to_sbmlmath():
+    """The MathML 'implies' logical operator maps to the sm::implies helper."""
+    assert formula_to_string(parseL3Formula("implies(a, b)"), {}, state_variables=[]) == "sm::implies(a, b)"
+
+
+@pytest.mark.parametrize(
+    ("formula", "expected"),
+    [
+        # n-ary relationals (>2 operands) become sm:: calls with the correct semantics...
+        ("lt(1, 2, 3)", "sm::lt(1.0, 2.0, 3.0)"),
+        ("gt(2, 1, 2)", "sm::gt(2.0, 1.0, 2.0)"),
+        ("leq(1, 2, 3, 4)", "sm::leq(1.0, 2.0, 3.0, 4.0)"),
+        ("geq(2, 1, 2)", "sm::geq(2.0, 1.0, 2.0)"),
+        ("eq(1, 1, 2)", "sm::eq(1.0, 1.0, 2.0)"),
+        # ...while binary relationals stay as infix operators (unchanged output).
+        ("a < b", "a < b"),
+        ("a >= b", "a >= b"),
+    ],
+)
+def test_formula_to_string_nary_relational_uses_sbmlmath(formula, expected):
+    """n-ary relationals route to the variadic sm:: helpers; binary ones stay infix."""
+    variable_types = {"a": VarType.PARAMETER, "b": VarType.PARAMETER}
+    assert formula_to_string(parseL3Formula(formula), variable_types, state_variables=[]) == expected
+
+
+def test_rewrite_nary_relational_leaves_binary_untouched():
+    """rewrite_nary_relational converts only >2-operand relationals, leaving binary ones as-is."""
+    binary = parseL3Formula("a < b")
+    rewrite_nary_relational(binary)
+    assert formulaToL3String(binary) == "a < b"
+
+    nary = parseL3Formula("lt(a, b, c)")
+    rewrite_nary_relational(nary)
+    assert formulaToL3String(nary) == "lt(a, b, c)"
 
 
 def test_formula_to_string_rateof_state_variable_uses_derivative():
@@ -121,8 +159,8 @@ def test_substitute_ast_names_leaves_original_unchanged():
     assert formulaToL3String(original) == "a + b"
 
 
-def test_replace_avogadro_csymbol_renames_nested_node():
-    """An avogadro csymbol anywhere in the tree becomes a plain name with the placeholder id."""
+def test_replace_constant_symbols_renames_nested_node():
+    """An avogadro csymbol anywhere in the tree becomes a plain name with its placeholder id."""
     one = ASTNode(AST_REAL)
     one.setValue(1.0)
     avogadro = ASTNode(AST_NAME_AVOGADRO)
@@ -130,19 +168,81 @@ def test_replace_avogadro_csymbol_renames_nested_node():
     expr.addChild(one)
     expr.addChild(avogadro)
 
-    replace_avogadro_csymbol(expr, "AVO")
+    replace_constant_symbols(expr)
 
     renamed = expr.getChild(1)
     assert renamed.getType() == AST_NAME
-    assert renamed.getName() == "AVO"
+    assert renamed.getName() == AVOGADRO_PLACEHOLDER
 
 
-def test_replace_avogadro_csymbol_leaves_other_names():
-    """A non-avogadro name node is left untouched."""
+def test_replace_constant_symbols_leaves_other_names():
+    """A non-symbol name node is left untouched."""
     name = ASTNode(AST_NAME)
     name.setName("x")
-    replace_avogadro_csymbol(name, "AVO")
+    replace_constant_symbols(name)
     assert name.getName() == "x"
+
+
+@pytest.mark.parametrize(
+    ("mathml_symbol", "expected"),
+    [
+        ("<pi/>", "M_PI"),
+        ("<exponentiale/>", "M_E"),
+        ("<infinity/>", "std::numeric_limits<double>::infinity()"),
+        ("<notanumber/>", "std::numeric_limits<double>::quiet_NaN()"),
+    ],
+)
+def test_formula_to_string_math_constants(mathml_symbol, expected):
+    """SBML math constants map to their C++ form."""
+    math = libsbml.readMathMLFromString(f'<math xmlns="http://www.w3.org/1998/Math/MathML">{mathml_symbol}</math>')
+    assert formula_to_string(math, {}, state_variables=[]) == expected
+
+
+@pytest.mark.parametrize(
+    ("mathml_symbol", "param", "expected"),
+    [
+        ("<infinity/>", "INF", "std::numeric_limits<double>::infinity()"),
+        ("<notanumber/>", "NaN", "std::numeric_limits<double>::quiet_NaN()"),
+    ],
+)
+def test_formula_to_string_infinity_nan_distinct_from_parameter(mathml_symbol, param, expected):
+    """The <infinity/>/<notanumber/> constants stay distinct from a parameter spelled INF/NaN.
+
+    libsbml stores these constants as real nodes that render as ``INF``/``NaN`` -- the same text as
+    a reference to a parameter so named -- so the constant must be resolved from the AST, not its
+    rendered spelling (test-suite cases 1811/1813).
+    """
+    math = libsbml.readMathMLFromString(f'<math xmlns="http://www.w3.org/1998/Math/MathML">{mathml_symbol}</math>')
+    assert formula_to_string(math, {param: VarType.PARAMETER}, state_variables=[]) == expected
+
+
+def test_formula_to_string_pi_constant_and_parameter_are_distinct():
+    """The <pi/> constant maps to M_PI while a same-named parameter keeps its own name."""
+    math = libsbml.readMathMLFromString(
+        '<math xmlns="http://www.w3.org/1998/Math/MathML"><apply><plus/><ci>pi</ci><pi/></apply></math>'
+    )
+    assert formula_to_string(math, {"pi": VarType.PARAMETER}, state_variables=[]) == "pi + M_PI"
+
+
+def test_formula_to_string_time_symbol_and_named_variable_are_distinct():
+    """The time csymbol maps to `time`; a plain variable named `t` is left as-is (not time)."""
+    assert formula_to_string(parseL3Formula("time"), {}, state_variables=[]) == "time"
+    assert formula_to_string(parseL3Formula("t"), {"t": VarType.PARAMETER}, state_variables=[]) == "t"
+
+
+def test_formula_to_string_rateof_local_parameter_is_zero():
+    """rateOf of a kinetic-law local parameter (constant) is zero, not a global's derivative."""
+    from chaste_sbml._records import LocalParameter
+
+    out = formula_to_string(
+        parseL3Formula("rateOf(k)"),
+        variable_types={"k": VarType.STATE_VARIABLE},
+        state_variables=[
+            StateVariable(index=0, id="k", derivative_id="d_k_dt", label="", initial_value=None, units="")
+        ],
+        local_parameters=[LocalParameter(id="k", label="", value="1")],
+    )
+    assert out == "0.0"
 
 
 def test_strip_ast_units_removes_units_recursively():

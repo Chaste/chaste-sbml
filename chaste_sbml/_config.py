@@ -16,6 +16,10 @@ INITIAL_ASSIGNMENT_PREFIX = "ia"
 DERIVATIVE_PREFIX = "d_"
 DERIVATIVE_SUFFIX = "_dt"
 
+# Base id for the synthetic zero-derivative state variable added to models with no ODEs, so the
+# generated ODE system always has at least one variable for the solver to integrate.
+PLACEHOLDER_STATE_ID = "placeholder"
+
 
 class EquationType(Enum):
     """Enumeration of equation types for code generation."""
@@ -45,6 +49,19 @@ class VarType(Enum):
     REACTION = 3
     STATE_VARIABLE = 4
     UNKNOWN = 5
+
+
+class DerivedQuantityKind(Enum):
+    """Kind of derived quantity, which determines how it is declared and computed.
+
+    NORMAL is declared as a member and computed from an equation; REACTION is a reaction flux
+    (declared and computed by the reaction machinery, only exposed here as an output); CONVERSION
+    is an amount/concentration conversion computed in ComputeDerivedQuantities.
+    """
+
+    NORMAL = 0
+    REACTION = 1
+    CONVERSION = 2
 
 
 class ModelType(Enum):

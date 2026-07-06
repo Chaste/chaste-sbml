@@ -9,7 +9,7 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 from chaste_sbml import ChasteSbmlModel
-from chaste_sbml._config import ROOT_DIR, ModelType
+from chaste_sbml._config import ModelType
 from chaste_sbml._names import generate_header_guard
 
 if TYPE_CHECKING:
@@ -18,6 +18,24 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 sbml_versions = ["l2v5", "l3v2", "l3v1"]
+
+
+def _cpp_double_literal(value: str) -> str:
+    """Render a reference-CSV cell as a C++ double literal.
+
+    Reference results can be non-finite -- a division by zero gives INF and 0/0 gives NaN -- and
+    the SBML Test Suite writes these as ``INF``/``-INF``/``NaN``, which are not valid C++ tokens.
+    Map them to the ``<cmath>`` macros so the expected-results initialiser list compiles; finite
+    numbers are already valid literals and pass through unchanged.
+    """
+    token = value.strip()
+    magnitude = token.lstrip("+-").lower()
+    sign = "-" if token.startswith("-") else ""
+    if magnitude == "inf":
+        return f"{sign}INFINITY"
+    if magnitude == "nan":
+        return "NAN"
+    return token
 
 
 class TestType(Enum):
@@ -50,7 +68,9 @@ class ChasteSbmlTestSuiteModel(ChasteSbmlModel):
         self._test_hpp_filename = f"Test{self._model_name}.hpp"
 
         test_result_columns = ", ".join(f'"{col}"' for col in test_params["results"][0])
-        test_result_data = ["{ " + ", ".join(row) + " }" for row in test_params["results"][1:]]
+        test_result_data = [
+            "{ " + ", ".join(_cpp_double_literal(cell) for cell in row) + " }" for row in test_params["results"][1:]
+        ]
         test_result_data = ",\n".join(test_result_data)
 
         test_amounts = test_params["settings"]["amount"].split(",")

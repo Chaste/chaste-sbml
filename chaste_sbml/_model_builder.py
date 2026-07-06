@@ -33,7 +33,9 @@ from ._config import (
     DERIVATIVE_SUFFIX,
     INITIAL_ASSIGNMENT_PREFIX,
     NON_DIM_UNITS,
+    PLACEHOLDER_STATE_ID,
     PREFIX_SEP,
+    DerivedQuantityKind,
     EquationType,
     EventType,
     VarType,
@@ -114,7 +116,7 @@ class ModelBuilder:
         amt_rhs = f"{species_id} * {compartment_id}"
         amt_math = parseL3Formula(amt_rhs)
 
-        self._add_derived_quantity(amt_id, amt_label, None, amt_units, is_conversion=True)
+        self._add_derived_quantity(amt_id, amt_label, None, amt_units, kind=DerivedQuantityKind.CONVERSION)
         self._add_equation(var=amt_id, math=amt_math, eq_type=EquationType.CONVERSION)
 
     def _add_concentration(self, species: "Species") -> None:
@@ -135,7 +137,7 @@ class ModelBuilder:
         conc_rhs = f"{species_id} / {compartment_id}"
         conc_math = parseL3Formula(conc_rhs)
 
-        self._add_derived_quantity(conc_id, conc_label, None, conc_units, is_conversion=True)
+        self._add_derived_quantity(conc_id, conc_label, None, conc_units, kind=DerivedQuantityKind.CONVERSION)
         self._add_equation(var=conc_id, math=conc_math, eq_type=EquationType.CONVERSION)
 
     def _add_assignment_rule(self, id_: str, label: str, var: str, math: "ASTNode") -> None:
@@ -154,8 +156,7 @@ class ModelBuilder:
         label: str,
         initial_value: Optional[float],
         units: str = NON_DIM_UNITS,
-        is_conversion: bool = False,
-        is_reaction: bool = False,
+        kind: DerivedQuantityKind = DerivedQuantityKind.NORMAL,
     ) -> None:
         """Add a derived quantity to the template variables.
 
@@ -163,11 +164,10 @@ class ModelBuilder:
         :param label: The variable description.
         :param initial_value: The variable initial value.
         :param units: The variable units.
-        :param is_conversion: True if the derived quantity is an amount/concentration
-            conversion (computed in ComputeDerivedQuantities rather than stored as a member).
-        :param is_reaction: True if the derived quantity is a reaction flux exposed as an
-            output. Its member is already declared by the reaction loop, so it is not
-            re-declared, and its variable type stays VarType.REACTION.
+        :param kind: The kind of derived quantity. CONVERSION is an amount/concentration conversion
+            (computed in ComputeDerivedQuantities rather than stored as a member); REACTION is a
+            reaction flux exposed as an output -- its member is already declared by the reaction
+            loop, so it is not re-declared and its variable type stays VarType.REACTION.
         """
         self._derived_quantities.append(
             DerivedQuantity(
@@ -175,13 +175,11 @@ class ModelBuilder:
                 label=label,
                 index=len(self._derived_quantities),
                 initial_value=initial_value,
-                is_conversion=is_conversion,
-                is_reaction=is_reaction,
                 units=units,
+                kind=kind,
+                name=self._names.sbml_name(id_),
             )
         )
-        if not is_reaction:
-            self._variable_types[id_] = VarType.DERIVED_QUANTITY
 
     def _add_equation(
         self,
@@ -243,7 +241,6 @@ class ModelBuilder:
         :param body: The function body.
         """
         self._functions.append(Function(id=id_, label=label, index=len(self._functions), args=args, body=body))
-        self._variable_types[id_] = VarType.FUNCTION
 
     def _add_initial_assignment(self, id_: str, label: str, var: str, math: Optional["ASTNode"] = None) -> None:
         """Add an initial assignment to the template variables.
@@ -279,9 +276,9 @@ class ModelBuilder:
                 label=label,
                 initial_value=initial_value,
                 units=units,
+                name=self._names.sbml_name(id_),
             )
         )
-        self._variable_types[id_] = VarType.PARAMETER
 
     def _add_rate_rule(self, id_: str, label: str, var: str, math: "ASTNode") -> None:
         """Add a rate rule to the template variables.
@@ -300,7 +297,6 @@ class ModelBuilder:
         :param label: The variable description.
         """
         self._reactions.append(Reaction(index=len(self._reactions), id=id_, label=label))
-        self._variable_types[id_] = VarType.REACTION
 
     def _add_state_variable(
         self, id_: str, label: str, initial_value: Optional[float], units: str = NON_DIM_UNITS
@@ -320,12 +316,27 @@ class ModelBuilder:
             label=label,
             initial_value=initial_value,
             units=units,
+            name=self._names.sbml_name(id_),
         )
 
         self._state_variables.append(state_var)
-        self._variable_types[id_] = VarType.STATE_VARIABLE
 
         return state_var
+
+    def _add_placeholder_state_variable(self) -> None:
+        """Add a synthetic state variable with a zero derivative for a model with no ODEs.
+
+        Chaste's ODE system integrates a vector of state variables, so a model with no continuous
+        dynamics still needs at least one. The placeholder is constant (``dy/dt = 0``), starts at
+        zero and is not an SBML output, so it never appears in the expected results; it exists only
+        to give the solver a trivial state to advance in time while the model's real outputs are
+        recomputed each step.
+        """
+        placeholder_id = self._names.reserve(PREFIX_SEP.join([CHASTE_PREFIX, PLACEHOLDER_STATE_ID]))
+        state_var = self._add_state_variable(placeholder_id, "Placeholder state variable (model has no ODEs)", 0.0)
+        # Initialise the member to zero
+        self._add_equation(var=placeholder_id, math=parseL3Formula("0.0"), eq_type=EquationType.INITIAL_VALUE)
+        self._add_equation(var=state_var.derivative_id, math=parseL3Formula("0.0"), eq_type=EquationType.DERIVATIVE)
 
     def _add_stoichiometry_variable(self, species_reference: "SpeciesReference") -> None:
         """Add a stoichiometry variable to the template variables.
@@ -449,9 +460,9 @@ class ModelBuilder:
             math = rule.math
             odes[var] = math
 
-        if not odes:
-            raise NotImplementedError("Models without ODEs are not supported.")
-
+        # An empty odes dict is allowed: a model with no reactions or rate rules has no
+        # continuous dynamics, and build() synthesises a placeholder state variable so the
+        # generated ODE system still has something for the solver to integrate.
         self._odes = odes
 
     def _total_time_derivative(self, ast_node: "ASTNode") -> str:
@@ -531,12 +542,16 @@ class ModelBuilder:
     def _format_events(self) -> None:
         """Add events to template variables."""
         for event in self._sbml_events:
+            trigger = event.getTrigger()
+            if trigger is None or trigger.getMath() is None:
+                # An event with no trigger, or a trigger with no MathML, can never fire.
+                continue
             self._reject_unsupported_delay(event)
             label = event.getName().strip()
             event_type = self._guess_event_type(label)
             # Compute the trigger formula first: it mutates the trigger AST in place (stripping
             # units, renaming the avogadro csymbol), and the distance below deep-copies that AST.
-            trigger_formula = self._formula_to_string(event.getTrigger().getMath())
+            trigger_formula = self._formula_to_string(trigger.getMath())
             trigger_distance = self._event_trigger_distance(event)
             assignments = self._event_assignments(event)
             self._compensate_compartment_resizes(event, assignments)
@@ -554,18 +569,31 @@ class ModelBuilder:
                 priority,
             )
 
+    def _reject_unsupported_packages(self) -> None:
+        """Raise if the model uses an SBML package the generator cannot translate.
+
+        :raises NotImplementedError: if the model uses the flux-balance-constraints (fbc) package.
+        """
+        if self._sbml_model.getPlugin("fbc") is not None:
+            raise NotImplementedError("Flux balance constraint models (SBML fbc package) are not supported.")
+
     def _reject_unsupported_delay(self, event) -> None:
         """Raise if the event has a non-zero delay (delays are not supported)."""
-        if event.isSetDelay():
-            math = self._formula_to_string(event.getDelay().getMath())
-            try:
-                delay = float(math)
-            except ValueError:
-                delay = 9999
+        if not event.isSetDelay():
+            return
+        delay_math = event.getDelay().getMath()
+        if delay_math is None:
+            # A delay element with no MathML is treated as no delay.
+            return
+        math = self._formula_to_string(delay_math)
+        try:
+            delay = float(math)
+        except ValueError:
+            delay = 9999
 
-            if delay != 0.0:
-                # Delay of zero is equivalent to no delay
-                raise NotImplementedError("Events with delays are not supported.")
+        if delay != 0.0:
+            # Delay of zero is equivalent to no delay
+            raise NotImplementedError("Events with delays are not supported.")
 
     @staticmethod
     def _guess_event_type(label: str) -> EventType:
@@ -736,6 +764,9 @@ class ModelBuilder:
     def _format_function_definitions(self) -> None:
         """Add function definitions to template variables."""
         for fd in self._sbml_function_definitions:
+            if fd.getBody() is None:
+                # A function definition with no MathML body cannot be emitted.
+                continue
             fd_id = fd.getId()
             label = fd.getName().strip()
             arg_list = get_function_definition_arguments(fd)
@@ -828,8 +859,8 @@ class ModelBuilder:
             # A reaction's ID denotes its rate (flux), an observable that rules, events and
             # test outputs can read. Expose it as a derived quantity. The flux member is
             # already declared and computed by the reaction machinery, so it keeps its
-            # VarType.REACTION type and is not re-declared (is_reaction=True).
-            self._add_derived_quantity(id_, label, None, NON_DIM_UNITS, is_reaction=True)
+            # VarType.REACTION type and is not re-declared (kind=REACTION).
+            self._add_derived_quantity(id_, label, None, NON_DIM_UNITS, kind=DerivedQuantityKind.REACTION)
 
             kinetic_law = reaction.getKineticLaw()
             if kinetic_law is None:
@@ -1079,8 +1110,11 @@ class ModelBuilder:
                 self._add_equation(
                     var=state_var.derivative_id, math=parseL3Formula(rhs), eq_type=EquationType.DERIVATIVE
                 )
+            elif species_id in self._event_assigned_ids:
+                # Otherwise constant but modified by an event: model as a (variable) parameter
+                self._add_parameter(species_id, label, initial_value, units)
             else:
-                # Truly constant: no reactions, no rules, constant compartment
+                # Truly constant: no reactions, no rules, no events, constant compartment
                 self._add_derived_quantity(species_id, label, initial_value, units)
 
     def _formula_to_string(self, math: "ASTNode", local_parameters: Optional[list["LocalParameter"]] = None) -> str:
@@ -1093,7 +1127,7 @@ class ModelBuilder:
         :param local_parameters: Local parameters in scope for the formula.
         :return: The equivalent C++ string.
         """
-        return formula_to_string(math, self._variable_types, self._state_variables, local_parameters)
+        return formula_to_string(math, self._variable_type_map(), self._state_variables, local_parameters)
 
     def _get_timescale_multiplier(self) -> float:
         """Get the timescale multiplier.
@@ -1138,9 +1172,30 @@ class ModelBuilder:
             for record in collection:
                 index_of[record.id] = record.index
         for derived_quantity in self._derived_quantities:
-            if not derived_quantity.is_reaction:
+            if derived_quantity.kind != DerivedQuantityKind.REACTION:
                 index_of[derived_quantity.id] = derived_quantity.index
         return index_of
+
+    def _variable_type_map(self) -> dict[str, VarType]:
+        """Map each variable id to its VarType, derived from the built record collections.
+
+        The type of a variable is implied by which collection its record belongs to, so no separate
+        mapping is kept. A reaction flux is both a Reaction (typed VarType.REACTION) and an
+        REACTION-kind DerivedQuantity; the latter is skipped so the reaction id keeps its type.
+        """
+        types: dict[str, VarType] = {}
+        for derived_quantity in self._derived_quantities:
+            if derived_quantity.kind != DerivedQuantityKind.REACTION:
+                types[derived_quantity.id] = VarType.DERIVED_QUANTITY
+        for function in self._functions:
+            types[function.id] = VarType.FUNCTION
+        for parameter in self._parameters:
+            types[parameter.id] = VarType.PARAMETER
+        for reaction in self._reactions:
+            types[reaction.id] = VarType.REACTION
+        for state_variable in self._state_variables:
+            types[state_variable.id] = VarType.STATE_VARIABLE
+        return types
 
     def _get_variable_type(self, var_id: str) -> VarType:
         """Get the type of a variable based on its ID.
@@ -1148,7 +1203,7 @@ class ModelBuilder:
         :param var_id: The variable ID.
         :return: The variable's VarType, or VarType.UNKNOWN if it is not a known variable.
         """
-        return self._variable_types.get(var_id, VarType.UNKNOWN)
+        return self._variable_type_map().get(var_id, VarType.UNKNOWN)
 
     def _order_derived_quantities(self) -> None:
         """Order derived quantities: normal quantities, then reactions, then conversions.
@@ -1161,9 +1216,9 @@ class ModelBuilder:
         """
 
         def group(dq: "DerivedQuantity") -> int:
-            if dq.is_conversion:
+            if dq.kind == DerivedQuantityKind.CONVERSION:
                 return 2
-            if dq.is_reaction:
+            if dq.kind == DerivedQuantityKind.REACTION:
                 return 1
             return 0
 
@@ -1173,7 +1228,8 @@ class ModelBuilder:
 
     def build(self) -> None:
         """Process the SBML model to set up the formatted variables for templates."""
-        self._variable_types = {}
+        self._reject_unsupported_packages()
+
         self._index_of = None  # id -> index cache, built lazily by _get_variable_index
         self._odes = {}
 
@@ -1191,6 +1247,12 @@ class ModelBuilder:
         self._events = []
         self._functions = []
 
+        # Ids assigned by some event, so species classification can model an otherwise-constant
+        # event-modified species as a (variable) parameter.
+        self._event_assigned_ids = {
+            ea.getVariable() for event in self._sbml_events for ea in event.getListOfEventAssignments()
+        }
+
         # Names already claimed by real SBML entities and the Chaste base classes. Synthetic
         # identifiers (derivatives, amount/concentration conversions, initial-assignment
         # intermediates) are allocated against this so they never collide.
@@ -1207,7 +1269,11 @@ class ModelBuilder:
         self._format_parameters()
 
         if not self._state_variables:
-            raise NotImplementedError("Models without state variables are not supported.")
+            # The model has no continuous dynamics (no reactions, ODEs or rate rules). Add a
+            # placeholder state variable with a zero derivative so the generated ODE system still
+            # has something for the solver to integrate; its outputs (constants, assignment rules
+            # of time, event-driven changes) are recomputed each step like any other model.
+            self._add_placeholder_state_variable()
 
         self._format_reactions()
         self._format_function_definitions()
@@ -1243,10 +1309,12 @@ class ModelBuilder:
             identifiers.append((var.id, "state variable"))
             identifiers.append((var.derivative_id, "state-variable derivative"))
         for dq in self._derived_quantities:
-            if dq.is_reaction:
+            if dq.kind == DerivedQuantityKind.REACTION:
                 continue  # Declared under reactions; counted there.
-            kind = "amount/concentration conversion" if dq.is_conversion else "derived quantity"
-            identifiers.append((dq.id, kind))
+            kind_label = (
+                "amount/concentration conversion" if dq.kind == DerivedQuantityKind.CONVERSION else "derived quantity"
+            )
+            identifiers.append((dq.id, kind_label))
         identifiers += [(s.id, "stoichiometry variable") for s in self._stoichiometry_variables]
         identifiers += [(r.id, "reaction") for r in self._reactions]
         identifiers += [(f.id, "function") for f in self._functions]

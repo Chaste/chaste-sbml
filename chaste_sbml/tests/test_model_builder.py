@@ -4,7 +4,15 @@ import libsbml
 import pytest
 from libsbml import parseL3Formula
 
-from chaste_sbml._config import ROOT_DIR, EquationType, VarType
+from chaste_sbml._config import (
+    CHASTE_PREFIX,
+    PLACEHOLDER_STATE_ID,
+    PREFIX_SEP,
+    ROOT_DIR,
+    DerivedQuantityKind,
+    EquationType,
+    VarType,
+)
 from chaste_sbml._model_builder import ModelBuilder
 from chaste_sbml._names import NameConflictError, NameManager
 from chaste_sbml._records import (
@@ -94,10 +102,8 @@ def _make_state_variable(*, id, derivative_id):
     return StateVariable(index=0, id=id, derivative_id=derivative_id, label="", initial_value=None, units="")
 
 
-def _make_derived_quantity(*, id, is_conversion=False, is_reaction=False):
-    return DerivedQuantity(
-        id=id, label="", index=0, initial_value=None, is_conversion=is_conversion, is_reaction=is_reaction, units=""
-    )
+def _make_derived_quantity(*, id, kind=DerivedQuantityKind.NORMAL):
+    return DerivedQuantity(id=id, label="", index=0, initial_value=None, units="", kind=kind)
 
 
 def test_check_name_conflicts_passes_for_clean_model():
@@ -110,7 +116,7 @@ def test_check_name_conflicts_flags_synthetic_vs_real_collision():
     """A real id equal to a synthesised amount-conversion name is caught."""
     builder = _builder_with_names(
         state_variables=["X"],
-        derived_quantities=[{"id": "amt__X", "is_conversion": True, "is_reaction": False}],
+        derived_quantities=[{"id": "amt__X", "kind": DerivedQuantityKind.CONVERSION}],
         parameters=["amt__X"],
     )
     with pytest.raises(NameConflictError, match="amt__X"):
@@ -136,7 +142,7 @@ def test_check_name_conflicts_ignores_reaction_flux_duplicate():
     builder = _builder_with_names(
         state_variables=["C"],
         reactions=["reaction1"],
-        derived_quantities=[{"id": "reaction1", "is_conversion": False, "is_reaction": True}],
+        derived_quantities=[{"id": "reaction1", "kind": DerivedQuantityKind.REACTION}],
     )
     builder._check_name_conflicts()  # should not raise
 
@@ -171,6 +177,118 @@ def test_check_name_conflicts_flags_local_parameter_shadowing_time():
         builder._check_name_conflicts()
 
 
+PLACEHOLDER_ID = PREFIX_SEP.join([CHASTE_PREFIX, PLACEHOLDER_STATE_ID])
+
+
+def _no_ode_model(tmp_path):
+    """Write a no-ODE SBML model (constant species + time-dependent assignment rule) to disk.
+
+    The model has no reactions, ODEs or rate rules, so it has no state variables of its own.
+    """
+    doc = libsbml.SBMLDocument(3, 2)
+    model = doc.createModel()
+    model.setId("NoOde")
+    compartment = model.createCompartment()
+    compartment.setId("cell")
+    compartment.setConstant(True)
+    compartment.setSize(1.0)
+    compartment.setSpatialDimensions(3)
+    # A parameter that is an explicit function of time via an assignment rule.
+    parameter = model.createParameter()
+    parameter.setId("P")
+    parameter.setConstant(False)
+    parameter.setValue(0.0)
+    rule = model.createAssignmentRule()
+    rule.setVariable("P")
+    rule.setMath(parseL3Formula("2 * time"))
+    # A constant species.
+    species = model.createSpecies()
+    species.setId("S")
+    species.setCompartment("cell")
+    species.setConstant(True)
+    species.setBoundaryCondition(True)
+    species.setHasOnlySubstanceUnits(False)
+    species.setInitialConcentration(3.0)
+
+    path = tmp_path / "NoOde.xml"
+    libsbml.writeSBMLToFile(doc, str(path))
+    return path
+
+
+def test_build_synthesises_placeholder_state_variable_for_no_ode_model(tmp_path):
+    """A model with no ODEs gets a single zero-derivative placeholder state variable."""
+    builder = _build(_no_ode_model(tmp_path))
+
+    assert [s.id for s in builder._state_variables] == [PLACEHOLDER_ID]
+    placeholder = builder._state_variables[0]
+    assert placeholder.initial_value == 0.0
+
+    deriv_equations = [e for e in builder._equations if e.type == EquationType.DERIVATIVE]
+    assert len(deriv_equations) == 1
+    assert deriv_equations[0].var == placeholder.derivative_id
+    assert deriv_equations[0].rhs == "0.0"
+
+    # The placeholder's member must be initialised to zero: Initialise() reads it to set the
+    # solver's initial condition, so without this equation the state would be uninitialised memory.
+    init_equations = [e for e in builder._equations if e.type == EquationType.INITIAL_VALUE]
+    assert placeholder.id in [e.var for e in init_equations]
+    assert next(e for e in init_equations if e.var == placeholder.id).rhs == "0.0"
+
+
+def test_build_no_ode_model_preserves_real_outputs(tmp_path):
+    """The placeholder does not displace the model's real outputs (assignment rule, species)."""
+    builder = _build(_no_ode_model(tmp_path))
+
+    # The time-dependent assignment-rule parameter is still emitted as a derived quantity, and
+    # the constant boundary species is still emitted (as a parameter). Neither is the placeholder.
+    assert "P" in {d.id for d in builder._derived_quantities}
+    assert "S" in {p.id for p in builder._parameters}
+
+
+def test_build_event_modified_constant_species_is_a_parameter(tmp_path):
+    """An otherwise-constant species modified by an event is a parameter, not a derived quantity.
+
+    A derived quantity is recomputed from the current member each step, so an event's change would
+    be reported at every earlier time point; a parameter is time-resolved in the recorded solution.
+    """
+    doc = libsbml.SBMLDocument(3, 2)
+    model = doc.createModel()
+    compartment = model.createCompartment()
+    compartment.setId("C")
+    compartment.setConstant(True)
+    compartment.setSize(1.0)
+    compartment.setSpatialDimensions(3)
+    species = model.createSpecies()
+    species.setId("S")
+    species.setCompartment("C")
+    species.setConstant(False)
+    species.setBoundaryCondition(False)
+    species.setHasOnlySubstanceUnits(False)
+    species.setInitialAmount(0.0)
+    event = model.createEvent()
+    event.setUseValuesFromTriggerTime(True)
+    trigger = event.createTrigger()
+    trigger.setMath(parseL3Formula("time >= 1"))
+    trigger.setInitialValue(True)
+    trigger.setPersistent(True)
+    assignment = event.createEventAssignment()
+    assignment.setVariable("S")
+    assignment.setMath(parseL3Formula("5"))
+    path = tmp_path / "event_species.xml"
+    libsbml.writeSBMLToFile(doc, str(path))
+
+    builder = _build(path)
+
+    assert "S" in {p.id for p in builder._parameters}
+    assert "S" not in {d.id for d in builder._derived_quantities}
+
+
+def test_build_does_not_add_placeholder_when_model_has_odes():
+    """A model with genuine ODEs is left untouched: no placeholder state variable is added."""
+    builder = _build(REFERENCE / "Goldbeter1991" / "Goldbeter1991.xml")
+    assert PLACEHOLDER_ID not in {s.id for s in builder._state_variables}
+
+
 def test_build_extracts_state_variables_and_derivatives():
     """Each SBML species with an ODE becomes a state variable with a d_<id>_dt derivative."""
     builder = _build(REFERENCE / "Goldbeter1991" / "Goldbeter1991.xml")
@@ -188,7 +306,7 @@ def test_build_extracts_parameters_and_reactions():
 def test_build_adds_amount_conversions_for_amount_species():
     """Amount species get an amt__<id> conversion derived quantity."""
     builder = _build(REFERENCE / "Goldbeter1991" / "Goldbeter1991.xml")
-    conversions = {d.id for d in builder._derived_quantities if d.is_conversion}
+    conversions = {d.id for d in builder._derived_quantities if d.kind == DerivedQuantityKind.CONVERSION}
     assert conversions == {"amt__C", "amt__M", "amt__X"}
 
 
@@ -208,14 +326,96 @@ def test_build_extracts_cell_division_event():
     assert event.assignments == [EventAssignment(index=3, lhs="m", rhs="m / 2.0", type=VarType.STATE_VARIABLE)]
 
 
+def _event_builder():
+    """A bare builder with an empty model, wired just enough for _format_events."""
+    builder = _builder_without_init()
+    doc = libsbml.SBMLDocument(3, 2)
+    builder._sbml_model = doc.createModel()
+    builder._keep_doc = doc  # keep the owning document (and thus the model) alive
+    builder._sbml_events = builder._sbml_model.getListOfEvents()
+    builder._sbml_function_definitions = builder._sbml_model.getListOfFunctionDefinitions()
+    builder._state_variables = []
+    builder._parameters = []
+    builder._derived_quantities = []
+    builder._reactions = []
+    builder._events = []
+    builder._functions = []
+    return builder
+
+
+def test_format_events_skips_event_with_missing_trigger_math():
+    """An event whose trigger has no MathML can never fire, so no event is emitted."""
+    builder = _event_builder()
+    event = builder._sbml_model.createEvent()
+    event.createTrigger()  # trigger element present but with no math
+    event.createEventAssignment().setVariable("p")
+
+    builder._format_events()
+
+    assert builder._events == []
+
+
+def test_format_events_skips_event_with_no_trigger():
+    """An event with no trigger element at all can never fire, so no event is emitted."""
+    builder = _event_builder()
+    builder._sbml_model.createEvent()  # no trigger
+
+    builder._format_events()
+
+    assert builder._events == []
+
+
+def test_reject_unsupported_delay_allows_missing_delay_math():
+    """A delay element with no MathML is treated as no delay, so it is not rejected."""
+    builder = _event_builder()
+    event = builder._sbml_model.createEvent()
+    event.createDelay()  # delay element present but with no math
+
+    builder._reject_unsupported_delay(event)  # should not raise
+
+
+def test_reject_unsupported_packages_rejects_fbc():
+    """A model using the flux-balance-constraints (fbc) package is rejected."""
+    doc = libsbml.SBMLDocument(libsbml.SBMLNamespaces(3, 1, "fbc", 2))
+    builder = _builder_without_init()
+    builder._sbml_model = doc.createModel()
+    builder._keep_doc = doc
+
+    with pytest.raises(NotImplementedError, match="fbc"):
+        builder._reject_unsupported_packages()
+
+
+def test_reject_unsupported_packages_allows_plain_model():
+    """A model without an unsupported package is not rejected."""
+    doc = libsbml.SBMLDocument(3, 2)
+    builder = _builder_without_init()
+    builder._sbml_model = doc.createModel()
+    builder._keep_doc = doc
+
+    builder._reject_unsupported_packages()  # should not raise
+
+
+def test_format_function_definitions_skips_missing_body():
+    """A function definition with no MathML body is skipped rather than crashing."""
+    builder = _event_builder()
+    builder._sbml_model.createFunctionDefinition().setId("foo")  # no body
+
+    builder._format_function_definitions()
+
+    assert builder._functions == []
+
+
 def _distance_builder() -> ModelBuilder:
     """A bare builder wired just enough for _event_trigger_distance and trigger formatting."""
     builder = _builder_without_init()
     doc = libsbml.SBMLDocument(3, 2)
     builder._sbml_model = doc.createModel()
     builder._keep_doc = doc  # keep the owning document (and thus the model) alive
-    builder._variable_types = {}
     builder._state_variables = []
+    builder._parameters = []
+    builder._derived_quantities = []
+    builder._reactions = []
+    builder._functions = []
     return builder
 
 
@@ -266,8 +466,11 @@ def _resize_builder(*, assignment_rules=()) -> ModelBuilder:
     builder._sbml_compartments = model.getListOfCompartments()
     builder._sbml_species = model.getListOfSpecies()
     builder._assignment_rules = list(assignment_rules)
-    builder._variable_types = {"S": VarType.STATE_VARIABLE}
-    builder._state_variables = []
+    builder._state_variables = [_make_state_variable(id="S", derivative_id="d_S_dt")]
+    builder._parameters = []
+    builder._derived_quantities = []
+    builder._reactions = []
+    builder._functions = []
     builder._index_of = {"S": 0}
     return builder
 

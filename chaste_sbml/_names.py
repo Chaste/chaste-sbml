@@ -23,6 +23,8 @@ name inherited from the base classes.
 
 import re
 
+import libsbml
+
 # C++ keywords (and alternative operator spellings); none may be used as an identifier.
 CPP_KEYWORDS = frozenset(
     {
@@ -156,8 +158,13 @@ CHASTE_RESERVED_NAMES = frozenset(
     }
 )
 
+# C++ macros (from <cmath>/<cstdlib>) that expand when used as a bare identifier, so an SBML id
+# spelled like one cannot be emitted verbatim (e.g. a parameter NAN becomes `double NAN;`, which
+# the preprocessor rewrites into the macro's expansion).
+CPP_MACROS = frozenset({"NAN", "INFINITY", "HUGE_VAL", "EOF", "NULL"})
+
 # Every name the generator may not use for one of its own identifiers.
-RESERVED_NAMES = CPP_KEYWORDS | CHASTE_RESERVED_NAMES
+RESERVED_NAMES = CPP_KEYWORDS | CHASTE_RESERVED_NAMES | CPP_MACROS
 
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
@@ -239,7 +246,7 @@ def resolve_cpp_name(base: str, taken) -> str:
     :return: A C++-safe identifier not present in ``taken``.
     """
     candidate = base
-    while candidate in CPP_KEYWORDS or candidate in CHASTE_RESERVED_NAMES:
+    while candidate in CPP_KEYWORDS or candidate in CHASTE_RESERVED_NAMES or candidate in CPP_MACROS:
         candidate += "_"
     return unique_name(candidate, taken)
 
@@ -257,6 +264,10 @@ class NameManager:
         """:param sbml_model: The libsbml Model whose ids are being turned into C++."""
         self._sbml_model = sbml_model
         self._taken: set = set()
+        # C++ identifier (the renamed id) -> original SBML id, for ids renamed to dodge a C++
+        # keyword or reserved name. Lets the generated code report a variable under its real SBML
+        # id even though its C++ identifier had to be escaped.
+        self._sbml_names: dict[str, str] = {}
 
     def resolve_real_id_conflicts(self) -> None:
         """Rename real SBML ids that are C++ keywords or reserved Chaste names.
@@ -289,13 +300,51 @@ class NameManager:
             if not element.isSetId():
                 continue
             old_id = element.getId()
-            if old_id not in CPP_KEYWORDS and old_id not in CHASTE_RESERVED_NAMES:
+            if old_id not in CPP_KEYWORDS and old_id not in CHASTE_RESERVED_NAMES and old_id not in CPP_MACROS:
                 continue
             new_id = resolve_cpp_name(old_id, taken)
             element.setId(new_id)
             for referrer in model.getListOfAllElements():
                 referrer.renameSIdRefs(old_id, new_id)
+            # ``renameSIdRefs`` rewrites variable references but not function-call names (a call
+            # ``f(x)`` is an ``AST_FUNCTION`` node, not an ``AST_NAME``), so a renamed function
+            # definition would leave its callers dangling. Rewrite those calls explicitly.
+            self._rename_function_call_refs(old_id, new_id)
             taken.add(new_id)
+            self._sbml_names[new_id] = old_id
+
+    def _rename_function_call_refs(self, old_id: str, new_id: str) -> None:
+        """Rename every ``old_id(...)`` function call in the model's math to ``new_id(...)``.
+
+        Function calls reference a function definition by name through an ``AST_FUNCTION`` node,
+        which ``renameSIdRefs`` leaves untouched; without this a function definition renamed to
+        avoid a keyword/reserved/macro clash (e.g. one called ``this``) keeps being called under
+        its old, now-invalid name.
+        """
+
+        def rename(node: "libsbml.ASTNode") -> None:
+            if node is None:
+                return
+            if node.getType() == libsbml.AST_FUNCTION and node.getName() == old_id:
+                node.setName(new_id)
+            for i in range(node.getNumChildren()):
+                rename(node.getChild(i))
+
+        for element in self._sbml_model.getListOfAllElements():
+            if hasattr(element, "isSetMath") and element.isSetMath():
+                rename(element.getMath())
+
+    def sbml_name(self, cpp_id: str) -> str:
+        """Return the original SBML id for a (possibly renamed) C++ identifier.
+
+        A variable is reported to Chaste under this name, so it is looked up by its real SBML id
+        even when the emitted C++ identifier had to be escaped (e.g. a parameter ``time`` emitted
+        as ``time_``). Ids that were never renamed are returned unchanged.
+
+        :param cpp_id: The C++ identifier as it appears in the generated code.
+        :return: The original SBML id if ``cpp_id`` was a renamed id, else ``cpp_id``.
+        """
+        return self._sbml_names.get(cpp_id, cpp_id)
 
     def reset(self) -> None:
         """Recompute the taken-name set from the (resolved) model, ready for a build.

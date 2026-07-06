@@ -154,6 +154,14 @@ public:
         TS_ASSERT_EQUALS(sm::not_(true), false);
         TS_ASSERT_EQUALS(sm::not_(false), true);
     }
+    void TestImplies()
+    {
+        // implies(a, b) == (not a) or b
+        TS_ASSERT_EQUALS(sm::implies(true, true), true);
+        TS_ASSERT_EQUALS(sm::implies(true, false), false);
+        TS_ASSERT_EQUALS(sm::implies(false, true), true);
+        TS_ASSERT_EQUALS(sm::implies(false, false), true);
+    }
 
     void TestXor()
     {
@@ -166,6 +174,11 @@ public:
         TS_ASSERT_EQUALS(sm::xor_(false, false), false);
         TS_ASSERT_EQUALS(sm::xor_(false, true, false), true);
         TS_ASSERT_EQUALS(sm::xor_(true, false, true), false);
+
+        // Numeric-boolean (double) operands: cast to bool before xoring.
+        TS_ASSERT_EQUALS(sm::xor_(1.0, 0.0), true);
+        TS_ASSERT_EQUALS(sm::xor_(1.0, 1.0), false);
+        TS_ASSERT_EQUALS(sm::xor_(1.0, 0.0, 1.0), false);
     }
 
     // Relational =================================
@@ -361,6 +374,7 @@ public:
 
     void TestMax()
     {
+        TS_ASSERT_EQUALS(sm::max(2.0), 2.0);  // single argument
         TS_ASSERT_EQUALS(sm::max(1.0, 2.0), 2.0);
         TS_ASSERT_EQUALS(sm::max(2.0, 1.0), 2.0);
         TS_ASSERT_EQUALS(sm::max(1.0, 2.0, 3.0), 3.0);
@@ -374,6 +388,7 @@ public:
 
     void TestMin()
     {
+        TS_ASSERT_EQUALS(sm::min(2.0), 2.0);  // single argument
         TS_ASSERT_EQUALS(sm::min(1.0, 2.0), 1.0);
         TS_ASSERT_EQUALS(sm::min(2.0, 1.0), 1.0);
         TS_ASSERT_EQUALS(sm::min(3.0, 2.0, 1.0), 1.0);
@@ -394,6 +409,12 @@ public:
 
         TS_ASSERT_EQUALS(sm::piecewise(1, true, 2), 1);
         TS_ASSERT_EQUALS(sm::piecewise(1, false, 2), 2);
+
+        // No otherwise clause: the value when the condition holds, NaN when it does not.
+        TS_ASSERT_EQUALS(sm::piecewise(1.0, true), 1.0);
+        TS_ASSERT(std::isnan(sm::piecewise(1.0, false)));
+        TS_ASSERT_EQUALS(sm::piecewise(1.0, true, 2.0, false), 1.0);
+        TS_ASSERT(std::isnan(sm::piecewise(1.0, false, 2.0, false)));
     }
 
     void TestQuotient()

@@ -166,6 +166,72 @@ def test_name_manager_resolve_leaves_safe_ids_untouched():
     assert sbml_model.getElementBySId("cell") is not None
 
 
+def test_name_manager_sbml_name_recovers_original_id():
+    """After a keyword id is renamed, sbml_name maps the C++ id back to the original SBML id.
+
+    A variable must be reported to Chaste under its real SBML id even though the emitted C++
+    identifier had to be escaped, so it can be looked up by that id.
+    """
+    doc = libsbml.SBMLDocument(3, 2)
+    sbml_model = doc.createModel()
+    parameter = sbml_model.createParameter()
+    parameter.setId("true")  # 'true' is a C++ keyword, so it is renamed to 'true_'
+    parameter.setConstant(True)
+    parameter.setValue(1.0)
+
+    manager = NameManager(sbml_model)
+    manager.resolve_real_id_conflicts()
+
+    assert sbml_model.getParameter("true_") is not None
+    assert manager.sbml_name("true_") == "true"  # renamed id maps back to the real SBML id
+    assert manager.sbml_name("k") == "k"  # an un-renamed id is returned unchanged
+
+
+def test_name_manager_resolve_renames_cpp_macro():
+    """An id spelling a C++ macro (e.g. NAN) is renamed but still reported under its original id.
+
+    ``double NAN;`` would be rewritten by the preprocessor into the macro's expansion, so the id
+    must be escaped for the emitted code while keeping ``NAN`` as its reported name.
+    """
+    doc = libsbml.SBMLDocument(3, 2)
+    sbml_model = doc.createModel()
+    parameter = sbml_model.createParameter()
+    parameter.setId("NAN")  # the NAN macro from <cmath>
+    parameter.setConstant(True)
+    parameter.setValue(0.1)
+
+    manager = NameManager(sbml_model)
+    manager.resolve_real_id_conflicts()
+
+    assert sbml_model.getParameter("NAN") is None
+    assert sbml_model.getParameter("NAN_") is not None
+    assert manager.sbml_name("NAN_") == "NAN"
+
+
+def test_name_manager_resolve_renames_function_calls():
+    """A function definition renamed to dodge a keyword also has its callers rewritten.
+
+    A call ``this(x)`` is an ``AST_FUNCTION`` node, which ``renameSIdRefs`` leaves untouched, so
+    renaming the ``this`` function definition must explicitly rewrite the call inside ``caller`` --
+    otherwise the emitted C++ would call a function that no longer exists (and ``this`` is a keyword).
+    """
+    doc = libsbml.SBMLDocument(3, 2)
+    sbml_model = doc.createModel()
+    callee = sbml_model.createFunctionDefinition()
+    callee.setId("this")  # 'this' is a C++ keyword
+    callee.setMath(libsbml.parseL3Formula("lambda(x, x)"))
+    caller = sbml_model.createFunctionDefinition()
+    caller.setId("caller")
+    caller.setMath(libsbml.parseL3Formula("lambda(x, this(x))"))
+
+    NameManager(sbml_model).resolve_real_id_conflicts()
+
+    assert sbml_model.getFunctionDefinition("this") is None
+    assert sbml_model.getFunctionDefinition("this_") is not None
+    # The body of 'caller' now calls the renamed function.
+    assert "this_(x)" in libsbml.formulaToL3String(sbml_model.getFunctionDefinition("caller").getMath())
+
+
 def test_generate_header_guard():
     """Test header guard generation."""
     test_cases = [

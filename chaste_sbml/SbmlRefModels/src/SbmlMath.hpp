@@ -95,6 +95,9 @@ constexpr bool or_(Args... args);
 // not_
 inline bool not_(bool x) { return !x; }
 
+// implies (a implies b == (not a) or b)
+inline bool implies(double antecedent, double consequent) { return !antecedent || consequent; }
+
 // xor_
 template <typename... Args>
 constexpr bool xor_(Args... args);
@@ -149,16 +152,22 @@ inline double asech(double x) { return std::acosh(1.0 / x); }
 // factorial
 inline double factorial(double x) { return std::tgamma(x + 1.0); }
 
-// max
+// max (the max of a single value is that value)
+constexpr double max(double only) { return only; }
 template <typename... Args>
 constexpr double max(double first, double second, Args... rest);
 
-// min
+// min (the min of a single value is that value)
+constexpr double min(double only) { return only; }
 template <typename... Args>
 constexpr double min(double first, double second, Args... rest);
 
 // piecewise
 constexpr double piecewise(double otherwise);
+
+// A piecewise with no otherwise clause: undefined (NaN) when the condition does not hold. Also the
+// recursion base case for an even number of arguments (pieces without a trailing otherwise).
+constexpr double piecewise(double value, bool condition);
 
 constexpr double piecewise(double value, bool condition, double otherwise);
 
@@ -206,7 +215,9 @@ constexpr bool sbmlmath::or_(Args... args)
 template <typename... Args>
 constexpr bool sbmlmath::xor_(Args... args)
 {
-    return (false ^ ... ^ args);
+    // Cast each operand to bool first: the arguments are numeric booleans (0/non-0), and ^ is
+    // bitwise (undefined for double), so xor them as bools -- true when an odd number are true.
+    return (false ^ ... ^ static_cast<bool>(args));
 }
 
 // Relational (variadic templates) ==============
@@ -294,6 +305,11 @@ constexpr double sbmlmath::min(double first, double second, Args... rest)
 constexpr double sbmlmath::piecewise(double otherwise)
 {
     return otherwise;
+}
+
+constexpr double sbmlmath::piecewise(double value, bool condition)
+{
+    return condition ? value : std::numeric_limits<double>::quiet_NaN();
 }
 
 constexpr double sbmlmath::piecewise(double value, bool condition, double otherwise)

@@ -19,7 +19,7 @@ fi
 
 if [[ ! -d "${chaste_dir}" ]]; then
 	echo "Error: Chaste source directory not found at '${chaste_dir}'." >&2
-	echo "Set CHASTE_SOURCE_DIR to override the default sibling checkout path." >&2
+	echo "Set CHASTE_SOURCE_DIR to override the default checkout path." >&2
 	exit 1
 fi
 
@@ -27,5 +27,5 @@ mkdir -p "${output_dir}" "${build_dir}"
 export CHASTE_TEST_OUTPUT="${output_dir}"
 
 cd "${build_dir}"
-nice -n 9 cmake "${chaste_dir}"
+nice -n 9 cmake -DChaste_UPDATE_PROVENANCE=OFF "${chaste_dir}"
 

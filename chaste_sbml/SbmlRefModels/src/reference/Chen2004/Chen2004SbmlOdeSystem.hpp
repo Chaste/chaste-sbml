@@ -27,6 +27,9 @@ private:
     }
 
     // PARAMETERS
+    double BUB2;       // BUB2
+    double LTE1;       // LTE1
+    double MAD2;       // MAD2
     double b0;         // b0
     double bub2h;      // bub2h
     double bub2l;      // bub2l
@@ -249,7 +252,6 @@ private:
     // DERIVED QUANTITIES
     double cell;    // cell
     double BCK2;    // BCK2
-    double BUB2;    // BUB2
     double CDC14T;  // CDC14T
     double CDC15i;  // CDC15i
     double CDC6T;   // CDC6T
@@ -258,8 +260,6 @@ private:
     double CLB5T;   // CLB5T
     double CLN3;    // CLN3
     double IE;      // IE
-    double LTE1;    // LTE1
-    double MAD2;    // MAD2
     double MCM1;    // MCM1
     double NET1T;   // NET1T
     double PE;      // PE

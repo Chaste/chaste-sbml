@@ -74,22 +74,22 @@ void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vect
 
 void Gardner1998SbmlOdeSystem::Initialise(double time)
 {
-    Cell = 1.0;                              //
-    C = 0.0;                                 //
-    X = 0.0;                                 //
-    M = 0.0;                                 //
-    Y = 1.0;                                 //
-    Z = 1.0;                                 //
-    K6 = 0.3;                                //
-    V1p = 0.75;                              //
-    V3p = 0.3;                               //
-    C = C / Cell;                            //
-    X = X / Cell;                            //
-    M = M / Cell;                            //
-    Y = Y / Cell;                            //
-    Z = Z / Cell;                            //
-    V1 = C * V1p * std::pow((C + K6), -1.0); //
-    V3 = M * V3p;                            //
+    Cell = 1.0;                            //
+    C = 0.0;                               //
+    X = 0.0;                               //
+    M = 0.0;                               //
+    Y = 1.0;                               //
+    Z = 1.0;                               //
+    K6 = 0.3;                              //
+    V1p = 0.75;                            //
+    V3p = 0.3;                             //
+    C = C / Cell;                          //
+    X = X / Cell;                          //
+    M = M / Cell;                          //
+    Y = Y / Cell;                          //
+    Z = Z / Cell;                          //
+    V1 = C * V1p * std::pow(C + K6, -1.0); //
+    V3 = M * V3p;                          //
     // reaction1:
     {
         [[maybe_unused]] double vi = 0.1;
@@ -105,7 +105,7 @@ void Gardner1998SbmlOdeSystem::Initialise(double time)
         // Qualify with this-> so the assignment targets the reaction member even when a local
         // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
         // reaction J1 with a local parameter also named J1).
-        this->reaction2 = C * k1 * X * std::pow((C + K5), -1.0);
+        this->reaction2 = C * k1 * X * std::pow(C + K5, -1.0);
     }
     // reaction3:
     {
@@ -121,7 +121,7 @@ void Gardner1998SbmlOdeSystem::Initialise(double time)
         // Qualify with this-> so the assignment targets the reaction member even when a local
         // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
         // reaction J1 with a local parameter also named J1).
-        this->reaction4 = (1.0 + -1.0 * M) * V1 * std::pow((K1 + -1.0 * M + 1.0), -1.0);
+        this->reaction4 = (1.0 + -1.0 * M) * V1 * std::pow(K1 + -1.0 * M + 1.0, -1.0);
     }
     // reaction5:
     {
@@ -130,7 +130,7 @@ void Gardner1998SbmlOdeSystem::Initialise(double time)
         // Qualify with this-> so the assignment targets the reaction member even when a local
         // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
         // reaction J1 with a local parameter also named J1).
-        this->reaction5 = M * V2 * std::pow((K2 + M), -1.0);
+        this->reaction5 = M * V2 * std::pow(K2 + M, -1.0);
     }
     // reaction6:
     {
@@ -138,7 +138,7 @@ void Gardner1998SbmlOdeSystem::Initialise(double time)
         // Qualify with this-> so the assignment targets the reaction member even when a local
         // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
         // reaction J1 with a local parameter also named J1).
-        this->reaction6 = V3 * (1.0 + -1.0 * X) * std::pow((K3 + -1.0 * X + 1.0), -1.0);
+        this->reaction6 = V3 * (1.0 + -1.0 * X) * std::pow(K3 + -1.0 * X + 1.0, -1.0);
     }
     // reaction7:
     {
@@ -147,7 +147,7 @@ void Gardner1998SbmlOdeSystem::Initialise(double time)
         // Qualify with this-> so the assignment targets the reaction member even when a local
         // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
         // reaction J1 with a local parameter also named J1).
-        this->reaction7 = V4 * X * std::pow((K4 + X), -1.0);
+        this->reaction7 = V4 * X * std::pow(K4 + X, -1.0);
     }
     // reaction8:
     {
@@ -259,8 +259,8 @@ std::vector<double> Gardner1998SbmlOdeSystem::RunModelEquations(double time, con
     V1p = GetParameter(1);
     V3p = GetParameter(2);
 
-    V1 = C * V1p * std::pow((C + K6), -1.0); //
-    V3 = M * V3p;                            //
+    V1 = C * V1p * std::pow(C + K6, -1.0); //
+    V3 = M * V3p;                          //
     // reaction1:
     {
         [[maybe_unused]] double vi = 0.1;
@@ -276,7 +276,7 @@ std::vector<double> Gardner1998SbmlOdeSystem::RunModelEquations(double time, con
         // Qualify with this-> so the assignment targets the reaction member even when a local
         // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
         // reaction J1 with a local parameter also named J1).
-        this->reaction2 = C * k1 * X * std::pow((C + K5), -1.0);
+        this->reaction2 = C * k1 * X * std::pow(C + K5, -1.0);
     }
     // reaction3:
     {
@@ -292,7 +292,7 @@ std::vector<double> Gardner1998SbmlOdeSystem::RunModelEquations(double time, con
         // Qualify with this-> so the assignment targets the reaction member even when a local
         // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
         // reaction J1 with a local parameter also named J1).
-        this->reaction4 = (1.0 + -1.0 * M) * V1 * std::pow((K1 + -1.0 * M + 1.0), -1.0);
+        this->reaction4 = (1.0 + -1.0 * M) * V1 * std::pow(K1 + -1.0 * M + 1.0, -1.0);
     }
     // reaction5:
     {
@@ -301,7 +301,7 @@ std::vector<double> Gardner1998SbmlOdeSystem::RunModelEquations(double time, con
         // Qualify with this-> so the assignment targets the reaction member even when a local
         // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
         // reaction J1 with a local parameter also named J1).
-        this->reaction5 = M * V2 * std::pow((K2 + M), -1.0);
+        this->reaction5 = M * V2 * std::pow(K2 + M, -1.0);
     }
     // reaction6:
     {
@@ -309,7 +309,7 @@ std::vector<double> Gardner1998SbmlOdeSystem::RunModelEquations(double time, con
         // Qualify with this-> so the assignment targets the reaction member even when a local
         // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
         // reaction J1 with a local parameter also named J1).
-        this->reaction6 = V3 * (1.0 + -1.0 * X) * std::pow((K3 + -1.0 * X + 1.0), -1.0);
+        this->reaction6 = V3 * (1.0 + -1.0 * X) * std::pow(K3 + -1.0 * X + 1.0, -1.0);
     }
     // reaction7:
     {
@@ -318,7 +318,7 @@ std::vector<double> Gardner1998SbmlOdeSystem::RunModelEquations(double time, con
         // Qualify with this-> so the assignment targets the reaction member even when a local
         // parameter shadows its name (an SBML local parameter may shadow the reaction ID, e.g. a
         // reaction J1 with a local parameter also named J1).
-        this->reaction7 = V4 * X * std::pow((K4 + X), -1.0);
+        this->reaction7 = V4 * X * std::pow(K4 + X, -1.0);
     }
     // reaction8:
     {

@@ -327,7 +327,7 @@ void CellwiseOdeSystemInformation<{{ ode_class_name }}>::Initialise()
 {
     // STATE VARIABLES
 {% for var in state_variables %}
-    this->mVariableNames.push_back("{{ var['id'] }}");
+    this->mVariableNames.push_back("{{ var['name'] }}");
     this->mVariableUnits.push_back("{{ var['units'] }}");
 {% if var["initial_value"] is not none %}
     this->mInitialConditions.push_back({{ var['initial_value'] }});
@@ -339,14 +339,14 @@ void CellwiseOdeSystemInformation<{{ ode_class_name }}>::Initialise()
 
     // DERIVED QUANTITIES
 {% for dq in derived_quantities %}
-    this->mDerivedQuantityNames.push_back("{{ dq['id'] }}");
+    this->mDerivedQuantityNames.push_back("{{ dq['name'] }}");
     this->mDerivedQuantityUnits.push_back("{{ dq['units'] }}");
 
 {% endfor %}
 
     // PARAMETERS
 {% for var in parameters %}
-    this->mParameterNames.push_back("{{ var['id'] }}");
+    this->mParameterNames.push_back("{{ var['name'] }}");
     this->mParameterUnits.push_back("{{ var['units'] }}");
 
 {% endfor %}
