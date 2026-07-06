@@ -35,6 +35,7 @@ from ._config import (
     NON_DIM_UNITS,
     PLACEHOLDER_STATE_ID,
     PREFIX_SEP,
+    DerivedQuantityKind,
     EquationType,
     EventType,
     VarType,
@@ -115,7 +116,7 @@ class ModelBuilder:
         amt_rhs = f"{species_id} * {compartment_id}"
         amt_math = parseL3Formula(amt_rhs)
 
-        self._add_derived_quantity(amt_id, amt_label, None, amt_units, is_conversion=True)
+        self._add_derived_quantity(amt_id, amt_label, None, amt_units, kind=DerivedQuantityKind.CONVERSION)
         self._add_equation(var=amt_id, math=amt_math, eq_type=EquationType.CONVERSION)
 
     def _add_concentration(self, species: "Species") -> None:
@@ -136,7 +137,7 @@ class ModelBuilder:
         conc_rhs = f"{species_id} / {compartment_id}"
         conc_math = parseL3Formula(conc_rhs)
 
-        self._add_derived_quantity(conc_id, conc_label, None, conc_units, is_conversion=True)
+        self._add_derived_quantity(conc_id, conc_label, None, conc_units, kind=DerivedQuantityKind.CONVERSION)
         self._add_equation(var=conc_id, math=conc_math, eq_type=EquationType.CONVERSION)
 
     def _add_assignment_rule(self, id_: str, label: str, var: str, math: "ASTNode") -> None:
@@ -155,8 +156,7 @@ class ModelBuilder:
         label: str,
         initial_value: Optional[float],
         units: str = NON_DIM_UNITS,
-        is_conversion: bool = False,
-        is_reaction: bool = False,
+        kind: DerivedQuantityKind = DerivedQuantityKind.NORMAL,
     ) -> None:
         """Add a derived quantity to the template variables.
 
@@ -164,11 +164,10 @@ class ModelBuilder:
         :param label: The variable description.
         :param initial_value: The variable initial value.
         :param units: The variable units.
-        :param is_conversion: True if the derived quantity is an amount/concentration
-            conversion (computed in ComputeDerivedQuantities rather than stored as a member).
-        :param is_reaction: True if the derived quantity is a reaction flux exposed as an
-            output. Its member is already declared by the reaction loop, so it is not
-            re-declared, and its variable type stays VarType.REACTION.
+        :param kind: The kind of derived quantity. CONVERSION is an amount/concentration conversion
+            (computed in ComputeDerivedQuantities rather than stored as a member); REACTION is a
+            reaction flux exposed as an output -- its member is already declared by the reaction
+            loop, so it is not re-declared and its variable type stays VarType.REACTION.
         """
         self._derived_quantities.append(
             DerivedQuantity(
@@ -176,14 +175,11 @@ class ModelBuilder:
                 label=label,
                 index=len(self._derived_quantities),
                 initial_value=initial_value,
-                is_conversion=is_conversion,
-                is_reaction=is_reaction,
                 units=units,
+                kind=kind,
                 name=self._names.sbml_name(id_),
             )
         )
-        if not is_reaction:
-            self._variable_types[id_] = VarType.DERIVED_QUANTITY
 
     def _add_equation(
         self,
@@ -245,7 +241,6 @@ class ModelBuilder:
         :param body: The function body.
         """
         self._functions.append(Function(id=id_, label=label, index=len(self._functions), args=args, body=body))
-        self._variable_types[id_] = VarType.FUNCTION
 
     def _add_initial_assignment(self, id_: str, label: str, var: str, math: Optional["ASTNode"] = None) -> None:
         """Add an initial assignment to the template variables.
@@ -284,7 +279,6 @@ class ModelBuilder:
                 name=self._names.sbml_name(id_),
             )
         )
-        self._variable_types[id_] = VarType.PARAMETER
 
     def _add_rate_rule(self, id_: str, label: str, var: str, math: "ASTNode") -> None:
         """Add a rate rule to the template variables.
@@ -303,7 +297,6 @@ class ModelBuilder:
         :param label: The variable description.
         """
         self._reactions.append(Reaction(index=len(self._reactions), id=id_, label=label))
-        self._variable_types[id_] = VarType.REACTION
 
     def _add_state_variable(
         self, id_: str, label: str, initial_value: Optional[float], units: str = NON_DIM_UNITS
@@ -327,7 +320,6 @@ class ModelBuilder:
         )
 
         self._state_variables.append(state_var)
-        self._variable_types[id_] = VarType.STATE_VARIABLE
 
         return state_var
 
@@ -865,8 +857,8 @@ class ModelBuilder:
             # A reaction's ID denotes its rate (flux), an observable that rules, events and
             # test outputs can read. Expose it as a derived quantity. The flux member is
             # already declared and computed by the reaction machinery, so it keeps its
-            # VarType.REACTION type and is not re-declared (is_reaction=True).
-            self._add_derived_quantity(id_, label, None, NON_DIM_UNITS, is_reaction=True)
+            # VarType.REACTION type and is not re-declared (kind=REACTION).
+            self._add_derived_quantity(id_, label, None, NON_DIM_UNITS, kind=DerivedQuantityKind.REACTION)
 
             kinetic_law = reaction.getKineticLaw()
             if kinetic_law is None:
@@ -1133,7 +1125,7 @@ class ModelBuilder:
         :param local_parameters: Local parameters in scope for the formula.
         :return: The equivalent C++ string.
         """
-        return formula_to_string(math, self._variable_types, self._state_variables, local_parameters)
+        return formula_to_string(math, self._variable_type_map(), self._state_variables, local_parameters)
 
     def _get_timescale_multiplier(self) -> float:
         """Get the timescale multiplier.
@@ -1178,9 +1170,30 @@ class ModelBuilder:
             for record in collection:
                 index_of[record.id] = record.index
         for derived_quantity in self._derived_quantities:
-            if not derived_quantity.is_reaction:
+            if derived_quantity.kind != DerivedQuantityKind.REACTION:
                 index_of[derived_quantity.id] = derived_quantity.index
         return index_of
+
+    def _variable_type_map(self) -> dict[str, VarType]:
+        """Map each variable id to its VarType, derived from the built record collections.
+
+        The type of a variable is implied by which collection its record belongs to, so no separate
+        mapping is kept. A reaction flux is both a Reaction (typed VarType.REACTION) and an
+        REACTION-kind DerivedQuantity; the latter is skipped so the reaction id keeps its type.
+        """
+        types: dict[str, VarType] = {}
+        for derived_quantity in self._derived_quantities:
+            if derived_quantity.kind != DerivedQuantityKind.REACTION:
+                types[derived_quantity.id] = VarType.DERIVED_QUANTITY
+        for function in self._functions:
+            types[function.id] = VarType.FUNCTION
+        for parameter in self._parameters:
+            types[parameter.id] = VarType.PARAMETER
+        for reaction in self._reactions:
+            types[reaction.id] = VarType.REACTION
+        for state_variable in self._state_variables:
+            types[state_variable.id] = VarType.STATE_VARIABLE
+        return types
 
     def _get_variable_type(self, var_id: str) -> VarType:
         """Get the type of a variable based on its ID.
@@ -1188,7 +1201,7 @@ class ModelBuilder:
         :param var_id: The variable ID.
         :return: The variable's VarType, or VarType.UNKNOWN if it is not a known variable.
         """
-        return self._variable_types.get(var_id, VarType.UNKNOWN)
+        return self._variable_type_map().get(var_id, VarType.UNKNOWN)
 
     def _order_derived_quantities(self) -> None:
         """Order derived quantities: normal quantities, then reactions, then conversions.
@@ -1201,9 +1214,9 @@ class ModelBuilder:
         """
 
         def group(dq: "DerivedQuantity") -> int:
-            if dq.is_conversion:
+            if dq.kind == DerivedQuantityKind.CONVERSION:
                 return 2
-            if dq.is_reaction:
+            if dq.kind == DerivedQuantityKind.REACTION:
                 return 1
             return 0
 
@@ -1215,7 +1228,6 @@ class ModelBuilder:
         """Process the SBML model to set up the formatted variables for templates."""
         self._reject_unsupported_packages()
 
-        self._variable_types = {}
         self._index_of = None  # id -> index cache, built lazily by _get_variable_index
         self._odes = {}
 
@@ -1295,10 +1307,12 @@ class ModelBuilder:
             identifiers.append((var.id, "state variable"))
             identifiers.append((var.derivative_id, "state-variable derivative"))
         for dq in self._derived_quantities:
-            if dq.is_reaction:
+            if dq.kind == DerivedQuantityKind.REACTION:
                 continue  # Declared under reactions; counted there.
-            kind = "amount/concentration conversion" if dq.is_conversion else "derived quantity"
-            identifiers.append((dq.id, kind))
+            kind_label = (
+                "amount/concentration conversion" if dq.kind == DerivedQuantityKind.CONVERSION else "derived quantity"
+            )
+            identifiers.append((dq.id, kind_label))
         identifiers += [(s.id, "stoichiometry variable") for s in self._stoichiometry_variables]
         identifiers += [(r.id, "reaction") for r in self._reactions]
         identifiers += [(f.id, "function") for f in self._functions]

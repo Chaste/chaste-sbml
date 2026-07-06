@@ -9,6 +9,7 @@ from chaste_sbml._config import (
     PLACEHOLDER_STATE_ID,
     PREFIX_SEP,
     ROOT_DIR,
+    DerivedQuantityKind,
     EquationType,
     VarType,
 )
@@ -101,10 +102,8 @@ def _make_state_variable(*, id, derivative_id):
     return StateVariable(index=0, id=id, derivative_id=derivative_id, label="", initial_value=None, units="")
 
 
-def _make_derived_quantity(*, id, is_conversion=False, is_reaction=False):
-    return DerivedQuantity(
-        id=id, label="", index=0, initial_value=None, is_conversion=is_conversion, is_reaction=is_reaction, units=""
-    )
+def _make_derived_quantity(*, id, kind=DerivedQuantityKind.NORMAL):
+    return DerivedQuantity(id=id, label="", index=0, initial_value=None, units="", kind=kind)
 
 
 def test_check_name_conflicts_passes_for_clean_model():
@@ -117,7 +116,7 @@ def test_check_name_conflicts_flags_synthetic_vs_real_collision():
     """A real id equal to a synthesised amount-conversion name is caught."""
     builder = _builder_with_names(
         state_variables=["X"],
-        derived_quantities=[{"id": "amt__X", "is_conversion": True, "is_reaction": False}],
+        derived_quantities=[{"id": "amt__X", "kind": DerivedQuantityKind.CONVERSION}],
         parameters=["amt__X"],
     )
     with pytest.raises(NameConflictError, match="amt__X"):
@@ -143,7 +142,7 @@ def test_check_name_conflicts_ignores_reaction_flux_duplicate():
     builder = _builder_with_names(
         state_variables=["C"],
         reactions=["reaction1"],
-        derived_quantities=[{"id": "reaction1", "is_conversion": False, "is_reaction": True}],
+        derived_quantities=[{"id": "reaction1", "kind": DerivedQuantityKind.REACTION}],
     )
     builder._check_name_conflicts()  # should not raise
 
@@ -301,7 +300,7 @@ def test_build_extracts_parameters_and_reactions():
 def test_build_adds_amount_conversions_for_amount_species():
     """Amount species get an amt__<id> conversion derived quantity."""
     builder = _build(REFERENCE / "Goldbeter1991" / "Goldbeter1991.xml")
-    conversions = {d.id for d in builder._derived_quantities if d.is_conversion}
+    conversions = {d.id for d in builder._derived_quantities if d.kind == DerivedQuantityKind.CONVERSION}
     assert conversions == {"amt__C", "amt__M", "amt__X"}
 
 
@@ -329,8 +328,10 @@ def _event_builder():
     builder._keep_doc = doc  # keep the owning document (and thus the model) alive
     builder._sbml_events = builder._sbml_model.getListOfEvents()
     builder._sbml_function_definitions = builder._sbml_model.getListOfFunctionDefinitions()
-    builder._variable_types = {}
     builder._state_variables = []
+    builder._parameters = []
+    builder._derived_quantities = []
+    builder._reactions = []
     builder._events = []
     builder._functions = []
     return builder
@@ -404,8 +405,11 @@ def _distance_builder() -> ModelBuilder:
     doc = libsbml.SBMLDocument(3, 2)
     builder._sbml_model = doc.createModel()
     builder._keep_doc = doc  # keep the owning document (and thus the model) alive
-    builder._variable_types = {}
     builder._state_variables = []
+    builder._parameters = []
+    builder._derived_quantities = []
+    builder._reactions = []
+    builder._functions = []
     return builder
 
 
@@ -456,8 +460,11 @@ def _resize_builder(*, assignment_rules=()) -> ModelBuilder:
     builder._sbml_compartments = model.getListOfCompartments()
     builder._sbml_species = model.getListOfSpecies()
     builder._assignment_rules = list(assignment_rules)
-    builder._variable_types = {"S": VarType.STATE_VARIABLE}
-    builder._state_variables = []
+    builder._state_variables = [_make_state_variable(id="S", derivative_id="d_S_dt")]
+    builder._parameters = []
+    builder._derived_quantities = []
+    builder._reactions = []
+    builder._functions = []
     builder._index_of = {"S": 0}
     return builder
 

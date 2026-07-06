@@ -51,6 +51,19 @@ class VarType(Enum):
     UNKNOWN = 5
 
 
+class DerivedQuantityKind(Enum):
+    """Kind of derived quantity, which determines how it is declared and computed.
+
+    NORMAL is declared as a member and computed from an equation; REACTION is a reaction flux
+    (declared and computed by the reaction machinery, only exposed here as an output); CONVERSION
+    is an amount/concentration conversion computed in ComputeDerivedQuantities.
+    """
+
+    NORMAL = 0
+    REACTION = 1
+    CONVERSION = 2
+
+
 class ModelType(Enum):
     """Enumeration of model types for code generation."""
 

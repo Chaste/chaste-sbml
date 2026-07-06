@@ -42,7 +42,7 @@ private:
 
     // DERIVED QUANTITIES
 {% for dq in derived_quantities %}
-{% if dq["is_conversion"] is false() and dq["is_reaction"] is false() %}
+{% if dq["kind"] == DerivedQuantityKind.NORMAL %}
     double {{ dq["id"] }}; // {{ dq["label"] }}
 {% endif %}
 {% endfor %}

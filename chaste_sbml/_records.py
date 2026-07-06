@@ -9,7 +9,7 @@ templates read; changing one means updating the templates too.
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
-from ._config import EquationType, EventType, VarType
+from ._config import DerivedQuantityKind, EquationType, EventType, VarType
 
 if TYPE_CHECKING:
     from libsbml import ASTNode
@@ -71,9 +71,8 @@ class DerivedQuantity:
     label: str
     index: int
     initial_value: Optional[float]
-    is_conversion: bool
-    is_reaction: bool
     units: str
+    kind: DerivedQuantityKind = DerivedQuantityKind.NORMAL
     # SBML id reported to Chaste; equals ``id`` unless the id was escaped for C++ (see NameManager).
     name: str = ""
 

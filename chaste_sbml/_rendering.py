@@ -18,6 +18,7 @@ from ._config import (
     CONCENTRATION_PREFIX,
     PREFIX_SEP,
     ROOT_DIR,
+    DerivedQuantityKind,
     EquationType,
     EventType,
     VarType,
@@ -35,6 +36,7 @@ class CodeRenderer:
     )
     _env.globals["AMOUNT_PREFIX"] = AMOUNT_PREFIX
     _env.globals["CONCENTRATION_PREFIX"] = CONCENTRATION_PREFIX
+    _env.globals["DerivedQuantityKind"] = DerivedQuantityKind
     _env.globals["EquationType"] = EquationType
     _env.globals["EventType"] = EventType
     _env.globals["PREFIX_SEP"] = PREFIX_SEP
