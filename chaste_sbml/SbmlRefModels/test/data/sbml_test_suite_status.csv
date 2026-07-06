@@ -948,8 +948,8 @@ test,status,notes
 00947,pass,ok
 00948,pass,ok
 00949,pass,ok (no-ode placeholder)
-00950,fail_known,non-finite expected results (INF/NaN)
-00951,fail_known,non-finite expected results (INF/NaN)
+00950,pass,ok (non-finite results: INF/-INF/NaN)
+00951,pass,ok (non-finite results: INF/-INF/NaN)
 00952,unsupported,random event execution
 00953,unsupported,event execution semantics (competing simultaneous events)
 00954,pass,ok (no-ode placeholder)
@@ -1809,9 +1809,9 @@ test,status,notes
 01808,pass,ok
 01809,pass,ok
 01810,pass,ok (no-ode placeholder)
-01811,fail_known,non-finite expected results (INF/NaN)
+01811,pass,ok (parameters named INF/Inf/inf vs the infinity constant)
 01812,pass,ok (id spelled like a C++ macro)
-01813,fail_known,non-finite expected results (INF/NaN)
+01813,pass,ok (parameters named NAN/NaN/nan vs the notanumber constant)
 01814,pass,ok (no-ode placeholder)
 01815,pass,ok (no-ode placeholder)
 01816,pass,ok (no-ode placeholder)

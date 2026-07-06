@@ -160,11 +160,27 @@ public:
                 TS_ASSERT_EQUALS(values.size(), expected_result_data.size());
                 for (unsigned i = 0; i < expected_result_data.size(); i++)
                 {
-                    double delta = std::abs(expected_result_data[i][j] - values[i]);
-                    double tol = tol_absolute + tol_relative * std::abs(expected_result_data[i][j]);
-                    std::string msg(sth::ToString(values[i]) + " vs " + sth::ToString(expected_result_data[i][j])
+                    double expected = expected_result_data[i][j];
+                    double actual = values[i];
+                    std::string msg(sth::ToString(actual) + " vs " + sth::ToString(expected)
                                     + " at " + sth::ToString(ode_solution.rGetTimes()[i], 3) + " for " + var_name);
-                    TSM_ASSERT_LESS_THAN_EQUALS(msg.c_str(), delta, tol);
+                    // Non-finite expected values (e.g. a division by zero gives +/-INF, 0/0 gives
+                    // NaN) cannot be checked with a tolerance: |INF - INF| is NaN, and any
+                    // comparison against NaN is false. Match them by kind (and sign) instead.
+                    if (std::isnan(expected))
+                    {
+                        TSM_ASSERT(msg.c_str(), std::isnan(actual));
+                    }
+                    else if (std::isinf(expected))
+                    {
+                        TSM_ASSERT(msg.c_str(), std::isinf(actual) && std::signbit(actual) == std::signbit(expected));
+                    }
+                    else
+                    {
+                        double delta = std::abs(expected - actual);
+                        double tol = tol_absolute + tol_relative * std::abs(expected);
+                        TSM_ASSERT_LESS_THAN_EQUALS(msg.c_str(), delta, tol);
+                    }
                 }
             }
 

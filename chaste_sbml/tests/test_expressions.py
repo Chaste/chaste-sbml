@@ -189,13 +189,31 @@ def test_replace_constant_symbols_leaves_other_names():
         ("<pi/>", "M_PI"),
         ("<exponentiale/>", "M_E"),
         ("<infinity/>", "std::numeric_limits<double>::infinity()"),
-        ("<notanumber/>", "NAN"),
+        ("<notanumber/>", "std::numeric_limits<double>::quiet_NaN()"),
     ],
 )
 def test_formula_to_string_math_constants(mathml_symbol, expected):
-    """SBML math constants (incl. the capitalised INF/NaN libsbml emits) map to their C++ form."""
+    """SBML math constants map to their C++ form."""
     math = libsbml.readMathMLFromString(f'<math xmlns="http://www.w3.org/1998/Math/MathML">{mathml_symbol}</math>')
     assert formula_to_string(math, {}, state_variables=[]) == expected
+
+
+@pytest.mark.parametrize(
+    ("mathml_symbol", "param", "expected"),
+    [
+        ("<infinity/>", "INF", "std::numeric_limits<double>::infinity()"),
+        ("<notanumber/>", "NaN", "std::numeric_limits<double>::quiet_NaN()"),
+    ],
+)
+def test_formula_to_string_infinity_nan_distinct_from_parameter(mathml_symbol, param, expected):
+    """The <infinity/>/<notanumber/> constants stay distinct from a parameter spelled INF/NaN.
+
+    libsbml stores these constants as real nodes that render as ``INF``/``NaN`` -- the same text as
+    a reference to a parameter so named -- so the constant must be resolved from the AST, not its
+    rendered spelling (test-suite cases 1811/1813).
+    """
+    math = libsbml.readMathMLFromString(f'<math xmlns="http://www.w3.org/1998/Math/MathML">{mathml_symbol}</math>')
+    assert formula_to_string(math, {param: VarType.PARAMETER}, state_variables=[]) == expected
 
 
 def test_formula_to_string_pi_constant_and_parameter_are_distinct():

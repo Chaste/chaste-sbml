@@ -6,6 +6,7 @@ given the model's variable-type map and state-variable list as arguments rather 
 into the model.
 """
 
+import math
 import re
 from typing import TYPE_CHECKING, Optional
 
@@ -81,6 +82,9 @@ AVOGADRO_PLACEHOLDER = f"{CHASTE_PREFIX}{PREFIX_SEP}avogadro"
 PI_PLACEHOLDER = f"{CHASTE_PREFIX}{PREFIX_SEP}pi"
 E_PLACEHOLDER = f"{CHASTE_PREFIX}{PREFIX_SEP}exponentiale"
 TIME_PLACEHOLDER = f"{CHASTE_PREFIX}{PREFIX_SEP}time"
+INFINITY_PLACEHOLDER = f"{CHASTE_PREFIX}{PREFIX_SEP}infinity"
+NEG_INFINITY_PLACEHOLDER = f"{CHASTE_PREFIX}{PREFIX_SEP}neg_infinity"
+NAN_PLACEHOLDER = f"{CHASTE_PREFIX}{PREFIX_SEP}nan"
 
 _SYMBOL_PLACEHOLDERS = {
     AST_NAME_AVOGADRO: AVOGADRO_PLACEHOLDER,
@@ -91,12 +95,15 @@ _SYMBOL_PLACEHOLDERS = {
 
 
 def replace_constant_symbols(node: "ASTNode") -> None:
-    """Recursively rename SBML math-symbol nodes (avogadro, pi, exponentiale, time) to placeholders.
+    """Recursively rename SBML math-symbol nodes (avogadro, pi, exponentiale, time, inf, NaN).
 
     Each of these symbols renders identically to a same-named parameter, so it is renamed to a
     unique placeholder that maps to its C++ value, keeping it distinct from a parameter of the same
     spelling. Handling this at the AST level (rather than string-matching the rendered name) means a
-    real variable named ``t``, ``pi`` etc. is never mistaken for the symbol.
+    real variable named ``t``, ``pi`` etc. is never mistaken for the symbol. The MathML constants
+    ``<infinity/>`` and ``<notanumber/>`` are especially treacherous: libsbml stores them as ordinary
+    real nodes that render as ``INF``/``NaN``, indistinguishable from a reference to a parameter so
+    named (see test-suite cases 1811/1813), so they are matched here by their non-finite value.
 
     :param node: The root AST node.
     """
@@ -104,6 +111,14 @@ def replace_constant_symbols(node: "ASTNode") -> None:
     if placeholder is not None:
         node.setType(AST_NAME)
         node.setName(placeholder)
+    elif node.getType() == AST_REAL:
+        value = node.getReal()
+        if math.isnan(value):
+            node.setType(AST_NAME)
+            node.setName(NAN_PLACEHOLDER)
+        elif math.isinf(value):
+            node.setType(AST_NAME)
+            node.setName(NEG_INFINITY_PLACEHOLDER if value < 0 else INFINITY_PLACEHOLDER)
     for i in range(node.getNumChildren()):
         replace_constant_symbols(node.getChild(i))
 
@@ -239,21 +254,18 @@ def rewrite_power(node: Optional["ASTNode"]) -> None:
         rewrite_power(node.getChild(i))
 
 
-# SBML symbolic constants replaced with their C++ equivalents, keyed by the
-# placeholder each symbol is renamed to (see replace_constant_symbols) plus the
-# infinity/NaN literals formulaToL3String emits. (avogadro/pi/exponentiale/time
-# are handled via placeholders; true/false deliberately absent.)
+# SBML symbolic constants replaced with their C++ equivalents, keyed by the placeholder each symbol
+# is renamed to (see replace_constant_symbols). Every one is matched at the AST level and renamed to
+# its placeholder, so a same-named parameter (e.g. one literally called pi, inf or NaN) is never
+# mistaken for the constant. (true/false deliberately absent.)
 _CONSTANTS = {
     AVOGADRO_PLACEHOLDER: "sm::AVOGADRO",
     PI_PLACEHOLDER: "M_PI",
     E_PLACEHOLDER: "M_E",
     TIME_PLACEHOLDER: "time",
-    "inf": "std::numeric_limits<double>::infinity()",
-    "INF": "std::numeric_limits<double>::infinity()",
-    "infinity": "std::numeric_limits<double>::infinity()",
-    "nan": "NAN",
-    "NaN": "NAN",
-    "notanumber": "NAN",
+    INFINITY_PLACEHOLDER: "std::numeric_limits<double>::infinity()",
+    NEG_INFINITY_PLACEHOLDER: "-std::numeric_limits<double>::infinity()",
+    NAN_PLACEHOLDER: "std::numeric_limits<double>::quiet_NaN()",
 }
 
 # SBML functions whose name matches the C++ (std::) equivalent.
