@@ -62,7 +62,8 @@ class ChasteSbmlTestSuiteModel(ChasteSbmlModel):
 
         model_name = f"{prefix}{test_params['case']}{sbml_version.upper()}Sbml"
 
-        super().__init__(sbml_file, model_name=model_name, model_type=ModelType.GENERIC, **kwargs)
+        # This generates its own test, so disable the placeholder test
+        super().__init__(sbml_file, model_name=model_name, model_type=ModelType.GENERIC, generate_tests=False, **kwargs)
 
         self._test_type = test_type
         self._test_hpp_filename = f"Test{self._model_name}.hpp"

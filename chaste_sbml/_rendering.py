@@ -21,6 +21,7 @@ from ._config import (
     DerivedQuantityKind,
     EquationType,
     EventType,
+    ModelType,
     VarType,
 )
 
@@ -39,6 +40,7 @@ class CodeRenderer:
     _env.globals["DerivedQuantityKind"] = DerivedQuantityKind
     _env.globals["EquationType"] = EquationType
     _env.globals["EventType"] = EventType
+    _env.globals["ModelType"] = ModelType
     _env.globals["PREFIX_SEP"] = PREFIX_SEP
     _env.globals["VarType"] = VarType
 

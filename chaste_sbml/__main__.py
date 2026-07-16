@@ -34,6 +34,17 @@ def parse_args() -> argparse.Namespace:
         const="generic",
         nargs="?",
     )
+    generate.add_argument(
+        "--tests",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Generate placeholder test files (default: on). Use --no-tests to disable.",
+    )
+    generate.add_argument(
+        "--test-output-dir",
+        default=None,
+        help="The directory to place generated test files in (defaults to --output-dir)",
+    )
 
     # copy-base-classes: copy the C++ base classes the generated code depends on.
     copy_parser = subparsers.add_parser(
@@ -61,8 +72,8 @@ def process_command_line(args: "argparse.Namespace"):
     elif args.model_type == "cell-cycle":
         model_type = ModelType.CELL_CYCLE
 
-    chaste_model = ChasteSbmlModel(args.sbml_file, model_type=model_type)
-    chaste_model.write(args.output_dir)
+    chaste_model = ChasteSbmlModel(args.sbml_file, model_type=model_type, generate_tests=args.tests)
+    chaste_model.write(args.output_dir, args.test_output_dir)
 
 
 def main():
