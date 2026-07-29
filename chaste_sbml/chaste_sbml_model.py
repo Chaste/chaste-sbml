@@ -24,12 +24,19 @@ class ChasteSbmlModel:
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, sbml_file: str, model_name: str = "", model_type: ModelType = ModelType.GENERIC) -> None:
+    def __init__(
+        self,
+        sbml_file: str,
+        model_name: str = "",
+        model_type: ModelType = ModelType.GENERIC,
+        generate_tests: bool = True,
+    ) -> None:
         """Initialise the ChasteSbmlModel.
 
         :param sbml_file: The SBML file to generate code from.
         :param model_name: The model name; derived from the filename when not given.
         :param model_type: The model type e.g. ModelType.SRN.
+        :param generate_tests: Whether to generate a placeholder test for the model.
         """
         self._sbml_file = os.path.abspath(sbml_file)
         if not os.path.isfile(self._sbml_file):
@@ -43,6 +50,9 @@ class ChasteSbmlModel:
             self._model_name = model_name[0].upper() + model_name[1:]
 
         self._model_type = model_type
+
+        self._generate_tests = generate_tests
+        self._test_hpp_filename = f"Test{self._model_name}.hpp"
 
         self._ode_class_name = self._model_name + "OdeSystem"
         self._ode_hpp_filename = f"{self._ode_class_name}.hpp"
@@ -72,6 +82,7 @@ class ChasteSbmlModel:
         self._template_vars = {}  # type: dict[str, Any]
 
         self._outputs = {}  # { filename: code }
+        self._test_outputs = {}  # { filename: code } for generated placeholder tests
         self._renderer = CodeRenderer()
 
         self._names.resolve_real_id_conflicts()
@@ -88,16 +99,32 @@ class ChasteSbmlModel:
         """
         return dict(self._outputs)
 
-    def write(self, output_directory=None):
+    @property
+    def test_outputs(self) -> dict[str, str]:
+        """Get the generated placeholder test outputs.
+
+        :return: A copy of the filename to code mapping, so callers cannot mutate the internal state.
+        """
+        return dict(self._test_outputs)
+
+    def write(self, output_directory=None, test_output_directory=None):
         """Generate Chaste code and write to file.
 
-        :param output_directory: The output directory. Defaults to the current directory.
+        :param output_directory: The output directory for the model code.
+            Defaults to the current directory.
+        :param test_output_directory: The output directory for the generated
+            placeholder tests. Defaults to ``output_directory``.
         """
         # Generate the code
         self._generate_outputs()
 
-        # Write the code to file (formatted with clang-format)
+        # Write the model code to file (formatted with clang-format)
         self._renderer.write(self._outputs, output_directory)
+
+        # Write the placeholder tests, defaulting to the model output directory
+        if self._test_outputs:
+            test_dir = test_output_directory if test_output_directory is not None else output_directory
+            self._renderer.write(self._test_outputs, test_dir)
 
     def _add_output(self, filename: str, code: str) -> None:
         """Add generated code to the outputs dictionary.
@@ -118,6 +145,14 @@ class ChasteSbmlModel:
         code = self._renderer.render(template_path, self._template_vars)
         self._add_output(filename, code)
 
+    def _generate_test_output(self) -> None:
+        """Generate the placeholder test file for the model.
+
+        Rendered into the separate test outputs so it can be written to its own directory.
+        """
+        code = self._renderer.render("test/test.hpp", self._template_vars)
+        self._test_outputs[self._test_hpp_filename] = code
+
     def _generate_outputs(self) -> None:
         """Generate Chaste code for the model."""
         # Generate code for the OdeSystem
@@ -133,6 +168,10 @@ class ChasteSbmlModel:
             self._generate_output("cell_cycle/cell_cycle.hpp", self._cell_cycle_hpp_filename)
             self._generate_output("cell_cycle/cell_cycle.cpp", self._cell_cycle_cpp_filename)
 
+        # Generate a placeholder test skeleton for the model
+        if self._generate_tests:
+            self._generate_test_output()
+
     def _populate_template_vars(self) -> None:
         """Populate the template variables for generating C++ code."""
         template_vars: dict[str, "Any"] = dict(
@@ -140,6 +179,8 @@ class ChasteSbmlModel:
             ode_class_name=self._ode_class_name,
             ode_header_guard=generate_header_guard(self._ode_hpp_filename),
             ode_hpp_file=self._ode_hpp_filename,
+            test_header_guard=generate_header_guard(self._test_hpp_filename),
+            model_type=self._model_type,
         )
 
         if self._model_type == ModelType.SRN:

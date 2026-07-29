@@ -87,6 +87,8 @@ chaste-sbml generate my_model.xml --model-type srn --output-dir src/
 ```
 usage: chaste-sbml generate [-h] [--output-dir OUTPUT_DIR]
                                     [--model-type [{generic,srn,cell-cycle}]]
+                                    [--tests | --no-tests]
+                                    [--test-output-dir TEST_OUTPUT_DIR]
                                     sbml_file
 
 positional arguments:
@@ -97,7 +99,16 @@ options:
                         The directory to place output files in
   --model-type [{generic,srn,cell-cycle}]
                         The type of model to generate
+  --tests, --no-tests   Generate placeholder test files (default: on)
+  --test-output-dir TEST_OUTPUT_DIR
+                        The directory to place generated test files in
+                        (defaults to --output-dir)
 ```
+
+By default `generate` also emits a placeholder test (`Test<Model>Sbml.hpp`), a
+CxxTest skeleton with a suite for the ODE system, and the SRN/cell-cycle
+model where applicable. Pass `--no-tests` to skip it, or `--test-output-dir` to
+place the placeholder test somewhere other than `--output-dir`.
 
 ### `copy-base-classes`
 
