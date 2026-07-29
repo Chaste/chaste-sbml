@@ -14,6 +14,9 @@
 #include "{{ cell_cycle_hpp_file }}"
 {% endif %}
 
+// This test is never run in parallel
+#include "FakePetscSetup.hpp"
+
 class Test{{ ode_class_name }} : public CxxTest::TestSuite
 {
     // TODO: Add tests

@@ -40,6 +40,9 @@ def test_placeholder_test_generated(tmp_path, model_name, model_type, extra_clas
 
     code = model.test_outputs[test_filename]
 
+    # Every Chaste test must initialise PETSc; the placeholder is never run in parallel.
+    assert '#include "FakePetscSetup.hpp"' in code
+
     # The OdeSystem suite is always present and uses the lightweight CxxTest base class.
     assert f"class Test{model_name}SbmlOdeSystem : public CxxTest::TestSuite" in code
     assert "void TestOdeSystem()" in code
