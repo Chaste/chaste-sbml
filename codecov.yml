@@ -1,0 +1,25 @@
+# Combined coverage gate. Reports merge server-side by commit SHA:
+#   - flag "python": pytest (build_and_test) + generate_cases over the SBML test suite
+#   - flag "cpp":    the SbmlRefModels reference-model tests (base classes + reference/)
+# Scope is set upstream (.coveragerc for Python; lcov extract/remove for C++), so coverage
+# covers only the Python codegen package and the hand-written reference models.
+coverage:
+  status:
+    project:
+      default:
+        target: 100%
+        threshold: 0%
+    patch:
+      default:
+        target: 100%
+        threshold: 0%
+
+flag_management:
+  individual_flags:
+    - name: python
+      carryforward: false
+    - name: cpp
+      carryforward: false
+
+comment:
+  layout: "reach, flags, files"

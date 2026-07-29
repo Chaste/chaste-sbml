@@ -1129,7 +1129,7 @@ class ModelBuilder:
         """
         return formula_to_string(math, self._variable_type_map(), self._state_variables, local_parameters)
 
-    def _get_timescale_multiplier(self) -> float:
+    def _get_timescale_multiplier(self) -> float:  # pragma: no cover - unused; only caller is commented out (see above)
         """Get the timescale multiplier.
 
         SBML uses seconds by default and Chaste uses hours.
@@ -1155,7 +1155,7 @@ class ModelBuilder:
         """
         if self._index_of is None:
             self._index_of = self._build_variable_index()
-        if id_ not in self._index_of:
+        if id_ not in self._index_of:  # pragma: no cover - internal invariant; ids are validated upstream
             raise ValueError(f"ID '{id_}' is not a recognized variable.")
         return self._index_of[id_]
 
@@ -1359,7 +1359,9 @@ class ModelBuilder:
             # False if there is a local parameter with the same name as the variable.
             if eq.local_parameters:
                 if any(var == param.id for param in eq.local_parameters):
-                    return False
+                    # Only reachable if a local parameter is named like a synthetic variable
+                    # (derivative/amount) sorted after its reaction - not a realistic model.
+                    return False  # pragma: no cover
 
             return bool(re.search(rf"\b{var}\b", eq.rhs))
 

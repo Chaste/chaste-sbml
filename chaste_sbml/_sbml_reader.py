@@ -36,7 +36,7 @@ def load_sbml_model(sbml_file: str) -> "Model":
         flatten_props = ConversionProperties()
         flatten_props.addOption("flatten comp", True, "flatten comp")
         flatten_props.addOption("leave_ports", False)
-        if doc.convert(flatten_props) != LIBSBML_OPERATION_SUCCESS:
+        if doc.convert(flatten_props) != LIBSBML_OPERATION_SUCCESS:  # pragma: no cover - libsbml failure path
             doc.printErrors()
             raise ValueError("Errors during comp flattening")
 
@@ -51,7 +51,7 @@ def load_sbml_model(sbml_file: str) -> "Model":
     # config.addOption('expandFunctionDefinitions')
 
     status = doc.convert(config)
-    if status != LIBSBML_OPERATION_SUCCESS:
+    if status != LIBSBML_OPERATION_SUCCESS:  # pragma: no cover - libsbml failure path
         doc.printErrors()
         raise ValueError("Errors during conversion")
 

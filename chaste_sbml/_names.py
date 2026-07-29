@@ -323,7 +323,7 @@ class NameManager:
         """
 
         def rename(node: "libsbml.ASTNode") -> None:
-            if node is None:
+            if node is None:  # pragma: no cover - defensive base case; callers pass a real AST root
                 return
             if node.getType() == libsbml.AST_FUNCTION and node.getName() == old_id:
                 node.setName(new_id)
