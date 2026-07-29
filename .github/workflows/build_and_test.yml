@@ -96,7 +96,9 @@ jobs:
             --output-file coverage.info
           lcov --extract coverage.info '*/projects/SbmlRefModels/src/*' --output-file coverage.info
           # Scope to the reference models: drop generated cases and test helpers.
-          lcov --remove coverage.info '*/src/cases/*' '*/src/fortests/*' --output-file coverage.info
+          # --ignore-errors stops lcov 2.x treating empty cases/ as a fatal error.
+          lcov --remove coverage.info '*/src/cases/*' '*/src/fortests/*' \
+            --ignore-errors unused --output-file coverage.info
           lcov --list coverage.info
         working-directory: Chaste
 
