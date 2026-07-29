@@ -94,7 +94,7 @@ std::vector<double> TysonNovak2001SbmlOdeSystem::ComputeDerivedQuantities(double
     dqs.push_back(conc__SK);
 
     return dqs;
-}
+} // LCOV_EXCL_LINE (gcov marks this closing brace of a std::vector-returning function as uncovered)
 
 void TysonNovak2001SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {

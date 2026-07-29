@@ -58,7 +58,7 @@ std::vector<double> Tan2014SbmlOdeSystem::ComputeDerivedQuantities(double time, 
     dqs.push_back(amt__drag);
 
     return dqs;
-}
+} // LCOV_EXCL_LINE (gcov marks this closing brace of a std::vector-returning function as uncovered)
 
 void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {

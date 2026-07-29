@@ -36,8 +36,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef TEST_VAN_LEEUWEN_2007_SBML_SRN_MODEL_HPP_
 #define TEST_VAN_LEEUWEN_2007_SBML_SRN_MODEL_HPP_
 
+#include <fstream>
 #include <iostream>
-#include <vector>
+#include <memory>
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
@@ -45,7 +46,18 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cxxtest/TestSuite.h>
 
 #include "AbstractCellBasedTestSuite.hpp"
+#include "AbstractSrnModel.hpp"
+#include "Cell.hpp"
+#include "DifferentiatedCellProliferativeType.hpp"
+#include "OutputFileHandler.hpp"
+#include "SimulationTime.hpp"
+#include "SmartPointers.hpp"
+#include "TransitCellProliferativeType.hpp"
+#include "UniformCellCycleModel.hpp"
+#include "UniformG1GenerationalCellCycleModel.hpp"
+#include "WildTypeCellMutationState.hpp"
 
+#include "VanLeeuwen2007SbmlOdeSystem.hpp"
 #include "VanLeeuwen2007SbmlSrnModel.hpp"
 
 // This test is never run in parallel
@@ -53,11 +65,130 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class TestVanLeeuwen2007SbmlSrnModel : public AbstractCellBasedTestSuite
 {
-// TODO: Add tests
 public:
     void TestSrnCorrectBehaviour()
     {
         TS_ASSERT_THROWS_NOTHING(VanLeeuwen2007SbmlSrnModel srn_model);
+
+        VanLeeuwen2007SbmlSrnModel* p_srn_model = new VanLeeuwen2007SbmlSrnModel();
+
+        // Set non-default initial conditions (one per state variable)
+        std::vector<double> starter_conditions = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1 };
+        p_srn_model->SetInitialConditions(starter_conditions);
+
+        UniformG1GenerationalCellCycleModel* p_cc_model = new UniformG1GenerationalCellCycleModel();
+
+        MAKE_PTR(WildTypeCellMutationState, p_healthy_state);
+        MAKE_PTR(DifferentiatedCellProliferativeType, p_diff_type);
+
+        CellPtr p_cell(new Cell(p_healthy_state, p_cc_model, p_srn_model, false, CellPropertyCollection()));
+        p_cell->SetCellProliferativeType(p_diff_type);
+        p_cell->InitialiseCellCycleModel();
+        p_cell->InitialiseSrnModel();
+
+        // Now update the SRN
+        SimulationTime* p_simulation_time = SimulationTime::Instance();
+        unsigned num_steps = 100;
+        double end_time = 10.0;
+        p_simulation_time->SetEndTimeAndNumberOfTimeSteps(end_time, num_steps);
+
+        while (p_simulation_time->GetTime() < end_time)
+        {
+            p_simulation_time->IncrementTimeOneStep();
+            p_srn_model->SimulateToCurrentTime();
+        }
+
+        TS_ASSERT_THROWS_NOTHING(p_srn_model->GetStateVariable("X"));
+    }
+
+    void TestSrnCreateCopy()
+    {
+        VanLeeuwen2007SbmlSrnModel* p_model = new VanLeeuwen2007SbmlSrnModel;
+
+        // Set ODE system with known state variables
+        std::vector<double> state_variables = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0 };
+        VanLeeuwen2007SbmlOdeSystem* p_ode_system = new VanLeeuwen2007SbmlOdeSystem;
+        p_ode_system->SetStateVariables(state_variables);
+        p_model->SetOdeSystem(p_ode_system);
+
+        // Create a copy
+        VanLeeuwen2007SbmlSrnModel* p_model2 = static_cast<VanLeeuwen2007SbmlSrnModel*>(p_model->CreateSrnModel());
+
+        // The copy carries the same state
+        TS_ASSERT_EQUALS(dynamic_cast<AbstractSbmlSrnModel*>(p_model2)->GetStateVariable("X"), 1.0);
+        TS_ASSERT_EQUALS(dynamic_cast<AbstractSbmlSrnModel*>(p_model2)->GetStateVariable("Y"), 11.0);
+
+        delete p_model;
+        delete p_model2;
+    }
+
+    void TestSrnModelOutputParameters()
+    {
+        OutputFileHandler output_file_handler("TestVanLeeuwen2007SrnOutputParameters", false);
+
+        VanLeeuwen2007SbmlSrnModel srn_model;
+        TS_ASSERT_EQUALS(srn_model.GetIdentifier(), "VanLeeuwen2007SbmlSrnModel");
+
+        out_stream parameter_file = output_file_handler.OpenOutputFile("van_leeuwen_2007_srn_results.parameters");
+        TS_ASSERT_THROWS_NOTHING(srn_model.OutputSrnModelParameters(parameter_file));
+        parameter_file->close();
+    }
+
+    void TestSrnArchiving()
+    {
+        OutputFileHandler handler("archive", false);
+        std::string archive_filename = handler.GetOutputDirectoryFullPath() + "van_leeuwen_2007_srn.arch";
+
+        double var0;
+
+        // Save
+        {
+            double end_time = 10.0;
+            SimulationTime* p_simulation_time = SimulationTime::Instance();
+            p_simulation_time->SetEndTimeAndNumberOfTimeSteps(end_time, 100);
+
+            UniformCellCycleModel* p_cc_model = new UniformCellCycleModel;
+            AbstractOdeSrnModel* p_srn_model = new VanLeeuwen2007SbmlSrnModel;
+
+            MAKE_PTR(WildTypeCellMutationState, p_healthy_state);
+            MAKE_PTR(TransitCellProliferativeType, p_transit_type);
+
+            CellPtr p_cell(new Cell(p_healthy_state, p_cc_model, p_srn_model));
+            p_cell->SetCellProliferativeType(p_transit_type);
+            p_cell->InitialiseCellCycleModel();
+            p_cell->InitialiseSrnModel();
+            p_cell->SetBirthTime(0.0);
+
+            std::ofstream ofs(archive_filename.c_str());
+            boost::archive::text_oarchive output_arch(ofs);
+
+            while (p_simulation_time->GetTime() < end_time)
+            {
+                p_simulation_time->IncrementTimeOneStep();
+                p_srn_model->SimulateToCurrentTime();
+            }
+
+            var0 = dynamic_cast<AbstractSbmlSrnModel*>(p_srn_model)->GetStateVariable("X");
+
+            output_arch << p_srn_model;
+            SimulationTime::Destroy();
+        }
+
+        // Load
+        {
+            SimulationTime::Instance()->SetStartTime(0.0);
+
+            AbstractSrnModel* p_srn_model;
+            std::ifstream ifs(archive_filename.c_str(), std::ios::binary);
+            boost::archive::text_iarchive input_arch(ifs);
+            input_arch >> p_srn_model;
+
+            double var1 = dynamic_cast<VanLeeuwen2007SbmlSrnModel*>(p_srn_model)->GetStateVariable("X");
+            TS_ASSERT_DELTA(var1, var0, 1e-6);
+
+            delete p_srn_model;
+        }
     }
 };
+
 #endif // TEST_VAN_LEEUWEN_2007_SBML_SRN_MODEL_HPP_

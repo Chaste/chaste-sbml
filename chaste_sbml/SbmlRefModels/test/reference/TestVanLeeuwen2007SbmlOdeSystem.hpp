@@ -320,6 +320,13 @@ public:
         CvodeAdaptor solver;
         RunOdeWithSolver(solver, "cvode");
     }
+
+    void TestComputeDerivedQuantities()
+    {
+        VanLeeuwen2007SbmlOdeSystem ode_system;
+        std::vector<double> derived = ode_system.ComputeDerivedQuantities(0.0, ode_system.GetInitialConditions());
+        TS_ASSERT_LESS_THAN(0u, derived.size());
+    }
 };
 
 #endif // TEST_VAN_LEEUWEN_2007_SBML_ODE_SYSTEM_HPP_

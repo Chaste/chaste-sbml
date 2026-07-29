@@ -36,6 +36,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef TEST_TYSON_NOVAK_2001_SBML_CELL_CYCLE_MODEL_HPP_
 #define TEST_TYSON_NOVAK_2001_SBML_CELL_CYCLE_MODEL_HPP_
 
+#include <fstream>
 #include <iostream>
 #include <vector>
 
@@ -50,6 +51,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ApcOneHitCellMutationState.hpp"
 #include "BackwardEulerIvpOdeSolver.hpp"
 #include "CellCycleModelOdeSolver.hpp"
+#include "OutputFileHandler.hpp"
 #include "StemCellProliferativeType.hpp"
 #include "WildTypeCellMutationState.hpp"
 
@@ -207,6 +209,70 @@ public:
         TS_ASSERT_DELTA(proteins_2[5], proteins_0[5], 1e-4); // IEP
         TS_ASSERT_DELTA(proteins_2[6], proteins_0[6], 1e-4); // CKIt
         TS_ASSERT_DELTA(proteins_2[7], proteins_0[7], 1e-4); // SK
+    }
+
+    void TestBaseClassMethods()
+    {
+        SimulationTime* p_simulation_time = SimulationTime::Instance();
+        p_simulation_time->SetEndTimeAndNumberOfTimeSteps(1.0, 1);
+
+        auto p_wild_state = boost::make_shared<WildTypeCellMutationState>();
+        auto p_stem_type = boost::make_shared<StemCellProliferativeType>();
+
+        auto p_cell = boost::make_shared<Cell>(p_wild_state, new TysonNovak2001SbmlCellCycleModel);
+        p_cell->SetCellProliferativeType(p_stem_type);
+        p_cell->InitialiseCellCycleModel();
+
+        auto p_ccm = static_cast<TysonNovak2001SbmlCellCycleModel*>(p_cell->GetCellCycleModel());
+
+        // Base-class accessors (defaults defined on AbstractSbmlCellCycleModel)
+        TS_ASSERT_DELTA(p_ccm->GetAverageTransitCellCycleTime(), 1.25, 1e-9);
+        TS_ASSERT_DELTA(p_ccm->GetAverageStemCellCycleTime(), 1.25, 1e-9);
+        TS_ASSERT_THROWS_NOTHING(p_ccm->GetStateVariable("CycBt"));
+
+        // Base-class parameter output
+        OutputFileHandler handler("TestTysonNovakCcOutputParameters", false);
+        out_stream parameter_file = handler.OpenOutputFile("tyson_novak_cc_results.parameters");
+        TS_ASSERT_THROWS_NOTHING(p_ccm->OutputCellCycleModelParameters(parameter_file));
+        parameter_file->close();
+    }
+
+    void TestArchiving()
+    {
+        OutputFileHandler handler("archive", false);
+        std::string archive_filename = handler.GetOutputDirectoryFullPath() + "tyson_novak_cc.arch";
+
+        {
+            SimulationTime::Instance()->SetEndTimeAndNumberOfTimeSteps(1.0, 1);
+
+            AbstractCellCycleModel* const p_model = new TysonNovak2001SbmlCellCycleModel;
+            p_model->SetDimension(3);
+            p_model->SetBirthTime(-1.0);
+
+            auto p_wild_state = boost::make_shared<WildTypeCellMutationState>();
+            auto p_stem_type = boost::make_shared<StemCellProliferativeType>();
+            CellPtr p_cell(new Cell(p_wild_state, p_model));
+            p_cell->SetCellProliferativeType(p_stem_type);
+            p_cell->InitialiseCellCycleModel();
+
+            std::ofstream ofs(archive_filename.c_str());
+            boost::archive::text_oarchive output_arch(ofs);
+            output_arch << p_model;
+
+            SimulationTime::Destroy();
+        }
+
+        {
+            SimulationTime::Instance()->SetStartTime(0.0);
+
+            AbstractCellCycleModel* p_model2;
+            std::ifstream ifs(archive_filename.c_str(), std::ios::binary);
+            boost::archive::text_iarchive input_arch(ifs);
+            input_arch >> p_model2;
+
+            TS_ASSERT_EQUALS(p_model2->GetDimension(), 3u);
+            delete p_model2;
+        }
     }
 };
 

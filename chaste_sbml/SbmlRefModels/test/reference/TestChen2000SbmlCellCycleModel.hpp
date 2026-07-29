@@ -36,7 +36,22 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef TEST_CHEN_2000_SBML_CELL_CYCLE_MODEL_HPP_
 #define TEST_CHEN_2000_SBML_CELL_CYCLE_MODEL_HPP_
 
+#include <fstream>
+#include <vector>
+
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/make_shared.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <cxxtest/TestSuite.h>
+
 #include "AbstractCellBasedTestSuite.hpp"
+#include "OutputFileHandler.hpp"
+#include "SimulationTime.hpp"
+#include "SmartPointers.hpp"
+#include "StemCellProliferativeType.hpp"
+#include "WildTypeCellMutationState.hpp"
 
 #include "Chen2000SbmlCellCycleModel.hpp"
 
@@ -45,11 +60,91 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class TestChen2000SbmlCellCycleModel : public AbstractCellBasedTestSuite
 {
-    // TODO: Add tests
 public:
     void TestCellCycleModel()
     {
         TS_ASSERT_THROWS_NOTHING(Chen2000SbmlCellCycleModel cell_cycle_model);
+
+        SimulationTime* p_simulation_time = SimulationTime::Instance();
+        const double dt = 0.01;
+        const double end_time = 20.0;
+        p_simulation_time->SetEndTimeAndNumberOfTimeSteps(end_time, static_cast<unsigned>(end_time / dt));
+
+        auto p_wild_state = boost::make_shared<WildTypeCellMutationState>();
+        auto p_stem_type = boost::make_shared<StemCellProliferativeType>();
+
+        auto p_cell = boost::make_shared<Cell>(p_wild_state, new Chen2000SbmlCellCycleModel);
+        p_cell->SetCellProliferativeType(p_stem_type);
+
+        auto p_ccm = static_cast<Chen2000SbmlCellCycleModel*>(p_cell->GetCellCycleModel());
+        p_ccm->SetBirthTime(p_simulation_time->GetTime());
+        TS_ASSERT_EQUALS(p_ccm->CanCellTerminallyDifferentiate(), false);
+
+        p_cell->InitialiseCellCycleModel();
+        p_ccm->SetDt(dt);
+
+        // Base-class accessors
+        TS_ASSERT_DELTA(p_ccm->GetAverageTransitCellCycleTime(), 1.25, 1e-9);
+        TS_ASSERT_DELTA(p_ccm->GetAverageStemCellCycleTime(), 1.25, 1e-9);
+        TS_ASSERT_THROWS_NOTHING(p_ccm->GetStateVariable("Cln2"));
+
+        // Advance a few steps so the ODE system is integrated
+        for (unsigned i = 0; i < 10; i++)
+        {
+            p_simulation_time->IncrementTimeOneStep();
+            TS_ASSERT_THROWS_NOTHING(p_ccm->ReadyToDivide());
+        }
+
+        // Copy via CreateCellCycleModel (exercises the protected copy-constructor)
+        Chen2000SbmlCellCycleModel* p_ccm2 = static_cast<Chen2000SbmlCellCycleModel*>(p_ccm->CreateCellCycleModel());
+        TS_ASSERT(p_ccm2 != nullptr);
+        delete p_ccm2;
+
+        // Parameter output
+        OutputFileHandler handler("TestChen2000CcOutputParameters", false);
+        out_stream parameter_file = handler.OpenOutputFile("chen_2000_cc_results.parameters");
+        TS_ASSERT_THROWS_NOTHING(p_ccm->OutputCellCycleModelParameters(parameter_file));
+        parameter_file->close();
+    }
+
+    void TestArchiving()
+    {
+        OutputFileHandler handler("archive", false);
+        std::string archive_filename = handler.GetOutputDirectoryFullPath() + "chen_2000_cc.arch";
+
+        {
+            SimulationTime::Instance()->SetEndTimeAndNumberOfTimeSteps(1.0, 1);
+
+            AbstractCellCycleModel* const p_model = new Chen2000SbmlCellCycleModel;
+            p_model->SetDimension(3);
+            p_model->SetBirthTime(-1.0);
+
+            auto p_wild_state = boost::make_shared<WildTypeCellMutationState>();
+            auto p_stem_type = boost::make_shared<StemCellProliferativeType>();
+            CellPtr p_cell(new Cell(p_wild_state, p_model));
+            p_cell->SetCellProliferativeType(p_stem_type);
+            p_cell->InitialiseCellCycleModel();
+
+            std::ofstream ofs(archive_filename.c_str());
+            boost::archive::text_oarchive output_arch(ofs);
+            output_arch << p_model;
+
+            SimulationTime::Destroy();
+        }
+
+        {
+            SimulationTime::Instance()->SetStartTime(0.0);
+
+            AbstractCellCycleModel* p_model2;
+            std::ifstream ifs(archive_filename.c_str(), std::ios::binary);
+            boost::archive::text_iarchive input_arch(ifs);
+            input_arch >> p_model2;
+
+            TS_ASSERT_EQUALS(p_model2->GetDimension(), 3u);
+            TS_ASSERT_DELTA(p_model2->GetBirthTime(), -1.0, 1e-12);
+
+            delete p_model2;
+        }
     }
 };
 

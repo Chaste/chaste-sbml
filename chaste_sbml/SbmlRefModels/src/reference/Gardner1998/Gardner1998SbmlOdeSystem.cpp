@@ -59,7 +59,7 @@ std::vector<double> Gardner1998SbmlOdeSystem::ComputeDerivedQuantities(double ti
     dqs.push_back(amt__Z);
 
     return dqs;
-}
+} // LCOV_EXCL_LINE (gcov marks this closing brace of a std::vector-returning function as uncovered)
 
 void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {

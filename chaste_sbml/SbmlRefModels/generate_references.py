@@ -52,7 +52,8 @@ def generate_references(reference_dir: str) -> None:
         model_type = _infer_model_type(model_dir)
 
         logger.info(f"Regenerating {model_name} ({model_type.name}) from {os.path.basename(sbml_file)}")
-        model = ChasteSbmlModel(sbml_file, model_name=model_name, model_type=model_type)
+        # The reference models keep hand-written tests, so skip the placeholder test.
+        model = ChasteSbmlModel(sbml_file, model_name=model_name, model_type=model_type, generate_tests=False)
         model.write(model_dir)
 
 
