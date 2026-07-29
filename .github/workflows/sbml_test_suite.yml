@@ -35,6 +35,16 @@ jobs:
             last_case: "1821"
 
     steps:
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: false
+          swap-storage: false
+
       - name: Checkout
         uses: actions/checkout@v6
 
@@ -108,7 +118,7 @@ jobs:
           repo="deb [signed-by=/usr/share/keyrings/chaste.asc] https://chaste.github.io/ubuntu ${codename}/"
           echo "${repo}" | sudo tee /etc/apt/sources.list.d/chaste.list
           sudo apt-get update
-          sudo apt-get install -y chaste-dependencies lcov
+          sudo apt-get install -y chaste-dependencies
 
       - name: Setup Chaste paths
         run: |
@@ -117,7 +127,7 @@ jobs:
 
       - name: Configure Chaste
         run: |
-          cmake -DCMAKE_BUILD_TYPE=Debug -DChaste_ERROR_ON_WARNING=OFF -DChaste_COVERAGE=ON ..
+          cmake -DCMAKE_BUILD_TYPE=Release -DChaste_ERROR_ON_WARNING=OFF -DChaste_COVERAGE=OFF ..
         working-directory: Chaste/build
 
       - name: Build SbmlRefModels
