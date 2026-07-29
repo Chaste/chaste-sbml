@@ -27,6 +27,7 @@ Tan2014SbmlOdeSystem::~Tan2014SbmlOdeSystem()
 std::vector<double> Tan2014SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
 {
     std::vector<double> dqs;
+    dqs.reserve(18);
     RunModelEquations(time, rY);
 
     // AMOUNT / CONCENTRATION CONVERSIONS

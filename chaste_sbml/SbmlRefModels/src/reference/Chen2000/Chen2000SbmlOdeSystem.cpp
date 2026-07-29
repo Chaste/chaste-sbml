@@ -27,6 +27,7 @@ Chen2000SbmlOdeSystem::~Chen2000SbmlOdeSystem()
 std::vector<double> Chen2000SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
 {
     std::vector<double> dqs;
+    dqs.reserve(16);
     RunModelEquations(time, rY);
 
     // AMOUNT / CONCENTRATION CONVERSIONS

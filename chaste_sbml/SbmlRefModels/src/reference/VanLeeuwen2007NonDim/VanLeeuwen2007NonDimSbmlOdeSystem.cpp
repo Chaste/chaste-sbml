@@ -27,6 +27,7 @@ VanLeeuwen2007NonDimSbmlOdeSystem::~VanLeeuwen2007NonDimSbmlOdeSystem()
 std::vector<double> VanLeeuwen2007NonDimSbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
 {
     std::vector<double> dqs;
+    dqs.reserve(42);
     RunModelEquations(time, rY);
 
     // AMOUNT / CONCENTRATION CONVERSIONS

@@ -44,6 +44,7 @@ Chen2004SbmlOdeSystem::~Chen2004SbmlOdeSystem()
 std::vector<double> Chen2004SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
 {
     std::vector<double> dqs;
+    dqs.reserve(184);
     RunModelEquations(time, rY);
 
     // AMOUNT / CONCENTRATION CONVERSIONS

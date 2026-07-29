@@ -75,6 +75,7 @@ std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, 
 {
     std::vector<double> dqs;
 {% if derived_quantities %}
+    dqs.reserve({{ derived_quantities | length }});
     RunModelEquations(time, rY);
 
     // AMOUNT / CONCENTRATION CONVERSIONS

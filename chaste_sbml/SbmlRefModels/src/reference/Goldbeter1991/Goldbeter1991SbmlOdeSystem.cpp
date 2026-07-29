@@ -27,6 +27,7 @@ Goldbeter1991SbmlOdeSystem::~Goldbeter1991SbmlOdeSystem()
 std::vector<double> Goldbeter1991SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
 {
     std::vector<double> dqs;
+    dqs.reserve(13);
     RunModelEquations(time, rY);
 
     // AMOUNT / CONCENTRATION CONVERSIONS

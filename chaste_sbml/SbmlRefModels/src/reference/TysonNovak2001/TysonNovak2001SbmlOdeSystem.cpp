@@ -41,6 +41,7 @@ TysonNovak2001SbmlOdeSystem::~TysonNovak2001SbmlOdeSystem()
 std::vector<double> TysonNovak2001SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
 {
     std::vector<double> dqs;
+    dqs.reserve(36);
     RunModelEquations(time, rY);
 
     // AMOUNT / CONCENTRATION CONVERSIONS
