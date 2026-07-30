@@ -68,6 +68,12 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
+namespace
+{
+// Native time units per hour: the model's time is in seconds, but Chaste integrates in hours.
+constexpr double TIMESCALE_MULTIPLIER = 3600.0;
+} // namespace
+
 class TestGoldbeter1991SbmlSrnModel : public AbstractCellBasedTestSuite
 {
 public:
@@ -81,7 +87,7 @@ public:
         // Save archive
         {
             // Model is in seconds; Chaste integrates in hours, so divide the end time by 3600.
-            double end_time = 10.0 / 3600.0;
+            double end_time = 10.0 / TIMESCALE_MULTIPLIER;
             SimulationTime* p_simulation_time = SimulationTime::Instance();
             p_simulation_time->SetEndTimeAndNumberOfTimeSteps(end_time, 100);
 
@@ -172,7 +178,7 @@ public:
         SimulationTime* p_simulation_time = SimulationTime::Instance();
         unsigned num_steps = 100;
         // Model is in seconds; Chaste integrates in hours, so divide the end time by 3600.
-        double end_time = 10.0 / 3600.0;
+        double end_time = 10.0 / TIMESCALE_MULTIPLIER;
         p_simulation_time->SetEndTimeAndNumberOfTimeSteps(end_time, num_steps);
 
         while (p_simulation_time->GetTime() < end_time)
@@ -243,8 +249,8 @@ public:
 
         // run until 100, with dt=0.001 (in the model's native seconds). Chaste integrates in hours,
         // so divide both by 3600; the same steady state is reached over the same native span.
-        double end_time = 100 / 3600.0;
-        double dt = 0.001 / 3600.0;
+        double end_time = 100 / TIMESCALE_MULTIPLIER;
+        double dt = 0.001 / TIMESCALE_MULTIPLIER;
         unsigned num_steps = (unsigned)(end_time / dt);
         p_simulation_time->SetEndTimeAndNumberOfTimeSteps(end_time, num_steps + 1);
 

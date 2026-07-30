@@ -57,6 +57,12 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace sth = sbmltesthelpers;
 
+namespace
+{
+// Native time units per hour: the model's time is in minutes, but Chaste integrates in hours.
+constexpr double TIMESCALE_MULTIPLIER = 60.0;
+} // namespace
+
 class TestTysonNovak2001SbmlOdeSystem : public AbstractCellBasedTestSuite
 {
 private:
@@ -89,10 +95,10 @@ private:
             // derivatives by 60. Divide the times by 60 to reach the same states as before; the
             // measured stopping times (in hours) are multiplied back by 60 below to compare against
             // the native (minute) expected values.
-            const double max_step = 0.01 / 60.0;
-            const double sampling_interval = 0.01 / 60.0;
+            const double max_step = 0.01 / TIMESCALE_MULTIPLIER;
+            const double sampling_interval = 0.01 / TIMESCALE_MULTIPLIER;
 
-            const double run_length = 200.0 / 60.0;
+            const double run_length = 200.0 / TIMESCALE_MULTIPLIER;
             double start_time = 0.0;
             double end_time = start_time + run_length;
 
@@ -121,7 +127,7 @@ private:
                 TS_ASSERT_EQUALS(rSolver.StoppingEventOccurred(), true);
 
                 // Check stopping times
-                TS_ASSERT_DELTA(ode_solution.rGetTimes().back() * 60.0, expected_stop_times[i], 1e-2);
+                TS_ASSERT_DELTA(ode_solution.rGetTimes().back() * TIMESCALE_MULTIPLIER, expected_stop_times[i], 1e-2);
 
                 // Collate solutions, times and derived quantities from all runs
                 solutions.insert(solutions.end(), ode_solution.rGetSolutions().begin(), ode_solution.rGetSolutions().end());
@@ -354,7 +360,7 @@ public:
         std::vector<std::string> var_names = ode_system.rGetStateVariableNames();
         for (unsigned i = 0; i < ODE_SIZE; i++)
         {
-            TSM_ASSERT_DELTA(var_names[i].c_str(), derivatives[i] / 60.0, derivatives_expected[i], 1e-6);
+            TSM_ASSERT_DELTA(var_names[i].c_str(), derivatives[i] / TIMESCALE_MULTIPLIER, derivatives_expected[i], 1e-6);
         }
 
         // Check derived quantities

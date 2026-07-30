@@ -58,6 +58,12 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
+namespace
+{
+// Native time units per hour: the model's time is in minutes, but Chaste integrates in hours.
+constexpr double TIMESCALE_MULTIPLIER = 60.0;
+} // namespace
+
 class TestChen2000SbmlCellCycleModel : public AbstractCellBasedTestSuite
 {
 public:
@@ -68,8 +74,8 @@ public:
         SimulationTime* p_simulation_time = SimulationTime::Instance();
         // The model is in minutes but Chaste integrates in hours (the ODE system scales derivatives
         // by 60), so divide the timestep and end time by 60 to integrate over the same native span.
-        const double dt = 0.01 / 60.0;
-        const double end_time = 20.0 / 60.0;
+        const double dt = 0.01 / TIMESCALE_MULTIPLIER;
+        const double end_time = 20.0 / TIMESCALE_MULTIPLIER;
         p_simulation_time->SetEndTimeAndNumberOfTimeSteps(end_time, static_cast<unsigned>(end_time / dt));
 
         auto p_wild_state = boost::make_shared<WildTypeCellMutationState>();

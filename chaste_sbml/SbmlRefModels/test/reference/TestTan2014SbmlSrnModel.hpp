@@ -64,6 +64,12 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
+namespace
+{
+// Native time units per hour: the model's time is in minutes, but Chaste integrates in hours.
+constexpr double TIMESCALE_MULTIPLIER = 60.0;
+} // namespace
+
 class TestTan2014SbmlSrnModel : public AbstractCellBasedTestSuite
 {
 public:
@@ -91,7 +97,7 @@ public:
         SimulationTime* p_simulation_time = SimulationTime::Instance();
         unsigned num_steps = 100;
         // Model is in minutes; Chaste integrates in hours, so divide the end time by 60.
-        double end_time = 10.0 / 60.0;
+        double end_time = 10.0 / TIMESCALE_MULTIPLIER;
         p_simulation_time->SetEndTimeAndNumberOfTimeSteps(end_time, num_steps);
 
         while (p_simulation_time->GetTime() < end_time)
@@ -146,7 +152,7 @@ public:
         // Save
         {
             // Model is in minutes; Chaste integrates in hours, so divide the end time by 60.
-            double end_time = 10.0 / 60.0;
+            double end_time = 10.0 / TIMESCALE_MULTIPLIER;
             SimulationTime* p_simulation_time = SimulationTime::Instance();
             p_simulation_time->SetEndTimeAndNumberOfTimeSteps(end_time, 100);
 

@@ -55,6 +55,12 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
+namespace
+{
+// Native time units per hour: the model's time is in minutes, but Chaste integrates in hours.
+constexpr double TIMESCALE_MULTIPLIER = 60.0;
+} // namespace
+
 class TestChen2004SbmlCellCycleModel : public AbstractCellBasedTestSuite
 {
 private:
@@ -69,8 +75,8 @@ public:
         // by 60), so divide the timestep and end time by 60 to integrate over the same native span.
         // The simulation time (hours) is converted back to minutes below to compare against the
         // native divide times.
-        const double dt = 0.01 / 60.0;
-        const double end_time = 220.0 / 60.0;
+        const double dt = 0.01 / TIMESCALE_MULTIPLIER;
+        const double end_time = 220.0 / TIMESCALE_MULTIPLIER;
         const unsigned num_timesteps = static_cast<unsigned>(end_time / dt);
         p_simulation_time->SetEndTimeAndNumberOfTimeSteps(end_time, num_timesteps);
 
@@ -113,7 +119,7 @@ public:
         for (unsigned i = 0; i < num_timesteps / 2; i++)
         {
             p_simulation_time->IncrementTimeOneStep();
-            double time = p_simulation_time->GetTime() * 60.0; // hours -> native minutes
+            double time = p_simulation_time->GetTime() * TIMESCALE_MULTIPLIER; // hours -> native minutes
 
             bool division_ready_0 = p_ccm_0->ReadyToDivide();
             bool division_ready_1 = p_ccm_1->ReadyToDivide();
@@ -216,7 +222,7 @@ public:
         for (unsigned i = 0; i < num_timesteps / 2; i++)
         {
             p_simulation_time->IncrementTimeOneStep();
-            double time = p_simulation_time->GetTime() * 60.0; // hours -> native minutes
+            double time = p_simulation_time->GetTime() * TIMESCALE_MULTIPLIER; // hours -> native minutes
 
             bool division_ready_0 = p_ccm_0->ReadyToDivide();
             bool division_ready_2 = p_ccm_2->ReadyToDivide();

@@ -73,6 +73,12 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace sth = sbmltesthelpers;
 
+namespace
+{
+// Native time units per hour: the model's time is in minutes, but Chaste integrates in hours.
+constexpr double TIMESCALE_MULTIPLIER = 60.0;
+} // namespace
+
 class TestChen2000SbmlOdeSystem : public AbstractCellBasedTestSuite
 {
 private:
@@ -103,11 +109,11 @@ private:
 
             // The model is in minutes but Chaste integrates in hours, so the ODE system scales
             // derivatives by 60. Divide the times by 60 to reach the same states as before.
-            const double max_step = 0.01 / 60.0;
-            const double sampling_interval = 0.01 / 60.0;
+            const double max_step = 0.01 / TIMESCALE_MULTIPLIER;
+            const double sampling_interval = 0.01 / TIMESCALE_MULTIPLIER;
 
             const double start_time = 0.0;
-            const double end_time = 300.0 / 60.0;
+            const double end_time = 300.0 / TIMESCALE_MULTIPLIER;
 
             std::vector<double> initial_conditions;
             OdeSolution ode_solution;
@@ -347,7 +353,7 @@ public:
         std::vector<std::string> var_names = ode_system.rGetStateVariableNames();
         for (unsigned i = 0; i < ODE_SIZE; i++)
         {
-            TSM_ASSERT_DELTA(var_names[i].c_str(), derivatives[i] / 60.0, derivatives_expected[i], 1e-6);
+            TSM_ASSERT_DELTA(var_names[i].c_str(), derivatives[i] / TIMESCALE_MULTIPLIER, derivatives_expected[i], 1e-6);
         }
     }
 
