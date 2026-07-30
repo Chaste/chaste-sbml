@@ -247,6 +247,15 @@ def test_resolve_defaults_level3_to_no_conversion(any_model, caplog):
     assert "--timescale" in caplog.text
 
 
+def test_resolve_unsupported_level_no_conversion(any_model, caplog):
+    """An undeclared model at an unsupported level (neither 2 nor 3) applies no conversion and warns."""
+    with caplog.at_level(logging.WARNING):
+        resolved = any_model._resolve_time_unit(None, None, 1)
+    assert resolved is TimeUnit.NONE
+    assert "unsupported" in caplog.text.lower()
+    assert "--timescale" in caplog.text
+
+
 # --- end-to-end resolution + rendering ------------------------------------------------------------
 
 

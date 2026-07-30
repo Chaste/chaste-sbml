@@ -107,8 +107,9 @@ class ChasteSbmlModel:
 
         Precedence: an explicit override wins (warning if it contradicts a declared unit); otherwise a
         declared unit is used; otherwise the SBML default applies -- Level 2 predefines ``time`` as
-        seconds, while Level 3 leaves an unset time unit undefined (no conversion). When no unit is
-        declared and no override is given, a warning hints at the ``--timescale`` option.
+        seconds, while Level 3 (and any other, unsupported level) leaves it undefined (no
+        conversion). When no unit is declared and no override is given, a warning hints at the
+        ``--timescale`` option.
 
         :param override: An explicit time unit (from ``--timescale``), or ``None`` to auto-detect.
         :param declared: The time unit declared by the model, or ``None`` if none was declared.
@@ -135,13 +136,22 @@ class ChasteSbmlModel:
                 "set the model's time unit explicitly.",
                 resolved.multiplier,
             )
-        else:
+        elif sbml_level == 3:
             # SBML Level 3 leaves an unset time unit undefined, so apply no conversion.
             resolved = TimeUnit.NONE
             logger.warning(
                 "The model declares no time unit (SBML Level 3 leaves it undefined); no time "
                 "conversion is applied. Pass --timescale ms|s|m|h to convert the model to Chaste "
                 "hours.",
+            )
+        else:
+            # Unsupported SBML level (already flagged when loading); do not guess a unit.
+            resolved = TimeUnit.NONE
+            logger.warning(
+                "The model declares no time unit and its SBML level (%d) is unsupported; no time "
+                "conversion is applied. Pass --timescale ms|s|m|h to convert the model to Chaste "
+                "hours.",
+                sbml_level,
             )
 
         logger.info("Using time unit %s (derivative multiplier %s).", resolved.display, resolved.multiplier)
