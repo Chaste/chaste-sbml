@@ -248,8 +248,9 @@ def test_model_detects_minutes_and_scales(tmp_path):
     assert model._time_unit is TimeUnit.MINUTE
     model.write(str(tmp_path))
     cpp = (tmp_path / "TysonNovak2001SbmlOdeSystem.cpp").read_text()
-    assert "time *= 60.0;" in cpp
-    assert "rDY[i] = 60.0 * derivatives[i];" in cpp
+    assert "constexpr double TIMESCALE_MULTIPLIER = 60.0;" in cpp
+    assert "time *= TIMESCALE_MULTIPLIER;" in cpp
+    assert "rDY[i] = TIMESCALE_MULTIPLIER * derivatives[i];" in cpp
 
 
 def test_timescale_override_forces_conversion(tmp_path):
@@ -259,7 +260,8 @@ def test_timescale_override_forces_conversion(tmp_path):
     assert model._time_unit is TimeUnit.MINUTE
     model.write(str(tmp_path))
     cpp = (tmp_path / "Goldbeter1991SbmlOdeSystem.cpp").read_text()
-    assert "time *= 60.0;" in cpp
+    assert "constexpr double TIMESCALE_MULTIPLIER = 60.0;" in cpp
+    assert "time *= TIMESCALE_MULTIPLIER;" in cpp
 
 
 def test_timescale_none_override_suppresses_conversion(tmp_path):

@@ -9,6 +9,15 @@
 #include "{{ ode_hpp_file }}"
 
 namespace sm = sbmlmath;
+{% if scale_time %}
+
+namespace
+{
+// Chaste integrates in hours but this model's time is in {{ time_unit_display }}. Convert the
+// incoming time to native units and scale the derivatives by this factor (native units per hour).
+constexpr double TIMESCALE_MULTIPLIER = {{ time_multiplier }};
+} // namespace
+{% endif %}
 
 {{ ode_class_name }}::{{ ode_class_name }}()
     : AbstractSbmlOdeSystem({{ state_variables|length }}, {{parameters|length }}, {{ events|length }})
@@ -77,7 +86,7 @@ std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, 
 {% if derived_quantities %}
     dqs.reserve({{ derived_quantities | length }});
 {% if scale_time %}
-    time *= {{ time_multiplier }}; // Chaste integrates in hours; use the model's native time units
+    time *= TIMESCALE_MULTIPLIER; // Chaste integrates in hours; use the model's native time units
 {% endif %}
     RunModelEquations(time, rY);
 
@@ -100,12 +109,12 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
 {
 {% if scale_time %}
     // Chaste integrates in hours; convert to the model's native time units and scale the
-    // resulting derivatives (dY/d(hours) = {{ time_multiplier }} * dY/d(native)).
-    time *= {{ time_multiplier }};
+    // resulting derivatives (dY/d(hours) = TIMESCALE_MULTIPLIER * dY/d(native)).
+    time *= TIMESCALE_MULTIPLIER;
     std::vector<double> derivatives = RunModelEquations(time, rY);
     for (unsigned i = 0; i < rDY.size(); ++i)
     {
-        rDY[i] = {{ time_multiplier }} * derivatives[i];
+        rDY[i] = TIMESCALE_MULTIPLIER * derivatives[i];
     }
 {% else %}
     std::vector<double> derivatives = RunModelEquations(time, rY);
@@ -155,7 +164,7 @@ void {{ ode_class_name }}::Initialise(double time)
 double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<double> &rY)
 {
 {% if scale_time %}
-    time *= {{ time_multiplier }}; // Chaste integrates in hours; use the model's native time units
+    time *= TIMESCALE_MULTIPLIER; // Chaste integrates in hours; use the model's native time units
 {% endif %}
     // Ensure all member variables (state vars, parameters, derived quantities) reflect
     // the rY passed in. Without this, event triggers and assignments would use stale

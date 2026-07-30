@@ -224,6 +224,7 @@ class ChasteSbmlModel:
             model_type=self._model_type,
             scale_time=self._time_unit.multiplier != 1.0,
             time_multiplier=self._time_unit.multiplier_literal,
+            time_unit_display=self._time_unit.display,
         )
 
         if self._model_type == ModelType.SRN:

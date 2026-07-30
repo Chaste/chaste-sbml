@@ -10,6 +10,13 @@
 
 namespace sm = sbmlmath;
 
+namespace
+{
+// Chaste integrates in hours but this model's time is in minutes. Convert the
+// incoming time to native units and scale the derivatives by this factor (native units per hour).
+constexpr double TIMESCALE_MULTIPLIER = 60.0;
+} // namespace
+
 Tan2014SbmlOdeSystem::Tan2014SbmlOdeSystem()
         : AbstractSbmlOdeSystem(6, 12, 0)
 {
@@ -28,7 +35,7 @@ std::vector<double> Tan2014SbmlOdeSystem::ComputeDerivedQuantities(double time, 
 {
     std::vector<double> dqs;
     dqs.reserve(18);
-    time *= 60.0; // Chaste integrates in hours; use the model's native time units
+    time *= TIMESCALE_MULTIPLIER; // Chaste integrates in hours; use the model's native time units
     RunModelEquations(time, rY);
 
     // AMOUNT / CONCENTRATION CONVERSIONS
@@ -65,12 +72,12 @@ std::vector<double> Tan2014SbmlOdeSystem::ComputeDerivedQuantities(double time, 
 void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
     // Chaste integrates in hours; convert to the model's native time units and scale the
-    // resulting derivatives (dY/d(hours) = 60.0 * dY/d(native)).
-    time *= 60.0;
+    // resulting derivatives (dY/d(hours) = TIMESCALE_MULTIPLIER * dY/d(native)).
+    time *= TIMESCALE_MULTIPLIER;
     std::vector<double> derivatives = RunModelEquations(time, rY);
     for (unsigned i = 0; i < rDY.size(); ++i)
     {
-        rDY[i] = 60.0 * derivatives[i];
+        rDY[i] = TIMESCALE_MULTIPLIER * derivatives[i];
     }
 }
 
@@ -143,7 +150,7 @@ void Tan2014SbmlOdeSystem::Initialise(double time)
 
 double Tan2014SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double>& rY)
 {
-    time *= 60.0; // Chaste integrates in hours; use the model's native time units
+    time *= TIMESCALE_MULTIPLIER; // Chaste integrates in hours; use the model's native time units
     // Ensure all member variables (state vars, parameters, derived quantities) reflect
     // the rY passed in. Without this, event triggers and assignments would use stale
     // values from the last EvaluateYDerivatives call, which may differ from rY when
