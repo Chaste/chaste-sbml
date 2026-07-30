@@ -1,7 +1,9 @@
 """Configuration settings and constants for code generation."""
 
+import math
 import pathlib
 from enum import Enum
+from typing import Optional
 
 ROOT_DIR = pathlib.Path(__file__).parent.absolute()
 
@@ -70,3 +72,44 @@ class ModelType(Enum):
     GENERIC = 0
     SRN = 1
     CELL_CYCLE = 2
+
+
+class TimeUnit(Enum):
+    """SBML time units relevant to Chaste, which simulates in hours.
+
+    Each member carries its size in seconds (used to match an SBML unit definition), the multiplier
+    that converts a derivative from the native unit to per-hour (native units per hour), and a display
+    name for logging. ``NONE`` means "no conversion" (multiplier 1.0); it is distinct from ``HOUR``
+    (also multiplier 1.0) so logging can tell "already in hours" from "left unscaled".
+    """
+
+    #             (key,           seconds_per_unit, units_per_hour, display)
+    NONE = ("native", None, 1.0, "native/unknown")
+    MILLISECOND = ("millisecond", 1.0e-3, 3.6e6, "milliseconds")
+    SECOND = ("second", 1.0, 3600.0, "seconds")
+    MINUTE = ("minute", 60.0, 60.0, "minutes")
+    HOUR = ("hour", 3600.0, 1.0, "hours")
+
+    def __init__(self, key: str, seconds_per_unit: Optional[float], multiplier: float, display: str) -> None:
+        self._key = key
+        self.seconds_per_unit = seconds_per_unit
+        self.multiplier = multiplier  # native units per hour; applied to derivatives (dY/d(hours))
+        self.display = display
+
+    @property
+    def multiplier_literal(self) -> str:
+        """C++ double literal for the multiplier, e.g. ``'60.0'``, ``'3600.0'``, ``'3600000.0'``."""
+        return repr(float(self.multiplier))
+
+    @classmethod
+    def from_cli(cls, token: str) -> "TimeUnit":
+        """Map a ``--timescale`` token (``ms``/``s``/``m``/``h``) to a TimeUnit."""
+        return {"ms": cls.MILLISECOND, "s": cls.SECOND, "m": cls.MINUTE, "h": cls.HOUR}[token]
+
+    @classmethod
+    def from_seconds_factor(cls, factor: float) -> Optional["TimeUnit"]:
+        """Map a seconds-per-unit factor to a TimeUnit, or None if it matches no known unit."""
+        for unit in (cls.MILLISECOND, cls.SECOND, cls.MINUTE, cls.HOUR):
+            if math.isclose(factor, unit.seconds_per_unit, rel_tol=1e-9):
+                return unit
+        return None

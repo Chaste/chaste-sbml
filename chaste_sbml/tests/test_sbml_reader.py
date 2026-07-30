@@ -15,9 +15,12 @@ GOLDBETER = ROOT_DIR / "SbmlRefModels" / "src" / "reference" / "Goldbeter1991" /
 
 
 def test_load_sbml_model_reads_a_valid_file():
-    """A valid SBML file loads into a libsbml Model."""
-    model = load_sbml_model(str(GOLDBETER))
+    """A valid SBML file loads into a libsbml Model, with its declared time unit and SBML level."""
+    model, declared_time_unit, sbml_level = load_sbml_model(str(GOLDBETER))
     assert model.getNumSpecies() == 3
+    # Goldbeter1991 is SBML Level 2 and declares no time unit.
+    assert sbml_level == 2
+    assert declared_time_unit is None
 
 
 def test_load_sbml_model_raises_on_read_errors(tmp_path):

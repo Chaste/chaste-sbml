@@ -34,7 +34,7 @@ REFERENCE = ROOT_DIR / "SbmlRefModels" / "src" / "reference"
 
 def _build(sbml_path) -> ModelBuilder:
     """Load, resolve names for and build a real SBML model, returning the ModelBuilder."""
-    sbml_model = load_sbml_model(str(sbml_path))
+    sbml_model, _, _ = load_sbml_model(str(sbml_path))
     names = NameManager(sbml_model)
     names.resolve_real_id_conflicts()
     builder = ModelBuilder(sbml_model, names, "Test")

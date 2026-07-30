@@ -84,7 +84,6 @@ class ModelBuilder:
         self._sbml_reactions = sbml_model.getListOfReactions()
         self._sbml_rules = sbml_model.getListOfRules()
         self._sbml_species = sbml_model.getListOfSpecies()
-        self._sbml_unit_definitions = sbml_model.getListOfUnitDefinitions()
         self._names = name_manager
         self._model_name = model_name
 
@@ -1087,11 +1086,6 @@ class ModelBuilder:
                 # Scale by compartment volume
                 rhs = f"{rhs} / {compartment_id}"
 
-            # TODO: Handle time scaling
-            # time_multiplier = self._get_timescale_multiplier()
-            # if time_multiplier != 1.0:
-            #     f"rDY[{state_variable_index}] *= {time_multiplier};"
-
             state_var = self._add_state_variable(species_id, label, initial_value, units)
             self._add_equation(var=state_var.derivative_id, math=parseL3Formula(rhs), eq_type=EquationType.DERIVATIVE)
 
@@ -1128,23 +1122,6 @@ class ModelBuilder:
         :return: The equivalent C++ string.
         """
         return formula_to_string(math, self._variable_type_map(), self._state_variables, local_parameters)
-
-    def _get_timescale_multiplier(self) -> float:  # pragma: no cover - unused; only caller is commented out (see above)
-        """Get the timescale multiplier.
-
-        SBML uses seconds by default and Chaste uses hours.
-
-        :return: The timescale multiplier.
-        """
-        for unit_def in self._sbml_unit_definitions:
-            u_id = unit_def.getId()
-            if u_id.lower() == "time":  # Do people ever call this something different?
-                timescale = unit_def.getName().strip().lower()
-                if "minute" in timescale:
-                    return 60.0
-                elif "hour" in timescale:
-                    return 1.0
-        return 3600.0
 
     def _get_variable_index(self, id_: str) -> int:
         """Get the index of a variable within its own collection.

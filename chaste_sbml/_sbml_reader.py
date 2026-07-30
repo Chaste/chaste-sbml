@@ -8,19 +8,28 @@ Also provides small readers over individual SBML elements (compartment size,
 function-definition arguments) used while building the internal representation.
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
-from libsbml import LIBSBML_OPERATION_SUCCESS, ConversionProperties, SBMLReader, formulaToString
+from libsbml import (
+    LIBSBML_OPERATION_SUCCESS,
+    UNIT_KIND_SECOND,
+    ConversionProperties,
+    SBMLReader,
+    formulaToString,
+)
+
+from ._config import TimeUnit
 
 if TYPE_CHECKING:
-    from libsbml import Compartment, FunctionDefinition, Model
+    from libsbml import Compartment, FunctionDefinition, Model, UnitDefinition
 
 
-def load_sbml_model(sbml_file: str) -> "Model":
+def load_sbml_model(sbml_file: str) -> tuple["Model", Optional[TimeUnit], int]:
     """Read, comp-flatten and convert an SBML file into a ready-to-process libsbml Model.
 
     :param sbml_file: Path to the SBML file.
-    :return: The loaded libsbml ``Model``.
+    :return: A tuple of the loaded libsbml ``Model``, its declared time unit (or ``None`` if the
+        model declares no determinable time unit), and its SBML level.
     :raises ValueError: if the file has read errors, or flattening/conversion fails.
     """
     reader = SBMLReader()
@@ -40,6 +49,11 @@ def load_sbml_model(sbml_file: str) -> "Model":
             doc.printErrors()
             raise ValueError("Errors during comp flattening")
 
+    # Detect the declared time unit before the conversions below: 'removeUnusedUnits' can strip an
+    # unreferenced <unitDefinition id="time">, which would hide it from the builder.
+    sbml_level = doc.getLevel()
+    declared_time_unit = detect_time_unit(doc.getModel())
+
     # Run required conversions
     config = ConversionProperties()
     # Sort assignment rules in order of dependence.
@@ -55,7 +69,69 @@ def load_sbml_model(sbml_file: str) -> "Model":
         doc.printErrors()
         raise ValueError("Errors during conversion")
 
-    return doc.getModel()
+    return doc.getModel(), declared_time_unit, sbml_level
+
+
+def detect_time_unit(model: "Model") -> Optional[TimeUnit]:
+    """Determine the time unit a model *declares*, or ``None`` if it declares none we can resolve.
+
+    Precedence: the SBML Level 3 ``model.timeUnits`` attribute (a base-unit keyword such as
+    ``second``, or a ``UnitDefinition`` id), then a ``<unitDefinition id="time">`` (the Level 2
+    convention). The unit is resolved structurally from the ``<unit>`` list (see ``_seconds_factor``),
+    never from the human-readable unit name.
+
+    :param model: The libsbml model.
+    :return: The declared :class:`TimeUnit`, or ``None`` if undeclared/undeterminable.
+    """
+    unit_id = model.getTimeUnits() if model.isSetTimeUnits() else ""
+
+    # An L3 timeUnits attribute may name a base unit directly rather than a UnitDefinition.
+    builtin = _builtin_time_unit(unit_id)
+    if builtin is not None:
+        return builtin
+
+    unit_def = model.getUnitDefinition(unit_id) if unit_id else None
+    if unit_def is None:
+        unit_def = model.getUnitDefinition("time")
+    if unit_def is None:
+        return None
+
+    factor = _seconds_factor(unit_def)
+    if factor is None:
+        return None
+    return TimeUnit.from_seconds_factor(factor)
+
+
+def _builtin_time_unit(unit_id: str) -> Optional[TimeUnit]:
+    """Map an SBML base-unit keyword used as a time unit to a TimeUnit.
+
+    :param unit_id: A unit id, which may be a base-unit keyword (e.g. ``second``).
+    :return: The matching :class:`TimeUnit`, or ``None`` if it is not a recognised base-unit keyword.
+    """
+    if unit_id == "second":
+        return TimeUnit.SECOND
+    if unit_id == "dimensionless":
+        return TimeUnit.NONE
+    return None
+
+
+def _seconds_factor(unit_def: "UnitDefinition") -> Optional[float]:
+    """Return the size in seconds of a UnitDefinition that is a scalar multiple of ``second^1``.
+
+    :param unit_def: The unit definition.
+    :return: ``multiplier * 10**scale`` seconds, or ``None`` if the definition is not exactly one
+        second-kind unit with exponent 1 (composite units, non-second kinds and exponents other than
+        1 are treated as undeterminable).
+    """
+    if unit_def.getNumUnits() != 1:
+        return None
+    unit = unit_def.getUnit(0)
+    if unit.getKind() != UNIT_KIND_SECOND:
+        return None
+    if unit.getExponentAsDouble() != 1.0:
+        return None
+    # seconds = multiplier * 10^scale (offset is 0 for time units).
+    return unit.getMultiplier() * (10.0**unit.getScale())
 
 
 def get_compartment_size(compartment: "Compartment") -> float:
