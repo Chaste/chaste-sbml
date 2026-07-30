@@ -117,13 +117,12 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
         rDY[i] = TIMESCALE_MULTIPLIER * derivatives[i];
     }
 {% else %}
+    // No time scaling: the model already uses Chaste's time units (hours) or none was determined.
     std::vector<double> derivatives = RunModelEquations(time, rY);
     for (unsigned i = 0; i < rDY.size(); ++i)
     {
         rDY[i] = derivatives[i];
     }
-
-    // TODO: Scale time appropriately
 {% endif %}
 }
 
