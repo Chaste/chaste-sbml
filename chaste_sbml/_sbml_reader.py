@@ -8,6 +8,7 @@ Also provides small readers over individual SBML elements (compartment size,
 function-definition arguments) used while building the internal representation.
 """
 
+import logging
 from typing import TYPE_CHECKING, Optional
 
 from libsbml import (
@@ -22,6 +23,12 @@ from ._config import TimeUnit
 
 if TYPE_CHECKING:
     from libsbml import Compartment, FunctionDefinition, Model, UnitDefinition
+
+logger = logging.getLogger(__name__)
+
+# SBML levels the generator supports.
+MIN_SBML_LEVEL = 2
+MAX_SBML_LEVEL = 3
 
 
 def load_sbml_model(sbml_file: str) -> tuple["Model", Optional[TimeUnit], int]:
@@ -52,6 +59,7 @@ def load_sbml_model(sbml_file: str) -> tuple["Model", Optional[TimeUnit], int]:
     # Detect the declared time unit before the conversions below: 'removeUnusedUnits' can strip an
     # unreferenced <unitDefinition id="time">, which would hide it from the builder.
     sbml_level = doc.getLevel()
+    _warn_unsupported_level(sbml_level)
     declared_time_unit = detect_time_unit(doc.getModel())
 
     # Run required conversions
@@ -70,6 +78,24 @@ def load_sbml_model(sbml_file: str) -> tuple["Model", Optional[TimeUnit], int]:
         raise ValueError("Errors during conversion")
 
     return doc.getModel(), declared_time_unit, sbml_level
+
+
+def _warn_unsupported_level(sbml_level: int) -> None:
+    """Warn if the SBML level is outside the supported range (Levels 2 and 3).
+
+    Level 1 predates much of the structure the generator relies on, and no level above 3 exists yet;
+    either way the generated code may be incorrect, so warn rather than fail.
+
+    :param sbml_level: The model's SBML level.
+    """
+    if sbml_level < MIN_SBML_LEVEL or sbml_level > MAX_SBML_LEVEL:
+        logger.warning(
+            "SBML Level %d is not supported; only Levels %d and %d are supported. "
+            "Generated code may be incorrect.",
+            sbml_level,
+            MIN_SBML_LEVEL,
+            MAX_SBML_LEVEL,
+        )
 
 
 def detect_time_unit(model: "Model") -> Optional[TimeUnit]:

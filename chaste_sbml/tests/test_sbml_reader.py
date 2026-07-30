@@ -1,11 +1,14 @@
 """Tests for loading and reading SBML with libsbml."""
 
+import logging
+
 import libsbml
 import pytest
 from libsbml import parseL3Formula
 
 from chaste_sbml._config import ROOT_DIR
 from chaste_sbml._sbml_reader import (
+    _warn_unsupported_level,
     get_compartment_size,
     get_function_definition_arguments,
     load_sbml_model,
@@ -29,6 +32,22 @@ def test_load_sbml_model_raises_on_read_errors(tmp_path):
     bad.write_text("<not well formed <<<")
     with pytest.raises(ValueError, match="Errors found while reading"):
         load_sbml_model(str(bad))
+
+
+@pytest.mark.parametrize("level", [1, 4])
+def test_warn_unsupported_level_warns(level, caplog):
+    """SBML levels outside 2-3 (e.g. Level 1, or a future Level 4) trigger a warning."""
+    with caplog.at_level(logging.WARNING):
+        _warn_unsupported_level(level)
+    assert f"SBML Level {level} is not supported" in caplog.text
+
+
+@pytest.mark.parametrize("level", [2, 3])
+def test_warn_unsupported_level_quiet_for_supported(level, caplog):
+    """Supported SBML levels (2 and 3) produce no warning."""
+    with caplog.at_level(logging.WARNING):
+        _warn_unsupported_level(level)
+    assert "not supported" not in caplog.text
 
 
 def test_get_compartment_size_returns_set_size():
