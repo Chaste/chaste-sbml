@@ -229,14 +229,22 @@ def test_resolve_uses_declared_when_no_override(any_model):
     assert any_model._resolve_time_unit(None, TimeUnit.MINUTE, 2) is TimeUnit.MINUTE
 
 
-def test_resolve_defaults_level2_to_seconds(any_model):
-    """An undeclared Level 2 model defaults to seconds (SBML L2 predefines time = second)."""
-    assert any_model._resolve_time_unit(None, None, 2) is TimeUnit.SECOND
+def test_resolve_defaults_level2_to_seconds(any_model, caplog):
+    """An undeclared Level 2 model defaults to seconds and warns, hinting at --timescale."""
+    with caplog.at_level(logging.WARNING):
+        resolved = any_model._resolve_time_unit(None, None, 2)
+    assert resolved is TimeUnit.SECOND
+    assert "no time unit" in caplog.text.lower()
+    assert "--timescale" in caplog.text
 
 
-def test_resolve_defaults_level3_to_no_conversion(any_model):
-    """An undeclared Level 3 model leaves time undefined (no conversion)."""
-    assert any_model._resolve_time_unit(None, None, 3) is TimeUnit.NONE
+def test_resolve_defaults_level3_to_no_conversion(any_model, caplog):
+    """An undeclared Level 3 model applies no conversion and warns, hinting at --timescale."""
+    with caplog.at_level(logging.WARNING):
+        resolved = any_model._resolve_time_unit(None, None, 3)
+    assert resolved is TimeUnit.NONE
+    assert "no time unit" in caplog.text.lower()
+    assert "--timescale" in caplog.text
 
 
 # --- end-to-end resolution + rendering ------------------------------------------------------------

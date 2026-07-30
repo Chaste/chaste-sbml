@@ -107,7 +107,8 @@ class ChasteSbmlModel:
 
         Precedence: an explicit override wins (warning if it contradicts a declared unit); otherwise a
         declared unit is used; otherwise the SBML default applies -- Level 2 predefines ``time`` as
-        seconds, while Level 3 leaves an unset time unit undefined (no conversion).
+        seconds, while Level 3 leaves an unset time unit undefined (no conversion). When no unit is
+        declared and no override is given, a warning hints at the ``--timescale`` option.
 
         :param override: An explicit time unit (from ``--timescale``), or ``None`` to auto-detect.
         :param declared: The time unit declared by the model, or ``None`` if none was declared.
@@ -125,9 +126,23 @@ class ChasteSbmlModel:
             resolved = override
         elif declared is not None:
             resolved = declared
+        elif sbml_level == 2:
+            # SBML Level 2 predefines the time unit as seconds when none is declared.
+            resolved = TimeUnit.SECOND
+            logger.warning(
+                "The model declares no time unit; assuming seconds per the SBML Level 2 default and "
+                "scaling derivatives by %s to convert to Chaste hours. Pass --timescale ms|s|m|h to "
+                "set the model's time unit explicitly.",
+                resolved.multiplier,
+            )
         else:
-            # Spec-faithful default: L2 predefines time = second; L3 leaves it undefined.
-            resolved = TimeUnit.SECOND if sbml_level == 2 else TimeUnit.NONE
+            # SBML Level 3 leaves an unset time unit undefined, so apply no conversion.
+            resolved = TimeUnit.NONE
+            logger.warning(
+                "The model declares no time unit (SBML Level 3 leaves it undefined); no time "
+                "conversion is applied. Pass --timescale ms|s|m|h to convert the model to Chaste "
+                "hours.",
+            )
 
         logger.info("Using time unit %s (derivative multiplier %s).", resolved.display, resolved.multiplier)
         return resolved
