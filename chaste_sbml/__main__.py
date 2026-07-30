@@ -3,7 +3,7 @@
 import argparse
 
 from chaste_sbml import ChasteSbmlModel, copy_base_classes
-from chaste_sbml._config import ModelType
+from chaste_sbml._config import ModelType, TimeUnit
 
 from ._version import __version__
 
@@ -41,6 +41,13 @@ def parse_args() -> argparse.Namespace:
         help="Generate placeholder test files (default: on). Use --no-tests to disable.",
     )
     generate.add_argument(
+        "--timescale",
+        choices=["ms", "s", "m", "h"],
+        default=None,
+        help="The model's native time unit (milliseconds/seconds/minutes/hours), used to convert "
+        "derivatives to Chaste's hours. Overrides auto-detection from the SBML; omit to auto-detect.",
+    )
+    generate.add_argument(
         "--test-output-dir",
         default=None,
         help="The directory to place generated test files in (defaults to --output-dir)",
@@ -72,7 +79,11 @@ def process_command_line(args: "argparse.Namespace"):
     elif args.model_type == "cell-cycle":
         model_type = ModelType.CELL_CYCLE
 
-    chaste_model = ChasteSbmlModel(args.sbml_file, model_type=model_type, generate_tests=args.tests)
+    time_unit = TimeUnit.from_cli(args.timescale) if args.timescale else None
+
+    chaste_model = ChasteSbmlModel(
+        args.sbml_file, model_type=model_type, generate_tests=args.tests, time_unit=time_unit
+    )
     chaste_model.write(args.output_dir, args.test_output_dir)
 
 
