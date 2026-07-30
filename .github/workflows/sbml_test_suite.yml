@@ -48,10 +48,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Empty reference tests
+      - name: Empty reference test packs
         run: |
-          rm -rf ${PROJ_ROOT}/src/reference
-          rm -rf ${PROJ_ROOT}/test/reference
+          # Clear the test packs so only the generated semantic cases are built later.
+          # The reference model sources themselves are removed after the Codecov upload
+          # (below) -- deleting them here breaks the Codecov CLI, which walks every
+          # git-tracked source file and aborts on the missing reference *.cpp/*.hpp.
           echo "" > ${PROJ_ROOT}/test/ContinuousTestPack.txt
           echo "" > ${PROJ_ROOT}/test/WeeklyTestPack.txt
 
@@ -92,6 +94,13 @@ jobs:
           files: coverage.xml
           flags: python
           disable_search: true
+
+      - name: Remove reference models
+        run: |
+          # Now that coverage is uploaded, drop the reference models so the Chaste
+          # build below compiles only the generated semantic cases.
+          rm -rf ${PROJ_ROOT}/src/reference
+          rm -rf ${PROJ_ROOT}/test/reference
 
       - name: Check for generated src
         run: |
