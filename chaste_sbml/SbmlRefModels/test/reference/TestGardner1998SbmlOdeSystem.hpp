@@ -83,8 +83,10 @@ private:
         {
             Gardner1998SbmlOdeSystem ode_system;
 
-            double dt = 0.01;
-            double end_time = 200.0;
+            // The model is in seconds but Chaste integrates in hours, so the ODE system scales
+            // derivatives by 3600. Divide the times by 3600 to reach the same states as before.
+            double dt = 0.01 / 3600.0;
+            double end_time = 200.0 / 3600.0;
 
             std::vector<double> initial_conditions = ode_system.GetInitialConditions();
 
@@ -218,12 +220,14 @@ public:
         std::vector<double> derivs(initial_conditions.size());
         ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
-        // Compare derivatives with values from Tellurium
-        TS_ASSERT_DELTA(derivs[0], 0.155, 1e-3);  // C
-        TS_ASSERT_DELTA(derivs[1], 0.0, 1e-6);    // X
-        TS_ASSERT_DELTA(derivs[2], 0.0, 1e-6);    // M
-        TS_ASSERT_DELTA(derivs[3], 0.202, 1e-3);  // Y
-        TS_ASSERT_DELTA(derivs[4], -0.057, 1e-3); // Z
+        // Compare derivatives with values from Tellurium. EvaluateYDerivatives returns per-hour
+        // derivatives (the model is in seconds, scaled by 3600); divide by 3600 to compare against
+        // the native (per-second) values.
+        TS_ASSERT_DELTA(derivs[0] / 3600.0, 0.155, 1e-3);  // C
+        TS_ASSERT_DELTA(derivs[1] / 3600.0, 0.0, 1e-6);    // X
+        TS_ASSERT_DELTA(derivs[2] / 3600.0, 0.0, 1e-6);    // M
+        TS_ASSERT_DELTA(derivs[3] / 3600.0, 0.202, 1e-3);  // Y
+        TS_ASSERT_DELTA(derivs[4] / 3600.0, -0.057, 1e-3); // Z
     }
 
     void TestOdeWithChasteSolver()

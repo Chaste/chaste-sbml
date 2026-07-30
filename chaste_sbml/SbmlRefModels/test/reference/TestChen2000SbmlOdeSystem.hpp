@@ -101,11 +101,13 @@ private:
             // Solve system using solver
             Chen2000SbmlOdeSystem ode_system;
 
-            const double max_step = 0.01;
-            const double sampling_interval = 0.01;
+            // The model is in minutes but Chaste integrates in hours, so the ODE system scales
+            // derivatives by 60. Divide the times by 60 to reach the same states as before.
+            const double max_step = 0.01 / 60.0;
+            const double sampling_interval = 0.01 / 60.0;
 
             const double start_time = 0.0;
-            const double end_time = 300.0;
+            const double end_time = 300.0 / 60.0;
 
             std::vector<double> initial_conditions;
             OdeSolution ode_solution;
@@ -340,10 +342,12 @@ public:
             0.03495495495495495     // SPN
         };
 
+        // EvaluateYDerivatives returns per-hour derivatives (the model is in minutes, scaled by 60);
+        // divide by 60 to compare against the native (per-minute) Tellurium values.
         std::vector<std::string> var_names = ode_system.rGetStateVariableNames();
         for (unsigned i = 0; i < ODE_SIZE; i++)
         {
-            TSM_ASSERT_DELTA(var_names[i].c_str(), derivatives[i], derivatives_expected[i], 1e-6);
+            TSM_ASSERT_DELTA(var_names[i].c_str(), derivatives[i] / 60.0, derivatives_expected[i], 1e-6);
         }
     }
 

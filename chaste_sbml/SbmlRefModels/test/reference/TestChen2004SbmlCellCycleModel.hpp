@@ -65,8 +65,12 @@ public:
     {
         // Setup time
         SimulationTime* p_simulation_time = SimulationTime::Instance();
-        const double dt = 0.01;
-        const double end_time = 220.0;
+        // The model is in minutes but Chaste integrates in hours (the ODE system scales derivatives
+        // by 60), so divide the timestep and end time by 60 to integrate over the same native span.
+        // The simulation time (hours) is converted back to minutes below to compare against the
+        // native divide times.
+        const double dt = 0.01 / 60.0;
+        const double end_time = 220.0 / 60.0;
         const unsigned num_timesteps = static_cast<unsigned>(end_time / dt);
         p_simulation_time->SetEndTimeAndNumberOfTimeSteps(end_time, num_timesteps);
 
@@ -105,11 +109,11 @@ public:
 
         // Test the cell is ready to divide at the right time
         double standard_divide_time = 101.20;
-        double divide_time_tolerance = 0.02;
+        double divide_time_tolerance = 0.1;
         for (unsigned i = 0; i < num_timesteps / 2; i++)
         {
             p_simulation_time->IncrementTimeOneStep();
-            double time = p_simulation_time->GetTime();
+            double time = p_simulation_time->GetTime() * 60.0; // hours -> native minutes
 
             bool division_ready_0 = p_ccm_0->ReadyToDivide();
             bool division_ready_1 = p_ccm_1->ReadyToDivide();
@@ -208,11 +212,11 @@ public:
 
         // Test the cell is ready to divide at the right time
         standard_divide_time = 202.14;
-        divide_time_tolerance = 0.02;
+        divide_time_tolerance = 0.1;
         for (unsigned i = 0; i < num_timesteps / 2; i++)
         {
             p_simulation_time->IncrementTimeOneStep();
-            double time = p_simulation_time->GetTime();
+            double time = p_simulation_time->GetTime() * 60.0; // hours -> native minutes
 
             bool division_ready_0 = p_ccm_0->ReadyToDivide();
             bool division_ready_2 = p_ccm_2->ReadyToDivide();

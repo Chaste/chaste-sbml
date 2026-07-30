@@ -114,10 +114,14 @@ private:
             // Solve system using solver
             Chen2004SbmlOdeSystem ode_system;
 
-            const double max_step = 0.01;
-            const double sampling_interval = 0.01;
+            // The model is in minutes but Chaste integrates in hours, so the ODE system scales
+            // derivatives by 60. Divide the times by 60 to reach the same states as before; the
+            // measured stopping times (in hours) are multiplied back by 60 below to compare against
+            // the native (minute) expected values.
+            const double max_step = 0.01 / 60.0;
+            const double sampling_interval = 0.01 / 60.0;
 
-            const double run_length = 100.0;
+            const double run_length = 100.0 / 60.0;
             double start_time = 0.0;
             double end_time = start_time + run_length;
 
@@ -154,7 +158,7 @@ private:
                 // (~t=185, ~t=202) are reached after a long stiff integration whose
                 // floating-point result is sensitive to build/optimisation at the ~0.01 level,
                 // which would otherwise straddle a tighter bound.
-                TS_ASSERT_DELTA(ode_solution.rGetTimes().back(), expected_stop_times[i], 2e-2);
+                TS_ASSERT_DELTA(ode_solution.rGetTimes().back() * 60.0, expected_stop_times[i], 2e-2);
 
                 // Collate solutions and times from all runs
                 solutions.insert(solutions.end(), ode_solution.rGetSolutions().begin(), ode_solution.rGetSolutions().end());
@@ -458,10 +462,12 @@ public:
 
         TS_ASSERT_EQUALS(ode_system.GetNumberOfStateVariables(), ODE_SIZE);
 
+        // EvaluateYDerivatives returns per-hour derivatives (the model is in minutes, scaled by 60);
+        // divide by 60 to compare against the native (per-minute) Tellurium values.
         std::vector<std::string> var_names = ode_system.rGetStateVariableNames();
         for (unsigned i = 0; i < ODE_SIZE; i++)
         {
-            TSM_ASSERT_DELTA(var_names[i].c_str(), derivatives[i], derivatives_expected[i], 1e-6);
+            TSM_ASSERT_DELTA(var_names[i].c_str(), derivatives[i] / 60.0, derivatives_expected[i], 1e-6);
         }
 
         // Check derived quantity indices

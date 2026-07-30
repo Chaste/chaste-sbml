@@ -90,7 +90,8 @@ public:
         // Now update the SRN
         SimulationTime* p_simulation_time = SimulationTime::Instance();
         unsigned num_steps = 100;
-        double end_time = 10.0;
+        // Model is in minutes; Chaste integrates in hours, so divide the end time by 60.
+        double end_time = 10.0 / 60.0;
         p_simulation_time->SetEndTimeAndNumberOfTimeSteps(end_time, num_steps);
 
         while (p_simulation_time->GetTime() < end_time)
@@ -144,7 +145,8 @@ public:
 
         // Save
         {
-            double end_time = 10.0;
+            // Model is in minutes; Chaste integrates in hours, so divide the end time by 60.
+            double end_time = 10.0 / 60.0;
             SimulationTime* p_simulation_time = SimulationTime::Instance();
             p_simulation_time->SetEndTimeAndNumberOfTimeSteps(end_time, 100);
 
