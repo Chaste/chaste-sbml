@@ -12,8 +12,8 @@ namespace sm = sbmlmath;
 
 namespace
 {
-// Chaste integrates in hours but this model's time is in seconds. Convert the
-// incoming time to native units and scale the derivatives by this factor (native units per hour).
+// Convert the model's native time units (seconds) to Chaste default (hours) and
+// scale the derivatives by this factor (seconds per hour).
 constexpr double TIMESCALE_MULTIPLIER = 3600.0;
 } // namespace
 
@@ -62,8 +62,7 @@ std::vector<double> Goldbeter1991SbmlOdeSystem::ComputeDerivedQuantities(double 
 
 void Goldbeter1991SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
-    // Chaste integrates in hours; convert to the model's native time units and scale the
-    // resulting derivatives (dY/d(hours) = TIMESCALE_MULTIPLIER * dY/d(native)).
+    // Convert the model's native time units to Chaste default (hours) and scale the derivatives.
     time *= TIMESCALE_MULTIPLIER;
     std::vector<double> derivatives = RunModelEquations(time, rY);
     for (unsigned i = 0; i < rDY.size(); ++i)

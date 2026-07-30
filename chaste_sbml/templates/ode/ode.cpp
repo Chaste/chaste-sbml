@@ -13,8 +13,8 @@ namespace sm = sbmlmath;
 
 namespace
 {
-// Chaste integrates in hours but this model's time is in {{ time_unit_display }}. Convert the
-// incoming time to native units and scale the derivatives by this factor (native units per hour).
+// Convert the model's native time units ({{ time_unit_display }}) to Chaste default (hours) and
+// scale the derivatives by this factor ({{ time_unit_display }} per hour).
 constexpr double TIMESCALE_MULTIPLIER = {{ time_multiplier }};
 } // namespace
 {% endif %}
@@ -108,8 +108,7 @@ std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, 
 void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
 {% if scale_time %}
-    // Chaste integrates in hours; convert to the model's native time units and scale the
-    // resulting derivatives (dY/d(hours) = TIMESCALE_MULTIPLIER * dY/d(native)).
+    // Convert the model's native time units to Chaste default (hours) and scale the derivatives.
     time *= TIMESCALE_MULTIPLIER;
     std::vector<double> derivatives = RunModelEquations(time, rY);
     for (unsigned i = 0; i < rDY.size(); ++i)
@@ -117,7 +116,6 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
         rDY[i] = TIMESCALE_MULTIPLIER * derivatives[i];
     }
 {% else %}
-    // No time scaling: the model already uses Chaste's time units (hours) or none was determined.
     std::vector<double> derivatives = RunModelEquations(time, rY);
     for (unsigned i = 0; i < rDY.size(); ++i)
     {
