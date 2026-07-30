@@ -1356,12 +1356,12 @@ class ModelBuilder:
             :param var: The variable to check for.
             :return: True if the variable appears in the rhs of the equation, False otherwise.
             """
-            # False if there is a local parameter with the same name as the variable.
+            # A local parameter shadows any outer variable of the same name within the
+            # kinetic law, so an occurrence of `var` in the rhs refers to the local
+            # parameter, not the outer variable - the equation does not depend on it.
             if eq.local_parameters:
                 if any(var == param.id for param in eq.local_parameters):
-                    # Only reachable if a local parameter is named like a synthetic variable
-                    # (derivative/amount) sorted after its reaction - not a realistic model.
-                    return False  # pragma: no cover
+                    return False
 
             return bool(re.search(rf"\b{var}\b", eq.rhs))
 

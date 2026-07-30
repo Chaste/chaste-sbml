@@ -141,10 +141,13 @@ def test_time_varying_compartment_conversion_factor(tmp_path):
 
 
 def test_local_parameter_shadows_variable(tmp_path):
-    """A reaction whose local parameter shares a species' name does not depend on that species.
+    """A reaction is not treated as depending on a global parameter its local parameter shadows.
 
-    Reaction ``R2`` has a local parameter ``A`` used in its rate, shadowing the species ``A``; the
-    dependency sort must not treat the reaction as depending on species ``A``.
+    Global parameter ``p`` is defined by an assignment rule referencing reaction ``R1``'s rate, so
+    the dependency sort places ``p`` after ``R1``. ``R1`` has a local parameter also named ``p``,
+    which shadows the global ``p`` inside the kinetic law -- so the ``p`` in ``R1``'s rate is the
+    local one, and the sort must not treat ``R1`` as depending on the global ``p`` equation
+    (exercises the local-parameter shadowing branch in ``_sort_equations._depends``).
     """
     body = """    <listOfCompartments>
       <compartment id="c" size="1" constant="true"/>
@@ -155,7 +158,13 @@ def test_local_parameter_shadows_variable(tmp_path):
     </listOfSpecies>
     <listOfParameters>
       <parameter id="k" value="1" constant="true"/>
+      <parameter id="p" constant="false"/>
     </listOfParameters>
+    <listOfRules>
+      <assignmentRule variable="p">
+        <math xmlns="http://www.w3.org/1998/Math/MathML"><ci>R1</ci></math>
+      </assignmentRule>
+    </listOfRules>
     <listOfReactions>
       <reaction id="R1" reversible="false">
         <listOfReactants>
@@ -166,23 +175,10 @@ def test_local_parameter_shadows_variable(tmp_path):
         </listOfProducts>
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
-            <apply><times/><ci>k</ci><ci>A</ci></apply>
-          </math>
-        </kineticLaw>
-      </reaction>
-      <reaction id="R2" reversible="false">
-        <listOfReactants>
-          <speciesReference species="B" stoichiometry="1" constant="true"/>
-        </listOfReactants>
-        <listOfProducts>
-          <speciesReference species="A" stoichiometry="1" constant="true"/>
-        </listOfProducts>
-        <kineticLaw>
-          <math xmlns="http://www.w3.org/1998/Math/MathML">
-            <apply><times/><ci>A</ci><ci>B</ci></apply>
+            <apply><times/><ci>p</ci><ci>A</ci></apply>
           </math>
           <listOfLocalParameters>
-            <localParameter id="A" value="1"/>
+            <localParameter id="p" value="2"/>
           </listOfLocalParameters>
         </kineticLaw>
       </reaction>
