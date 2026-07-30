@@ -27,6 +27,7 @@ VanLeeuwen2007SbmlOdeSystem::~VanLeeuwen2007SbmlOdeSystem()
 std::vector<double> VanLeeuwen2007SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
 {
     std::vector<double> dqs;
+    dqs.reserve(42);
     RunModelEquations(time, rY);
 
     // AMOUNT / CONCENTRATION CONVERSIONS
@@ -89,7 +90,7 @@ std::vector<double> VanLeeuwen2007SbmlOdeSystem::ComputeDerivedQuantities(double
     dqs.push_back(amt__drag);
 
     return dqs;
-}
+} // LCOV_EXCL_LINE (gcov marks this closing brace of a std::vector-returning function as uncovered)
 
 void VanLeeuwen2007SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {

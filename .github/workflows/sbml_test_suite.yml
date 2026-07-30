@@ -48,10 +48,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Empty reference tests
+      - name: Empty reference test packs
         run: |
-          rm -rf ${PROJ_ROOT}/src/reference
-          rm -rf ${PROJ_ROOT}/test/reference
+          # Clear the test packs so only the generated semantic cases are built later.
+          # The reference model sources themselves are removed after the Codecov upload
+          # (below) -- deleting them here breaks the Codecov CLI, which walks every
+          # git-tracked source file and aborts on the missing reference *.cpp/*.hpp.
           echo "" > ${PROJ_ROOT}/test/ContinuousTestPack.txt
           echo "" > ${PROJ_ROOT}/test/WeeklyTestPack.txt
 
@@ -63,7 +65,7 @@ jobs:
       - name: Install SBML codegen
         run: |
           python3 -m pip install --upgrade pip
-          python3 -m pip install .[dev]
+          python3 -m pip install -e .[dev]
 
       - name: Checkout SBML test suite
         uses: actions/checkout@v6
@@ -74,13 +76,31 @@ jobs:
       - name: Generate semantic test cases
         run: |
           mkdir -p ${PROJ_ROOT}/src/cases/semantic
-          python3 ${PROJ_ROOT}/generate_cases.py \
+          python3 -m coverage run --rcfile=.coveragerc ${PROJ_ROOT}/generate_cases.py \
             --sbml-test-suite-dir sbml-test-suite \
             --gen-src-dir ${PROJ_ROOT}/src/cases/semantic \
             --gen-test-dir ${PROJ_ROOT}/test/cases/semantic \
             --test-pack-file ${PROJ_ROOT}/test/WeeklyTestPack.txt \
             --first-case ${{ matrix.first_case }} \
             --last-case ${{ matrix.last_case }}
+
+      - name: Report Python coverage from generation
+        run: python3 -m coverage xml -o coverage.xml
+
+      - name: Upload Python coverage to Codecov
+        uses: codecov/codecov-action@v6
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.xml
+          flags: python
+          disable_search: true
+
+      - name: Remove reference models
+        run: |
+          # Now that coverage is uploaded, drop the reference models so the Chaste
+          # build below compiles only the generated semantic cases.
+          rm -rf ${PROJ_ROOT}/src/reference
+          rm -rf ${PROJ_ROOT}/test/reference
 
       - name: Check for generated src
         run: |

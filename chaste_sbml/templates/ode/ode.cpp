@@ -75,6 +75,7 @@ std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, 
 {
     std::vector<double> dqs;
 {% if derived_quantities %}
+    dqs.reserve({{ derived_quantities | length }});
     RunModelEquations(time, rY);
 
     // AMOUNT / CONCENTRATION CONVERSIONS
@@ -90,7 +91,7 @@ std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, 
 {% endif %} {# 'if derived_quantities' #}
 
     return dqs;
-}
+} // LCOV_EXCL_LINE (gcov marks this closing brace of a std::vector-returning function as uncovered)
 
 void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {

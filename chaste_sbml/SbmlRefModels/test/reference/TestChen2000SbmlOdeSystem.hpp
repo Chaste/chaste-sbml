@@ -361,6 +361,13 @@ public:
         cvode_solver.CheckForStoppingEvents();
         RunOdeWithSolver(cvode_solver, "cvode");
     }
+
+    void TestComputeDerivedQuantities()
+    {
+        Chen2000SbmlOdeSystem ode_system;
+        std::vector<double> derived = ode_system.ComputeDerivedQuantities(0.0, ode_system.GetInitialConditions());
+        TS_ASSERT_LESS_THAN(0u, derived.size());
+    }
 };
 
 #endif // TEST_CHEN_2000_SBML_ODE_SYSTEM_HPP_

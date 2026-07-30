@@ -27,6 +27,7 @@ Chen2000SbmlOdeSystem::~Chen2000SbmlOdeSystem()
 std::vector<double> Chen2000SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
 {
     std::vector<double> dqs;
+    dqs.reserve(16);
     RunModelEquations(time, rY);
 
     // AMOUNT / CONCENTRATION CONVERSIONS
@@ -49,7 +50,7 @@ std::vector<double> Chen2000SbmlOdeSystem::ComputeDerivedQuantities(double time,
     dqs.push_back(Swi5);
 
     return dqs;
-}
+} // LCOV_EXCL_LINE (gcov marks this closing brace of a std::vector-returning function as uncovered)
 
 void Chen2000SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {

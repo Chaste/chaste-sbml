@@ -27,6 +27,7 @@ Gardner1998SbmlOdeSystem::~Gardner1998SbmlOdeSystem()
 std::vector<double> Gardner1998SbmlOdeSystem::ComputeDerivedQuantities(double time, const std::vector<double>& rY)
 {
     std::vector<double> dqs;
+    dqs.reserve(21);
     RunModelEquations(time, rY);
 
     // AMOUNT / CONCENTRATION CONVERSIONS
@@ -59,7 +60,7 @@ std::vector<double> Gardner1998SbmlOdeSystem::ComputeDerivedQuantities(double ti
     dqs.push_back(amt__Z);
 
     return dqs;
-}
+} // LCOV_EXCL_LINE (gcov marks this closing brace of a std::vector-returning function as uncovered)
 
 void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {

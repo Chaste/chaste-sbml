@@ -200,7 +200,7 @@ def rewrite_nary_relational(node: Optional["ASTNode"]) -> None:
 
     :param node: The root AST node to rewrite.
     """
-    if node is None:
+    if node is None:  # pragma: no cover - defensive base case; callers pass a real AST root
         return
     name = _NARY_RELATIONAL_NAMES.get(node.getType())
     if name is not None and node.getNumChildren() > 2:
@@ -245,7 +245,7 @@ def rewrite_power(node: Optional["ASTNode"]) -> None:
 
     :param node: The root AST node to rewrite.
     """
-    if node is None:
+    if node is None:  # pragma: no cover - defensive base case; callers pass a real AST root
         return
     if node.getType() in (AST_POWER, AST_FUNCTION_POWER):
         node.setType(AST_FUNCTION)

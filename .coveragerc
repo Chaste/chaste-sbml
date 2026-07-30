@@ -1,6 +1,8 @@
 [run]
 source = chaste_sbml
+relative_files = true
 omit =
     chaste_sbml/_version.py
     chaste_sbml/tests/*
     chaste_sbml/templates/*
+    chaste_sbml/SbmlRefModels/*
