@@ -9,7 +9,7 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 from chaste_sbml import ChasteSbmlModel
-from chaste_sbml._config import ModelType
+from chaste_sbml._config import ModelType, TimeUnit
 from chaste_sbml._names import generate_header_guard
 
 if TYPE_CHECKING:
@@ -62,8 +62,20 @@ class ChasteSbmlTestSuiteModel(ChasteSbmlModel):
 
         model_name = f"{prefix}{test_params['case']}{sbml_version.upper()}Sbml"
 
+        # The SBML test suite validates output in the model's own (dimensionless) time, so never
+        # convert time here regardless of any declared unit. The caller does not set time_unit, but
+        # pop it defensively so the forced value always wins.
+        kwargs.pop("time_unit", None)
+
         # This generates its own test, so disable the placeholder test
-        super().__init__(sbml_file, model_name=model_name, model_type=ModelType.GENERIC, generate_tests=False, **kwargs)
+        super().__init__(
+            sbml_file,
+            model_name=model_name,
+            model_type=ModelType.GENERIC,
+            generate_tests=False,
+            time_unit=TimeUnit.NONE,
+            **kwargs,
+        )
 
         self._test_type = test_type
         self._test_hpp_filename = f"Test{self._model_name}.hpp"

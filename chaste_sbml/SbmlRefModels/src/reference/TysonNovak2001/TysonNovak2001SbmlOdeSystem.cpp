@@ -42,6 +42,7 @@ std::vector<double> TysonNovak2001SbmlOdeSystem::ComputeDerivedQuantities(double
 {
     std::vector<double> dqs;
     dqs.reserve(36);
+    time *= 60.0; // Chaste integrates in hours; use the model's native time units
     RunModelEquations(time, rY);
 
     // AMOUNT / CONCENTRATION CONVERSIONS
@@ -99,13 +100,14 @@ std::vector<double> TysonNovak2001SbmlOdeSystem::ComputeDerivedQuantities(double
 
 void TysonNovak2001SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
+    // Chaste integrates in hours; convert to the model's native time units and scale the
+    // resulting derivatives (dY/d(hours) = 60.0 * dY/d(native)).
+    time *= 60.0;
     std::vector<double> derivatives = RunModelEquations(time, rY);
     for (unsigned i = 0; i < rDY.size(); ++i)
     {
-        rDY[i] = derivatives[i];
+        rDY[i] = 60.0 * derivatives[i];
     }
-
-    // TODO: Scale time appropriately
 }
 
 void TysonNovak2001SbmlOdeSystem::Initialise(double time)
@@ -246,6 +248,7 @@ void TysonNovak2001SbmlOdeSystem::Initialise(double time)
 
 double TysonNovak2001SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double>& rY)
 {
+    time *= 60.0; // Chaste integrates in hours; use the model's native time units
     // Ensure all member variables (state vars, parameters, derived quantities) reflect
     // the rY passed in. Without this, event triggers and assignments would use stale
     // values from the last EvaluateYDerivatives call, which may differ from rY when

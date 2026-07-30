@@ -7,6 +7,11 @@
   </annotation>
   <model id="mweda59eac_0680_4d5b_a73c_41036dc4d139" name="VanLeeuwen">
     <listOfUnitDefinitions>
+      <unitDefinition id="time" name="hours">
+        <listOfUnits>
+          <unit kind="second" multiplier="3600" />
+        </listOfUnits>
+      </unitDefinition>
       <unitDefinition id="MWDERIVEDUNIT_meter___3" name="meter^3">
         <listOfUnits>
           <unit kind="metre" exponent="3" />

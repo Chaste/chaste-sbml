@@ -28,6 +28,7 @@ std::vector<double> Gardner1998SbmlOdeSystem::ComputeDerivedQuantities(double ti
 {
     std::vector<double> dqs;
     dqs.reserve(21);
+    time *= 3600.0; // Chaste integrates in hours; use the model's native time units
     RunModelEquations(time, rY);
 
     // AMOUNT / CONCENTRATION CONVERSIONS
@@ -64,13 +65,14 @@ std::vector<double> Gardner1998SbmlOdeSystem::ComputeDerivedQuantities(double ti
 
 void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
+    // Chaste integrates in hours; convert to the model's native time units and scale the
+    // resulting derivatives (dY/d(hours) = 3600.0 * dY/d(native)).
+    time *= 3600.0;
     std::vector<double> derivatives = RunModelEquations(time, rY);
     for (unsigned i = 0; i < rDY.size(); ++i)
     {
-        rDY[i] = derivatives[i];
+        rDY[i] = 3600.0 * derivatives[i];
     }
-
-    // TODO: Scale time appropriately
 }
 
 void Gardner1998SbmlOdeSystem::Initialise(double time)
@@ -225,6 +227,7 @@ void Gardner1998SbmlOdeSystem::Initialise(double time)
 
 double Gardner1998SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double>& rY)
 {
+    time *= 3600.0; // Chaste integrates in hours; use the model's native time units
     // Ensure all member variables (state vars, parameters, derived quantities) reflect
     // the rY passed in. Without this, event triggers and assignments would use stale
     // values from the last EvaluateYDerivatives call, which may differ from rY when
