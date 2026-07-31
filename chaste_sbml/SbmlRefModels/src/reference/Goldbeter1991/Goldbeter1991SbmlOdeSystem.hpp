@@ -45,8 +45,6 @@ private:
     double V1;   // V1
     double V3;   // V3
 
-    // STOICHIOMETRY VARIABLES
-
     // REACTIONS
     double reaction1; // creation of cyclin
     double reaction2; // default degradation of cyclin

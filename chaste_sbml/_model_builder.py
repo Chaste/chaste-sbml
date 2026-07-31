@@ -90,7 +90,6 @@ class ModelBuilder:
     def template_data(self) -> dict[str, "Any"]:
         """Return the built collections as a template-variables dict."""
         return dict(
-            assignment_rules=self._assignment_rules,
             derived_quantities=self._derived_quantities,
             equations=self._equations,
             events=self._events,
@@ -98,7 +97,6 @@ class ModelBuilder:
             parameters=self._parameters,
             reactions=self._reactions,
             state_variables=self._state_variables,
-            stoichiometry_variables=self._stoichiometry_variables,
         )
 
     def _add_amount(self, species: "Species") -> None:

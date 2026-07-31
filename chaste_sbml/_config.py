@@ -83,15 +83,14 @@ class TimeUnit(Enum):
     (also multiplier 1.0) so logging can tell "already in hours" from "left unscaled".
     """
 
-    #             (key,           seconds_per_unit, units_per_hour, display)
-    NONE = ("native", None, 1.0, "native/unknown")
-    MILLISECOND = ("millisecond", 1.0e-3, 3.6e6, "milliseconds")
-    SECOND = ("second", 1.0, 3600.0, "seconds")
-    MINUTE = ("minute", 60.0, 60.0, "minutes")
-    HOUR = ("hour", 3600.0, 1.0, "hours")
+    #        (seconds_per_unit, units_per_hour, display)
+    NONE = (None, 1.0, "native/unknown")
+    MILLISECOND = (1.0e-3, 3.6e6, "milliseconds")
+    SECOND = (1.0, 3600.0, "seconds")
+    MINUTE = (60.0, 60.0, "minutes")
+    HOUR = (3600.0, 1.0, "hours")
 
-    def __init__(self, key: str, seconds_per_unit: Optional[float], multiplier: float, display: str) -> None:
-        self._key = key
+    def __init__(self, seconds_per_unit: Optional[float], multiplier: float, display: str) -> None:
         self.seconds_per_unit = seconds_per_unit
         self.multiplier = multiplier  # native units per hour; applied to derivatives (dY/d(hours))
         self.display = display

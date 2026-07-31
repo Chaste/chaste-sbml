@@ -90,8 +90,6 @@ private:
     double C_T;                       // C_T
     double drag;                      // drag
 
-    // STOICHIOMETRY VARIABLES
-
     // REACTIONS
     double mwcfbf7716_cc13_473c_979a_033c57a28857; // r1
     double mwab347951_a286_432d_b03b_254dcdba4a25; // r2
