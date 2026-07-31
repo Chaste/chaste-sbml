@@ -242,6 +242,7 @@ class ChasteSbmlModel:
         """Populate the template variables for generating C++ code."""
         template_vars: dict[str, "Any"] = dict(
             **self._builder.template_data(),
+            model_name=self._model_name,
             ode_class_name=self._ode_class_name,
             ode_header_guard=generate_header_guard(self._ode_hpp_filename),
             ode_hpp_file=self._ode_hpp_filename,

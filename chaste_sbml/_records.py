@@ -115,6 +115,9 @@ class Equation:
     type: EquationType = EquationType.UNKNOWN
     local_parameters: Optional[list[LocalParameter]] = None
     rhs: str = ""
+    # Human-readable annotation emitted as a trailing comment; unset for equations (kept for
+    # template parity with the other records, which the templates read a ``label`` from).
+    label: str = ""
 
 
 @dataclass
