@@ -103,6 +103,18 @@ def test_cpp_metacharacters_are_not_escaped():
     assert rendered == expr
 
 
+def test_none_output_is_rejected():
+    """The finalize hook turns a provided-yet-None value into an error, not the text ``None``.
+
+    StrictUndefined only catches an *unprovided* variable; a value that is present but ``None``
+    (e.g. an unset ``initial_value`` rendered without its ``is not none`` guard) would otherwise
+    emit the literal ``None`` into the generated C++. Rendering one through the real environment
+    checks the hook is wired up and raises instead.
+    """
+    with pytest.raises(ValueError, match="None value"):
+        CodeRenderer._env.from_string("{{ x }}").render(x=None)
+
+
 @pytest.mark.parametrize(
     ("model_name", "model_type", "expected_keys"),
     [
