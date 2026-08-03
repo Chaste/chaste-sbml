@@ -33,6 +33,12 @@ def test_from_cli_maps_every_token():
     assert TimeUnit.from_cli("h") is TimeUnit.HOUR
 
 
+def test_from_cli_rejects_unknown_token():
+    """An unrecognised token raises ValueError (not a bare KeyError) for a clear public-API failure."""
+    with pytest.raises(ValueError, match="Unknown time unit"):
+        TimeUnit.from_cli("years")
+
+
 def test_from_seconds_factor_matches_and_rejects():
     """A recognised seconds factor maps to a unit; an unknown one returns None."""
     assert TimeUnit.from_seconds_factor(60.0) is TimeUnit.MINUTE

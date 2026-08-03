@@ -107,8 +107,18 @@ class TimeUnit(Enum):
 
     @classmethod
     def from_cli(cls, token: str) -> "TimeUnit":
-        """Map a ``--timescale`` token (``ms``/``s``/``m``/``h``) to a TimeUnit."""
-        return {"ms": cls.MILLISECOND, "s": cls.SECOND, "m": cls.MINUTE, "h": cls.HOUR}[token]
+        """Map a ``--timescale`` token (``ms``/``s``/``m``/``h``) to a TimeUnit.
+
+        :param token: The CLI token for the unit.
+        :return: The matching :class:`TimeUnit`.
+        :raises ValueError: if the token is not one of the recognised units. The CLI restricts
+            ``--timescale`` to these via ``choices``, but this method is public and callable directly.
+        """
+        units = {"ms": cls.MILLISECOND, "s": cls.SECOND, "m": cls.MINUTE, "h": cls.HOUR}
+        try:
+            return units[token]
+        except KeyError:
+            raise ValueError(f"Unknown time unit '{token}'; expected one of {sorted(units)}") from None
 
     @classmethod
     def from_seconds_factor(cls, factor: float) -> Optional["TimeUnit"]:
