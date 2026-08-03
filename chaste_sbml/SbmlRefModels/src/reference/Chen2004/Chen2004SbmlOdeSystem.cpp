@@ -312,6 +312,7 @@ void Chen2004SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
 
 void Chen2004SbmlOdeSystem::Initialise(double time)
 {
+    // This does NOT scale time as Initialise only runs at time=0 from the constructor.
     cell = 1.0;                                                                                        //
     BUB2 = 0.2;                                                                                        //
     BUD = 0.008473;                                                                                    //

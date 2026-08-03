@@ -18,8 +18,8 @@ INITIAL_ASSIGNMENT_PREFIX = "ia"
 DERIVATIVE_PREFIX = "d_"
 DERIVATIVE_SUFFIX = "_dt"
 
-# Base id for the synthetic zero-derivative state variable added to models with no ODEs, so the
-# generated ODE system always has at least one variable for the solver to integrate.
+# Base id for the synthetic zero-derivative state variable added to models with
+# no ODEs, so the generated ODE system always has at least one state variable.
 PLACEHOLDER_STATE_ID = "placeholder"
 
 
@@ -56,9 +56,9 @@ class VarType(Enum):
 class DerivedQuantityKind(Enum):
     """Kind of derived quantity, which determines how it is declared and computed.
 
-    NORMAL is declared as a member and computed from an equation; REACTION is a reaction flux
-    (declared and computed by the reaction machinery, only exposed here as an output); CONVERSION
-    is an amount/concentration conversion computed in ComputeDerivedQuantities.
+    NORMAL is declared as a member and computed from an equation.
+    REACTION is a reaction flux, only exposed here as an output.
+    CONVERSION is an amount/concentration conversion.
     """
 
     NORMAL = 0
@@ -77,13 +77,18 @@ class ModelType(Enum):
 class TimeUnit(Enum):
     """SBML time units relevant to Chaste, which simulates in hours.
 
-    Each member carries its size in seconds (used to match an SBML unit definition), the multiplier
-    that converts a derivative from the native unit to per-hour (native units per hour), and a display
-    name for logging. ``NONE`` means "no conversion" (multiplier 1.0); it is distinct from ``HOUR``
-    (also multiplier 1.0) so logging can tell "already in hours" from "left unscaled".
+    Each member carries:
+
+    - Its size in seconds (used to match an SBML unit definition).
+    - The multiplier that converts a derivative from the native unit to per-hour (native units
+      per hour).
+    - The unit display name (for logging).
+
+    ``NONE`` means "no conversion" (multiplier 1.0); it is distinct from ``HOUR`` (also multiplier
+    1.0) so we can tell "already in hours" from "left unscaled".
     """
 
-    #        (seconds_per_unit, units_per_hour, display)
+    # (seconds_per_unit, units_per_hour, display)
     NONE = (None, 1.0, "native/unknown")
     MILLISECOND = (1.0e-3, 3.6e6, "milliseconds")
     SECOND = (1.0, 3600.0, "seconds")

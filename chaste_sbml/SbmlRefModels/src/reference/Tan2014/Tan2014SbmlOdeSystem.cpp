@@ -82,6 +82,7 @@ void Tan2014SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<d
 
 void Tan2014SbmlOdeSystem::Initialise(double time)
 {
+    // This does NOT scale time as Initialise only runs at time=0 from the constructor.
     compartment = 1.0;                                                                                          //
     CytosolMembrane = 1.16;                                                                                     //
     nucleus = 0.65;                                                                                             //

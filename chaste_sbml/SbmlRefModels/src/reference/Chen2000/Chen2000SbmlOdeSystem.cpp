@@ -73,6 +73,7 @@ void Chen2000SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<
 
 void Chen2000SbmlOdeSystem::Initialise(double time)
 {
+    // This does NOT scale time as Initialise only runs at time=0 from the constructor.
     COMpartment = 1.0;                                                                                                                                                                                                                                                                                                                                                   //
     Cln2 = 0.0078;                                                                                                                                                                                                                                                                                                                                                       //
     ks_n2 = 0.0;                                                                                                                                                                                                                                                                                                                                                         //

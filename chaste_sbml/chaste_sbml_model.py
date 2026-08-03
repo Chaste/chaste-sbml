@@ -20,9 +20,12 @@ logger = logging.getLogger(__name__)
 class ChasteSbmlModel:
     """Generates Chaste C++ code from an SBML model.
 
-    Orchestrates the pipeline: load the SBML (``_sbml_reader``), resolve identifier conflicts
-    and reserve synthetic names (``NameManager``), build the internal representation
-    (``ModelBuilder``), then render and write the C++ (``CodeRenderer``).
+    Orchestrates the pipeline:
+
+    - Load the SBML (``_sbml_reader``)
+    - Resolve identifier conflicts and reserve synthetic names (``NameManager``)
+    - Build the internal representation (``ModelBuilder``)
+    - Render and write the C++ (``CodeRenderer``)
     """
 
     __metaclass__ = abc.ABCMeta
@@ -103,13 +106,18 @@ class ChasteSbmlModel:
     def _resolve_time_unit(
         self, override: Optional[TimeUnit], declared: Optional[TimeUnit], sbml_level: int
     ) -> TimeUnit:
-        """Resolve the time unit to convert derivatives from, into Chaste's hours.
+        """Resolve the model's native time unit into Chaste's hours.
 
-        Precedence: an explicit override wins (warning if it contradicts a declared unit); otherwise a
-        declared unit is used; otherwise the SBML default applies -- Level 2 predefines ``time`` as
-        seconds, while Level 3 (and any other, unsupported level) leaves it undefined (no
-        conversion). When no unit is declared and no override is given, a warning hints at the
-        ``--timescale`` option.
+        Precedence:
+
+        - An explicit ``--timescale`` override wins (warning if it contradicts a declared unit)
+        - Otherwise a declared unit is used
+        - Otherwise the SBML default applies:
+
+          - Level 2 predefines ``time`` as seconds
+          - Level 3 (and any other unsupported level) leaves it undefined (no conversion).
+
+        When no unit is declared and no override is given, a warning hints at the ``--timescale`` option.
 
         :param override: An explicit time unit (from ``--timescale``), or ``None`` to auto-detect.
         :param declared: The time unit declared by the model, or ``None`` if none was declared.

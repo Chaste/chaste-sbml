@@ -56,8 +56,8 @@ def load_sbml_model(sbml_file: str) -> tuple["Model", Optional[TimeUnit], int]:
             doc.printErrors()
             raise ValueError("Errors during comp flattening")
 
-    # Detect the declared time unit before the conversions below: 'removeUnusedUnits' can strip an
-    # unreferenced <unitDefinition id="time">, which would hide it from the builder.
+    # Detect the declared time unit before the conversions below:
+    # 'removeUnusedUnits' can strip an unreferenced <unitDefinition id="time">.
     sbml_level = doc.getLevel()
     _warn_unsupported_level(sbml_level)
     declared_time_unit = detect_time_unit(doc.getModel())
@@ -109,19 +109,31 @@ def detect_time_unit(model: "Model") -> Optional[TimeUnit]:
     :param model: The libsbml model.
     :return: The declared :class:`TimeUnit`, or ``None`` if undeclared/undeterminable.
     """
+    # Step 1: read the Level 3 model-wide time unit. This is the ``timeUnits`` attribute on
+    # <model>; Level 2 has no such attribute, so unit_id stays "" and we fall through to step 3.
     unit_id = model.getTimeUnits() if model.isSetTimeUnits() else ""
 
-    # An L3 timeUnits attribute may name a base unit directly rather than a UnitDefinition.
+    # Step 2: an L3 ``timeUnits`` may be a base-unit keyword ("second", "dimensionless") rather
+    # than a reference to a <unitDefinition>. Handle that spelling directly -- there is no
+    # UnitDefinition to look up for a builtin keyword.
     builtin = _builtin_time_unit(unit_id)
     if builtin is not None:
         return builtin
 
+    # Step 3: otherwise resolve a <unitDefinition>. If ``timeUnits`` named one (L3), look that up;
+    # failing that (or in L2, where unit_id is ""), fall back to the id="time" definition that is
+    # the Level 2 convention for redefining the time unit.
     unit_def = model.getUnitDefinition(unit_id) if unit_id else None
     if unit_def is None:
         unit_def = model.getUnitDefinition("time")
+
+    # No matching definition: the model declares no time unit we can resolve. Return None so the
+    # caller applies its level-aware default (L2 -> seconds, L3 -> no conversion).
     if unit_def is None:
         return None
 
+    # Step 4: reduce the definition to its size in seconds structurally (not by name), then map
+    # that factor onto a known TimeUnit. An unrecognised or non-second-based unit yields None.
     factor = _seconds_factor(unit_def)
     if factor is None:
         return None

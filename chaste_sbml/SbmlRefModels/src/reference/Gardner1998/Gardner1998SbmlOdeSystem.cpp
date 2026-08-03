@@ -83,6 +83,7 @@ void Gardner1998SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vect
 
 void Gardner1998SbmlOdeSystem::Initialise(double time)
 {
+    // This does NOT scale time as Initialise only runs at time=0 from the constructor.
     Cell = 1.0;                            //
     C = 0.0;                               //
     X = 0.0;                               //

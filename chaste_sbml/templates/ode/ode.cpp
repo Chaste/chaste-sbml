@@ -126,6 +126,9 @@ void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<d
 
 void {{ ode_class_name }}::Initialise(double time)
 {
+{% if scale_time %}
+    // This does NOT scale time as Initialise only runs at time=0 from the constructor.
+{% endif %}
 {% for eq in equations %}
 {% if ( eq["type"] != EquationType.CONVERSION ) %}
 {% if eq["local_parameters"] %}

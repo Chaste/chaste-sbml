@@ -118,6 +118,7 @@ void TysonNovak2001SbmlOdeSystem::EvaluateYDerivatives(double time, const std::v
 
 void TysonNovak2001SbmlOdeSystem::Initialise(double time)
 {
+    // This does NOT scale time as Initialise only runs at time=0 from the constructor.
     cell = 1.0;                                                                                                                                         //
     CycBt = 0.001;                                                                                                                                      //
     Cdc20a = 0.001;                                                                                                                                     //

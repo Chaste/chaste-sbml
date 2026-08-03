@@ -73,6 +73,7 @@ void Goldbeter1991SbmlOdeSystem::EvaluateYDerivatives(double time, const std::ve
 
 void Goldbeter1991SbmlOdeSystem::Initialise(double time)
 {
+    // This does NOT scale time as Initialise only runs at time=0 from the constructor.
     cell = 1.0;                            //
     C = 0.01;                              //
     M = 0.01;                              //
