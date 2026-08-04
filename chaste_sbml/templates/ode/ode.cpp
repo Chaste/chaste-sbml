@@ -9,6 +9,15 @@
 #include "{{ ode_hpp_file }}"
 
 namespace sm = sbmlmath;
+{% if scale_time %}
+
+namespace
+{
+// Convert the model's native time units ({{ time_unit_display }}) to Chaste default (hours) and
+// scale the derivatives by this factor ({{ time_unit_display }} per hour).
+constexpr double TIMESCALE_MULTIPLIER = {{ time_multiplier }};
+} // namespace
+{% endif %}
 
 {{ ode_class_name }}::{{ ode_class_name }}()
     : AbstractSbmlOdeSystem({{ state_variables|length }}, {{parameters|length }}, {{ events|length }})
@@ -76,6 +85,9 @@ std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, 
     std::vector<double> dqs;
 {% if derived_quantities %}
     dqs.reserve({{ derived_quantities | length }});
+{% if scale_time %}
+    time *= TIMESCALE_MULTIPLIER; // Chaste integrates in hours; use the model's native time units
+{% endif %}
     RunModelEquations(time, rY);
 
     // AMOUNT / CONCENTRATION CONVERSIONS
@@ -95,17 +107,28 @@ std::vector<double> {{ ode_class_name }}::ComputeDerivedQuantities(double time, 
 
 void {{ ode_class_name }}::EvaluateYDerivatives(double time, const std::vector<double> &rY, std::vector<double> &rDY)
 {
+{% if scale_time %}
+    // Convert the model's native time units to Chaste default (hours) and scale the derivatives.
+    time *= TIMESCALE_MULTIPLIER;
+    std::vector<double> derivatives = RunModelEquations(time, rY);
+    for (unsigned i = 0; i < rDY.size(); ++i)
+    {
+        rDY[i] = TIMESCALE_MULTIPLIER * derivatives[i];
+    }
+{% else %}
     std::vector<double> derivatives = RunModelEquations(time, rY);
     for (unsigned i = 0; i < rDY.size(); ++i)
     {
         rDY[i] = derivatives[i];
     }
-
-    // TODO: Scale time appropriately
+{% endif %}
 }
 
 void {{ ode_class_name }}::Initialise(double time)
 {
+{% if scale_time %}
+    // This does NOT scale time as Initialise only runs at time=0 from the constructor.
+{% endif %}
 {% for eq in equations %}
 {% if ( eq["type"] != EquationType.CONVERSION ) %}
 {% if eq["local_parameters"] %}
@@ -140,6 +163,9 @@ void {{ ode_class_name }}::Initialise(double time)
 
 double {{ ode_class_name }}::ProcessModelEvents(double time, const std::vector<double> &rY)
 {
+{% if scale_time %}
+    time *= TIMESCALE_MULTIPLIER; // Chaste integrates in hours; use the model's native time units
+{% endif %}
     // Ensure all member variables (state vars, parameters, derived quantities) reflect
     // the rY passed in. Without this, event triggers and assignments would use stale
     // values from the last EvaluateYDerivatives call, which may differ from rY when

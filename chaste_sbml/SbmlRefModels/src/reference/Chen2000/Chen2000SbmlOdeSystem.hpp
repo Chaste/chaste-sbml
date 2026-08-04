@@ -146,8 +146,6 @@ private:
     double Mcm1;        // Mcm1
     double Swi5;        // Swi5
 
-    // STOICHIOMETRY VARIABLES
-
     // REACTIONS
 
     /**

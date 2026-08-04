@@ -72,6 +72,12 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace sth = sbmltesthelpers;
 
+namespace
+{
+// Native time units per hour: the model's time is in seconds, but Chaste integrates in hours.
+constexpr double TIMESCALE_MULTIPLIER = 3600.0;
+} // namespace
+
 class TestGardner1998SbmlOdeSystem : public AbstractCellBasedTestSuite
 {
 private:
@@ -83,8 +89,10 @@ private:
         {
             Gardner1998SbmlOdeSystem ode_system;
 
-            double dt = 0.01;
-            double end_time = 200.0;
+            // The model is in seconds but Chaste integrates in hours, so the ODE system scales
+            // derivatives by 3600. Divide the times by 3600 to reach the same states as before.
+            double dt = 0.01 / TIMESCALE_MULTIPLIER;
+            double end_time = 200.0 / TIMESCALE_MULTIPLIER;
 
             std::vector<double> initial_conditions = ode_system.GetInitialConditions();
 
@@ -218,12 +226,14 @@ public:
         std::vector<double> derivs(initial_conditions.size());
         ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
-        // Compare derivatives with values from Tellurium
-        TS_ASSERT_DELTA(derivs[0], 0.155, 1e-3);  // C
-        TS_ASSERT_DELTA(derivs[1], 0.0, 1e-6);    // X
-        TS_ASSERT_DELTA(derivs[2], 0.0, 1e-6);    // M
-        TS_ASSERT_DELTA(derivs[3], 0.202, 1e-3);  // Y
-        TS_ASSERT_DELTA(derivs[4], -0.057, 1e-3); // Z
+        // Compare derivatives with values from Tellurium. EvaluateYDerivatives returns per-hour
+        // derivatives (the model is in seconds, scaled by 3600); divide by 3600 to compare against
+        // the native (per-second) values.
+        TS_ASSERT_DELTA(derivs[0] / TIMESCALE_MULTIPLIER, 0.155, 1e-3);  // C
+        TS_ASSERT_DELTA(derivs[1] / TIMESCALE_MULTIPLIER, 0.0, 1e-6);    // X
+        TS_ASSERT_DELTA(derivs[2] / TIMESCALE_MULTIPLIER, 0.0, 1e-6);    // M
+        TS_ASSERT_DELTA(derivs[3] / TIMESCALE_MULTIPLIER, 0.202, 1e-3);  // Y
+        TS_ASSERT_DELTA(derivs[4] / TIMESCALE_MULTIPLIER, -0.057, 1e-3); // Z
     }
 
     void TestOdeWithChasteSolver()

@@ -1,10 +1,11 @@
 """Module for the ChasteSbmlModel class."""
 
 import abc
+import logging
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
-from ._config import ModelType
+from ._config import ModelType, TimeUnit
 from ._model_builder import ModelBuilder
 from ._names import NameManager, generate_header_guard, to_camel_case, to_cpp_name
 from ._rendering import CodeRenderer
@@ -13,13 +14,18 @@ from ._sbml_reader import load_sbml_model
 if TYPE_CHECKING:
     from typing import Any
 
+logger = logging.getLogger(__name__)
+
 
 class ChasteSbmlModel:
     """Generates Chaste C++ code from an SBML model.
 
-    Orchestrates the pipeline: load the SBML (``_sbml_reader``), resolve identifier conflicts
-    and reserve synthetic names (``NameManager``), build the internal representation
-    (``ModelBuilder``), then render and write the C++ (``CodeRenderer``).
+    Orchestrates the pipeline:
+
+    - Load the SBML (``_sbml_reader``)
+    - Resolve identifier conflicts and reserve synthetic names (``NameManager``)
+    - Build the internal representation (``ModelBuilder``)
+    - Render and write the C++ (``CodeRenderer``)
     """
 
     __metaclass__ = abc.ABCMeta
@@ -30,6 +36,7 @@ class ChasteSbmlModel:
         model_name: str = "",
         model_type: ModelType = ModelType.GENERIC,
         generate_tests: bool = True,
+        time_unit: Optional[TimeUnit] = None,
     ) -> None:
         """Initialise the ChasteSbmlModel.
 
@@ -37,6 +44,8 @@ class ChasteSbmlModel:
         :param model_name: The model name; derived from the filename when not given.
         :param model_type: The model type e.g. ModelType.SRN.
         :param generate_tests: Whether to generate a placeholder test for the model.
+        :param time_unit: The model's native time unit, overriding auto-detection. ``None``
+            (the default) auto-detects from the SBML; pass ``TimeUnit.NONE`` to force no conversion.
         """
         self._sbml_file = os.path.abspath(sbml_file)
         if not os.path.isfile(self._sbml_file):
@@ -75,7 +84,10 @@ class ChasteSbmlModel:
             self._cell_cycle_cpp_filename = f"{self._cell_cycle_class_name}.cpp"
 
         # Read, flatten and convert the SBML model
-        self._sbml_model = load_sbml_model(self._sbml_file)
+        self._sbml_model, declared_time_unit, sbml_level = load_sbml_model(self._sbml_file)
+
+        # Resolve the time unit used to scale derivatives to Chaste's hours (see _resolve_time_unit).
+        self._time_unit = self._resolve_time_unit(time_unit, declared_time_unit, sbml_level)
 
         self._names = NameManager(self._sbml_model)
 
@@ -90,6 +102,68 @@ class ChasteSbmlModel:
         self._builder = ModelBuilder(self._sbml_model, self._names, self._model_name)
         self._builder.build()
         self._populate_template_vars()
+
+    def _resolve_time_unit(
+        self, override: Optional[TimeUnit], declared: Optional[TimeUnit], sbml_level: int
+    ) -> TimeUnit:
+        """Resolve the model's native time unit into Chaste's hours.
+
+        Precedence:
+
+        - An explicit ``--timescale`` override wins (warning if it contradicts a declared unit)
+        - Otherwise a declared unit is used
+        - Otherwise the SBML default applies:
+
+          - Level 2 predefines ``time`` as seconds
+          - Level 3 (and any other unsupported level) leaves it undefined (no conversion).
+
+        When no unit is declared and no override is given, a warning hints at the ``--timescale`` option.
+
+        :param override: An explicit time unit (from ``--timescale``), or ``None`` to auto-detect.
+        :param declared: The time unit declared by the model, or ``None`` if none was declared.
+        :param sbml_level: The model's SBML level.
+        :return: The resolved :class:`TimeUnit`.
+        """
+        if override is not None:
+            if declared is not None and declared is not override:
+                logger.warning(
+                    "Time unit override (%s) differs from the unit declared by the model (%s); "
+                    "using the override.",
+                    override.display,
+                    declared.display,
+                )
+            resolved = override
+        elif declared is not None:
+            resolved = declared
+        elif sbml_level == 2:
+            # SBML Level 2 predefines the time unit as seconds when none is declared.
+            resolved = TimeUnit.SECOND
+            logger.warning(
+                "The model declares no time unit; assuming seconds per the SBML Level 2 default and "
+                "scaling derivatives by %s to convert to Chaste hours. Pass --timescale ms|s|m|h to "
+                "set the model's time unit explicitly.",
+                resolved.multiplier,
+            )
+        elif sbml_level == 3:
+            # SBML Level 3 leaves an unset time unit undefined, so apply no conversion.
+            resolved = TimeUnit.NONE
+            logger.warning(
+                "The model declares no time unit (SBML Level 3 leaves it undefined); no time "
+                "conversion is applied. Pass --timescale ms|s|m|h to convert the model to Chaste "
+                "hours.",
+            )
+        else:
+            # Unsupported SBML level (already flagged when loading); do not guess a unit.
+            resolved = TimeUnit.NONE
+            logger.warning(
+                "The model declares no time unit and its SBML level (%d) is unsupported; no time "
+                "conversion is applied. Pass --timescale ms|s|m|h to convert the model to Chaste "
+                "hours.",
+                sbml_level,
+            )
+
+        logger.info("Using time unit %s (derivative multiplier %s).", resolved.display, resolved.multiplier)
+        return resolved
 
     @property
     def outputs(self) -> dict[str, str]:
@@ -176,11 +250,15 @@ class ChasteSbmlModel:
         """Populate the template variables for generating C++ code."""
         template_vars: dict[str, "Any"] = dict(
             **self._builder.template_data(),
+            model_name=self._model_name,
             ode_class_name=self._ode_class_name,
             ode_header_guard=generate_header_guard(self._ode_hpp_filename),
             ode_hpp_file=self._ode_hpp_filename,
             test_header_guard=generate_header_guard(self._test_hpp_filename),
             model_type=self._model_type,
+            scale_time=self._time_unit.multiplier != 1.0,
+            time_multiplier=self._time_unit.multiplier_literal,
+            time_unit_display=self._time_unit.display,
         )
 
         if self._model_type == ModelType.SRN:

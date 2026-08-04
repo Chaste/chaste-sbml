@@ -287,8 +287,6 @@ private:
     double Vppf6;   // Vppf6
     double F;       // F
 
-    // STOICHIOMETRY VARIABLES
-
     // REACTIONS
     double Growth;                               // Growth
     double Synthesis_of_CLN2;                    // Synthesis of CLN2

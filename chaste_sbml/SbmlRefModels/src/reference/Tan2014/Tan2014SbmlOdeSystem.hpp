@@ -61,8 +61,6 @@ private:
     double nucleus;         //
     double drag;            // drag
 
-    // STOICHIOMETRY VARIABLES
-
     // REACTIONS
     double Bsynthesis;   //
     double kDegradation; //

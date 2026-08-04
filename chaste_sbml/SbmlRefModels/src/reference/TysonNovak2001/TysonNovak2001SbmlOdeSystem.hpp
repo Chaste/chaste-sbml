@@ -90,8 +90,6 @@ private:
     double Mad;    // Mad
     double TF;     // TF
 
-    // STOICHIOMETRY VARIABLES
-
     // REACTIONS
     double CycBt_synthesis;           // CycBt synthesis
     double CycBdegradation;           // CycBt degradation

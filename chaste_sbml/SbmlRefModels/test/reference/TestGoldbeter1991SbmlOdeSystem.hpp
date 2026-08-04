@@ -60,6 +60,12 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace sth = sbmltesthelpers;
 
+namespace
+{
+// Native time units per hour: the model's time is in seconds, but Chaste integrates in hours.
+constexpr double TIMESCALE_MULTIPLIER = 3600.0;
+} // namespace
+
 class TestGoldbeter1991SbmlOdeSystem : public AbstractCellBasedTestSuite
 {
 private:
@@ -78,10 +84,12 @@ private:
             // Solve system using solver
             Goldbeter1991SbmlOdeSystem ode_system;
 
+            // The model is in seconds but Chaste integrates in hours, so the ODE system scales
+            // derivatives by 3600. Divide the times by 3600 to reach the same states as before.
             double start_time = 0.0;
-            double end_time = 100.0;
-            double max_step = 0.01;
-            double sampling_interval = 0.1;
+            double end_time = 100.0 / TIMESCALE_MULTIPLIER;
+            double max_step = 0.01 / TIMESCALE_MULTIPLIER;
+            double sampling_interval = 0.1 / TIMESCALE_MULTIPLIER;
 
             std::vector<double> initial_conditions = ode_system.GetInitialConditions();
             OdeSolution solutions;
@@ -206,10 +214,12 @@ public:
             -0.32338358, // X
         };
 
+        // EvaluateYDerivatives returns per-hour derivatives (the model is in seconds, scaled by
+        // 3600); divide by 3600 to compare against the native (per-second) Tellurium values.
         std::vector<std::string> var_names = ode_system.rGetStateVariableNames();
         for (unsigned i = 0; i < ODE_SIZE; i++)
         {
-            TSM_ASSERT_DELTA(var_names[i].c_str(), derivs[i], derivs_expected[i], 1e-6);
+            TSM_ASSERT_DELTA(var_names[i].c_str(), derivs[i] / TIMESCALE_MULTIPLIER, derivs_expected[i], 1e-6);
         }
     }
 

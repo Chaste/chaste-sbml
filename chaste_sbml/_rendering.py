@@ -11,7 +11,7 @@ import shutil
 import subprocess
 import sys
 
-from jinja2 import Environment, PackageLoader, select_autoescape
+from jinja2 import Environment, PackageLoader, StrictUndefined
 
 from ._config import (
     AMOUNT_PREFIX,
@@ -26,14 +26,34 @@ from ._config import (
 )
 
 
+def _reject_none(value):
+    """Jinja finalize hook: a ``None`` reaching the output is a bug, not the literal ``"None"``.
+
+    StrictUndefined catches an *unprovided* variable, but a provided-yet-``None`` value (e.g. an
+    unset ``initial_value`` rendered without its ``is not none`` guard) would otherwise silently
+    emit the text ``None`` into the generated C++. Raise instead so it surfaces during generation.
+
+    :param value: The value about to be rendered.
+    :return: The value unchanged when it is not ``None``.
+    """
+    if value is None:
+        raise ValueError("template rendered a None value (missing an 'is not none' guard?)")
+    return value
+
+
 class CodeRenderer:
     """Renders Chaste C++ source from the packaged Jinja templates and writes it to disk."""
 
     _env = Environment(
         loader=PackageLoader("chaste_sbml"),
-        autoescape=select_autoescape(),
+        # These templates emit C++, never HTML/XML: autoescaping would turn operators like < > &
+        # into &lt; &gt; &amp; and corrupt the output, so it is always off (never select_autoescape,
+        # whose filename heuristic would silently enable it for e.g. an .xml template).
+        autoescape=False,
         trim_blocks=True,
         lstrip_blocks=True,
+        undefined=StrictUndefined,  # a template referencing an unprovided variable is an error
+        finalize=_reject_none,  # a None reaching the output is a bug, not the literal "None"
     )
     _env.globals["AMOUNT_PREFIX"] = AMOUNT_PREFIX
     _env.globals["CONCENTRATION_PREFIX"] = CONCENTRATION_PREFIX

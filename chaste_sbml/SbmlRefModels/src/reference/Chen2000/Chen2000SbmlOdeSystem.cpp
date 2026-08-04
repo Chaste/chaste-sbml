@@ -10,6 +10,13 @@
 
 namespace sm = sbmlmath;
 
+namespace
+{
+// Convert the model's native time units (minutes) to Chaste default (hours) and
+// scale the derivatives by this factor (minutes per hour).
+constexpr double TIMESCALE_MULTIPLIER = 60.0;
+} // namespace
+
 Chen2000SbmlOdeSystem::Chen2000SbmlOdeSystem()
         : AbstractSbmlOdeSystem(13, 71, 0)
 {
@@ -28,6 +35,7 @@ std::vector<double> Chen2000SbmlOdeSystem::ComputeDerivedQuantities(double time,
 {
     std::vector<double> dqs;
     dqs.reserve(16);
+    time *= TIMESCALE_MULTIPLIER; // Chaste integrates in hours; use the model's native time units
     RunModelEquations(time, rY);
 
     // AMOUNT / CONCENTRATION CONVERSIONS
@@ -54,17 +62,18 @@ std::vector<double> Chen2000SbmlOdeSystem::ComputeDerivedQuantities(double time,
 
 void Chen2000SbmlOdeSystem::EvaluateYDerivatives(double time, const std::vector<double>& rY, std::vector<double>& rDY)
 {
+    // Convert the model's native time units to Chaste default (hours) and scale the derivatives.
+    time *= TIMESCALE_MULTIPLIER;
     std::vector<double> derivatives = RunModelEquations(time, rY);
     for (unsigned i = 0; i < rDY.size(); ++i)
     {
-        rDY[i] = derivatives[i];
+        rDY[i] = TIMESCALE_MULTIPLIER * derivatives[i];
     }
-
-    // TODO: Scale time appropriately
 }
 
 void Chen2000SbmlOdeSystem::Initialise(double time)
 {
+    // This does NOT scale time as Initialise only runs at time=0 from the constructor.
     COMpartment = 1.0;                                                                                                                                                                                                                                                                                                                                                   //
     Cln2 = 0.0078;                                                                                                                                                                                                                                                                                                                                                       //
     ks_n2 = 0.0;                                                                                                                                                                                                                                                                                                                                                         //
@@ -282,6 +291,7 @@ void Chen2000SbmlOdeSystem::Initialise(double time)
 
 double Chen2000SbmlOdeSystem::ProcessModelEvents(double time, const std::vector<double>& rY)
 {
+    time *= TIMESCALE_MULTIPLIER; // Chaste integrates in hours; use the model's native time units
     // Ensure all member variables (state vars, parameters, derived quantities) reflect
     // the rY passed in. Without this, event triggers and assignments would use stale
     // values from the last EvaluateYDerivatives call, which may differ from rY when

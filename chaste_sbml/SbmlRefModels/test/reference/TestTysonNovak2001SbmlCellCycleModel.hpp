@@ -60,6 +60,12 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
+namespace
+{
+// Native time units per hour: the model's time is in minutes, but Chaste integrates in hours.
+constexpr double TIMESCALE_MULTIPLIER = 60.0;
+} // namespace
+
 class TestTysonNovak2001SbmlCellCycleModel : public AbstractCellBasedTestSuite
 {
 private:
@@ -70,8 +76,12 @@ public:
     {
         // Setup time
         SimulationTime* p_simulation_time = SimulationTime::Instance();
+        // The model is in minutes but Chaste integrates in hours (the ODE system scales derivatives
+        // by 60), so divide the end time and timestep by 60 to integrate over the same native span.
+        // The simulation time (hours) is converted back to minutes below to compare against the
+        // native divide times.
         const unsigned num_timesteps = 10000;
-        p_simulation_time->SetEndTimeAndNumberOfTimeSteps(300.0, num_timesteps);
+        p_simulation_time->SetEndTimeAndNumberOfTimeSteps(300.0 / TIMESCALE_MULTIPLIER, num_timesteps);
 
         // Create a healthy cell
         auto p_wild_state = boost::make_shared<WildTypeCellMutationState>();
@@ -86,7 +96,7 @@ public:
         TS_ASSERT_EQUALS(p_ccm_0->CanCellTerminallyDifferentiate(), false);
 
         p_cell_0->InitialiseCellCycleModel();
-        p_ccm_0->SetDt(0.01);
+        p_ccm_0->SetDt(0.01 / TIMESCALE_MULTIPLIER);
 
         // Create another cell with a cell-cycle model that uses a BackwardEulerIvpOdeSolver
         auto solver = CellCycleModelOdeSolver<TysonNovak2001SbmlCellCycleModel, BackwardEulerIvpOdeSolver>::Instance();
@@ -104,7 +114,7 @@ public:
 
         p_cell_1->InitialiseCellCycleModel();
         TS_ASSERT_EQUALS(p_ccm_1->GetDt(), 0.0001); // Timestep for non-adaptive solvers defaults to 0.0001
-        p_ccm_1->SetDt(0.01);
+        p_ccm_1->SetDt(0.01 / TIMESCALE_MULTIPLIER);
 
         // Test the cell is ready to divide at the right time
         double standard_divide_time = 103.80;
@@ -112,7 +122,7 @@ public:
         for (unsigned i = 0; i < num_timesteps / 2; i++)
         {
             p_simulation_time->IncrementTimeOneStep();
-            double time = p_simulation_time->GetTime();
+            double time = p_simulation_time->GetTime() * TIMESCALE_MULTIPLIER; // hours -> native minutes
 
             bool division_ready_0 = p_ccm_0->ReadyToDivide();
             bool division_ready_1 = p_ccm_1->ReadyToDivide();
@@ -170,7 +180,7 @@ public:
         for (unsigned i = 0; i < num_timesteps / 2; i++)
         {
             p_simulation_time->IncrementTimeOneStep();
-            double time = p_simulation_time->GetTime();
+            double time = p_simulation_time->GetTime() * TIMESCALE_MULTIPLIER; // hours -> native minutes
 
             bool division_ready_0 = p_ccm_0->ReadyToDivide();
             bool division_ready_2 = p_ccm_2->ReadyToDivide();

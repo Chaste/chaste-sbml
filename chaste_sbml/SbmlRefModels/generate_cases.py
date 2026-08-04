@@ -5,11 +5,10 @@ import csv
 import logging
 import os
 import sys
-from enum import Enum
 from typing import TYPE_CHECKING
 
 from chaste_sbml import ChasteSbmlModel
-from chaste_sbml._config import ModelType
+from chaste_sbml._config import ModelType, TimeUnit
 from chaste_sbml._names import generate_header_guard
 
 if TYPE_CHECKING:
@@ -38,34 +37,25 @@ def _cpp_double_literal(value: str) -> str:
     return token
 
 
-class TestType(Enum):
-    """Enumeration of test types for code generation."""
-
-    SEMANTIC = 0
-    STOCHASTIC = 1
-    SYNTACTIC = 2
-
-
 class ChasteSbmlTestSuiteModel(ChasteSbmlModel):
-    """Extended ChasteSbmlModel with additional functionality for test suite generation."""
+    """Extended ChasteSbmlModel for generating SBML Test Suite semantic cases."""
 
     def __init__(self, sbml_file: str, sbml_version: str, test_params: dict[str, "Any"], **kwargs) -> None:
-        test_type = test_params["type"]
-        if test_type == TestType.SEMANTIC:
-            prefix = "Semantic"
-        elif test_type == TestType.STOCHASTIC:
-            prefix = "Stochastic"
-        elif test_type == TestType.SYNTACTIC:
-            prefix = "Syntactic"
-        else:
-            raise ValueError(f"Unknown test type: {test_type}")
+        model_name = f"Semantic{test_params['case']}{sbml_version.upper()}Sbml"
 
-        model_name = f"{prefix}{test_params['case']}{sbml_version.upper()}Sbml"
+        # Time is dimensionless in all SBML semantic cases, so make sure it's unset.
+        kwargs.pop("time_unit", None)
 
-        # This generates its own test, so disable the placeholder test
-        super().__init__(sbml_file, model_name=model_name, model_type=ModelType.GENERIC, generate_tests=False, **kwargs)
+        # This generates its own test, so disable generic placeholder test generation.
+        super().__init__(
+            sbml_file,
+            model_name=model_name,
+            model_type=ModelType.GENERIC,
+            generate_tests=False,
+            time_unit=TimeUnit.NONE,
+            **kwargs,
+        )
 
-        self._test_type = test_type
         self._test_hpp_filename = f"Test{self._model_name}.hpp"
 
         test_result_columns = ", ".join(f'"{col}"' for col in test_params["results"][0])
@@ -80,8 +70,6 @@ class ChasteSbmlTestSuiteModel(ChasteSbmlModel):
         test_concentrations = test_params["settings"]["concentration"].split(",")
         test_concentrations = ", ".join(f'"{conc.strip()}"' for conc in test_concentrations if conc.strip())
 
-        steady_state = test_params["settings"]["start"].strip() == ""
-
         self._template_vars.update(
             {
                 "test_header_guard": generate_header_guard(self._test_hpp_filename),
@@ -90,27 +78,16 @@ class ChasteSbmlTestSuiteModel(ChasteSbmlModel):
                 "test_amounts": test_amounts,
                 "test_concentrations": test_concentrations,
                 "test_settings": test_params["settings"],
-                "test_steady_state": steady_state,
             }
         )
 
     def _generate_outputs(self) -> None:
-        """Generate Chaste code for the model and tests."""
+        """Generate Chaste code for the model and its semantic-case test."""
         # Generate the model code
         super()._generate_outputs()
 
-        # Generate the test code
-        template_path = "cases"
-        if self._test_type == TestType.SEMANTIC:
-            template_path += "/semantic.hpp"
-        elif self._test_type == TestType.STOCHASTIC:
-            template_path += "/stochastic.hpp"
-        elif self._test_type == TestType.SYNTACTIC:
-            template_path += "/syntactic.hpp"
-        else:
-            raise ValueError(f"Unknown test type: {self._test_type}")
-
-        self._generate_output(template_path, self._test_hpp_filename)
+        # Generate the semantic-case test
+        self._generate_output("cases/semantic.hpp", self._test_hpp_filename)
 
 
 def generate_semantic_cases(
@@ -142,7 +119,6 @@ def generate_semantic_cases(
             continue
 
         test_params = {
-            "type": TestType.SEMANTIC,
             "case": case_,
         }
 
@@ -284,7 +260,6 @@ def main() -> None:
         logger.error(f"No test pack file @ '{args.test_pack_file}'")
         sys.exit(1)
 
-    # TODO: Only semantic cases are currently supported
     generate_semantic_cases(
         selection=list(range(args.first_case, args.last_case + 1)),
         sbml_test_suite_dir=args.sbml_test_suite_dir,

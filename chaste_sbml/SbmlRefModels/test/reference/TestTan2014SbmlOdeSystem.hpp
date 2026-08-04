@@ -61,6 +61,12 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace sth = sbmltesthelpers;
 
+namespace
+{
+// Native time units per hour: the model's time is in minutes, but Chaste integrates in hours.
+constexpr double TIMESCALE_MULTIPLIER = 60.0;
+} // namespace
+
 class TestTan2014SbmlOdeSystem : public AbstractCellBasedTestSuite
 {
 private:
@@ -72,10 +78,12 @@ private:
         {
             Tan2014SbmlOdeSystem ode_system;
 
+            // The model is in minutes but Chaste integrates in hours, so the ODE system scales
+            // derivatives by 60. Divide the times by 60 to reach the same states as before.
             double start_time = 0.0;
-            double end_time = 5000.0;
-            double max_step = 0.01;
-            double sampling_interval = 0.01;
+            double end_time = 5000.0 / TIMESCALE_MULTIPLIER;
+            double max_step = 0.01 / TIMESCALE_MULTIPLIER;
+            double sampling_interval = 0.01 / TIMESCALE_MULTIPLIER;
 
             std::vector<double> initial_conditions = ode_system.GetInitialConditions();
 
@@ -315,28 +323,30 @@ public:
         ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
         // Compare derivatives with values from Tellurium
-        // (Tellurium's `getRatesOfChange()` is not scaled by compartment)
+        // (Tellurium's `getRatesOfChange()` is not scaled by compartment). EvaluateYDerivatives
+        // returns per-hour derivatives (the model is in minutes, scaled by 60); divide by 60 to
+        // compare against the native (per-minute) values.
         const double CytosolMembrane = 1.16;
         const double nucleus = 0.65;
         TS_ASSERT_EQUALS(ode_system.GetParameter("wnt_level"), 0.0);
-        TS_ASSERT_DELTA(derivs[0], -1.97469879e+02 / CytosolMembrane, 1e-3); // bcat_cm
-        TS_ASSERT_DELTA(derivs[1], 2.73412000e-04 / CytosolMembrane, 1e-6);  // ligand_cm
-        TS_ASSERT_DELTA(derivs[2], -2.73412000e-04 / CytosolMembrane, 1e-6); // complex_cm
-        TS_ASSERT_DELTA(derivs[3], 1.98105040e+02 / nucleus, 1e-3);          // bcat_nu
-        TS_ASSERT_DELTA(derivs[4], 1.04000000e-03 / nucleus, 1e-5);          // ligand_nu
-        TS_ASSERT_DELTA(derivs[5], -1.04000000e-03 / nucleus, 1e-5);         // complex_nu
+        TS_ASSERT_DELTA(derivs[0] / TIMESCALE_MULTIPLIER, -1.97469879e+02 / CytosolMembrane, 1e-3); // bcat_cm
+        TS_ASSERT_DELTA(derivs[1] / TIMESCALE_MULTIPLIER, 2.73412000e-04 / CytosolMembrane, 1e-6);  // ligand_cm
+        TS_ASSERT_DELTA(derivs[2] / TIMESCALE_MULTIPLIER, -2.73412000e-04 / CytosolMembrane, 1e-6); // complex_cm
+        TS_ASSERT_DELTA(derivs[3] / TIMESCALE_MULTIPLIER, 1.98105040e+02 / nucleus, 1e-3);          // bcat_nu
+        TS_ASSERT_DELTA(derivs[4] / TIMESCALE_MULTIPLIER, 1.04000000e-03 / nucleus, 1e-5);          // ligand_nu
+        TS_ASSERT_DELTA(derivs[5] / TIMESCALE_MULTIPLIER, -1.04000000e-03 / nucleus, 1e-5);         // complex_nu
 
         // Set wnt_level=1 and check derivatives again
         ode_system.SetParameter("wnt_level", 1.0);
         TS_ASSERT_EQUALS(ode_system.GetParameter("wnt_level"), 1.0);
         ode_system.EvaluateYDerivatives(time, initial_conditions, derivs);
 
-        TS_ASSERT_DELTA(derivs[0], -1.97029323e+02 / CytosolMembrane, 1e-3); // bcat_cm
-        TS_ASSERT_DELTA(derivs[1], 2.73412000e-04 / CytosolMembrane, 1e-6);  // ligand_cm
-        TS_ASSERT_DELTA(derivs[2], -2.73412000e-04 / CytosolMembrane, 1e-6); // complex_cm
-        TS_ASSERT_DELTA(derivs[3], 1.98105040e+02 / nucleus, 1e-3);          // bcat_nu
-        TS_ASSERT_DELTA(derivs[4], 1.04000000e-03 / nucleus, 1e-5);          // ligand_nu
-        TS_ASSERT_DELTA(derivs[5], -1.04000000e-03 / nucleus, 1e-5);         // complex_nu
+        TS_ASSERT_DELTA(derivs[0] / TIMESCALE_MULTIPLIER, -1.97029323e+02 / CytosolMembrane, 1e-3); // bcat_cm
+        TS_ASSERT_DELTA(derivs[1] / TIMESCALE_MULTIPLIER, 2.73412000e-04 / CytosolMembrane, 1e-6);  // ligand_cm
+        TS_ASSERT_DELTA(derivs[2] / TIMESCALE_MULTIPLIER, -2.73412000e-04 / CytosolMembrane, 1e-6); // complex_cm
+        TS_ASSERT_DELTA(derivs[3] / TIMESCALE_MULTIPLIER, 1.98105040e+02 / nucleus, 1e-3);          // bcat_nu
+        TS_ASSERT_DELTA(derivs[4] / TIMESCALE_MULTIPLIER, 1.04000000e-03 / nucleus, 1e-5);          // ligand_nu
+        TS_ASSERT_DELTA(derivs[5] / TIMESCALE_MULTIPLIER, -1.04000000e-03 / nucleus, 1e-5);         // complex_nu
     }
 
     void TestOdeWithChasteSolver()

@@ -49,8 +49,6 @@ private:
     double V1;   // V1
     double V3;   // V3
 
-    // STOICHIOMETRY VARIABLES
-
     // REACTIONS
     double reaction1;  // creation of cyclin
     double reaction2;  // cdc2 kinase triggered degration of cyclin

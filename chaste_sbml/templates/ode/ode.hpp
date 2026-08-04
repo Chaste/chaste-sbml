@@ -47,11 +47,6 @@ private:
 {% endif %}
 {% endfor %}
 
-    // STOICHIOMETRY VARIABLES
-{% for var in stoichiometry_variables %}
-    double {{ var["id"] }}; // {{ var["label"] }}
-{% endfor %}
-
     // REACTIONS
 {% for reaction in reactions %}
     double {{ reaction["id"] }}; // {{ reaction["label"] }}

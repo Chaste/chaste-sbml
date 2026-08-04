@@ -99,8 +99,6 @@ void VanLeeuwen2007NonDimSbmlOdeSystem::EvaluateYDerivatives(double time, const 
     {
         rDY[i] = derivatives[i];
     }
-
-    // TODO: Scale time appropriately
 }
 
 void VanLeeuwen2007NonDimSbmlOdeSystem::Initialise(double time)
