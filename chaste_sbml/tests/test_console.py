@@ -12,11 +12,11 @@ GOLDBETER = ROOT_DIR / "SbmlRefModels" / "src" / "reference" / "Goldbeter1991" /
 
 
 def test_help():
-    """The top-level help lists both subcommands."""
+    """The help documents the default SBML file argument and the copy-base-classes switch."""
     output = subprocess.check_output(["chaste-sbml", "-h"]).decode("ascii")
 
-    assert "generate" in output
-    assert "copy-base-classes" in output
+    assert "sbml_file" in output
+    assert "--copy-base-classes" in output
 
 
 def test_version():
@@ -28,25 +28,24 @@ def test_version():
     assert output == expected
 
 
-def test_requires_subcommand():
-    """Running with no subcommand is a usage error (exit code 2)."""
+def test_requires_sbml_file():
+    """Running with no SBML file and no --copy-base-classes is a usage error (exit code 2)."""
     result = subprocess.run(["chaste-sbml"], capture_output=True, text=True)
 
     assert result.returncode == 2
 
 
-def test_generate_requires_sbml_file():
-    """generate without an SBML file is a usage error (exit code 2)."""
-    result = subprocess.run(["chaste-sbml", "generate"], capture_output=True, text=True)
-
-    assert result.returncode == 2
-
-
 def test_copy_base_classes_rejects_generation_options():
-    """copy-base-classes takes only --output-dir; generation options are usage errors (exit 2)."""
-    for extra in (["model.xml"], ["--model-type", "srn"]):
+    """--copy-base-classes takes only --output-dir; an SBML file or generation option is a usage error."""
+    for extra in (
+        ["model.xml"],
+        ["--model-type", "srn"],
+        ["--no-tests"],
+        ["--timescale", "s"],
+        ["--test-output-dir", "test/"],
+    ):
         result = subprocess.run(
-            ["chaste-sbml", "copy-base-classes", *extra],
+            ["chaste-sbml", "--copy-base-classes", *extra],
             capture_output=True,
             text=True,
         )
@@ -55,9 +54,9 @@ def test_copy_base_classes_rejects_generation_options():
 
 
 def test_copy_base_classes_accepts_output_dir(tmp_path):
-    """copy-base-classes with --output-dir copies the base classes."""
+    """--copy-base-classes with --output-dir copies the base classes."""
     result = subprocess.run(
-        ["chaste-sbml", "copy-base-classes", "--output-dir", str(tmp_path)],
+        ["chaste-sbml", "--copy-base-classes", "--output-dir", str(tmp_path)],
         capture_output=True,
         text=True,
     )
@@ -67,9 +66,9 @@ def test_copy_base_classes_accepts_output_dir(tmp_path):
 
 
 def test_generate_emits_placeholder_test(tmp_path):
-    """generate produces a placeholder test file alongside the model by default."""
+    """Generation produces a placeholder test file alongside the model by default."""
     result = subprocess.run(
-        ["chaste-sbml", "generate", str(GOLDBETER), "--output-dir", str(tmp_path)],
+        ["chaste-sbml", str(GOLDBETER), "--output-dir", str(tmp_path)],
         capture_output=True,
         text=True,
     )
@@ -80,9 +79,9 @@ def test_generate_emits_placeholder_test(tmp_path):
 
 
 def test_generate_no_tests_skips_placeholder_test(tmp_path):
-    """generate --no-tests writes the model but no placeholder test."""
+    """--no-tests writes the model but no placeholder test."""
     result = subprocess.run(
-        ["chaste-sbml", "generate", str(GOLDBETER), "--output-dir", str(tmp_path), "--no-tests"],
+        ["chaste-sbml", str(GOLDBETER), "--output-dir", str(tmp_path), "--no-tests"],
         capture_output=True,
         text=True,
     )
@@ -93,7 +92,7 @@ def test_generate_no_tests_skips_placeholder_test(tmp_path):
 
 
 def test_generate_test_output_dir_routes_test(tmp_path):
-    """generate --test-output-dir places the placeholder test in its own directory."""
+    """--test-output-dir places the placeholder test in its own directory."""
     src_dir = tmp_path / "src"
     test_dir = tmp_path / "test"
     src_dir.mkdir()
@@ -102,7 +101,6 @@ def test_generate_test_output_dir_routes_test(tmp_path):
     result = subprocess.run(
         [
             "chaste-sbml",
-            "generate",
             str(GOLDBETER),
             "--output-dir",
             str(src_dir),
