@@ -61,69 +61,59 @@ python3 -m pytest
 
 ## Usage
 
-`chaste-sbml` has two subcommands:
+Generating Chaste C++ code from an SBML file is the default action. Passing
+`--copy-base-classes` switches to copying the C++ base classes instead.
 
 ```
-usage: chaste-sbml [-h] [--version] command ...
-
-positional arguments:
-  command
-    generate           Generate Chaste C++ code from an SBML file
-    copy-base-classes  Copy the C++ base classes the generated code depends on
-
-options:
-  -h, --help           show this help message and exit
-  --version            show program's version number and exit
-```
-
-### `generate`
-
-Generate Chaste C++ code from an SBML file:
-
-```sh
-chaste-sbml generate my_model.xml --model-type srn --output-dir src/
-```
-
-```
-usage: chaste-sbml generate [-h] [--output-dir OUTPUT_DIR]
-                                    [--model-type [{generic,srn,cell-cycle}]]
-                                    [--tests | --no-tests]
-                                    [--test-output-dir TEST_OUTPUT_DIR]
-                                    sbml_file
+usage: chaste-sbml [-h] [--version] [--copy-base-classes]
+                   [--output-dir OUTPUT_DIR]
+                   [--model-type [{generic,srn,cell-cycle}]]
+                   [--tests | --no-tests] [--timescale {ms,s,m,h}]
+                   [--test-output-dir TEST_OUTPUT_DIR]
+                   [sbml_file]
 
 positional arguments:
   sbml_file             The SBML file to convert
 
 options:
+  -h, --help            show this help message and exit
+  --version             show program's version number and exit
+  --copy-base-classes   Copy the C++ base classes the generated code depends
+                        on, instead of generating code
   --output-dir OUTPUT_DIR
                         The directory to place output files in
   --model-type [{generic,srn,cell-cycle}]
                         The type of model to generate
   --tests, --no-tests   Generate placeholder test files (default: on)
+  --timescale {ms,s,m,h}
+                        The model's native time unit, used to convert
+                        derivatives to Chaste's hours (auto-detected if omitted)
   --test-output-dir TEST_OUTPUT_DIR
                         The directory to place generated test files in
                         (defaults to --output-dir)
 ```
 
-By default `generate` also emits a placeholder test (`Test<Model>Sbml.hpp`), a
+### Generate code
+
+Generate Chaste C++ code from an SBML file:
+
+```sh
+chaste-sbml my_model.xml --model-type srn --output-dir src/
+```
+
+By default this also emits a placeholder test (`Test<Model>Sbml.hpp`), a
 CxxTest skeleton with a suite for the ODE system, and the SRN/cell-cycle
 model where applicable. Pass `--no-tests` to skip it, or `--test-output-dir` to
 place the placeholder test somewhere other than `--output-dir`.
 
-### `copy-base-classes`
+### Copy the base classes
 
 The generated code `#include`s and subclasses a set of C++ base classes (for example
 `AbstractSbmlOdeSystem`). These are shipped with the package; copy them into your project so
 they match the installed version of `chaste-sbml`:
 
 ```sh
-chaste-sbml copy-base-classes --output-dir src/
+chaste-sbml --copy-base-classes --output-dir src/
 ```
 
-```
-usage: chaste-sbml copy-base-classes [-h] [--output-dir OUTPUT_DIR]
-
-options:
-  --output-dir OUTPUT_DIR
-                        The directory to place the base classes in
-```
+In this mode no SBML file is taken and the only other option that applies is `--output-dir`.

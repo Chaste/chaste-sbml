@@ -9,24 +9,26 @@ from ._version import __version__
 
 
 def parse_args() -> argparse.Namespace:
-    """Parse command line arguments."""
+    """Parse command line arguments.
+
+    Generating Chaste C++ code from an SBML file is the default action. Passing ``--copy-base-classes``
+    switches to copying the C++ base classes the generated code depends on instead; in that mode no
+    SBML file is taken and the only other option that applies is ``--output-dir``.
+    """
     parser = argparse.ArgumentParser(
         prog="chaste-sbml",
         description="Convert SBML models to Chaste C++ code",
     )
     parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
 
-    subparsers = parser.add_subparsers(dest="command", required=True, metavar="command")
-
-    # generate: create Chaste C++ code from an SBML file.
-    generate = subparsers.add_parser(
-        "generate",
-        help="Generate Chaste C++ code from an SBML file",
-        description="Generate Chaste C++ code from an SBML file",
+    parser.add_argument("sbml_file", nargs="?", help="The SBML file to convert")
+    parser.add_argument(
+        "--copy-base-classes",
+        action="store_true",
+        help="Copy the C++ base classes the generated code depends on, instead of generating code",
     )
-    generate.add_argument("sbml_file", help="The SBML file to convert")
-    generate.add_argument("--output-dir", default=None, help="The directory to place output files in")
-    generate.add_argument(
+    parser.add_argument("--output-dir", default=None, help="The directory to place output files in")
+    parser.add_argument(
         "--model-type",
         help="The type of model to generate",
         choices=["generic", "srn", "cell-cycle"],
@@ -34,34 +36,34 @@ def parse_args() -> argparse.Namespace:
         const="generic",
         nargs="?",
     )
-    generate.add_argument(
+    parser.add_argument(
         "--tests",
         action=argparse.BooleanOptionalAction,
         default=True,
         help="Generate placeholder test files (default: on). Use --no-tests to disable.",
     )
-    generate.add_argument(
+    parser.add_argument(
         "--timescale",
         choices=["ms", "s", "m", "h"],
         default=None,
         help="The model's native time unit (milliseconds/seconds/minutes/hours), used to convert "
         "derivatives to Chaste's hours. Overrides auto-detection from the SBML; omit to auto-detect.",
     )
-    generate.add_argument(
+    parser.add_argument(
         "--test-output-dir",
         default=None,
         help="The directory to place generated test files in (defaults to --output-dir)",
     )
 
-    # copy-base-classes: copy the C++ base classes the generated code depends on.
-    copy_parser = subparsers.add_parser(
-        "copy-base-classes",
-        help="Copy the C++ base classes the generated code depends on",
-        description="Copy the C++ base classes the generated code depends on",
-    )
-    copy_parser.add_argument("--output-dir", default=None, help="The directory to place the base classes in")
+    args = parser.parse_args()
 
-    return parser.parse_args()
+    if args.copy_base_classes:
+        if args.sbml_file is not None:
+            parser.error("--copy-base-classes does not take an SBML file")
+    elif args.sbml_file is None:
+        parser.error("an SBML file is required (or pass --copy-base-classes to copy the base classes)")
+
+    return args
 
 
 def process_command_line(args: "argparse.Namespace"):
@@ -69,7 +71,7 @@ def process_command_line(args: "argparse.Namespace"):
 
     :args: The parsed command line arguments.
     """
-    if args.command == "copy-base-classes":
+    if args.copy_base_classes:
         copy_base_classes(args.output_dir)
         return
 

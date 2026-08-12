@@ -28,23 +28,23 @@ def test_version_exits_zero(monkeypatch):
 
 @pytest.mark.parametrize("model_type", ["generic", "srn", "cell-cycle"])
 def test_generate_each_model_type(monkeypatch, tmp_path, model_type):
-    """generate handles every --model-type and emits the model plus placeholder test."""
-    _run(monkeypatch, "generate", str(GOLDBETER), "--model-type", model_type, "--output-dir", str(tmp_path))
+    """Generation (the default action) handles every --model-type and emits the model plus test."""
+    _run(monkeypatch, str(GOLDBETER), "--model-type", model_type, "--output-dir", str(tmp_path))
 
     assert (tmp_path / "Goldbeter1991SbmlOdeSystem.hpp").is_file()
     assert (tmp_path / "TestGoldbeter1991Sbml.hpp").is_file()
 
 
 def test_generate_no_tests(monkeypatch, tmp_path):
-    """generate --no-tests writes the model but no placeholder test."""
-    _run(monkeypatch, "generate", str(GOLDBETER), "--output-dir", str(tmp_path), "--no-tests")
+    """--no-tests writes the model but no placeholder test."""
+    _run(monkeypatch, str(GOLDBETER), "--output-dir", str(tmp_path), "--no-tests")
 
     assert (tmp_path / "Goldbeter1991SbmlOdeSystem.hpp").is_file()
     assert not (tmp_path / "TestGoldbeter1991Sbml.hpp").exists()
 
 
 def test_generate_test_output_dir(monkeypatch, tmp_path):
-    """generate --test-output-dir routes the placeholder test to its own directory."""
+    """--test-output-dir routes the placeholder test to its own directory."""
     src_dir = tmp_path / "src"
     test_dir = tmp_path / "test"
     src_dir.mkdir()
@@ -52,7 +52,6 @@ def test_generate_test_output_dir(monkeypatch, tmp_path):
 
     _run(
         monkeypatch,
-        "generate",
         str(GOLDBETER),
         "--output-dir",
         str(src_dir),
@@ -65,7 +64,23 @@ def test_generate_test_output_dir(monkeypatch, tmp_path):
 
 
 def test_copy_base_classes(monkeypatch, tmp_path):
-    """copy-base-classes copies the C++ base classes into --output-dir."""
-    _run(monkeypatch, "copy-base-classes", "--output-dir", str(tmp_path))
+    """--copy-base-classes copies the C++ base classes into --output-dir."""
+    _run(monkeypatch, "--copy-base-classes", "--output-dir", str(tmp_path))
 
     assert (tmp_path / "AbstractSbmlOdeSystem.hpp").is_file()
+
+
+def test_missing_sbml_file_is_usage_error(monkeypatch):
+    """No SBML file and no --copy-base-classes exits with a usage error (code 2)."""
+    with pytest.raises(SystemExit) as exc:
+        _run(monkeypatch)
+
+    assert exc.value.code == 2
+
+
+def test_copy_base_classes_with_sbml_file_is_usage_error(monkeypatch):
+    """--copy-base-classes takes no SBML file; supplying one exits with a usage error (code 2)."""
+    with pytest.raises(SystemExit) as exc:
+        _run(monkeypatch, "--copy-base-classes", str(GOLDBETER))
+
+    assert exc.value.code == 2

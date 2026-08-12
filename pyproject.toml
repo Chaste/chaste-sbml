@@ -36,7 +36,7 @@ chaste-sbml = "chaste_sbml.__main__:main"
 source = "https://github.com/Chaste/chaste-codegen-sbml"
 
 [tool.setuptools.package-data]
-# Ship the C++ base classes so `chaste-sbml copy-base-classes` can copy them out
+# Ship the C++ base classes so `chaste-sbml --copy-base-classes` can copy them out
 # of an installed package. (setuptools-scm also tracks these, but declaring them explicitly
 # keeps them in the wheel regardless of the VCS file finder.)
 chaste_sbml = [
