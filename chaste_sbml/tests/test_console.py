@@ -35,15 +35,22 @@ def test_requires_sbml_file():
     assert result.returncode == 2
 
 
-def test_copy_base_classes_rejects_sbml_file():
-    """--copy-base-classes takes no SBML file; supplying one is a usage error (exit 2)."""
-    result = subprocess.run(
-        ["chaste-sbml", "--copy-base-classes", "model.xml"],
-        capture_output=True,
-        text=True,
-    )
+def test_copy_base_classes_rejects_generation_options():
+    """--copy-base-classes takes only --output-dir; an SBML file or generation option is a usage error."""
+    for extra in (
+        ["model.xml"],
+        ["--model-type", "srn"],
+        ["--no-tests"],
+        ["--timescale", "s"],
+        ["--test-output-dir", "test/"],
+    ):
+        result = subprocess.run(
+            ["chaste-sbml", "--copy-base-classes", *extra],
+            capture_output=True,
+            text=True,
+        )
 
-    assert result.returncode == 2
+        assert result.returncode == 2, extra
 
 
 def test_copy_base_classes_accepts_output_dir(tmp_path):

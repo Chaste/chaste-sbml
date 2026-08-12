@@ -84,3 +84,15 @@ def test_copy_base_classes_with_sbml_file_is_usage_error(monkeypatch):
         _run(monkeypatch, "--copy-base-classes", str(GOLDBETER))
 
     assert exc.value.code == 2
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [["--model-type", "srn"], ["--no-tests"], ["--timescale", "s"], ["--test-output-dir", "test/"]],
+)
+def test_copy_base_classes_rejects_generation_options(monkeypatch, extra):
+    """A generation-only option in copy mode exits with a usage error (code 2), not silent ignore."""
+    with pytest.raises(SystemExit) as exc:
+        _run(monkeypatch, "--copy-base-classes", *extra)
+
+    assert exc.value.code == 2

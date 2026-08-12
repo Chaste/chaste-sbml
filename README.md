@@ -116,4 +116,5 @@ they match the installed version of `chaste-sbml`:
 chaste-sbml --copy-base-classes --output-dir src/
 ```
 
-In this mode no SBML file is taken and the only other option that applies is `--output-dir`.
+In this mode only `--output-dir` applies; passing an SBML file or a generation option (such as
+`--model-type` or `--no-tests`) is a usage error.
