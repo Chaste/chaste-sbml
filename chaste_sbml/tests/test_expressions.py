@@ -217,6 +217,27 @@ def test_formula_to_string_variable_named_like_function_is_distinct():
     assert out == "sin + std::sin(x)"
 
 
+@pytest.mark.parametrize(
+    ("name", "args"),
+    [
+        ("sin", "<ci>x</ci>"),  # spelled like an _UNCHANGED_FUNCTIONS built-in (std::sin)
+        ("min", "<ci>a</ci><ci>b</ci>"),  # spelled like a _CUSTOM_FUNCTIONS built-in (sm::min)
+        ("log", "<ci>x</ci>"),  # spelled like the log built-in (log10/sm::log)
+    ],
+)
+def test_formula_to_string_model_function_spelled_like_builtin_is_left_unchanged(name, args):
+    """A call to a model's own function definition spelled like a built-in keeps its own name.
+
+    Such a call is a generic ``AST_FUNCTION`` node (see ``_names.py``); only libsbml's *typed*
+    built-in function nodes are name-mapped, so the call resolves to the model's function, not the
+    C++ built-in of the same spelling.
+    """
+    mathml = f'<math xmlns="http://www.w3.org/1998/Math/MathML"><apply><ci>{name}</ci>{args}</apply></math>'
+    math = libsbml.readMathMLFromString(mathml)
+    rendered = args.replace("<ci>", "").replace("</ci>", ", ").rstrip(", ")
+    assert formula_to_string(math, {}, state_variables=[]) == f"{name}({rendered})"
+
+
 def test_formula_to_string_delay_is_unsupported():
     """A delay function raises rather than emitting invalid C++."""
     with pytest.raises(NotImplementedError, match="delay"):

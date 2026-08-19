@@ -368,8 +368,8 @@ def map_functions(node: "ASTNode") -> None:
     - logical operators -> renamed in place to ``sm::and_``/``or_``/``not_``/``xor_``/``implies``,
       keeping the logical node type so libsbml still picks infix vs call by arity (and parenthesises
       the operands the same way)
-    - other functions -> ``std::``/``sm::`` per the name maps; an unknown name (a model's own
-      function definition) is left as-is
+    - built-in functions -> ``std::``/``sm::`` per the name maps, keyed on libsbml's *typed*
+      function nodes (``AST_FUNCTION_SIN`` etc.).
 
     :param node: The root AST node to rewrite in place.
     """
@@ -386,7 +386,9 @@ def map_functions(node: "ASTNode") -> None:
         _rename_call(node, f"sm::{_NARY_RELATIONAL_NAMES[node_type]}")
     elif node.isLogical() and node.getName() in _LOGICAL_CPP:
         node.setName(_LOGICAL_CPP[node.getName()])
-    elif node.isFunction():
+    elif node.isFunction() and node_type != AST_FUNCTION:
+        # Skip generic AST_FUNCTIONs as these are calls to model function definitions.
+        # A model function spelled like a built-in (e.g. sin, min, log) should be left alone.
         name = node.getName()
         if name in _UNCHANGED_FUNCTIONS:
             _rename_call(node, f"std::{name}")
@@ -394,7 +396,7 @@ def map_functions(node: "ASTNode") -> None:
             _rename_call(node, f"std::{_RENAMED_FUNCTIONS[name]}")
         elif name in _CUSTOM_FUNCTIONS:
             _rename_call(node, f"sm::{_CUSTOM_FUNCTIONS[name]}")
-        # An unknown name is a model's own function definition; leave it unchanged.
+        # An unmapped typed built-in is left as-is (matches libsbml's own rendering).
 
     for i in range(node.getNumChildren()):
         map_functions(node.getChild(i))
