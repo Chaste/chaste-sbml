@@ -1,10 +1,18 @@
 ![build_and_test](https://github.com/Chaste/chaste-codegen-sbml/actions/workflows/build_and_test.yml/badge.svg?branch=develop)
 ![sbml_test_suite](https://github.com/Chaste/chaste-codegen-sbml/actions/workflows/sbml_test_suite.yml/badge.svg?branch=develop)
+![docs](https://github.com/Chaste/chaste-codegen-sbml/actions/workflows/docs.yml/badge.svg?branch=develop)
 
 # Import SBML models into Chaste
 
 This project is a Python code generator that reads an [SBML](https://sbml.org) model and emits C++ classes compatible
 with [Chaste](https://chaste.github.io), so you can run SBML-defined biology models inside Chaste simulations.
+
+## Documentation
+
+Full documentation — installation, command-line options, supported SBML features, the anatomy of the generated code,
+and worked tutorials — is at **<https://chaste.github.io/chaste-codegen-sbml/>**.
+
+The sections below are a quick reference; see the documentation site for the details.
 
 ## Installation
 
