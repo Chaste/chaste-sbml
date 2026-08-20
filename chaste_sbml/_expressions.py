@@ -1,9 +1,19 @@
 """Translation of SBML MathML/AST expressions into C++ formula strings.
 
-Extracted from ChasteSbmlModel so the expression-formatting logic lives on its own. The
-functions are pure apart from the libsbml AST objects they operate on: ``formula_to_string`` is
-given the model's variable-type map and state-variable list as arguments rather than reaching
-into the model.
+The functions are pure apart from the libsbml AST objects they operate on:
+``formula_to_string`` is given the model's variable-type map and state-variable
+list as arguments rather than reaching into the model.
+
+Rendering strategy: libsbml's ``formulaToL3String`` does all the structural work
+(operator precedence, parenthesization and numeric-literal formatting) and we do
+not reimplement any of it. Instead the mapping from SBML symbols/functions to
+their C++ spellings is applied *on the AST* (``resolve_constants``,
+``map_functions``) by renaming nodes to their final C++ names, which
+``formulaToL3String`` then renders verbatim. Working on the AST, where a node's
+kind is known, means a variable named ``sin`` or ``pi`` is never confused with
+the function/constant of the same spelling, unlike a string search of the
+rendered output. The only string post-processing is turning integer literals
+into doubles (to avoid integer division).
 """
 
 import math
@@ -15,11 +25,15 @@ from libsbml import (
     AST_CONSTANT_PI,
     AST_FUNCTION,
     AST_FUNCTION_DELAY,
+    AST_FUNCTION_LOG,
     AST_FUNCTION_POWER,
     AST_FUNCTION_RATE_OF,
+    AST_FUNCTION_ROOT,
+    AST_INTEGER,
     AST_NAME,
     AST_NAME_AVOGADRO,
     AST_NAME_TIME,
+    AST_PLUS,
     AST_POWER,
     AST_REAL,
     AST_RELATIONAL_EQ,
@@ -27,10 +41,11 @@ from libsbml import (
     AST_RELATIONAL_GT,
     AST_RELATIONAL_LEQ,
     AST_RELATIONAL_LT,
+    AST_TIMES,
     formulaToL3String,
 )
 
-from ._config import CHASTE_PREFIX, PREFIX_SEP, VarType
+from ._config import VarType
 
 if TYPE_CHECKING:
     from libsbml import ASTNode
@@ -74,53 +89,51 @@ def substitute_ast_names(node: "ASTNode", replacements: dict) -> "ASTNode":
     return result
 
 
-# Placeholder ids the SBML math symbols are renamed to. A parameter may share a symbol's spelling
-# (e.g. a parameter named 'pi' or 'time'), and ``formulaToL3String`` renders the symbol and the
-# parameter identically; renaming the symbol node to a unique placeholder keeps them distinct, so
-# the symbol maps to its C++ value (below) while the parameter keeps its own name.
-AVOGADRO_PLACEHOLDER = f"{CHASTE_PREFIX}{PREFIX_SEP}avogadro"
-PI_PLACEHOLDER = f"{CHASTE_PREFIX}{PREFIX_SEP}pi"
-E_PLACEHOLDER = f"{CHASTE_PREFIX}{PREFIX_SEP}exponentiale"
-TIME_PLACEHOLDER = f"{CHASTE_PREFIX}{PREFIX_SEP}time"
-INFINITY_PLACEHOLDER = f"{CHASTE_PREFIX}{PREFIX_SEP}infinity"
-NEG_INFINITY_PLACEHOLDER = f"{CHASTE_PREFIX}{PREFIX_SEP}neg_infinity"
-NAN_PLACEHOLDER = f"{CHASTE_PREFIX}{PREFIX_SEP}nan"
+# Non-finite literals rendered as C++ (matched by value, see resolve_constants).
+_INFINITY_CPP = "std::numeric_limits<double>::infinity()"
+_NEG_INFINITY_CPP = "-" + _INFINITY_CPP
+_NAN_CPP = "std::numeric_limits<double>::quiet_NaN()"
 
-_SYMBOL_PLACEHOLDERS = {
-    AST_NAME_AVOGADRO: AVOGADRO_PLACEHOLDER,
-    AST_CONSTANT_PI: PI_PLACEHOLDER,
-    AST_CONSTANT_E: E_PLACEHOLDER,
-    AST_NAME_TIME: TIME_PLACEHOLDER,
+# SBML math-symbol node types renamed directly to their C++ value. Matched by
+# node *type*, so a parameter that happens to share a symbol's spelling (e.g.
+# one named ``pi`` or ``time``) is an ordinary AST_NAME node and is never
+# mistaken for the symbol.
+_SYMBOL_CPP = {
+    AST_NAME_AVOGADRO: "sm::AVOGADRO",
+    AST_CONSTANT_PI: "M_PI",
+    AST_CONSTANT_E: "M_E",
+    AST_NAME_TIME: "time",
 }
 
 
-def replace_constant_symbols(node: "ASTNode") -> None:
-    """Recursively rename SBML math-symbol nodes (avogadro, pi, exponentiale, time, inf, NaN).
+def resolve_constants(node: "ASTNode") -> None:
+    """Recursively rename SBML math-symbol nodes to their C++ value, in place.
 
-    Each of these symbols renders identically to a same-named parameter, so it is renamed to a
-    unique placeholder that maps to its C++ value, keeping it distinct from a parameter of the same
-    spelling. Handling this at the AST level (rather than string-matching the rendered name) means a
-    real variable named ``t``, ``pi`` etc. is never mistaken for the symbol. The MathML constants
-    ``<infinity/>`` and ``<notanumber/>`` are especially treacherous: libsbml stores them as ordinary
-    real nodes that render as ``INF``/``NaN``, indistinguishable from a reference to a parameter so
-    named (see test-suite cases 1811/1813), so they are matched here by their non-finite value.
+    Handles avogadro, pi, exponentiale and the time csymbol (renamed by node
+    type), and the MathML constants ``<infinity/>`` and ``<notanumber/>``. The
+    latter are especially treacherous: libsbml stores them as ordinary real
+    nodes that render as ``INF``/``NaN``, indistinguishable from a reference to
+    a parameter so named (see test-suite cases 1811/1813), so they are matched
+    here by their non-finite value. Each node is renamed to a plain name holding
+    the C++ text, which ``formulaToL3String`` then renders verbatim; a
+    same-named parameter is an ordinary name node and is left untouched.
 
     :param node: The root AST node.
     """
-    placeholder = _SYMBOL_PLACEHOLDERS.get(node.getType())
-    if placeholder is not None:
+    cpp = _SYMBOL_CPP.get(node.getType())
+    if cpp is not None:
         node.setType(AST_NAME)
-        node.setName(placeholder)
+        node.setName(cpp)
     elif node.getType() == AST_REAL:
         value = node.getReal()
         if math.isnan(value):
             node.setType(AST_NAME)
-            node.setName(NAN_PLACEHOLDER)
+            node.setName(_NAN_CPP)
         elif math.isinf(value):
             node.setType(AST_NAME)
-            node.setName(NEG_INFINITY_PLACEHOLDER if value < 0 else INFINITY_PLACEHOLDER)
+            node.setName(_NEG_INFINITY_CPP if value < 0 else _INFINITY_CPP)
     for i in range(node.getNumChildren()):
-        replace_constant_symbols(node.getChild(i))
+        resolve_constants(node.getChild(i))
 
 
 def resolve_rate_of(
@@ -131,9 +144,9 @@ def resolve_rate_of(
 ) -> None:
     """Recursively resolve ``rateOf(x)`` nodes to a state variable's derivative id, or ``0``.
 
-    ``rateOf`` of a state variable is that variable's time derivative (its ``d_<id>_dt`` id); of
-    anything constant -- a parameter, or a kinetic-law local parameter that shadows a global -- it
-    is zero. Resolving on the AST (rather than by regex on the rendered string) is robust to the
+    ``rateOf`` of a state variable is that variable's time derivative (``d_<id>_dt``).
+    ``rateOf`` of anything constant (e.g. a parameter) is zero.
+    Resolving on the AST (rather than on the rendered string) is robust to the
     argument's spelling and to surrounding parentheses.
 
     :param node: The root AST node.
@@ -162,9 +175,10 @@ def resolve_rate_of(
 def strip_ast_units(node: "ASTNode") -> None:
     """Recursively strip units annotations from AST nodes.
 
-    SBML allows numeric literals to carry units annotations (e.g. ``<cn sbml:units="mole">``).
-    ``formulaToL3String`` includes these in its output (e.g. ``0.00015 mole``), which is not
-    valid C++. Stripping them here is safe because the units are not used.
+    SBML allows numeric literals to carry units annotations (e.g.
+    ``<cn sbml:units="mole">``). ``formulaToL3String`` includes these in its
+    output (e.g. ``0.00015 mole``), which is not valid C++. Stripping them here
+    is safe because the units are not used.
 
     :param node: The root AST node.
     """
@@ -183,31 +197,6 @@ _NARY_RELATIONAL_NAMES = {
     AST_RELATIONAL_GEQ: "geq",
     AST_RELATIONAL_EQ: "eq",
 }
-
-
-def rewrite_nary_relational(node: Optional["ASTNode"]) -> None:
-    """Rewrite n-ary (>2 operand) relational AST nodes into function-call form, in place.
-
-    SBML MathML relationals are n-ary: ``lt(a, b, c)`` means ``a < b < c``
-    (i.e. ``a < b`` and ``b < c``), and ``eq(a, b, c)`` means all equal. However,
-    ``formulaToL3String`` renders them as a chained infix expression (``a < b < c``),
-    which C++ mis-evaluates left-to-right as  ``(a < b) < c``. Converting each
-    such node to a function call (rendered ``lt(a, b, c)``, later mapped to the
-    variadic ``sm::lt`` helper that implements the correct semantics) fixes this.
-    Binary relationals are left as infix operators, so existing generated code
-    is unchanged. ``neq`` is binary-only in MathML, so it is never n-ary and is
-    not rewritten here.
-
-    :param node: The root AST node to rewrite.
-    """
-    if node is None:  # pragma: no cover - defensive base case; callers pass a real AST root
-        return
-    name = _NARY_RELATIONAL_NAMES.get(node.getType())
-    if name is not None and node.getNumChildren() > 2:
-        node.setType(AST_FUNCTION)
-        node.setName(name)
-    for i in range(node.getNumChildren()):
-        rewrite_nary_relational(node.getChild(i))
 
 
 def search_ast_type(root: Optional["ASTNode"], node_type: int) -> bool:
@@ -231,42 +220,6 @@ def search_ast_type(root: Optional["ASTNode"], node_type: int) -> bool:
 
     return False
 
-
-def rewrite_power(node: Optional["ASTNode"]) -> None:
-    """Rewrite power-operator (``a ^ b``) AST nodes into ``pow()`` function-call form, in place.
-
-    ``formulaToL3String`` renders a power as the infix ``a ^ b``, which is not
-    valid C++ (``^`` is bitwise xor). Converting each power node to a ``pow``
-    call before stringifying (rendered ``pow(a, b)``, later mapped to ``std::pow``
-    by the function-name token map) handles nesting correctly. Both power node
-    types are handled: ``AST_POWER`` (from ``^``/``pow`` in L3 infix, and from
-    MathML ``<power>`` that libsbml normalises) and ``AST_FUNCTION_POWER``
-    (from other MathML ``<power>`` forms).
-
-    :param node: The root AST node to rewrite.
-    """
-    if node is None:  # pragma: no cover - defensive base case; callers pass a real AST root
-        return
-    if node.getType() in (AST_POWER, AST_FUNCTION_POWER):
-        node.setType(AST_FUNCTION)
-        node.setName("pow")
-    for i in range(node.getNumChildren()):
-        rewrite_power(node.getChild(i))
-
-
-# SBML symbolic constants replaced with their C++ equivalents, keyed by the placeholder each symbol
-# is renamed to (see replace_constant_symbols). Every one is matched at the AST level and renamed to
-# its placeholder, so a same-named parameter (e.g. one literally called pi, inf or NaN) is never
-# mistaken for the constant. (true/false deliberately absent.)
-_CONSTANTS = {
-    AVOGADRO_PLACEHOLDER: "sm::AVOGADRO",
-    PI_PLACEHOLDER: "M_PI",
-    E_PLACEHOLDER: "M_E",
-    TIME_PLACEHOLDER: "time",
-    INFINITY_PLACEHOLDER: "std::numeric_limits<double>::infinity()",
-    NEG_INFINITY_PLACEHOLDER: "-std::numeric_limits<double>::infinity()",
-    NAN_PLACEHOLDER: "std::numeric_limits<double>::quiet_NaN()",
-}
 
 # SBML functions whose name matches the C++ (std::) equivalent.
 _UNCHANGED_FUNCTIONS = {
@@ -304,9 +257,11 @@ _RENAMED_FUNCTIONS = {
     "rem": "fmod",
 }
 
-# SBML functions with custom implementations in SbmlMath (sm::).
+# SBML functions with custom implementations in SbmlMath (sm::), rendered as
+# calls. The logical operators (and/or/not/xor/implies), n-ary relationals
+# (lt/gt/leq/geq/eq) and plus/times are handled by their own branches in
+# map_functions, so they are not listed here.
 _CUSTOM_FUNCTIONS = {
-    "and": "and_",
     "acot": "acot",
     "acoth": "acoth",
     "acsc": "acsc",
@@ -323,33 +278,128 @@ _CUSTOM_FUNCTIONS = {
     "coth": "coth",
     "csc": "csc",
     "csch": "csch",
-    "eq": "eq",
     "factorial": "factorial",
-    "geq": "geq",
-    "gt": "gt",
-    "implies": "implies",
-    "leq": "leq",
     "log": "log",
-    "lt": "lt",
     "max": "max",
     "min": "min",
-    "neq": "neq",
-    "not": "not_",
-    "or": "or_",
     "piecewise": "piecewise",
-    "plus": "plus",
     "quotient": "quotient",
     "root": "root",
     "sec": "sec",
     "sech": "sech",
     "sqr": "sqr",
-    "times": "times",
-    "xor": "xor_",
+}
+
+# SBML logical operators mapped to their C++ spelling. libsbml renders these
+# infix (&& || !) when they have enough operands and as a call otherwise, so
+# they are renamed in place (keeping the logical node type) to preserve that
+# arity-based choice and libsbml's parenthesisation of the operands.
+_LOGICAL_CPP = {
+    "and": "sm::and_",
+    "or": "sm::or_",
+    "not": "sm::not_",
+    "xor": "sm::xor_",
+    "implies": "sm::implies",
 }
 
 # TODO: From SBML Level 3 upwards, log defaults to base 10.
 # SBML versions lower than 3 default to base e.
 # See https://sbml.org/software/libsbml/5.18.0/docs/formatted/python-api/namespacelibsbml.html#a8e96a5a70569ae32655c6302638f6dc3  # noqa: B950
+
+
+def _rename_call(node: "ASTNode", cpp_name: str) -> None:
+    """Turn a node into a plain function call rendered with the given C++ name.
+
+    :param node: The node to rewrite in place.
+    :param cpp_name: The C++ function name (e.g. ``std::sin``), rendered verbatim by libsbml.
+    """
+    node.setType(AST_FUNCTION)
+    node.setName(cpp_name)
+
+
+def _map_root(node: "ASTNode") -> None:
+    """Map an SBML ``root`` node to ``std::sqrt`` (square roots) or ``sm::root`` (otherwise).
+
+    libsbml renders a two-argument root with an integer degree of 2 as ``sqrt``;
+    every other form (a general degree, a real ``2.0``, or a lone radicand) is a
+    general n-th root. We reproduce that split so the output matches libsbml's
+    own, dropping the redundant degree child for ``sqrt``.
+
+    :param node: The AST_FUNCTION_ROOT node to rewrite in place.
+    """
+    degree = node.getChild(0) if node.getNumChildren() >= 2 else None
+    if degree is not None and degree.getType() == AST_INTEGER and degree.getInteger() == 2:
+        node.removeChild(0)
+        _rename_call(node, "std::sqrt")
+    else:
+        _rename_call(node, "sm::root")
+
+
+def _map_log(node: "ASTNode") -> None:
+    """Map an SBML ``log`` node to ``log10`` (base 10) or ``sm::log`` (a general base).
+
+    libsbml renders a base-10 log as ``log10``; ``log`` with any other explicit
+    base is a two-argument general log. We reproduce that split, dropping the
+    redundant base-10 child.
+
+    :param node: The AST_FUNCTION_LOG node to rewrite in place.
+    """
+    base = node.getChild(0) if node.getNumChildren() >= 2 else None
+    if base is None or (base.getType() == AST_INTEGER and base.getInteger() == 10):
+        if base is not None:
+            node.removeChild(0)
+        _rename_call(node, "log10")
+    else:
+        _rename_call(node, "sm::log")
+
+
+def map_functions(node: "ASTNode") -> None:
+    """Recursively rename SBML function/operator nodes to their C++ spelling, in place.
+
+    Most operators libsbml already renders as infix C++ (``+ - * /``, ``&& || !``,
+    binary relationals) and are left alone. Handled here:
+
+    - power (``^``, MathML ``<power>``, ``sqr``) -> ``std::pow``
+    - ``root``/``log`` -> ``std::sqrt``/``log10`` or ``sm::root``/``sm::log`` (see helpers)
+    - degenerate ``plus``/``times`` (fewer than two operands, which libsbml renders as a call rather
+      than infix) -> ``sm::plus``/``sm::times``
+    - n-ary (>2 operand) relationals -> the variadic ``sm::`` helper (``a < b < c`` -> ``sm::lt``);
+      binary relationals stay infix
+    - logical operators -> renamed in place to ``sm::and_``/``or_``/``not_``/``xor_``/``implies``,
+      keeping the logical node type so libsbml still picks infix vs call by arity (and parenthesises
+      the operands the same way)
+    - built-in functions -> ``std::``/``sm::`` per the name maps, keyed on libsbml's *typed*
+      function nodes (``AST_FUNCTION_SIN`` etc.).
+
+    :param node: The root AST node to rewrite in place.
+    """
+    node_type = node.getType()
+    if node_type in (AST_POWER, AST_FUNCTION_POWER):
+        _rename_call(node, "std::pow")
+    elif node_type == AST_FUNCTION_ROOT:
+        _map_root(node)
+    elif node_type == AST_FUNCTION_LOG:
+        _map_log(node)
+    elif node_type in (AST_PLUS, AST_TIMES) and node.getNumChildren() < 2:
+        _rename_call(node, "sm::plus" if node_type == AST_PLUS else "sm::times")
+    elif node.isRelational() and node.getNumChildren() > 2:
+        _rename_call(node, f"sm::{_NARY_RELATIONAL_NAMES[node_type]}")
+    elif node.isLogical() and node.getName() in _LOGICAL_CPP:
+        node.setName(_LOGICAL_CPP[node.getName()])
+    elif node.isFunction() and node_type != AST_FUNCTION:
+        # Skip generic AST_FUNCTIONs as these are calls to model function definitions.
+        # A model function spelled like a built-in (e.g. sin, min, log) should be left alone.
+        name = node.getName()
+        if name in _UNCHANGED_FUNCTIONS:
+            _rename_call(node, f"std::{name}")
+        elif name in _RENAMED_FUNCTIONS:
+            _rename_call(node, f"std::{_RENAMED_FUNCTIONS[name]}")
+        elif name in _CUSTOM_FUNCTIONS:
+            _rename_call(node, f"sm::{_CUSTOM_FUNCTIONS[name]}")
+        # An unmapped typed built-in is left as-is (matches libsbml's own rendering).
+
+    for i in range(node.getNumChildren()):
+        map_functions(node.getChild(i))
 
 
 def formula_to_string(
@@ -378,44 +428,16 @@ def formula_to_string(
     local_param_ids = {param.id for param in (local_parameters or [])}
 
     strip_ast_units(math)
-    # Modify the AST, renaming the avogadro/pi/exponentiale/time symbol nodes to
-    # placeholders (so each stays distinct from a same-named parameter), and
-    # resolve rateOf to a derivative id (or 0).
-    replace_constant_symbols(math)
+    # Rename symbol and function nodes to their final C++ spelling on the AST, so formulaToL3String
+    # renders valid C++ directly (and a same-named variable is never mistaken for a symbol/function).
+    resolve_constants(math)
     resolve_rate_of(math, variable_types, state_variables, local_param_ids)
-    # Route operators that formulaToL3String would render as C++-invalid infix
-    # to function-call form: n-ary relationals (a < b < c) to the SBMLMath
-    # helpers (sm::lt(a, b, c)), and the power operator (a ^ b) to std::pow().
-    # Binary relationals stay as infix operators (a < b).
-    rewrite_nary_relational(math)
-    rewrite_power(math)
+    map_functions(math)
+
     formula = formulaToL3String(math)
 
     # Convert all integer literals to doubles to fix integer division. The lookbehinds
     # keep the digits of a scientific-notation exponent (e.g. 1e-5, 1e+5) intact.
     formula = re.sub(r"(?<!\.)(?<![eE][-+])\b[0-9]+\b(?!\.)", lambda x: f"{x[0]}.0", formula)
 
-    tokens = re.findall(r"\w+|\W+", formula)
-
-    cpp_tokens = []
-    for token in tokens:
-        cpp_token = token
-
-        # Replace function names and constants, but only when the token is not
-        # an actual model variable or a local parameter (e.g. a local parameter
-        # named "inf" must stay local).
-        if token in _CONSTANTS and token not in variable_types and token not in local_param_ids:
-            cpp_token = f"{_CONSTANTS[token]}"
-
-        elif token in _UNCHANGED_FUNCTIONS:
-            cpp_token = f"std::{token}"
-
-        elif token in _RENAMED_FUNCTIONS:
-            cpp_token = f"std::{_RENAMED_FUNCTIONS[token]}"
-
-        elif token in _CUSTOM_FUNCTIONS:
-            cpp_token = f"sm::{_CUSTOM_FUNCTIONS[token]}"
-
-        cpp_tokens.append(cpp_token)
-    cpp_formula = "".join(cpp_tokens)
-    return cpp_formula
+    return formula
