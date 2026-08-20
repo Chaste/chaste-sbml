@@ -24,25 +24,44 @@ class _WrapperSpec:
 
     Collects the per-type facts that would otherwise be spread across parallel ``if model_type ==``
     branches, so ``ChasteSbmlModel`` can drive naming, output selection and template variables from a
-    single lookup. ``ModelType.GENERIC`` has no wrapper (it generates only the ODE system) and so has
-    no entry in :data:`_WRAPPER_SPECS`.
+    single lookup, and the SRN and cell-cycle wrappers can share one pair of templates
+    (``templates/wrapper``). ``ModelType.GENERIC`` has no wrapper (it generates only the ODE system)
+    and so has no entry in :data:`_WRAPPER_SPECS`.
 
     :param class_suffix: Appended to the model name to form the wrapper class name (e.g. ``SrnModel``).
-    :param template_dir: The templates subdirectory holding the wrapper's ``.hpp``/``.cpp`` templates.
-    :param var_prefix: The prefix of the template-variable names the wrapper templates expect
-        (e.g. ``srn`` for ``srn_class_name``).
+    :param base_class: The Chaste base class the wrapper derives from (e.g. ``AbstractSbmlSrnModel``).
+    :param abstract_class: The abstract type returned by the ``Create*Model`` builder method
+        (e.g. ``AbstractSrnModel``).
+    :param create_method: The overridden builder method name (e.g. ``CreateSrnModel``).
+    :param output_method: The overridden parameter-output method name (e.g. ``OutputSrnModelParameters``).
+    :param model_noun: How the model is referred to in doc comments (e.g. ``SRN model``).
     """
 
     class_suffix: str
-    template_dir: str
-    var_prefix: str
+    base_class: str
+    abstract_class: str
+    create_method: str
+    output_method: str
+    model_noun: str
 
 
 # Wrapper descriptor per model type. GENERIC is absent: it generates only the ODE system.
 _WRAPPER_SPECS = {
-    ModelType.SRN: _WrapperSpec(class_suffix="SrnModel", template_dir="srn", var_prefix="srn"),
+    ModelType.SRN: _WrapperSpec(
+        class_suffix="SrnModel",
+        base_class="AbstractSbmlSrnModel",
+        abstract_class="AbstractSrnModel",
+        create_method="CreateSrnModel",
+        output_method="OutputSrnModelParameters",
+        model_noun="SRN model",
+    ),
     ModelType.CELL_CYCLE: _WrapperSpec(
-        class_suffix="CellCycleModel", template_dir="cell_cycle", var_prefix="cell_cycle"
+        class_suffix="CellCycleModel",
+        base_class="AbstractSbmlCellCycleModel",
+        abstract_class="AbstractCellCycleModel",
+        create_method="CreateCellCycleModel",
+        output_method="OutputCellCycleModelParameters",
+        model_noun="cell-cycle model",
     ),
 }
 
@@ -259,9 +278,8 @@ class ChasteSbmlModel:
 
         # Generate code for the SRN or cell-cycle wrapper, if this model type has one
         if self._wrapper_spec is not None:
-            template_dir = self._wrapper_spec.template_dir
-            self._generate_output(f"{template_dir}/{template_dir}.hpp", self._wrapper_hpp_filename)
-            self._generate_output(f"{template_dir}/{template_dir}.cpp", self._wrapper_cpp_filename)
+            self._generate_output("wrapper/wrapper.hpp", self._wrapper_hpp_filename)
+            self._generate_output("wrapper/wrapper.cpp", self._wrapper_cpp_filename)
 
         # Generate a placeholder test skeleton for the model
         if self._generate_tests:
@@ -283,12 +301,16 @@ class ChasteSbmlModel:
         )
 
         if self._wrapper_spec is not None:
-            prefix = self._wrapper_spec.var_prefix
             template_vars.update(
-                {
-                    f"{prefix}_class_name": self._wrapper_class_name,
-                    f"{prefix}_header_guard": generate_header_guard(self._wrapper_hpp_filename),
-                    f"{prefix}_hpp_file": self._wrapper_hpp_filename,
-                }
+                dict(
+                    wrapper_class_name=self._wrapper_class_name,
+                    wrapper_header_guard=generate_header_guard(self._wrapper_hpp_filename),
+                    wrapper_hpp_file=self._wrapper_hpp_filename,
+                    wrapper_base_class=self._wrapper_spec.base_class,
+                    wrapper_abstract_class=self._wrapper_spec.abstract_class,
+                    wrapper_create_method=self._wrapper_spec.create_method,
+                    wrapper_output_method=self._wrapper_spec.output_method,
+                    wrapper_model_noun=self._wrapper_spec.model_noun,
+                )
             )
         self._template_vars = template_vars
