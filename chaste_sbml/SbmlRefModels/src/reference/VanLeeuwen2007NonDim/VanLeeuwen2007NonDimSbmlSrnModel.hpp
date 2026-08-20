@@ -65,7 +65,7 @@ public:
      *
      * This overridden method sets up a new ODE system.
      */
-    void Initialise() override; // override
+    void Initialise() override;
 
     /**
      * Output SRN model parameters to file.

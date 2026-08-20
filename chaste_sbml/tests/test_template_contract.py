@@ -45,9 +45,17 @@ BASE_KEYS = {
     "reactions",
     "state_variables",
 }
-# Added on top of BASE_KEYS for SRN and cell-cycle models respectively.
-SRN_KEYS = {"srn_class_name", "srn_header_guard", "srn_hpp_file"}
-CELL_CYCLE_KEYS = {"cell_cycle_class_name", "cell_cycle_header_guard", "cell_cycle_hpp_file"}
+# Added on top of BASE_KEYS for any model with an SRN/cell-cycle wrapper (see _WRAPPER_SPECS).
+WRAPPER_KEYS = {
+    "wrapper_class_name",
+    "wrapper_header_guard",
+    "wrapper_hpp_file",
+    "wrapper_base_class",
+    "wrapper_abstract_class",
+    "wrapper_create_method",
+    "wrapper_output_method",
+    "wrapper_model_noun",
+}
 # Added by ChasteSbmlTestSuiteModel for semantic cases (see SbmlRefModels/generate_cases.py).
 CASE_KEYS = {
     "test_result_columns",
@@ -58,15 +66,13 @@ CASE_KEYS = {
 }
 
 # The exact context each packaged template is rendered with (the union of every context it may see;
-# test.hpp is rendered for all model types, so it may reference any of the SRN/cell-cycle keys).
+# test.hpp is rendered for all model types, so it may reference the wrapper keys).
 TEMPLATE_CONTEXT = {
     "ode/ode.cpp": BASE_KEYS,
     "ode/ode.hpp": BASE_KEYS,
-    "srn/srn.cpp": BASE_KEYS | SRN_KEYS,
-    "srn/srn.hpp": BASE_KEYS | SRN_KEYS,
-    "cell_cycle/cell_cycle.cpp": BASE_KEYS | CELL_CYCLE_KEYS,
-    "cell_cycle/cell_cycle.hpp": BASE_KEYS | CELL_CYCLE_KEYS,
-    "test/test.hpp": BASE_KEYS | SRN_KEYS | CELL_CYCLE_KEYS,
+    "wrapper/wrapper.cpp": BASE_KEYS | WRAPPER_KEYS,
+    "wrapper/wrapper.hpp": BASE_KEYS | WRAPPER_KEYS,
+    "test/test.hpp": BASE_KEYS | WRAPPER_KEYS,
     "cases/semantic.hpp": BASE_KEYS | CASE_KEYS,
 }
 
@@ -119,12 +125,12 @@ def test_none_output_is_rejected():
     ("model_name", "model_type", "expected_keys"),
     [
         ("Chen2000", ModelType.GENERIC, BASE_KEYS),
-        ("Goldbeter1991", ModelType.SRN, BASE_KEYS | SRN_KEYS),
-        ("Chen2000", ModelType.CELL_CYCLE, BASE_KEYS | CELL_CYCLE_KEYS),
+        ("Goldbeter1991", ModelType.SRN, BASE_KEYS | WRAPPER_KEYS),
+        ("Chen2000", ModelType.CELL_CYCLE, BASE_KEYS | WRAPPER_KEYS),
     ],
 )
 def test_context_contract_matches_model(model_name, model_type, expected_keys):
-    """The BASE/SRN/CELL_CYCLE contract matches what a real model provides, so it cannot drift
+    """The BASE/WRAPPER contract matches what a real model provides, so it cannot drift
     from _populate_template_vars, and any provided-but-unreferenced (dead) key is flagged."""
     sbml_file = str(REFERENCE_DIR / model_name / f"{model_name}.xml")
     model = ChasteSbmlModel(sbml_file, model_type=model_type)

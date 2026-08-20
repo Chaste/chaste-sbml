@@ -54,21 +54,21 @@ public:
     Chen2000SbmlCellCycleModel(boost::shared_ptr<AbstractCellCycleModelOdeSolver> pOdeSolver = boost::shared_ptr<AbstractCellCycleModelOdeSolver>());
 
     /**
-     * Overridden builder method to create new copies of this SRN model.
+     * Overridden builder method to create new copies of this cell-cycle model.
      *
-     * @return Returns a copy of the current SRN model.
+     * @return Returns a copy of the current cell-cycle model.
      */
     AbstractCellCycleModel* CreateCellCycleModel() override;
 
     /**
-     * Initialise the SRN model at the start of a simulation.
+     * Initialise the cell-cycle model at the start of a simulation.
      *
      * This overridden method sets up a new ODE system.
      */
     void Initialise() override;
 
     /**
-     * Output SRN model parameters to file.
+     * Output cell-cycle model parameters to file.
      *
      * @param rParamsFile the file stream to which the parameters are output
      */

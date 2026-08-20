@@ -3,6 +3,7 @@
 import abc
 import logging
 import os
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
 from ._config import ModelType, TimeUnit
@@ -15,6 +16,54 @@ if TYPE_CHECKING:
     from typing import Any
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class _WrapperSpec:
+    """Descriptor for a :class:`ModelType` that wraps the ODE system in a Chaste model class.
+
+    Collects the per-type facts that would otherwise be spread across parallel ``if model_type ==``
+    branches, so ``ChasteSbmlModel`` can drive naming, output selection and template variables from a
+    single lookup, and the SRN and cell-cycle wrappers can share one pair of templates
+    (``templates/wrapper``). ``ModelType.GENERIC`` has no wrapper (it generates only the ODE system)
+    and so has no entry in :data:`_WRAPPER_SPECS`.
+
+    :param class_suffix: Appended to the model name to form the wrapper class name (e.g. ``SrnModel``).
+    :param base_class: The Chaste base class the wrapper derives from (e.g. ``AbstractSbmlSrnModel``).
+    :param abstract_class: The abstract type returned by the ``Create*Model`` builder method
+        (e.g. ``AbstractSrnModel``).
+    :param create_method: The overridden builder method name (e.g. ``CreateSrnModel``).
+    :param output_method: The overridden parameter-output method name (e.g. ``OutputSrnModelParameters``).
+    :param model_noun: How the model is referred to in doc comments (e.g. ``SRN model``).
+    """
+
+    class_suffix: str
+    base_class: str
+    abstract_class: str
+    create_method: str
+    output_method: str
+    model_noun: str
+
+
+# Wrapper descriptor per model type. GENERIC is absent: it generates only the ODE system.
+_WRAPPER_SPECS = {
+    ModelType.SRN: _WrapperSpec(
+        class_suffix="SrnModel",
+        base_class="AbstractSbmlSrnModel",
+        abstract_class="AbstractSrnModel",
+        create_method="CreateSrnModel",
+        output_method="OutputSrnModelParameters",
+        model_noun="SRN model",
+    ),
+    ModelType.CELL_CYCLE: _WrapperSpec(
+        class_suffix="CellCycleModel",
+        base_class="AbstractSbmlCellCycleModel",
+        abstract_class="AbstractCellCycleModel",
+        create_method="CreateCellCycleModel",
+        output_method="OutputCellCycleModelParameters",
+        model_noun="cell-cycle model",
+    ),
+}
 
 
 class ChasteSbmlModel:
@@ -67,21 +116,15 @@ class ChasteSbmlModel:
         self._ode_hpp_filename = f"{self._ode_class_name}.hpp"
         self._ode_cpp_filename = f"{self._ode_class_name}.cpp"
 
-        self._srn_class_name = ""
-        self._srn_hpp_filename = ""
-        self._srn_cpp_filename = ""
-        if self._model_type == ModelType.SRN:
-            self._srn_class_name = self._model_name + "SrnModel"
-            self._srn_hpp_filename = f"{self._srn_class_name}.hpp"
-            self._srn_cpp_filename = f"{self._srn_class_name}.cpp"
-
-        self._cell_cycle_class_name = ""
-        self._cell_cycle_hpp_filename = ""
-        self._cell_cycle_cpp_filename = ""
-        if self._model_type == ModelType.CELL_CYCLE:
-            self._cell_cycle_class_name = self._model_name + "CellCycleModel"
-            self._cell_cycle_hpp_filename = f"{self._cell_cycle_class_name}.hpp"
-            self._cell_cycle_cpp_filename = f"{self._cell_cycle_class_name}.cpp"
+        # The SRN / cell-cycle wrapper class around the ODE system (none for a GENERIC model).
+        self._wrapper_spec = _WRAPPER_SPECS.get(self._model_type)
+        self._wrapper_class_name = ""
+        self._wrapper_hpp_filename = ""
+        self._wrapper_cpp_filename = ""
+        if self._wrapper_spec is not None:
+            self._wrapper_class_name = self._model_name + self._wrapper_spec.class_suffix
+            self._wrapper_hpp_filename = f"{self._wrapper_class_name}.hpp"
+            self._wrapper_cpp_filename = f"{self._wrapper_class_name}.cpp"
 
         # Read, flatten and convert the SBML model
         self._sbml_model, declared_time_unit, sbml_level = load_sbml_model(self._sbml_file)
@@ -233,14 +276,10 @@ class ChasteSbmlModel:
         self._generate_output("ode/ode.hpp", self._ode_hpp_filename)
         self._generate_output("ode/ode.cpp", self._ode_cpp_filename)
 
-        # Generate code for the SRN or Cell-Cycle model
-        if self._model_type == ModelType.SRN:
-            self._generate_output("srn/srn.hpp", self._srn_hpp_filename)
-            self._generate_output("srn/srn.cpp", self._srn_cpp_filename)
-
-        elif self._model_type == ModelType.CELL_CYCLE:
-            self._generate_output("cell_cycle/cell_cycle.hpp", self._cell_cycle_hpp_filename)
-            self._generate_output("cell_cycle/cell_cycle.cpp", self._cell_cycle_cpp_filename)
+        # Generate code for the SRN or cell-cycle wrapper, if this model type has one
+        if self._wrapper_spec is not None:
+            self._generate_output("wrapper/wrapper.hpp", self._wrapper_hpp_filename)
+            self._generate_output("wrapper/wrapper.cpp", self._wrapper_cpp_filename)
 
         # Generate a placeholder test skeleton for the model
         if self._generate_tests:
@@ -261,20 +300,17 @@ class ChasteSbmlModel:
             time_unit_display=self._time_unit.display,
         )
 
-        if self._model_type == ModelType.SRN:
+        if self._wrapper_spec is not None:
             template_vars.update(
                 dict(
-                    srn_class_name=self._srn_class_name,
-                    srn_header_guard=generate_header_guard(self._srn_hpp_filename),
-                    srn_hpp_file=self._srn_hpp_filename,
-                )
-            )
-        elif self._model_type == ModelType.CELL_CYCLE:
-            template_vars.update(
-                dict(
-                    cell_cycle_class_name=self._cell_cycle_class_name,
-                    cell_cycle_header_guard=generate_header_guard(self._cell_cycle_hpp_filename),
-                    cell_cycle_hpp_file=self._cell_cycle_hpp_filename,
+                    wrapper_class_name=self._wrapper_class_name,
+                    wrapper_header_guard=generate_header_guard(self._wrapper_hpp_filename),
+                    wrapper_hpp_file=self._wrapper_hpp_filename,
+                    wrapper_base_class=self._wrapper_spec.base_class,
+                    wrapper_abstract_class=self._wrapper_spec.abstract_class,
+                    wrapper_create_method=self._wrapper_spec.create_method,
+                    wrapper_output_method=self._wrapper_spec.output_method,
+                    wrapper_model_noun=self._wrapper_spec.model_noun,
                 )
             )
         self._template_vars = template_vars

@@ -25,8 +25,8 @@ def sbml_file(model_name: str) -> str:
     ("model_name", "model_type", "extra_class", "extra_method"),
     [
         ("Chen2000", ModelType.GENERIC, None, None),
-        ("Goldbeter1991", ModelType.SRN, "TestGoldbeter1991SbmlSrnModel", "TestSrnModel"),
-        ("Chen2000", ModelType.CELL_CYCLE, "TestChen2000SbmlCellCycleModel", "TestCellCycleModel"),
+        ("Goldbeter1991", ModelType.SRN, "TestGoldbeter1991SbmlSrnModel", "TestModel"),
+        ("Chen2000", ModelType.CELL_CYCLE, "TestChen2000SbmlCellCycleModel", "TestModel"),
     ],
 )
 def test_placeholder_test_generated(tmp_path, model_name, model_type, extra_class, extra_method):
