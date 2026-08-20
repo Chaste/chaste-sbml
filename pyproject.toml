@@ -11,9 +11,30 @@ description = "Chaste C++ code generation from SBML"
 readme = "README.md"
 license = { file = "LICENSE" }
 
-authors = [{ name = "Kwabena Amponsah" }, { name = "James Osborne" }]
+authors = [
+  { name = "Kwabena Amponsah" },
+  { name = "James Osborne" },
+  { name = "Chaste Developers", email = "chaste-users@maillist.ox.ac.uk" }
+]
 
 requires-python = ">=3.10"
+
+keywords = ["SBML", "Chaste", "code generation", "C++", "systems biology"]
+
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: BSD License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+  "Topic :: Software Development :: Code Generators",
+]
 
 dependencies = ["clang-format", "Jinja2 >=3.0,<4", "python-libsbml >=5.20,<6"]
 
@@ -23,10 +44,15 @@ dev = [
   "flake8",
   "flake8-bugbear",
   "isort",
-  "Jinja2>=3.1",
   "pytest",
   "pytest-cov",
-  "python-libsbml>=5.20",
+]
+docs = [
+  "sphinx",
+  "sphinx-autobuild",
+  "sphinx-copybutton",
+  "furo",
+  "myst-parser",
 ]
 
 [project.scripts]
@@ -34,11 +60,13 @@ chaste-sbml = "chaste_sbml.__main__:main"
 
 [project.urls]
 source = "https://github.com/Chaste/chaste-codegen-sbml"
+documentation = "https://chaste.github.io/chaste-codegen-sbml/"
+issues = "https://github.com/Chaste/chaste-codegen-sbml/issues"
 
 [tool.setuptools.package-data]
-# Ship the C++ base classes so `chaste-sbml --copy-base-classes` can copy them out
-# of an installed package. (setuptools-scm also tracks these, but declaring them explicitly
-# keeps them in the wheel regardless of the VCS file finder.)
+# Ship the C++ base classes so `chaste-sbml --copy-base-classes` can copy them
+# out of an installed package (setuptools-scm also tracks these, but declaring
+# them explicitly keeps them in the wheel regardless of the VCS file finder.)
 chaste_sbml = [
     "SbmlRefModels/src/*.hpp",
     "SbmlRefModels/src/*.cpp",
@@ -63,9 +91,4 @@ extend-exclude = """
 known_first_party = "chaste_sbml"
 extend_skip = ["templates", "venv"]
 profile = "black"
-multi_line_output = 3
-include_trailing_comma = "True"
-force_grid_wrap = 0
-use_parentheses = "True"
-ensure_newline_before_comments = "True"
-line_length = 100
+line_length = 120
