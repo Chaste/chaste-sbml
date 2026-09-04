@@ -33,7 +33,7 @@ dev = [
 chaste-sbml = "chaste_sbml.__main__:main"
 
 [project.urls]
-source = "https://github.com/Chaste/chaste-codegen-sbml"
+source = "https://github.com/Chaste/chaste-sbml"
 
 [tool.setuptools.package-data]
 # Ship the C++ base classes so `chaste-sbml --copy-base-classes` can copy them out

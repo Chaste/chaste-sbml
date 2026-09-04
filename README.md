@@ -1,5 +1,5 @@
-![build_and_test](https://github.com/Chaste/chaste-codegen-sbml/actions/workflows/build_and_test.yml/badge.svg?branch=develop)
-![sbml_test_suite](https://github.com/Chaste/chaste-codegen-sbml/actions/workflows/sbml_test_suite.yml/badge.svg?branch=develop)
+![build_and_test](https://github.com/Chaste/chaste-sbml/actions/workflows/build_and_test.yml/badge.svg?branch=develop)
+![sbml_test_suite](https://github.com/Chaste/chaste-sbml/actions/workflows/sbml_test_suite.yml/badge.svg?branch=develop)
 
 # Import SBML models into Chaste
 
@@ -11,7 +11,7 @@ with [Chaste](https://chaste.github.io), so you can run SBML-defined biology mod
 ### Install with `pipx` (recommended)
 
 ```sh
-pipx install git+https://github.com/Chaste/chaste-codegen-sbml@develop
+pipx install git+https://github.com/Chaste/chaste-sbml@develop
 ```
 
 ### Install with `pip`
@@ -26,7 +26,7 @@ source .venv/bin/activate
 Install the package
 
 ```sh
-python3 -m pip install git+https://github.com/Chaste/chaste-codegen-sbml@develop
+python3 -m pip install git+https://github.com/Chaste/chaste-sbml@develop
 ```
 
 ## Development
@@ -36,8 +36,8 @@ python3 -m pip install git+https://github.com/Chaste/chaste-codegen-sbml@develop
 Clone the repository
 
 ```sh
-git clone https://github.com/Chaste/chaste-codegen-sbml
-cd chaste-codegen-sbml
+git clone https://github.com/Chaste/chaste-sbml
+cd chaste-sbml
 ```
 
 Create and activate a virtual environment
