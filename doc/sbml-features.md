@@ -1,8 +1,8 @@
 # SBML feature support
 
 This page summarises which SBML constructs `chaste-sbml` can translate
-into Chaste C++, and which it cannot. Unsupported constructs are rejected with a
-clear error during generation.
+into Chaste C++, and which it cannot. Models using explicitly unsupported
+constructs are rejected with a clear error during generation.
 
 ## SBML levels and packages
 
@@ -83,7 +83,7 @@ warns and proceeds on a best-effort basis, so the output may be incorrect.
 Events are supported, with some limits:
 
 - **Trigger**, **event assignments**, **priority**, and the trigger's
-  **initial value** (persistent-at-`t=0`) semantics are handled.
+  **initial value at `t=0`** semantics are handled.
 - For CVODE root-finding, a *trigger distance* is derived from a single
   top-level relational operator with two operands. Compound boolean triggers or
   n-ary relationals fall back to a constant distance (they still fire, but not

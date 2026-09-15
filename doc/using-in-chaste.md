@@ -102,11 +102,14 @@ reaction network:
 
 ```cpp
 #include "MyModelSbmlSrnModel.hpp"
+#include "UniformCellCycleModel.hpp"
 
 MAKE_PTR(WildTypeCellMutationState, p_state);
 MAKE_PTR(StemCellProliferativeType, p_type);
-CellPtr p_cell(new Cell(p_state, new MyModelSbmlSrnModel()));
+CellPtr p_cell(new Cell(p_state, new UniformCellCycleModel(), new MyModelSbmlSrnModel()));
 p_cell->SetCellProliferativeType(p_type);
+p_cell->InitialiseCellCycleModel();
+p_cell->InitialiseSrnModel();
 ```
 
 For a **cell-cycle** model, pass it as the cell's cell-cycle model; division is
@@ -116,6 +119,7 @@ driven by the SBML cell-division event:
 #include "MyModelSbmlCellCycleModel.hpp"
 
 CellPtr p_cell(new Cell(p_state, new MyModelSbmlCellCycleModel()));
+p_cell->InitialiseCellCycleModel();
 ```
 
 :::{seealso}

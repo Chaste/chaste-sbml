@@ -22,7 +22,7 @@ The model also ships with the repository under
 Generate into a [Chaste user project](../using-in-chaste.md):
 
 ```bash
-chaste-sbml Goldbeter1991.xml --model-type srn \
+chaste-sbml chaste_sbml/SbmlRefModels/src/reference/Goldbeter1991/Goldbeter1991.xml --model-type srn \
   --output-dir Chaste/projects/MyProject/src \
   --test-output-dir Chaste/projects/MyProject/test
 ```
@@ -102,7 +102,7 @@ void Goldbeter1991SbmlSrnModel::Initialise()
 ```
 
 :::{note}
-Chaste calls `CreateSrnModel()` at division to produces a daughter-cell copy,
+Chaste calls `CreateSrnModel()` at division to produce a daughter-cell copy,
 deep-copying the ODE system.
 :::
 

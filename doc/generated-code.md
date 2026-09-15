@@ -117,8 +117,8 @@ Key methods:
   conversions, for post-processing and output.
 
 `ProcessModelEvents(time, rY)` *(override, private)*
-: Present for every model, but only does work when the model has events. For each
-  event it computes how close the trigger is to firing (used by CVODE
+: Present for every model. It refreshes the model state and, when the model has
+  events, computes how close each trigger is to firing (used by CVODE
   root-finding) and records the deferred event assignments. See
   [Events](#events) below.
 

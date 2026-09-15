@@ -1,6 +1,6 @@
 # Tutorial: Tyson-Novak 2001
 
-This tutorial walks through the [Tyson-Novak 2001](https://www.ebi.ac.uk/biomodels/BIOMD0000000005),
+This tutorial walks through the [Tyson-Novak 2001](https://www.ebi.ac.uk/biomodels/BIOMD0000000195),
 a model of the cell-cycle oscillator. It has eight state variables, twenty **reactions**,
 **assignment rules**, a **function definition**, and **events**, one of
 which represents cell division. This builds on the [Goldbeter 1991 tutorial](goldbeter1991.md)
@@ -17,7 +17,7 @@ The model ships with the repository under
 As before, generate into a [Chaste user project](../using-in-chaste.md):
 
 ```bash
-chaste-sbml TysonNovak2001.xml --model-type cell-cycle \
+chaste-sbml chaste_sbml/SbmlRefModels/src/reference/TysonNovak2001/TysonNovak2001.xml --model-type cell-cycle \
   --output-dir Chaste/projects/MyProject/src \
   --test-output-dir Chaste/projects/MyProject/test
 ```
