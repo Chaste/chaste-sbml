@@ -2,18 +2,18 @@
 
 This page summarises which SBML constructs `chaste-sbml` can translate
 into Chaste C++, and which it cannot. Unsupported constructs are rejected with a
-clear error during generation rather than producing wrong code.
+clear error during generation.
 
 ## SBML levels and packages
 
-- **SBML Level 2 and Level 3** are supported.
+- **SBML Level 2 and Level 3** are supported. **SBML Level 1** is **not** supported.
 - **Hierarchical models** (the `comp` package) are supported by *flattening* the
   model on load. If flattening fails, generation stops with an error.
 - **Flux balance constraints** (the `fbc` package) are **not supported**.
 - Other packages are not interpreted.
 
 :::{note}
-A model whose SBML level is outside 2–3 is not rejected outright — the generator
+A model whose SBML level is outside 2-3 is not rejected outright; the generator
 warns and proceeds on a best-effort basis, so the output may be incorrect.
 :::
 
@@ -99,7 +99,7 @@ Events are supported, with some limits:
   `--timescale` override.
 - **General physical units are not enforced.** Numeric-literal unit annotations
   are stripped, and species/parameter/compartment quantities are treated as
-  non-dimensional. Get the units right in your model.
+  non-dimensional, so your model must be unit-consistent on its own.
 
 ## MathML
 
@@ -125,28 +125,14 @@ rerouted to the C++ built-in of the same name.
 
 ## Explicitly unsupported constructs
 
-Each of these stops generation with an error, so an unsupported model never
-yields silently-wrong code:
+Each of these stops generation with an error:
 
-```{list-table}
-:header-rows: 1
-:widths: 40 60
-
-* - Construct
-  - Behaviour
-* - Flux balance constraints (`fbc` package)
-  - Rejected — flux-balance modelling is out of scope.
-* - Fast reactions
-  - Rejected.
-* - Algebraic rules
-  - Rejected.
-* - Event delays (non-zero)
-  - Rejected.
-* - `delay()` MathML function
-  - Rejected.
-* - Local parameter without a value
-  - Rejected.
-```
+- Flux balance constraints (`fbc` package)
+- Fast reactions
+- Algebraic rules
+- Event delays (non-zero)
+- `delay()` MathML function
+- Local parameter without a value
 
 ## SBML Test Suite results
 
@@ -193,6 +179,5 @@ The unsupported cases break down by the feature they exercise:
 
 :::{note}
 These counts come from `chaste_sbml/SbmlRefModels/test/data/sbml_test_suite_status.csv`,
-which CI checks against actual generation so the figures cannot drift out of
-date.
+which CI checks against actual generation.
 :::

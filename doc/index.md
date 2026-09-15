@@ -1,9 +1,8 @@
 # chaste-sbml
 
-`chaste-sbml` is a Python code generator that reads an
-[SBML](https://sbml.org) model and emits C++ classes compatible with
-[Chaste](https://chaste.github.io), so you can import SBML-defined biology
-models into a Chaste simulation.
+`chaste-sbml` reads an [SBML](https://sbml.org) model and generates the
+corresponding [Chaste](https://chaste.github.io) C++ classes, allowing you to
+import SBML models into a Chaste simulation.
 
 ```{toctree}
 :maxdepth: 2

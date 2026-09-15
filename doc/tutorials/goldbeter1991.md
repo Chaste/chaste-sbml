@@ -1,34 +1,40 @@
-# Tutorial: Goldbeter 1991 (a simple SRN model)
+# Tutorial: Goldbeter 1991
 
 This tutorial walks through generating and understanding a complete model,
 end to end. We use
 [Goldbeter 1991](https://www.ebi.ac.uk/biomodels/BIOMD0000000003), a minimal
-model of mitotic oscillations with three state variables — cyclin (`C`), active
-cdc2 kinase (`M`), and active cyclin protease (`X`) — driven by seven reactions.
-It is a good first example: reactions and assignment rules, but no events or
-delays.
+model of mitotic oscillations with three state variables: cyclin (`C`), active
+cdc2 kinase (`M`), and active cyclin protease (`X`). The model is driven by seven reactions.
+It is a relatively simple example containing SBML **reactions** and **assignment rules**,
+but no **events**.
 
 We generate it as an `srn` (subcellular reaction network) model, so it can run
 inside a cell in a Chaste cell-based simulation.
 
 ## 1. Get the model
 
-The model ships with the repository under
-`chaste_sbml/SbmlRefModels/src/reference/Goldbeter1991/Goldbeter1991.xml`, or you
-can download `BIOMD0000000003` from [BioModels](https://www.ebi.ac.uk/biomodels/).
+You can download `BIOMD0000000003` from [BioModels](https://www.ebi.ac.uk/biomodels/).
+The model also ships with the repository under
+`chaste_sbml/SbmlRefModels/src/reference/Goldbeter1991/Goldbeter1991.xml`.
 
 ## 2. Generate the code
 
+Generate into a [Chaste user project](../using-in-chaste.md):
+
 ```bash
-chaste-sbml Goldbeter1991.xml --model-type srn --output-dir out/
+chaste-sbml Goldbeter1991.xml --model-type srn \
+  --output-dir Chaste/projects/MyProject/src \
+  --test-output-dir Chaste/projects/MyProject/test
 ```
 
-This produces four files in `out/`:
+This produces the ODE system, the SRN wrapper, and a placeholder test:
 
 ```text
-Goldbeter1991SbmlOdeSystem.hpp / .cpp   # the ODE system
-Goldbeter1991SbmlSrnModel.hpp  / .cpp   # the SRN wrapper
-TestGoldbeter1991Sbml.hpp               # placeholder test (unless --no-tests)
+src/
+├── Goldbeter1991SbmlOdeSystem.hpp/.cpp   # the ODE system
+└── Goldbeter1991SbmlSrnModel.hpp/.cpp    # the SRN wrapper
+test/
+└── TestGoldbeter1991Sbml.hpp             # placeholder test (unless --no-tests)
 ```
 
 The model name `Goldbeter1991Sbml` is derived from the filename; the classes are
@@ -40,7 +46,7 @@ seconds are assumed and derivatives are scaled to Chaste's hours by 3600. Pass
 `--timescale` to override this — see [Time units](../command-line.md#time-units).
 :::
 
-## 3. Read the ODE system
+## 3. Review the ODE system
 
 Open `Goldbeter1991SbmlOdeSystem.hpp`. The model's quantities appear as labelled
 members, grouped by role:
@@ -55,7 +61,7 @@ double X; // Cyclin Protease
 double reaction1; // creation of cyclin
 ```
 
-The constructor declares the shape of the system to the base class — three state
+The constructor declares the shape of the system to the base class i.e. three state
 variables, three parameters, and no events:
 
 ```cpp
@@ -68,8 +74,8 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem()
 }
 ```
 
-`RunModelEquations` recomputes the reactions and returns the derivatives, and
-`EvaluateYDerivatives` — the method the solver calls — applies the time scaling:
+`RunModelEquations` recomputes the reactions and returns the derivatives.
+`EvaluateYDerivatives`, the method the solver calls, applies the time scaling:
 
 ```cpp
 constexpr double TIMESCALE_MULTIPLIER = 3600.0; // seconds -> hours
@@ -77,10 +83,12 @@ constexpr double TIMESCALE_MULTIPLIER = 3600.0; // seconds -> hours
 rDY[i] = TIMESCALE_MULTIPLIER * derivatives[i];
 ```
 
-See [Anatomy of generated code](../generated-code.md#the-ode-system) for the full
+:::{seealso}
+[Anatomy of generated code](../generated-code.md#the-ode-system): for the full
 tour of these methods.
+:::
 
-## 4. Read the SRN wrapper
+## 4. Review the SRN wrapper
 
 `Goldbeter1991SbmlSrnModel` wraps the ODE system so a cell can run it. Its
 `Initialise()` creates the ODE system and hands it to the base class:
@@ -93,21 +101,18 @@ void Goldbeter1991SbmlSrnModel::Initialise()
 }
 ```
 
-`CreateSrnModel()` produces a daughter-cell copy at division, deep-copying the
-ODE system. You don't call these yourself — Chaste does.
+:::{note}
+Chaste calls `CreateSrnModel()` at division to produces a daughter-cell copy,
+deep-copying the ODE system.
+:::
 
-## 5. Build it in Chaste
+## 5. Build and run
 
-Put the four files into a Chaste user project, copy the base classes alongside
-them, and register the test. This is the standard flow described in
-[Using generated code in Chaste](../using-in-chaste.md):
+The generated classes need the base classes alongside them, so copy those into
+the project's `src/` too:
 
 ```bash
-# in your project's src/
 chaste-sbml --copy-base-classes --output-dir Chaste/projects/MyProject/src
-chaste-sbml Goldbeter1991.xml --model-type srn \
-  --output-dir Chaste/projects/MyProject/src \
-  --test-output-dir Chaste/projects/MyProject/test
 ```
 
 Add `TestGoldbeter1991Sbml.hpp` to a test pack, then build and run:
@@ -119,10 +124,10 @@ ctest -R Goldbeter1991
 ```
 
 The placeholder test only checks that the classes construct. Replace its
-`// TODO: Add tests` with the assertions your model needs — for instance,
+`// TODO: Add tests` with the assertions your model needs e.g.
 integrating the ODE system and checking the oscillation period.
 
 ## Next steps
 
-The [Tyson–Novak 2001 tutorial](tysonnovak2001.md) covers a more complex model
+The [Tyson-Novak 2001 tutorial](tysonnovak2001.md) covers a more complex model
 with events, a cell-division trigger, and a function definition.

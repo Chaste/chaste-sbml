@@ -128,8 +128,7 @@ records variable names, units, and initial conditions.
 ## The wrapper (SRN / cell-cycle)
 
 For the `srn` and `cell-cycle` types, the wrapper class owns an instance of the
-ODE system and plugs it into Chaste's cell-based machinery. The two variants
-share one template and differ only where the base classes genuinely differ.
+ODE system and plugs it into Chaste's cell-based machinery.
 
 The default constructor forwards to the base class; note the **SRN** wrapper
 passes the state-variable count and the cell-cycle wrapper does not:
@@ -235,6 +234,6 @@ generated.
 :::
 
 :::{seealso}
-[Using generated code in Chaste](using-in-chaste.md) walks through wiring these
+[Using generated code](using-in-chaste.md) walks through wiring these
 files into a Chaste user project.
 :::

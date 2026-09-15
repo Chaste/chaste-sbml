@@ -59,9 +59,9 @@ docs = [
 chaste-sbml = "chaste_sbml.__main__:main"
 
 [project.urls]
-source = "https://github.com/Chaste/chaste-codegen-sbml"
-documentation = "https://chaste.github.io/chaste-codegen-sbml/"
-issues = "https://github.com/Chaste/chaste-codegen-sbml/issues"
+source = "https://github.com/Chaste/chaste-sbml"
+documentation = "https://chaste.github.io/chaste-sbml/"
+issues = "https://github.com/Chaste/chaste-sbml/issues"
 
 [tool.setuptools.package-data]
 # Ship the C++ base classes so `chaste-sbml --copy-base-classes` can copy them

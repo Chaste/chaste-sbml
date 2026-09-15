@@ -2,7 +2,7 @@
 
 ## User install
 
-### Using pipx (recommended)
+### With pipx (recommended)
 
 Use [pipx](https://pipx.pypa.io) to install `chaste-sbml` into its own isolated
 environment and put the command on your `PATH`, without touching other Python
@@ -23,7 +23,7 @@ Verify the installation:
 chaste-sbml --version
 ```
 
-### Using pip
+### With pip
 
 Create and activate a virtual environment (optional):
 
@@ -81,5 +81,12 @@ To build the documentation locally, install the `docs` extra and run `make`:
 
 ```bash
 python3 -m pip install -e ."[docs]"
-make -C doc livehtml      # live-reloading preview
+make -C doc livehtml      # live-reloading preview (full rebuilds)
+make -C doc clean html    # one-off clean build
 ```
+
+:::{note}
+Incremental documentation builds can leave stale HTML behind in some cases. If
+there are problems with rendering after updating markdown, try doing a clean
+rebuild.
+:::

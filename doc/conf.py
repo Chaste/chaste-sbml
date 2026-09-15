@@ -78,7 +78,7 @@ html_static_path = []
 
 # -- Options for HTMLHelp output ------------------------------------------
 
-htmlhelp_basename = "chaste-codegen-sbmldoc"
+htmlhelp_basename = "chaste-sbmldoc"
 
 
 # -- Options for LaTeX output ---------------------------------------------
