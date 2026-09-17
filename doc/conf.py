@@ -43,7 +43,7 @@ def _project_version() -> str:
     from importlib import metadata
 
     try:
-        return metadata.version("chaste-sbml")
+        return metadata.version("chaste_codegen_sbml")
     except metadata.PackageNotFoundError:
         return "0.0.0"
 
