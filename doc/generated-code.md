@@ -30,8 +30,8 @@ model name (the SBML filename with a `Sbml` suffix, unless you pass one):
 ```
 
 Pass `--tests` (or `--test-output-dir`) to emit a placeholder test
-`Test<Name>.hpp` alongside the model. All output is formatted with
-`clang-format`.
+`Test<Name>.hpp`. It is written alongside the model by default; `--test-output-dir`
+places it elsewhere. All output is formatted with `clang-format`.
 
 ## The class hierarchy
 
