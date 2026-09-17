@@ -54,8 +54,8 @@ These apply only when generating code. Passing any of them together with
   produces.
 
 `--tests`, `--no-tests`
-: Generate placeholder test files (default: on). Use `--no-tests` to skip them.
-  The placeholder is a CxxTest skeleton — see
+: Generate placeholder test files (default: off). Pass `--tests` to opt in;
+  `--no-tests` restates the default. The placeholder is a CxxTest skeleton — see
   [the placeholder test](generated-code.md#the-placeholder-test).
 
 `--timescale {ms,s,m,h}`
@@ -65,7 +65,9 @@ These apply only when generating code. Passing any of them together with
 
 `--test-output-dir TEST_OUTPUT_DIR`
 : The directory to place generated test files in. Defaults to `--output-dir`, so
-  set this to keep tests separate from the model source.
+  set this to keep tests separate from the model source. Passing it implies
+  `--tests`, since asking where the test goes asks for one; an explicit
+  `--no-tests` still wins.
 
 ## Copying the base classes
 

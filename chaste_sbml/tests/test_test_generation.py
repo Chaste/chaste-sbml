@@ -31,7 +31,7 @@ def sbml_file(model_name: str) -> str:
 )
 def test_placeholder_test_generated(tmp_path, model_name, model_type, extra_class, extra_method):
     """A placeholder test file is generated with an OdeSystem suite, plus an SRN/CellCycle suite."""
-    model = ChasteSbmlModel(sbml_file(model_name), model_type=model_type)
+    model = ChasteSbmlModel(sbml_file(model_name), model_type=model_type, generate_tests=True)
     model.write(tmp_path)
 
     test_filename = f"Test{model_name}Sbml.hpp"
@@ -59,9 +59,9 @@ def test_placeholder_test_generated(tmp_path, model_name, model_type, extra_clas
         assert f"void {extra_method}()" in code
 
 
-def test_no_tests_disables_generation(tmp_path):
-    """generate_tests=False produces no placeholder test, on disk or in memory."""
-    model = ChasteSbmlModel(sbml_file("Goldbeter1991"), model_type=ModelType.SRN, generate_tests=False)
+def test_tests_disabled_by_default(tmp_path):
+    """Without generate_tests, no placeholder test is produced, on disk or in memory."""
+    model = ChasteSbmlModel(sbml_file("Goldbeter1991"), model_type=ModelType.SRN)
     model.write(tmp_path)
 
     assert model.test_outputs == {}
@@ -78,7 +78,7 @@ def test_test_output_directory_routing(tmp_path):
     src_dir.mkdir()
     test_dir.mkdir()
 
-    model = ChasteSbmlModel(sbml_file("Goldbeter1991"), model_type=ModelType.SRN)
+    model = ChasteSbmlModel(sbml_file("Goldbeter1991"), model_type=ModelType.SRN, generate_tests=True)
     model.write(src_dir, test_dir)
 
     assert (test_dir / "TestGoldbeter1991Sbml.hpp").is_file()
@@ -88,9 +88,24 @@ def test_test_output_directory_routing(tmp_path):
 
 def test_test_defaults_to_output_directory(tmp_path):
     """Without a test directory, the placeholder test lands next to the model code."""
-    model = ChasteSbmlModel(sbml_file("Goldbeter1991"), model_type=ModelType.SRN)
+    model = ChasteSbmlModel(sbml_file("Goldbeter1991"), model_type=ModelType.SRN, generate_tests=True)
     model.write(tmp_path)
 
     written = {p.name for p in tmp_path.iterdir()}
     assert "TestGoldbeter1991Sbml.hpp" in written
     assert "Goldbeter1991SbmlOdeSystem.hpp" in written
+
+
+def test_test_directory_does_not_enable_generation(tmp_path):
+    """Unlike the command line, passing a test directory does not itself request a test."""
+    src_dir = tmp_path / "src"
+    test_dir = tmp_path / "test"
+    src_dir.mkdir()
+    test_dir.mkdir()
+
+    model = ChasteSbmlModel(sbml_file("Goldbeter1991"), model_type=ModelType.SRN)
+    model.write(src_dir, test_dir)
+
+    assert model.test_outputs == {}
+    assert list(test_dir.iterdir()) == []
+    assert (src_dir / "Goldbeter1991SbmlOdeSystem.hpp").is_file()

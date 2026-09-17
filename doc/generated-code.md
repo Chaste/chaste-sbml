@@ -29,8 +29,9 @@ model name (the SBML filename with a `Sbml` suffix, unless you pass one):
   - The ODE system plus a cell-cycle model that wraps it.
 ```
 
-Unless you pass `--no-tests`, a placeholder test `Test<Name>.hpp` is emitted as
-well. All output is formatted with `clang-format`.
+Pass `--tests` (or `--test-output-dir`) to emit a placeholder test
+`Test<Name>.hpp`. It is written alongside the model by default; `--test-output-dir`
+places it elsewhere. All output is formatted with `clang-format`.
 
 ## The class hierarchy
 
