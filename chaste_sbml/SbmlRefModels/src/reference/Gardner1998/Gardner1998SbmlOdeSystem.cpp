@@ -10,13 +10,6 @@
 
 namespace sm = sbmlmath;
 
-namespace
-{
-// Convert the model's native time units (seconds) to Chaste default (hours) and
-// scale the derivatives by this factor (seconds per hour).
-constexpr double TIMESCALE_MULTIPLIER = 3600.0;
-} // namespace
-
 Gardner1998SbmlOdeSystem::Gardner1998SbmlOdeSystem()
         : AbstractSbmlOdeSystem(5, 3, 0)
 {

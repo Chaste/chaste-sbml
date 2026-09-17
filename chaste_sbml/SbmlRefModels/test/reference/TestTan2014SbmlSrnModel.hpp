@@ -66,8 +66,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace
 {
-// Native time units per hour: the model's time is in minutes, but Chaste integrates in hours.
-constexpr double TIMESCALE_MULTIPLIER = 60.0;
+// Native time units per hour, taken from the model so it cannot drift from the generated code.
+constexpr double TIMESCALE_MULTIPLIER = Tan2014SbmlOdeSystem::TIMESCALE_MULTIPLIER;
 } // namespace
 
 class TestTan2014SbmlSrnModel : public AbstractCellBasedTestSuite

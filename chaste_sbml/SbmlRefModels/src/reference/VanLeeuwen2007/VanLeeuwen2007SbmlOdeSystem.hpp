@@ -130,6 +130,13 @@ private:
 
 public:
     /**
+     * The model's native time units (hours) per Chaste hour.
+     *
+     * Chaste integrates in hours, so the derivatives are scaled by this factor.
+     */
+    static constexpr double TIMESCALE_MULTIPLIER = 1.0;
+
+    /**
      * Default constructor
      */
     VanLeeuwen2007SbmlOdeSystem();
