@@ -4,12 +4,12 @@
 
 ### With pipx (recommended)
 
-Use [pipx](https://pipx.pypa.io) to install `chaste_codegen_sbml` into its own isolated
+Use [pipx](https://pipx.pypa.io) to install `chaste-sbml` into its own isolated
 environment and put the command on your `PATH`, without touching other Python
 packages:
 
 ```bash
-pipx install chaste_codegen_sbml==0.0.1
+pipx install git+https://github.com/Chaste/chaste-sbml@0.0.1
 ```
 
 :::{note}
@@ -35,7 +35,7 @@ source .venv/bin/activate
 Install the package:
 
 ```bash
-python3 -m pip install chaste_codegen_sbml==0.0.1
+python3 -m pip install git+https://github.com/Chaste/chaste-sbml@0.0.1
 ```
 
 :::{note}

@@ -3,7 +3,7 @@ requires = ["setuptools>=77", "setuptools-scm>=8", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "chaste_codegen_sbml"
+name = "chaste-sbml"
 dynamic = ["version"]
 
 description = "Chaste C++ code generation from SBML"
