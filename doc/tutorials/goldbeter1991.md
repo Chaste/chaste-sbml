@@ -34,7 +34,7 @@ src/
 ├── Goldbeter1991SbmlOdeSystem.hpp/.cpp   # the ODE system
 └── Goldbeter1991SbmlSrnModel.hpp/.cpp    # the SRN wrapper
 test/
-└── TestGoldbeter1991Sbml.hpp             # placeholder test (unless --no-tests)
+└── TestGoldbeter1991Sbml.hpp             # placeholder test (from --test-output-dir)
 ```
 
 The model name `Goldbeter1991Sbml` is derived from the filename; the classes are

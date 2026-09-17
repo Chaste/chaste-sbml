@@ -28,23 +28,31 @@ def test_version_exits_zero(monkeypatch):
 
 @pytest.mark.parametrize("model_type", ["generic", "srn", "cell-cycle"])
 def test_generate_each_model_type(monkeypatch, tmp_path, model_type):
-    """Generation (the default action) handles every --model-type and emits the model plus test."""
+    """Generation (the default action) handles every --model-type, emitting the model but no test."""
     _run(monkeypatch, str(GOLDBETER), "--model-type", model_type, "--output-dir", str(tmp_path))
+
+    assert (tmp_path / "Goldbeter1991SbmlOdeSystem.hpp").is_file()
+    assert not (tmp_path / "TestGoldbeter1991Sbml.hpp").exists()
+
+
+def test_generate_tests(monkeypatch, tmp_path):
+    """--tests opts in to the placeholder test alongside the model."""
+    _run(monkeypatch, str(GOLDBETER), "--output-dir", str(tmp_path), "--tests")
 
     assert (tmp_path / "Goldbeter1991SbmlOdeSystem.hpp").is_file()
     assert (tmp_path / "TestGoldbeter1991Sbml.hpp").is_file()
 
 
 def test_generate_no_tests(monkeypatch, tmp_path):
-    """--no-tests writes the model but no placeholder test."""
+    """--no-tests writes the model but no placeholder test, restating the default."""
     _run(monkeypatch, str(GOLDBETER), "--output-dir", str(tmp_path), "--no-tests")
 
     assert (tmp_path / "Goldbeter1991SbmlOdeSystem.hpp").is_file()
     assert not (tmp_path / "TestGoldbeter1991Sbml.hpp").exists()
 
 
-def test_generate_test_output_dir(monkeypatch, tmp_path):
-    """--test-output-dir routes the placeholder test to its own directory."""
+def test_test_output_dir_implies_tests(monkeypatch, tmp_path):
+    """--test-output-dir asks for a test as well as where to put it."""
     src_dir = tmp_path / "src"
     test_dir = tmp_path / "test"
     src_dir.mkdir()
@@ -61,6 +69,28 @@ def test_generate_test_output_dir(monkeypatch, tmp_path):
 
     assert (src_dir / "Goldbeter1991SbmlOdeSystem.hpp").is_file()
     assert (test_dir / "TestGoldbeter1991Sbml.hpp").is_file()
+
+
+def test_no_tests_overrides_test_output_dir(monkeypatch, tmp_path):
+    """An explicit --no-tests beats the implication from --test-output-dir."""
+    src_dir = tmp_path / "src"
+    test_dir = tmp_path / "test"
+    src_dir.mkdir()
+    test_dir.mkdir()
+
+    _run(
+        monkeypatch,
+        str(GOLDBETER),
+        "--no-tests",
+        "--output-dir",
+        str(src_dir),
+        "--test-output-dir",
+        str(test_dir),
+    )
+
+    assert (src_dir / "Goldbeter1991SbmlOdeSystem.hpp").is_file()
+    assert not (src_dir / "TestGoldbeter1991Sbml.hpp").exists()
+    assert list(test_dir.iterdir()) == []
 
 
 def test_copy_base_classes(monkeypatch, tmp_path):
@@ -88,7 +118,13 @@ def test_copy_base_classes_with_sbml_file_is_usage_error(monkeypatch):
 
 @pytest.mark.parametrize(
     "extra",
-    [["--model-type", "srn"], ["--no-tests"], ["--timescale", "s"], ["--test-output-dir", "test/"]],
+    [
+        ["--model-type", "srn"],
+        ["--tests"],
+        ["--no-tests"],
+        ["--timescale", "s"],
+        ["--test-output-dir", "test/"],
+    ],
 )
 def test_copy_base_classes_rejects_generation_options(monkeypatch, extra):
     """A generation-only option in copy mode exits with a usage error (code 2), not silent ignore."""

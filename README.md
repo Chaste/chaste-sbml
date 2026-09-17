@@ -92,13 +92,13 @@ options:
                         The directory to place output files in
   --model-type [{generic,srn,cell-cycle}]
                         The type of model to generate
-  --tests, --no-tests   Generate placeholder test files (default: on)
+  --tests, --no-tests   Generate placeholder test files (default: off)
   --timescale {ms,s,m,h}
                         The model's native time unit, used to convert
                         derivatives to Chaste's hours (auto-detected if omitted)
   --test-output-dir TEST_OUTPUT_DIR
                         The directory to place generated test files in
-                        (defaults to --output-dir)
+                        (defaults to --output-dir; implies --tests)
 ```
 
 ### Generate code
@@ -109,10 +109,10 @@ Generate Chaste C++ code from an SBML file:
 chaste-sbml my_model.xml --model-type srn --output-dir src/
 ```
 
-By default this also emits a placeholder test (`Test<Model>Sbml.hpp`), a
+Pass `--tests` to also emit a placeholder test (`Test<Model>Sbml.hpp`), a
 CxxTest skeleton with a suite for the ODE system, and the SRN/cell-cycle
-model where applicable. Pass `--no-tests` to skip it, or `--test-output-dir` to
-place the placeholder test somewhere other than `--output-dir`.
+model where applicable. `--test-output-dir` places that placeholder somewhere
+other than `--output-dir`, and asks for it in the first place.
 
 ### Copy the base classes
 

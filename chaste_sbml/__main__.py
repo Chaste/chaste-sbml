@@ -13,7 +13,7 @@ from ._version import __version__
 # option while generation fills in the real default below.
 _GENERATION_DEFAULTS = {
     "model_type": "generic",
-    "tests": True,
+    "tests": False,
     "timescale": None,
     "test_output_dir": None,
 }
@@ -51,7 +51,7 @@ def parse_args() -> argparse.Namespace:
         "--tests",
         action=argparse.BooleanOptionalAction,
         default=argparse.SUPPRESS,
-        help="Generate placeholder test files (default: on). Use --no-tests to disable.",
+        help="Generate placeholder test files (default: off). Passing --test-output-dir also enables them.",
     )
     parser.add_argument(
         "--timescale",
@@ -63,7 +63,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--test-output-dir",
         default=argparse.SUPPRESS,
-        help="The directory to place generated test files in (defaults to --output-dir)",
+        help="The directory to place generated test files in (defaults to --output-dir; implies --tests)",
     )
 
     args = parser.parse_args()
@@ -85,6 +85,9 @@ def parse_args() -> argparse.Namespace:
         for name, default in _GENERATION_DEFAULTS.items():
             if not hasattr(args, name):
                 setattr(args, name, default)
+        # Specifying where the test goes implies wanting one; an explicit --no-tests still wins.
+        if "test_output_dir" in supplied_generation_opts and "tests" not in supplied_generation_opts:
+            args.tests = True
 
     return args
 

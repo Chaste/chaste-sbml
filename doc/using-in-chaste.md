@@ -51,7 +51,8 @@ Do this once per project, and again whenever you upgrade `chaste-sbml`. See
 [the base classes](generated-code.md#the-base-classes) for what gets copied.
 :::
 
-Generate the model into `src/`, and the placeholder test into `test/`:
+Generate the model into `src/`, and the placeholder test into `test/`
+(`--test-output-dir` asks for the placeholder as well as placing it):
 
 ```bash
 chaste-sbml my_model.xml \

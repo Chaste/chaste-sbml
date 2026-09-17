@@ -14,7 +14,8 @@ chaste-sbml my_model.xml --output-dir src/
 
 This reads `my_model.xml` and writes an
 [ODE system](https://chaste.github.io/docs/user-tutorials/solvingodes/) into
-`src/`, along with a [placeholder test](generated-code.md#the-placeholder-test).
+`src/`. Add `--tests` to also emit a
+[placeholder test](generated-code.md#the-placeholder-test).
 
 ## Selecting a model type
 

@@ -84,7 +84,7 @@ class ChasteSbmlModel:
         sbml_file: str,
         model_name: str = "",
         model_type: ModelType = ModelType.GENERIC,
-        generate_tests: bool = True,
+        generate_tests: bool = False,
         time_unit: Optional[TimeUnit] = None,
     ) -> None:
         """Initialise the ChasteSbmlModel.
@@ -93,6 +93,7 @@ class ChasteSbmlModel:
         :param model_name: The model name; derived from the filename when not given.
         :param model_type: The model type e.g. ModelType.SRN.
         :param generate_tests: Whether to generate a placeholder test for the model.
+            Off by default; the placeholder is an opt-in extra.
         :param time_unit: The model's native time unit, overriding auto-detection. ``None``
             (the default) auto-detects from the SBML; pass ``TimeUnit.NONE`` to force no conversion.
         """
@@ -230,7 +231,9 @@ class ChasteSbmlModel:
         :param output_directory: The output directory for the model code.
             Defaults to the current directory.
         :param test_output_directory: The output directory for the generated
-            placeholder tests. Defaults to ``output_directory``.
+            placeholder tests. Defaults to ``output_directory``. Only used when the
+            model was constructed with ``generate_tests=True``; unlike the command
+            line, giving a test directory here does not itself request a test.
         """
         # Generate the code
         self._generate_outputs()
