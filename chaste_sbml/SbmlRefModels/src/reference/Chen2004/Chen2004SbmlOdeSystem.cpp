@@ -10,13 +10,6 @@
 
 namespace sm = sbmlmath;
 
-namespace
-{
-// Convert the model's native time units (minutes) to Chaste default (hours) and
-// scale the derivatives by this factor (minutes per hour).
-constexpr double TIMESCALE_MULTIPLIER = 60.0;
-} // namespace
-
 Chen2004SbmlOdeSystem::Chen2004SbmlOdeSystem()
         : AbstractSbmlOdeSystem(36, 146, 4)
 {

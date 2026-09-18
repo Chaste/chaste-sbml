@@ -56,14 +56,15 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "WildTypeCellMutationState.hpp"
 
 #include "TysonNovak2001SbmlCellCycleModel.hpp"
+#include "TysonNovak2001SbmlOdeSystem.hpp"
 
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
 namespace
 {
-// Native time units per hour: the model's time is in minutes, but Chaste integrates in hours.
-constexpr double TIMESCALE_MULTIPLIER = 60.0;
+// Native time units per hour, taken from the model so it cannot drift from the generated code.
+constexpr double TIMESCALE_MULTIPLIER = TysonNovak2001SbmlOdeSystem::TIMESCALE_MULTIPLIER;
 } // namespace
 
 class TestTysonNovak2001SbmlCellCycleModel : public AbstractCellBasedTestSuite

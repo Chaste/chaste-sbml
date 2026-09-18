@@ -74,8 +74,8 @@ namespace sth = sbmltesthelpers;
 
 namespace
 {
-// Native time units per hour: the model's time is in seconds, but Chaste integrates in hours.
-constexpr double TIMESCALE_MULTIPLIER = 3600.0;
+// Native time units per hour, taken from the model so it cannot drift from the generated code.
+constexpr double TIMESCALE_MULTIPLIER = Gardner1998SbmlOdeSystem::TIMESCALE_MULTIPLIER;
 } // namespace
 
 class TestGardner1998SbmlOdeSystem : public AbstractCellBasedTestSuite
