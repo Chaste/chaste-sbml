@@ -75,10 +75,11 @@ Goldbeter1991SbmlOdeSystem::Goldbeter1991SbmlOdeSystem()
 ```
 
 `RunModelEquations` recomputes the reactions and returns the derivatives.
-`EvaluateYDerivatives`, the method the solver calls, applies the time scaling:
+`EvaluateYDerivatives`, the method the solver calls, applies the time scaling
+using a constant the header exposes, so your tests can reuse it:
 
 ```cpp
-constexpr double TIMESCALE_MULTIPLIER = 3600.0; // seconds -> hours
+static constexpr double TIMESCALE_MULTIPLIER = 3600.0; // seconds per hour
 // ...
 rDY[i] = TIMESCALE_MULTIPLIER * derivatives[i];
 ```

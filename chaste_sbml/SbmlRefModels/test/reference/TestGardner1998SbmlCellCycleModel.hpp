@@ -54,14 +54,15 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "WildTypeCellMutationState.hpp"
 
 #include "Gardner1998SbmlCellCycleModel.hpp"
+#include "Gardner1998SbmlOdeSystem.hpp"
 
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
 namespace
 {
-// Native time units per hour: the model's time is in seconds, but Chaste integrates in hours.
-constexpr double TIMESCALE_MULTIPLIER = 3600.0;
+// Native time units per hour, taken from the model so it cannot drift from the generated code.
+constexpr double TIMESCALE_MULTIPLIER = Gardner1998SbmlOdeSystem::TIMESCALE_MULTIPLIER;
 } // namespace
 
 class TestGardner1998SbmlCellCycleModel : public AbstractCellBasedTestSuite

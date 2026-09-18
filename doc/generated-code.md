@@ -105,12 +105,19 @@ Key methods:
 `EvaluateYDerivatives(time, rY, rDY)` *(override)*
 : Called by the ODE solver. It runs the model equations and writes the
   derivatives into `rDY`. When time-unit scaling applies, it multiplies time and
-  each derivative by a file-local `TIMESCALE_MULTIPLIER`:
+  each derivative by `TIMESCALE_MULTIPLIER`, declared on the class so that tests
+  can work in the model's native units without repeating the value:
 
   ```cpp
-  constexpr double TIMESCALE_MULTIPLIER = 3600.0; // seconds -> hours
+  // in the header
+  static constexpr double TIMESCALE_MULTIPLIER = 3600.0; // seconds per hour
   // ...
   rDY[i] = TIMESCALE_MULTIPLIER * derivatives[i];
+  ```
+
+  ```cpp
+  // in a test
+  double end_time = 100.0 / Goldbeter1991SbmlOdeSystem::TIMESCALE_MULTIPLIER;
   ```
 
 `ComputeDerivedQuantities(time, rY)` *(override)*
