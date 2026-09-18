@@ -9,15 +9,6 @@
 #include "{{ ode_hpp_file }}"
 
 namespace sm = sbmlmath;
-{% if scale_time %}
-
-namespace
-{
-// Convert the model's native time units ({{ time_unit_display }}) to Chaste default (hours) and
-// scale the derivatives by this factor ({{ time_unit_display }} per hour).
-constexpr double TIMESCALE_MULTIPLIER = {{ time_multiplier }};
-} // namespace
-{% endif %}
 
 {{ ode_class_name }}::{{ ode_class_name }}()
     : AbstractSbmlOdeSystem({{ state_variables|length }}, {{parameters|length }}, {{ events|length }})

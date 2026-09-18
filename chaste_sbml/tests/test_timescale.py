@@ -270,8 +270,11 @@ def test_model_detects_minutes_and_scales(tmp_path):
     model = ChasteSbmlModel(str(TYSON), model_type=ModelType.GENERIC)
     assert model._time_unit is TimeUnit.MINUTE
     model.write(str(tmp_path))
+    # The multiplier is declared in the header so tests of the model can reuse it.
+    hpp = (tmp_path / "TysonNovak2001SbmlOdeSystem.hpp").read_text()
+    assert "static constexpr double TIMESCALE_MULTIPLIER = 60.0;" in hpp
     cpp = (tmp_path / "TysonNovak2001SbmlOdeSystem.cpp").read_text()
-    assert "constexpr double TIMESCALE_MULTIPLIER = 60.0;" in cpp
+    assert "constexpr double TIMESCALE_MULTIPLIER" not in cpp
     assert "time *= TIMESCALE_MULTIPLIER;" in cpp
     assert "rDY[i] = TIMESCALE_MULTIPLIER * derivatives[i];" in cpp
 
@@ -282,8 +285,9 @@ def test_timescale_override_forces_conversion(tmp_path):
     model = ChasteSbmlModel(str(GOLDBETER), time_unit=TimeUnit.MINUTE)
     assert model._time_unit is TimeUnit.MINUTE
     model.write(str(tmp_path))
+    hpp = (tmp_path / "Goldbeter1991SbmlOdeSystem.hpp").read_text()
+    assert "static constexpr double TIMESCALE_MULTIPLIER = 60.0;" in hpp
     cpp = (tmp_path / "Goldbeter1991SbmlOdeSystem.cpp").read_text()
-    assert "constexpr double TIMESCALE_MULTIPLIER = 60.0;" in cpp
     assert "time *= TIMESCALE_MULTIPLIER;" in cpp
 
 
@@ -294,3 +298,6 @@ def test_timescale_none_override_suppresses_conversion(tmp_path):
     model.write(str(tmp_path))
     cpp = (tmp_path / "Goldbeter1991SbmlOdeSystem.cpp").read_text()
     assert "time *=" not in cpp
+    # Declared even when no scaling applies, so a test can use it unconditionally.
+    hpp = (tmp_path / "Goldbeter1991SbmlOdeSystem.hpp").read_text()
+    assert "static constexpr double TIMESCALE_MULTIPLIER = 1.0;" in hpp

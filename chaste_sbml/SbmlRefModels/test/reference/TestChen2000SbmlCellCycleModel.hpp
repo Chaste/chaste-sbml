@@ -54,14 +54,15 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "WildTypeCellMutationState.hpp"
 
 #include "Chen2000SbmlCellCycleModel.hpp"
+#include "Chen2000SbmlOdeSystem.hpp"
 
 // This test is never run in parallel
 #include "FakePetscSetup.hpp"
 
 namespace
 {
-// Native time units per hour: the model's time is in minutes, but Chaste integrates in hours.
-constexpr double TIMESCALE_MULTIPLIER = 60.0;
+// Native time units per hour, taken from the model so it cannot drift from the generated code.
+constexpr double TIMESCALE_MULTIPLIER = Chen2000SbmlOdeSystem::TIMESCALE_MULTIPLIER;
 } // namespace
 
 class TestChen2000SbmlCellCycleModel : public AbstractCellBasedTestSuite

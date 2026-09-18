@@ -68,6 +68,13 @@ private:
 {% endfor %}
 
 public:
+    /**
+     * The model's native time units ({{ time_unit_display }}) per Chaste hour.
+     *
+     * Chaste integrates in hours, so the derivatives are scaled by this factor.
+     */
+    static constexpr double TIMESCALE_MULTIPLIER = {{ time_multiplier }};
+
     /** 
      * Default constructor
      */
